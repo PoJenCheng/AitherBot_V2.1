@@ -57,3 +57,4 @@ upperHigh = 16.3
 lowerHigh = -8.7
 global data
 data = ''
+tina = "test"
