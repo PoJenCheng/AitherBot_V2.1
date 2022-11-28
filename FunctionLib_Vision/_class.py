@@ -8,8 +8,6 @@ import cv2
 import math
 from PyQt5.QtGui import *
 
-
-
 '跟DICOM有關的, 會要建立很多組DICOM'
 class DICOM():
     def __init__(self):
@@ -96,8 +94,6 @@ class DICOM():
             tmp = imageInfo[i]
             imageTag[tmp.InstanceNumber-1] = tmp
         return imageTag
-
-
     
     def GetImage(self, imageTag):
         """get image from image DICOM
@@ -120,7 +116,6 @@ class DICOM():
             image = 0
         # a = numpy.array(image)
         return image
-    
     
     def Transfer2Hu(self, image, rescaleSlope, rescaleIntercept):
         """transfer pixel value to Hounsfield Unit (Hu)
@@ -154,7 +149,6 @@ class DICOM():
             else:
                 cutImagesHu.append(image[z,:,:])
         return cutImagesHu
-        
     
     def GetPixel2Mm(self, imageTag):
         """Get Pixel to Mm array
@@ -177,7 +171,7 @@ class DICOM():
         Args:
             imageHu2D (_numpy.array_): image 2D in Hounsfield Unit (Hu)
             ww (_number_): from tag (0028,1051)	Window Width
-            wl (_number_): from tag (0028,1050)	WindowCenter
+            wl (_number_): from tag (0028,1050)	Window Center
 
         Returns:
             imageHu2D_ (_array_): image 2D in HU and 256
@@ -209,10 +203,17 @@ class DICOM():
         qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return qimg
         
-
 '跟對位有關'
 class REGISTRATION():
     def TransformationMatrix(self, ballCenterMm):
+        """calculate Transformation Matrix
+
+        Args:
+            ballCenterMm (_numpy.array_): registation ball center (in mm unit)
+
+        Returns:
+            R_matrix (_numpy.array_): 3*3 [x axis; y axis; z axis]
+        """
         "ball_center_mm(1,:);   原點"
         "ball_center_mm(2,:);   Z 軸"
         "ball_center_mm(3,:);   X 軸"        
@@ -258,6 +259,16 @@ class REGISTRATION():
         return R_matrix
     
     def GetBallSection(self,candidateBall):
+        """calculate Transformation Matrix
+
+        Args:
+            candidateBall (_dictionary_): candidate ball center 
+            same as dictionaryPoint (_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
+
+        Returns:
+            numpy.array([showAxis, showSlice]) (_numpy.array_): show Axis(x=0, y=1, z=2), show Slice/section (slice number)
+        
+        """
         tmpMin = numpy.min(candidateBall,0)
         tmpMax = numpy.max(candidateBall,0)
         tmpMean = numpy.mean(candidateBall,0)
@@ -275,6 +286,14 @@ class REGISTRATION():
         return numpy.array([showAxis, showSlice])
     
     def GetError(self,ball):
+        """get rigistration error/difference
+
+        Args:
+            ball (_numpy.array_): registration ball center
+
+        Returns:
+            [numpy.min(error),numpy.max(error),numpy.mean(error)] (_list_): [min error, max error, mean error]
+        """
         error = []
         legsA = 140
         legsB = 150
@@ -285,6 +304,14 @@ class REGISTRATION():
         return [numpy.min(error),numpy.max(error),numpy.mean(error)]
     
     def GetNorm(self, V):
+        """get norm
+
+        Args:
+            V (_numpy.array_): vector
+
+        Returns:
+            d (_number_): (float)
+        """
         if V.shape[0] == 3:
             d = math.sqrt(numpy.square(V[0])+numpy.square(V[1])+numpy.square(V[2]))
             # distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
