@@ -3,7 +3,6 @@ import math
 from time import sleep
 from FunctionLib_Robot.__init__ import *
 from ._globalVar import *
-from FunctionLib_UI.matplotlib_pyqt import testData
 
 upper_G_length = 0
 upper_G_angle = 0
