@@ -549,6 +549,11 @@ class Ui_MainWindow(object):
         self.Slider_RobotSpeed.valueChanged['int'].connect(self.label_RobotSpeed.setNum)
         self.Button_RobotHome.clicked.connect(MainWindow.HomeProcessing)
         self.Button_RobotAutoRun.clicked.connect(MainWindow.RobotRun)
+        self.Button_Registration_H.clicked.connect(MainWindow.SetRegistration_H)
+        self.Button_show_Registration_H.clicked.connect(MainWindow.ShowRegistrationDifference_H)
+        self.Button_SetPoint_H.clicked.connect(MainWindow.SetPoint_H)
+        self.Button_ShowPoint_H.clicked.connect(MainWindow.ShowPoint_H)
+        self.Button_Planning_L.clicked.connect(MainWindow.SetPlanningPath)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

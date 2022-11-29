@@ -1256,12 +1256,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1472</x>
-     <y>458</y>
+     <x>1475</x>
+     <y>578</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1472</x>
-     <y>458</y>
+     <x>1475</x>
+     <y>549</y>
     </hint>
    </hints>
   </connection>
@@ -1272,8 +1272,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1436</x>
-     <y>458</y>
+     <x>1439</x>
+     <y>500</y>
     </hint>
     <hint type="destinationlabel">
      <x>1417</x>
@@ -1288,8 +1288,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1439</x>
-     <y>458</y>
+     <x>1442</x>
+     <y>500</y>
     </hint>
     <hint type="destinationlabel">
      <x>1430</x>
@@ -1304,12 +1304,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1491</x>
-     <y>458</y>
+     <x>1494</x>
+     <y>578</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1491</x>
-     <y>458</y>
+     <x>1494</x>
+     <y>549</y>
     </hint>
    </hints>
   </connection>
@@ -1320,8 +1320,8 @@
    <slot>ShowRegistrationDifference_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1671</x>
-     <y>88</y>
+     <x>1842</x>
+     <y>96</y>
     </hint>
     <hint type="destinationlabel">
      <x>1976</x>
@@ -1352,8 +1352,8 @@
    <slot>SetPoint_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1671</x>
-     <y>88</y>
+     <x>1674</x>
+     <y>195</y>
     </hint>
     <hint type="destinationlabel">
      <x>1995</x>
@@ -1368,8 +1368,8 @@
    <slot>ShowPoint_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1671</x>
-     <y>88</y>
+     <x>1674</x>
+     <y>230</y>
     </hint>
     <hint type="destinationlabel">
      <x>1953</x>
@@ -1384,11 +1384,11 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>594</x>
+     <x>598</x>
      <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>604</x>
+     <x>608</x>
      <y>298</y>
     </hint>
    </hints>
@@ -1400,8 +1400,8 @@
    <slot>HomeProcessing()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>686</x>
-     <y>149</y>
+     <x>642</x>
+     <y>167</y>
     </hint>
     <hint type="destinationlabel">
      <x>697</x>
@@ -1416,12 +1416,92 @@
    <slot>RobotRun()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>634</x>
-     <y>190</y>
+     <x>637</x>
+     <y>202</y>
     </hint>
     <hint type="destinationlabel">
      <x>646</x>
      <y>-9</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Registration_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetRegistration_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1714</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2040</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_show_Registration_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowRegistrationDifference_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1860</x>
+     <y>96</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2018</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetPoint_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPoint_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1772</x>
+     <y>249</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2018</x>
+     <y>248</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_ShowPoint_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPoint_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1853</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2012</x>
+     <y>286</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Planning_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPlanningPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1838</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1993</x>
+     <y>276</y>
     </hint>
    </hints>
   </connection>
@@ -1433,5 +1513,10 @@
   <slot>ShowPoint_L()</slot>
   <slot>HomeProcessing()</slot>
   <slot>RobotRun()</slot>
+  <slot>SetRegistration_H()</slot>
+  <slot>ShowRegistrationDifference_H()</slot>
+  <slot>SetPoint_H()</slot>
+  <slot>ShowPoint_H()</slot>
+  <slot>SetPlanningPath()</slot>
  </slots>
 </ui>
