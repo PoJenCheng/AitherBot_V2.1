@@ -521,6 +521,12 @@ class MotorSubFunction(MotorControl):
             target4 = 0
 
     def P2P(self, XPoint1, YPoint1, ZPoint1, XPoint2, YPoint2, ZPoint2):
+        # 取得entry point 與 target point
+        try:
+            pass
+        except:
+            pass
+
         # obtain upper point
         t = (upperHigh - ZPoint1)/(ZPoint2-ZPoint1)
         upperPointX = XPoint1 + (XPoint2-XPoint1)*t
@@ -546,3 +552,13 @@ class MotorSubFunction(MotorControl):
         LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
         self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                  RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+
+    def capturePoint(self):
+        entry_full = np.array([1, 2, 3])
+        target_full = np.array([4, 5, 6])
+        entry_halt = np.array([4, 5, 9])
+        target_halt = np.array([10, 11, 12])
+        pointTest = np.array(
+            [entry_full, target_full, entry_halt, target_halt])
+
+        "ji"
