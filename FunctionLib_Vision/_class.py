@@ -8,7 +8,7 @@ import cv2
 import math
 from PyQt5.QtGui import *
 
-'跟DICOM有關的, 會要建立很多組DICOM'
+"跟DICOM有關的, 會要建立很多組DICOM"
 class DICOM():
     def __init__(self):
         pass
@@ -89,7 +89,7 @@ class DICOM():
         
         imageInfo = dicDICOM.get(seriesNumberLabel[index])
         imageTag = [0]*tmp
-        # 照InstanceNumber排序
+        "照InstanceNumber排序"
         for i in range(len(imageInfo)):
             tmp = imageInfo[i]
             imageTag[tmp.InstanceNumber-1] = tmp
@@ -114,7 +114,6 @@ class DICOM():
                     break
         except:
             image = 0
-        # a = numpy.array(image)
         return image
     
     def Transfer2Hu(self, image, rescaleSlope, rescaleIntercept):
@@ -203,7 +202,7 @@ class DICOM():
         qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return qimg
         
-'跟對位有關'
+"跟對位有關"
 class REGISTRATION():
     def TransformationMatrix(self, ballCenterMm):
         """calculate Transformation Matrix
@@ -314,7 +313,6 @@ class REGISTRATION():
         """
         if V.shape[0] == 3:
             d = math.sqrt(numpy.square(V[0])+numpy.square(V[1])+numpy.square(V[2]))
-            # distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
         elif V.shape[0] == 2:
             d = math.sqrt(numpy.square(V[0])+numpy.square(V[1]))
         else:
@@ -333,7 +331,6 @@ class REGISTRATION():
         """ 
         imagesHuThr = []
         PIXEL_MAX = 4096-1
-        # down_ = -900
         down_ = -800
         up_ = 300
         for z in range(len(imageHu)):
@@ -352,121 +349,70 @@ class REGISTRATION():
         Returns:
             result_centroid (_type_): _description_
         """
-        # z=0
-        # tmp = image[z,0:200,0:512]
-        # plt.figure()
-        # plt.imshow(tmp, cmap='gray')
-        # plt.show()
         y = 200
         x = 512
         NORMALIZE=4096-1
-        # cut image
+        "cut image"
         cutImagesHu=[]
         if pixel2Mm[0]!=pixel2Mm[1]:
             print("xy plot resize is fail")
             return
         for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
-            # if pixel2Mm[0]==pixel2Mm[1]:
             cutImagesHu.append(imageHu[z,:y,:x])
-            # else:
-            #     print("xy plot resize is fail")
-            #     return
             
-        'filter & 二值化'
+        "filter & 二值化"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
-        # src = numpy.uint8(cutImageHuThr)
         src_tmp = numpy.uint8(cutImageHuThr)
         resultCentroid_xy = []
         
-        '係數'
-        'Hough Circles找半徑跟圓心'
+        "係數"
+        "Hough Circles找半徑跟圓心"
         ratio = 3
         low_threshold = 15
-        'Radius範圍 [4.5mm ~ (21/2)+3mm]'
+        "Radius範圍 [4.5mm ~ (21/2)+3mm]"
         minRadius=int((4.5/pixel2Mm[0]))
         maxRadius=int((21/pixel2Mm[0])/2)+3
         
         
-        '每一張DICOM找圓, 圓心, 半徑'
+        "每一張DICOM找圓, 圓心, 半徑"
         for z in range(src_tmp.shape[0]):
-            # cv2.imshow("src",src_tmp[z,:,:])
-            'filter'
+            "filter"
             src_tmp[z,:,:] = cv2.bilateralFilter(src_tmp[z,:,:],5,100,100)
-            # cv2.imshow("filter",src_tmp[z,:,:])
-            '畫輪廓'
+            "畫輪廓"
             contours, hierarchy = cv2.findContours(src_tmp[z,:,:],
                                                 cv2.RETR_EXTERNAL,
                                                 cv2.CHAIN_APPROX_SIMPLE)
-            '建立全黑的圖片畫輪廓'
+            "建立全黑的圖片畫輪廓"
             shape = (src_tmp.shape[1], src_tmp.shape[2], 1)
             black_image = numpy.zeros(shape, numpy.uint8)
             cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
-            # cv2.imshow("Contours",black_image)
-            '用輪廓找質心'
+            "用輪廓找質心"
             centroid = []
             for c in contours:
-                # print(c.shape[0])
                 if c.shape[0] > 4 and c.shape[0]<110:
                     M = cv2.moments(c)
                     if M["m00"] != 0:
                         Cx = (M["m10"]/M["m00"])
                         Cy = (M["m01"]/M["m00"])
                         centroid.append((Cx,Cy))
-                        # cv2.circle(black_image,(int(Cx),int(Cy)),1,(256/2,0,0),-1)
-            # cv2.imshow("centroid",black_image)
-            'Hough Circles找半徑跟圓心'
+            "Hough Circles找半徑跟圓心"
             circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT, 1, 75,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
-            ############ 待處理，要加上 filter
-            # if z+int(imageHu.shape[0]/3) == 482:    # 因為散射，有雜訊
-            #     # print("-----------")
-            #     plt.imshow(src_tmp[z,:,:], 'gray')
-            #     plt.colorbar()
-            #     plt.show()
-            #     pass
             if circles is not None and centroid is not None:
-                # for i in circles[0, :]:
-                #     # print(i)
-                #     center = (int(i[0]), int(i[1]))
-                #     radius = int(i[2])
-                #     'center and radius is required to be an integer !!!'
-                #     # circle center
-                #     cv2.circle(black_image, center, 1, (200, 0, 0), -1)
-                #     # circle outline
-                #     cv2.circle(black_image, center, radius, (200, 0, 0), 1)
-                # cv2.imshow("HoughCircles",black_image)
-            
-                '交集'
-                'centroid = 這張圖有幾個質心'
-                'circles = 這張圖有幾個hough circle'
+                "交集"
+                "centroid = 這張圖有幾個質心"
+                "circles = 這張圖有幾個hough circle"
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
-                        # print("distance: ",distance)
                         if distance<2:
-                            # print("distance: ",distance)
                             Px = i[0]*pixel2Mm[0]
                             Py = i[1]*pixel2Mm[1]
                             Pz = (z+int(imageHu.shape[0]/3))*abs(pixel2Mm[2])
                             Pr = j[2]*pixel2Mm[0]
                             
-                            # print("x,y = ",i)
-                            # print("z = ",z+int(imageHu.shape[0]/3))
-                            # print("r = ",j[2])
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
-                            # print("result_centroid :",result_centroid)
-                            # print(result_centroid[0][0])    # 58.12200435729847之[[58.12200435729847, 116.531045751634, 336, 7.4]]
-                            
-
-                # 'PPT結果圖'
-                # cv2.circle()
-                # cv2.imshow("result",)
-        
-
-        
-        
-        
         return resultCentroid_xy
 
   
@@ -482,10 +428,10 @@ class REGISTRATION():
         """
         dictionaryTmp = {}
         dictionary = {}
-        'pointMatrix 點跟點依序倆倆比較，符合條件的為同一組'
-        '條件: '
-        '兩點XY距離不超過2mm'
-        'Z軸距離不超過20+13mm'
+        "pointMatrix 點跟點依序倆倆比較，符合條件的為同一組"
+        "條件: "
+        "兩點XY距離不超過2mm"
+        "Z軸距離不超過20+13mm"
         for num1 in range(len(pointMatrix)-1):
             tmp=[]
             value = []
@@ -500,14 +446,13 @@ class REGISTRATION():
             value.extend(tmp)
             dictionaryTmp.update({tuple(pointMatrix[num1]):numpy.array(value)})
 
-        '刪除重複的組別 & 組別太小的'
-        '符合以下條件都刪除: '
-        '組別裡元素個數(=Z軸距離)大於15mm & key[i]與key[i+1]距離小於50mm'
-        '組別裡元素個數(=Z軸距離)小於15mm'
+        "刪除重複的組別 & 組別太小的"
+        "符合以下條件都刪除: "
+        "組別裡元素個數(=Z軸距離)大於15mm & key[i]與key[i+1]距離小於50mm"
+        "組別裡元素個數(=Z軸距離)小於15mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for num1 in range(len(key_)-1):
-            # tmp2=[]
             key = key_[num1]
             values = dictionaryTmp.get(key)
             if values.shape[0] >= 15:
@@ -527,10 +472,10 @@ class REGISTRATION():
                 del dictionaryTmp[dic1]
             except:
                 pass
-        '同組裡面若有斷層(不連貫), 自動分開'
-        '條件: '
-        '前-後(不連貫距離) < -3mm'
-        '自動分開以後留下組別裡元素個數大於15mm的'
+        "同組裡面若有斷層(不連貫), 自動分開"
+        "條件: "
+        "前-後(不連貫距離) < -3mm"
+        "自動分開以後留下組別裡元素個數大於15mm的"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for dic_num in range(len(key_)):
@@ -542,16 +487,12 @@ class REGISTRATION():
                 if values[num,2]-values[num+1,2] < (-3):
                     tmp1 = values[:num,:]
                     tmp2 = values[num+1:,:]
-                    # delete_label.append(key)
                     if tmp1.shape[0]>=15:
                         dictionaryTmp.update({tuple(tmp1[0,:]):tmp1})
                     else:
                         delete_label.append(tuple(key))
                     if tmp2.shape[0]>=15:
                         dictionaryTmp.update({tuple(tmp2[0,:]):tmp2})
-                    # else:
-                        # delete_label.append(tuple(key))
-                    # dictionaryTmpIsChange = True
                     
                     break
         for dic in delete_label:
@@ -560,23 +501,14 @@ class REGISTRATION():
             except:
                 pass
         
-        '將暫時的結果及Pr有改變的output'
-        '小 -> 大 -> 小'
+        "將暫時的結果及Pr有改變的output"
+        "小 -> 大 -> 小"
         for dic in dictionaryTmp:
             key = dic
             values = dictionaryTmp.get(dic)
-            # if self.IsRadiusChange(values[:,3],pixel2Mm):
             if self.IsRadiusChange(values[:,3]):
-                # print("True")
                 dictionary.update({key:values})
-            # else:
-                # print("False")
-                # pass
         return dictionary
-
-
-
-
     
     def FindBallYZ(self, imageHu, pixel2Mm):
         """找2D(XZ平面)圓心, 所以會有不是球的圓心被找到
@@ -591,19 +523,8 @@ class REGISTRATION():
         y = 200
         x = 512
         NORMALIZE=4096-1
-        # cut image
+        "cut image"
         cutImagesHu=[]
-        # for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
-        #     'resize, 會變成mm'
-        #     if pixel2Mm[0]<1 and abs(pixel2Mm[2])<=1:
-        #         src_tmp = cv2.resize(imageHu[z,:y,:x],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
-        #         cutImagesHu.append(src_tmp)
-        #     elif pixel2Mm[0]>1 and abs(pixel2Mm[2])>=1:
-        #         src_tmp = cv2.resize(imageHu[z,:y,:x],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
-        #         cutImagesHu.append(src_tmp)
-        #     else:
-        #         cutImagesHu.append(imageHu[z,:y,:x])
-        
         if pixel2Mm[0]<1 and abs(pixel2Mm[2])<=1:
             for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
                 src_tmp = cv2.resize(imageHu[z,:y,:x],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
@@ -616,42 +537,33 @@ class REGISTRATION():
             for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
                 cutImagesHu.append(imageHu[z,:y,:x])
             
-            
-        'filter'
+        "filter"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
-        # src = numpy.uint8(cutImageHuThr)
         src_tmp = numpy.uint8(cutImageHuThr)
         resultCentroid_yz = []
         
-        '係數'
-        'Hough Circles找半徑跟圓心'
+        "係數"
+        "Hough Circles找半徑跟圓心"
         ratio = 3
         low_threshold = 15
-        minRadius = 4   # mm
-        maxRadius = 21 # mm
+        "in mm"
+        minRadius = 4
+        "in mm"
+        maxRadius = 21
         
-        '每一張DICOM找圓, 圓心, 半徑'
+        "每一張DICOM找圓, 圓心, 半徑"
         for x in range(src_tmp.shape[2]):
-            
-            # if x == 36:
-            #     print("******************")
-            #     print(x)
-                
-            # cv2.imshow("src_tmp[:,:,x]",src_tmp[:,:,x])
-            'filter'
+            "filter"
             src_tmp[:,:,x] = cv2.bilateralFilter(src_tmp[:,:,x],5,100,100)
-            # cv2.imshow("filter",src_tmp[:,:,x])
-            '畫輪廓'
+            "畫輪廓"
             contours, hierarchy = cv2.findContours(src_tmp[:,:,x],
                                                 cv2.RETR_EXTERNAL,
                                                 cv2.CHAIN_APPROX_SIMPLE)
-            '建立全黑的圖片畫輪廓'
+            "建立全黑的圖片畫輪廓"
             shape = (src_tmp[:,:,x].shape[0], src_tmp[:,:,x].shape[1], 1)
             black_image = numpy.zeros(shape, numpy.uint8)
             cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
-            # cv2.imshow("Contours",black_image)
-            
-            '用輪廓找質心'
+            "用輪廓找質心"
             centroid = []
             for c in contours:
                 if c.shape[0] > 4 and c.shape[0]<110:
@@ -660,36 +572,18 @@ class REGISTRATION():
                         Cy = (M["m10"]/M["m00"])
                         Cz = (M["m01"]/M["m00"])+int(imageHu.shape[0]/3)
                         centroid.append((Cy,Cz))
-                        # cv2.circle(black_image,(int(Cy),int(Cz-int(imageHu.shape[0]/3))),1,(256/2,0,0),-1)
-            # cv2.imshow("centroid",black_image)
-            'Hough Circles找半徑跟圓心'
+            "Hough Circles找半徑跟圓心"
             circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT,1, 25,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
 
             if circles is not None and centroid is not None:
-                # for i in circles[0, :]:
-                #     # print(i)
-                #     center = (int(i[0]), int(i[1]))
-                #     radius = int(i[2])
-                #     'center and radius is required to be an integer !!!'
-                #     # circle center
-                #     cv2.circle(black_image, center, 1, (200, 0, 0), -1)
-                #     # circle outline
-                #     cv2.circle(black_image, center, radius, (200, 0, 0), 1)
-                # cv2.imshow("HoughCircles",black_image)
-            
-                '交集'
-                'centroid = 這張圖有幾個質心'
-                'circles = 這張圖有幾個hough circle'
+                "交集"
+                "centroid = 這張圖有幾個質心"
+                "circles = 這張圖有幾個hough circle"
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-(j[1]+int(imageHu.shape[0]/3)))**2)
-                        # print("distance: ",distance)
-                        # print("Pr: ",j[2])
-                        # print("|Py|: ",abs(i[0]-j[0]))
-                        # print("|Pz|: ",abs(i[1]-(j[1]+int(imageHu.shape[0]/3))))
-                        # print("-----------------------")
                         if distance <= 2:
                             Py = i[0]
                             Pz = i[1]
@@ -717,18 +611,14 @@ class REGISTRATION():
         """
         dictionaryTmp = {}
         dictionary = {}
-        'pointMatrix 點跟點依序倆倆比較，符合條件的為同一組'
-        '條件: '
-        '兩點YZ距離不超過3mm'
-        'X軸距離不超過20+13mm'
-        # 要改 dz
+        "pointMatrix 點跟點依序倆倆比較，符合條件的為同一組"
+        "條件: "
+        "兩點YZ距離不超過3mm"
+        "X軸距離不超過20+13mm"
         for num1 in range(len(pointMatrix)-1):
             tmp=[]
             value = []
             for num2 in range(num1+1,len(pointMatrix)):
-                # if num1 == 44 and num2 == 79:
-                #     print("P1",pointMatrix[num1])
-                #     print("P2",pointMatrix[num2])
                 P1 = pointMatrix[num1]
                 P2 = pointMatrix[num2]
                 distance = math.sqrt(numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
@@ -739,14 +629,13 @@ class REGISTRATION():
             value.extend(tmp)
             dictionaryTmp.update({tuple(pointMatrix[num1]):numpy.array(value)})
 
-        '刪除重複的組別 & 組別太小的'
-        '符合以下條件都刪除: '
-        '組別裡元素個數(=X軸距離)大於10mm & key[i]與key[i+1]距離小於50mm'
-        '組別裡元素個數(=X軸距離)小於10mm'
+        "刪除重複的組別 & 組別太小的"
+        "符合以下條件都刪除: "
+        "組別裡元素個數(=X軸距離)大於10mm & key[i]與key[i+1]距離小於50mm"
+        "組別裡元素個數(=X軸距離)小於10mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for num1 in range(len(key_)-1):
-            # tmp2=[]
             key = key_[num1]
             values = dictionaryTmp.get(key)
             if values.shape[0] >= 10:
@@ -765,10 +654,10 @@ class REGISTRATION():
                 del dictionaryTmp[dic1]
             except:
                 pass
-        '同組裡面若有斷層(不連貫), 自動分開'
-        '條件: '
-        '前-後(不連貫距離)<-3'
-        '自動分開以後留下組別裡元素個數大於15mm的'
+        "同組裡面若有斷層(不連貫), 自動分開"
+        "條件: "
+        "前-後(不連貫距離)<-3"
+        "自動分開以後留下組別裡元素個數大於15mm的"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for dic_num in range(len(key_)):
@@ -780,17 +669,12 @@ class REGISTRATION():
                 if values[num,2]-values[num+1,2] < (-3):
                     tmp1 = values[:num,:]
                     tmp2 = values[num+1:,:]
-                    # delete_label.append(key)
                     if tmp1.shape[0]>=15:
                         dictionaryTmp.update({tuple(tmp1[0,:]):tmp1})
                     else:
                         delete_label.append(tuple(key))
                     if tmp2.shape[0]>=15:
                         dictionaryTmp.update({tuple(tmp2[0,:]):tmp2})
-                    # else:
-                        # delete_label.append(tuple(key))
-                    # dictionaryTmpIsChange = True
-                    
                     break
         for dic in delete_label:
             try:
@@ -798,24 +682,14 @@ class REGISTRATION():
             except:
                 pass
         
-        
-        '將暫時的結果及Pr有改變的output'
-        '小 -> 大 -> 小'
+        "將暫時的結果及Pr有改變的output"
+        "小 -> 大 -> 小"
         for dic in dictionaryTmp:
             key = dic
             values = dictionaryTmp.get(dic)
-            # if self.IsRadiusChange(values[:,3],pixel2Mm):
             if self.IsRadiusChange(values[:,3]):
-                # print("True")
                 dictionary.update({key:values})
-            # else:
-                # print("False")
-                # pass
         return dictionary
-
-
-
-    
     
     def IsRadiusChange(self, matrix):
         """檢查分類/分組完的圓心中, Pr 有沒有改變
@@ -829,10 +703,10 @@ class REGISTRATION():
 
         max = numpy.max(matrix)
         min = numpy.min(matrix)
-        '去除差異小於2mm的'
+        "去除差異小於2mm的"
         if max-min < 2:
             return False
-        '去除差異 -2 < tmp <= 0'
+        "去除差異 -2 < tmp <= 0"
         tmp1 = matrix[0] - matrix[int(len(matrix)/2)]
         if tmp1 <= 0 and tmp1 > -2:
             return False
@@ -844,51 +718,38 @@ class REGISTRATION():
         if numpy.max(counts) >= 9:
             return False
         
-        '組別裡元素個數大於15mm且小於25mm'
-        # if len(matrix) >= 15 and len(matrix)<=25:
+        "組別裡元素個數大於15mm且小於25mm"
         if len(matrix)<=25:
             same = 0    # same = -1 ?????
             small2big = 0
             for i in range(len(matrix)-1):
                 if matrix[i] < matrix[i+1] or matrix[i] < matrix[int(len(matrix)/2)]:
-                    '代表由小變到大'
+                    "代表由小變到大"
                     small2big+=1
                 if matrix[i]>matrix[i+1] and matrix[i] == max:
-                # if matrix[i] > matrix[i+1]:
                     num = i
-                    '代表由小變到大'
+                    "代表由小變到大"
                     break
                 if matrix[i] == matrix[i+1]:
                     same+=1
                     if same == len(matrix)-1:
-                        '代表全部一樣'
+                        "代表全部一樣"
                         return False
                 if i+1 == len(matrix)-1:
-                    '迴圈到底了，代表持續變大'
+                    "迴圈到底了，代表持續變大"
                     return False
             if num!= len(matrix)-1 and small2big != 0:
                 change = num
                 for i in range(num,len(matrix)):
-                #     if matrix[i]<matrix[i+1] and matrix[i] == max:
-                #         '由小變到大'
-                #         break
-                # '小->大->小，圓形'
-                # return True
-
-                    # if matrix[i] >= min and matrix[i-1] >= matrix[i]:
                     if matrix[i] >= min:
                         change+=1
                         if change == len(matrix):
+                            "小->大->小，圓形"
                             return True
-                    # else:
-                    #     return False
-
-
             if same > (len(matrix)/2):
-                '橢圓形'
+                "橢圓形"
                 return False
         return False
-
 
     def AveragePoint(self, dictionaryPoint, axis=[False, False, False]):
         """得出最後的四球影像坐標 (平均)
@@ -912,8 +773,6 @@ class REGISTRATION():
                 array = []
                 Px = value[int(value.shape[0]/2),0]
                 for tmp in value:
-                    # print(tmp[1])
-                    # print(tmp[2])
                     tmp_str1 = str(tmp[1])
                     tmp_str2 = str(tmp[2])
                     "去除.5及整數，留下看起來是質心候選的"
@@ -922,18 +781,13 @@ class REGISTRATION():
                             pass
                         else:
                             array.append([Px,tmp[1],tmp[2]])
-                            # print("只有一個是.5\n")
                     elif int(tmp[2]) != tmp[2] and len(tmp_str2)-(tmp_str2.find(".")+1) == 1 and tmp_str2[tmp_str2.find(".")+1] == "5":
                         if int(tmp[1]) != tmp[1] and len(tmp_str1)-(tmp_str1.find(".")+1) == 1 and tmp_str1[tmp_str1.find(".")+1] == "5":
                             pass
                         else:
                             array.append([Px,tmp[1],tmp[2]])
-                            # print("只有一個是.5\n")
-                    # elif int(tmp) == tmp:
-                    #     pass
                     else:
                         array.append([Px,tmp[1],tmp[2]])
-                        # print("不是整數也不是.5\n")
                 point.append(numpy.mean(array,0))
         elif axis==[True,True,False]:
             for key in dictionaryPoint:
@@ -941,8 +795,6 @@ class REGISTRATION():
                 array = []
                 Pz = value[int(value.shape[0]/2),2]
                 for tmp in value:
-                    # print(tmp[0])
-                    # print(tmp[1])
                     tmp_str0 = str(tmp[0])
                     tmp_str1 = str(tmp[1])
                     "去除.5及整數，留下看起來是質心候選的"
@@ -951,24 +803,16 @@ class REGISTRATION():
                             pass
                         else:
                             array.append([tmp[0],tmp[1],Pz])
-                            # print("只有一個是.5\n")
                     elif int(tmp[1]) != tmp[1] and len(tmp_str1)-(tmp_str1.find(".")+1) == 1 and tmp_str1[tmp_str1.find(".")+1] == "5":
                         if int(tmp[0]) != tmp[0] and len(tmp_str0)-(tmp_str0.find(".")+1) == 1 and tmp_str1[tmp_str0.find(".")+1] == "5":
                             pass
                         else:
                             array.append([tmp[0],tmp[1],Pz])
-                            # print("只有一個是.5\n")
-                    # elif int(tmp) == tmp:
-                    #     pass
                     else:
                         array.append([tmp[0],tmp[1],Pz])
-                        # print("不是整數也不是.5\n")
                 point.append(numpy.mean(array,0))
-        
         return point
 
-
-    
     def GetBall(self, imageHu, pixel2Mm):
         """rigistration?
            目前目標先找到圓心
@@ -999,17 +843,9 @@ class REGISTRATION():
                         point.append([P1[0],P1[1],P2[2]])
         else:
             print("get point error")
-        
-        
-        # print("done")
-        # return dictionaryPoint_xy, dictionaryPoint_yz
         return numpy.array(point)
     
-    # def GetDirection(self, point, pixel2Mm):
-    #     pass
-    
-    
-# 使用範例
+"使用範例"
 if __name__ == "__main__":
     path_dicom_only = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\S2010\\"
     path_dicom = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\"

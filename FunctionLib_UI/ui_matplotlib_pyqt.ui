@@ -1017,6 +1017,79 @@
        <string>L / R</string>
       </property>
      </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_5">
+      <property name="geometry">
+       <rect>
+        <x>1570</x>
+        <y>10</y>
+        <width>331</width>
+        <height>271</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="Button_Registration_H">
+           <property name="text">
+            <string>Registration</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_show_Registration_H">
+           <property name="text">
+            <string>Show difference</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_error_H">
+         <property name="text">
+          <string>Difference: 0 mm</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_SetPoint_H">
+         <property name="text">
+          <string>Set point</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_ShowPoint_H">
+         <property name="text">
+          <string>Show point</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_H">
+         <item>
+          <property name="text">
+           <string>Axial</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Sagittal</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Coronal</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
     <widget class="QWidget" name="tabWidget_Robot">
      <attribute name="title">
