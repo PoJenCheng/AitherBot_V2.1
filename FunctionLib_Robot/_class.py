@@ -73,8 +73,6 @@ class MotorControl():
         self.bLimitSwitch6 = 'GVL.LimitSwitch6'
         self.bDualAbsolute = 'GVL.bDualAbsolute'
 
-        self.test = 'ffff'
-
         try:
             self.plc = pyads.Connection('5.109.167.73.1.1', 851)
             # ser = serial.Serial(port='COM6', baudrate=9600, timeout=2)
@@ -271,6 +269,7 @@ class MotorSubFunction(MotorControl):
                 print("Surgical robot connect success.")
             except:
                 print("Fail to link to robot, system will re-try after 3 seconds.")
+                robotCheckStatus = True
                 sleep(3)
 
         # Motor Enable
