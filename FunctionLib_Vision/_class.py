@@ -867,5 +867,3 @@ if __name__ == "__main__":
     plt.imshow(g_imageHu2D_, cmap='gray')
     plt.title("slice number: " + str(sliceNum))
     plt.show()
-    
-    print("---")

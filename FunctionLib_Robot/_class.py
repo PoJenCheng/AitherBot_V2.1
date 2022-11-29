@@ -285,6 +285,7 @@ class MotorSubFunction(MotorControl):
                 self.SetZero()
                 print("Motor are enabled.")
             except:
+                motorEnableStatus = True
                 print("Robot control system connect fail.")
 
     def FLDC_ButtonDisable(self):
