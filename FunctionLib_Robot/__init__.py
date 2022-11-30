@@ -42,6 +42,6 @@ lowerHigh = -8.7
 global data
 data = ''
 
-baseShift_X = 10
-baseShift_Y = 20
-baseShift_Z = 30
+baseShift_X = 205
+baseShift_Y = 70
+baseShift_Z = 15.5
