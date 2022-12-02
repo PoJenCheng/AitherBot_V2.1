@@ -241,6 +241,26 @@ class REGISTRATION():
             down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
+        
+        R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
+               [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
+               [0, 0, 1]])
+
+        "算出轉後的單位向量"
+        new_vector = unit_new_vector
+        unit_new_vector = []
+        for vector in new_vector:
+            unit_new_vector.append(numpy.dot(R_z,vector))
+            
+        "計算選轉角度"
+        angle_radian = []
+        unit = numpy.eye(3, dtype = 'int')
+        for n in range(unit.shape[0]):
+            top = numpy.dot(unit_new_vector[n],unit[n])
+            down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
+            angle_radian.append(math.acos(top / down))
+        angle_radian = numpy.array(angle_radian)
+        
         "轉動矩陣"
         R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
                [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],

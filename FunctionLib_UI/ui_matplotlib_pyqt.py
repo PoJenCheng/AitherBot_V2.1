@@ -599,6 +599,7 @@ class Ui_MainWindow(object):
         self.Button_show_Registration_H.clicked.connect(MainWindow.ShowRegistrationDifference_H)
         self.Button_SetPoint_H.clicked.connect(MainWindow.SetPoint_H)
         self.Button_ShowPoint_H.clicked.connect(MainWindow.ShowPoint_H)
+        self.Button_Planning.clicked.connect(MainWindow.SetPlanningPath)
         self.SliceSelect_Coronal_L.valueChanged['int'].connect(self.label_3.setNum)
         self.SliceSelect_Axial_L.valueChanged['int'].connect(self.label_9.setNum)
         self.SliceSelect_Sagittal_L.valueChanged['int'].connect(self.label_7.setNum)
