@@ -1467,7 +1467,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>1674</x>
+<<<<<<< HEAD
      <y>258</y>
+=======
+     <y>230</y>
+>>>>>>> 548b89a... update QT
     </hint>
     <hint type="destinationlabel">
      <x>1953</x>
@@ -1579,7 +1583,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>1853</x>
+<<<<<<< HEAD
      <y>309</y>
+=======
+     <y>281</y>
+>>>>>>> 548b89a... update QT
     </hint>
     <hint type="destinationlabel">
      <x>2012</x>
@@ -1588,6 +1596,7 @@
    </hints>
   </connection>
   <connection>
+<<<<<<< HEAD
    <sender>SliceSelect_Coronal_L</sender>
    <signal>valueChanged(int)</signal>
    <receiver>label_3</receiver>
@@ -1696,6 +1705,20 @@
     <hint type="destinationlabel">
      <x>1979</x>
      <y>278</y>
+=======
+   <sender>Button_Planning_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPlanningPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1838</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1993</x>
+     <y>276</y>
+>>>>>>> 548b89a... update QT
     </hint>
    </hints>
   </connection>
@@ -1711,6 +1734,10 @@
   <slot>ShowRegistrationDifference_H()</slot>
   <slot>SetPoint_H()</slot>
   <slot>ShowPoint_H()</slot>
+<<<<<<< HEAD
   <slot>ShowPlanningPath()</slot>
+=======
+  <slot>SetPlanningPath()</slot>
+>>>>>>> 548b89a... update QT
  </slots>
 </ui>
