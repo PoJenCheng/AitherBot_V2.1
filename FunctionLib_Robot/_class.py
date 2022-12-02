@@ -269,7 +269,6 @@ class MotorSubFunction(MotorControl):
                 print("Surgical robot connect success.")
             except:
                 print("Fail to link to robot, system will re-try after 3 seconds.")
-                robotCheckStatus = True
                 sleep(3)
 
         # Motor Enable
@@ -461,7 +460,7 @@ class MotorSubFunction(MotorControl):
         self.ReSetMotor()
         self.SetZero()
 
-    def upper_robotMovingPoint(self, PointX, PointY):
+    def Upper_RobotMovingPoint(self, PointX, PointY):
         global upper_G_length
         global upper_G_angle
 
@@ -482,7 +481,7 @@ class MotorSubFunction(MotorControl):
 
         return diffLength, diffAngle
 
-    def lower_robotMovingPoint(self, PointX, PointY):
+    def Lower_RobotMovingPoint(self, PointX, PointY):
         global lower_G_length
         global lower_G_angle
 
@@ -520,20 +519,63 @@ class MotorSubFunction(MotorControl):
             target3 = 0
             target4 = 0
 
-    def P2P(self, XPoint1, YPoint1, ZPoint1, XPoint2, YPoint2, ZPoint2):
+    def CapturePoint(self):
+        entry_full = np.array([215, 80, 35.5])
+        target_full = np.array([215, 80, 5.5])
+        entry_halt = np.array([215, 80, 35.5])
+        target_halt = np.array([215, 80, 5.5])
+        pointTest = np.array(
+            [entry_full, target_full, entry_halt, target_halt])
+
+        "translate base from ball to robot"
+        calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
+        breathingFull_entry = pointTest[0]
+        breathingFull_target = pointTest[1]
+        breathingHalt_entry = pointTest[2]
+        breathingHalt_target = pointTest[3]
+
+        breathingFull_entry = breathingFull_entry - calibration
+        breathingFull_target = breathingFull_target - calibration
+        breathingHalt_entry = breathingHalt_entry - calibration
+        breathingHalt_target = breathingHalt_target - calibration
+
+        "取得吸飽與吐底entry與target的平均值"
+        entryPoint_X = (breathingFull_entry[0] + breathingHalt_entry[0])/2
+        entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
+        entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
+
+        targetPoint_X = (breathingFull_target[0] + breathingHalt_target[0])/2
+        targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
+        targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
+
+        entryPoint = np.array([entryPoint_X, entryPoint_Y, entryPoint_Z])
+        targetPoint = np.array([targetPoint_X, targetPoint_Y, targetPoint_Z])
+
+        return entryPoint, targetPoint
+
+    def P2P(self):
+        # 取得entry point 與 target point
+        try:
+            movingPoint = self.CapturePoint()
+            entryPoint = movingPoint[0]
+            targetPoint = movingPoint[1]
+            print(entryPoint[0])
+        except:
+            pass
+
         # obtain upper point
-        t = (upperHigh - ZPoint1)/(ZPoint2-ZPoint1)
-        upperPointX = XPoint1 + (XPoint2-XPoint1)*t
-        upperPointY = YPoint1 + (YPoint2-YPoint1)*t
+        t = (upperHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+        upperPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+        upperPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
 
         # obtain lower point
-        t = (lowerHigh - ZPoint1)/(ZPoint2-ZPoint1)
-        lowerPointX = XPoint1 + (XPoint2-XPoint1)*t
-        lowerPointY = YPoint1 + (YPoint2-YPoint1)*t
+        t = (lowerHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+        lowerPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+        lowerPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
 
         # 計算上層的旋轉與移動
-        upperMotion = self.upper_robotMovingPoint(upperPointX, upperPointY)
-        lowerMotion = self.lower_robotMovingPoint(lowerPointX, lowerPointY)
+        upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
+        lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
         # robot motion
         # rotation command

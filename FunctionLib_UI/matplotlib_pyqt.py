@@ -111,14 +111,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         g_homeStatus = False
         self.homeStatus = g_homeStatus
 
-        # robot motion position setting
-        self.XPoint1 = 10
-        self.YPoint1 = 10
-        self.ZPoint1 = 20
-        self.XPoint2 = 10
-        self.YPoint2 = 10
-        self.ZPoint2 = 40
-
     # def _init_widget(self):
     #     """initial matplot widget
     #     """
@@ -150,8 +142,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
     def RobotRun(self):
         if self.homeStatus is True:
-            MotorSubFunction.P2P(self, self.XPoint1, self.YPoint1, self.ZPoint1,
-                                 self.XPoint2, self.YPoint2, self.ZPoint2)
+            MotorSubFunction.P2P(self)
         else:
             print("Please execute home processing first.")
 

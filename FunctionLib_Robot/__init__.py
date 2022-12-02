@@ -1,21 +1,5 @@
 import numpy as np
 
-PTM_OutputPath = 'c://PTM/Output.txt'
-Target_path = "C://MTP/TargetPoint.txt"
-Entry_Path = "C://MTP/EntryPoint.txt"
-MTP_path = 'c://MTP/Command.txt'
-InterpolateMatrix = 'c://MTP/InterpolateMatrix.txt'
-Inform_path = 'c://PTM/inform.txt'
-jogControlPath = 'c://MTP/jogControl_Z.txt'
-jogPositionPath = 'c://PTM/jogPosition_XY.txt'
-SlideZ_Path = 'c://MTP/jogControl.txt'
-pointAB_Path = 'C://PTM/jogPosition_XY.txt'
-dynamicTrackingDisabled = 'c://MTP/dynamicTrackingDisabled.txt'
-SlideZ_Path = 'c://MTP/jogControl.txt'
-pointAB_Path = 'C://PTM/jogPosition_XY.txt'
-point_Path = 'C://MTP/point.txt'
-
-
 LinearMotorCountPerLoop = 360  # 8192 count per loop in encoder
 LinearGearRatio = 1  # screw pitch is 1
 RotationMotorCountPerLoop = 360
@@ -57,3 +41,7 @@ upperHigh = 16.3
 lowerHigh = -8.7
 global data
 data = ''
+
+baseShift_X = 205
+baseShift_Y = 70
+baseShift_Z = 15.5
