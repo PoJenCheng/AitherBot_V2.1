@@ -204,31 +204,33 @@ class DICOM():
         
 "跟對位有關"
 class REGISTRATION():
+    def __init__(self):
+        self.PlanningPath = []
+        return
+        
+    
     def TransformationMatrix(self, ballCenterMm):
-        """calculate Transformation Matrix
+        """算轉換矩陣
 
         Args:
-            ballCenterMm (_numpy.array_): registation ball center (in mm unit)
+            ballCenterMm (_numpy.array_): 已配對定位球中心點
 
         Returns:
-            R_matrix (_numpy.array_): 3*3 [x axis; y axis; z axis]
+            TransformationMatrix(_numpy.array_): numpy.dot(R_y,R_z) Transformation Matrix
         """
         "ball_center_mm(1,:);   原點"
-        "ball_center_mm(2,:);   Z 軸"
-        "ball_center_mm(3,:);   X 軸"        
-        ball_vector_x = ballCenterMm[2] - ballCenterMm[0]
-        ball_vector_z = ballCenterMm[1] - ballCenterMm[0]
+        "ball_center_mm(2,:);   x 軸"
+        "ball_center_mm(3,:);   y 軸"  
+        ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
+        ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
         "建立新座標(向量兩兩垂直)"
-        vectorY = numpy.array(numpy.cross(ball_vector_z, ball_vector_x))
-        vectorX = numpy.array(numpy.cross(vectorY, ball_vector_z))
-        vectorZ = numpy.array(ball_vector_z)
-        
+        vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
+        vectorX = numpy.array(ball_vector_x)
+        vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
         new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        
         "計算單位向量"
         unit_new_vector = []
         for vector in new_vector:
-            # print(self.GetNorm(vector))
             unit_new_vector.append(vector / self.GetNorm(vector))
         unit_new_vector = numpy.array(unit_new_vector)
         "計算選轉角度"
@@ -240,22 +242,45 @@ class REGISTRATION():
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
         "轉動矩陣"
-        R_x = numpy.array([[1, 0,                     0],
-               [0, math.cos(angle_radian[0]), -math.sin(angle_radian[0])],
-               [0, math.sin(angle_radian[0]), math.cos(angle_radian[0])]])
-        
-        R_y = numpy.array([[math.cos(angle_radian[1]), 0, math.sin(angle_radian[1])],
-               [0, 1, 0],
-               [-math.sin(angle_radian[1]), 0, math.cos(angle_radian[1])]])
-        
-        R_z = numpy.array([[math.cos(angle_radian[2]), -math.sin(angle_radian[2]), 0],
-               [math.sin(angle_radian[2]), math.cos(angle_radian[2]), 0],
+        R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
+               [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
                [0, 0, 1]])
-        tmp = numpy.dot(R_z,R_y)
-        R_matrix = numpy.dot(tmp,R_x)  # R(2->0)
-        # R_matrix_inverse = numpy.linalg.inv(R_matrix)  # R(2->0)^-1
+        "算出轉後的單位向量 + 建立新座標(向量兩兩垂直)"
+        new_vector = unit_new_vector
+        unit_new_vector = []
+        for vector in new_vector:
+            unit_new_vector.append(numpy.dot(R_z,vector))
+        "計算選轉角度"
+        angle_radian = []
+        unit = numpy.eye(3, dtype = 'int')
+        for n in range(unit.shape[0]):
+            top = numpy.dot(unit_new_vector[n],unit[n])
+            down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
+            angle_radian.append(math.acos(top / down))
+        angle_radian = numpy.array(angle_radian)
+        "轉動矩陣"
+        R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
+               [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
+               [0, 0, 1]])
+        "算出轉後的單位向量 + 建立新座標(向量兩兩垂直)"
+        new_vector = unit_new_vector
+        unit_new_vector = []
+        for vector in new_vector:
+            unit_new_vector.append(numpy.dot(R_z,vector))
+        "計算選轉角度"
+        angle_radian = []
+        unit = numpy.eye(3, dtype = 'int')
+        for n in range(unit.shape[0]):
+            top = numpy.dot(unit_new_vector[n],unit[n])
+            down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
+            angle_radian.append(math.acos(top / down))
+        angle_radian = numpy.array(angle_radian)
+        "轉動矩陣"
+        R_y = numpy.array([[math.cos(angle_radian[0]), 0, math.sin(angle_radian[0])],
+        [0, 1, 0],
+        [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
         
-        return R_matrix
+        return numpy.dot(R_y,R_z)
     
     def GetBallSection(self,candidateBall):
         """calculate Transformation Matrix
@@ -414,7 +439,6 @@ class REGISTRATION():
                             
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
         return resultCentroid_xy
-
   
     def SortPointXY(self, pointMatrix, pixel2Mm):
         """Sort Point Matrix for FindBall() result
@@ -720,7 +744,7 @@ class REGISTRATION():
         
         "組別裡元素個數大於15mm且小於25mm"
         if len(matrix)<=25:
-            same = 0    # same = -1 ?????
+            same = 0
             small2big = 0
             for i in range(len(matrix)-1):
                 if matrix[i] < matrix[i+1] or matrix[i] < matrix[int(len(matrix)/2)]:
@@ -814,8 +838,7 @@ class REGISTRATION():
         return point
 
     def GetBall(self, imageHu, pixel2Mm):
-        """rigistration?
-           目前目標先找到圓心
+        """目前目標先找到圓心
            找到圓心之後要換成轉換矩陣, 再之後得出robot座標下的目標點
 
         Args:
@@ -845,6 +868,21 @@ class REGISTRATION():
             print("get point error")
         return numpy.array(point)
     
+    def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
+                        originPoint_L, selectedPoint_L, regMatrix_L):
+        PlanningPath = []
+        
+        for p in selectedPoint_H:
+            PlanningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
+        for p in selectedPoint_L:
+            PlanningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+        
+        self.PlanningPath = PlanningPath
+        
+        return PlanningPath
+        
+            
+    
 "使用範例"
 if __name__ == "__main__":
     path_dicom_only = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\S2010\\"
@@ -867,5 +905,3 @@ if __name__ == "__main__":
     plt.imshow(g_imageHu2D_, cmap='gray')
     plt.title("slice number: " + str(sliceNum))
     plt.show()
-    
-    print("---")
