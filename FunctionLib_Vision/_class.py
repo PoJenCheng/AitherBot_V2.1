@@ -205,7 +205,9 @@ class DICOM():
 "跟對位有關"
 class REGISTRATION():
     def __init__(self):
-        pass
+        self.PlanningPath = []
+        return
+        
     
     def TransformationMatrix(self, ballCenterMm):
         "ball_center_mm(1,:);   原點"
@@ -260,63 +262,6 @@ class REGISTRATION():
         [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
         
         return numpy.dot(R_y,R_z)
-        
-        
-        
-    
-    # def TransformationMatrix(self, ballCenterMm):
-    #     """calculate Transformation Matrix
-
-    #     Args:
-    #         ballCenterMm (_numpy.array_): registation ball center (in mm unit)
-
-    #     Returns:
-    #         R_matrix (_numpy.array_): 3*3 [x axis; y axis; z axis]
-    #     """
-    #     "ball_center_mm(1,:);   原點"
-    #     "ball_center_mm(2,:);   Z 軸"
-    #     "ball_center_mm(3,:);   X 軸"
-    #     ball_vector_x = ballCenterMm[2] - ballCenterMm[0]
-    #     ball_vector_z = ballCenterMm[1] - ballCenterMm[0]
-
-    #     "建立新座標(向量兩兩垂直)"
-    #     vectorY = numpy.array(numpy.cross(ball_vector_z, ball_vector_x))
-    #     vectorX = numpy.array(numpy.cross(vectorY, ball_vector_z))
-    #     vectorZ = numpy.array(ball_vector_z)
-        
-    #     new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        
-    #     "計算單位向量"
-    #     unit_new_vector = []
-    #     for vector in new_vector:
-    #         # print(self.GetNorm(vector))
-    #         unit_new_vector.append(vector / self.GetNorm(vector))
-    #     unit_new_vector = numpy.array(unit_new_vector)
-    #     "計算選轉角度"
-    #     angle_radian = []
-    #     unit = numpy.eye(3, dtype = 'int')
-    #     for n in range(unit.shape[0]):
-    #         top = numpy.dot(unit_new_vector[n],unit[n])
-    #         down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
-    #         angle_radian.append(math.acos(top / down))
-    #     angle_radian = numpy.array(angle_radian)
-    #     "轉動矩陣"
-    #     R_x = numpy.array([[1, 0, 0],
-    #            [0, math.cos(angle_radian[0]), -math.sin(angle_radian[0])],
-    #            [0, math.sin(angle_radian[0]), math.cos(angle_radian[0])]])
-        
-    #     R_y = numpy.array([[math.cos(angle_radian[1]), 0, math.sin(angle_radian[1])],
-    #            [0, 1, 0],
-    #            [-math.sin(angle_radian[1]), 0, math.cos(angle_radian[1])]])
-        
-    #     R_z = numpy.array([[math.cos(angle_radian[2]), -math.sin(angle_radian[2]), 0],
-    #            [math.sin(angle_radian[2]), math.cos(angle_radian[2]), 0],
-    #            [0, 0, 1]])
-    #     tmp = numpy.dot(R_z,R_y)
-    #     R_matrix = numpy.dot(tmp,R_x)  # R(2->0)
-    #     # R_matrix_inverse = numpy.linalg.inv(R_matrix)  # R(2->0)^-1
-        
-    #     return R_matrix
     
     def GetBallSection(self,candidateBall):
         """calculate Transformation Matrix
@@ -475,7 +420,6 @@ class REGISTRATION():
                             
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
         return resultCentroid_xy
-
   
     def SortPointXY(self, pointMatrix, pixel2Mm):
         """Sort Point Matrix for FindBall() result
@@ -904,6 +848,21 @@ class REGISTRATION():
         else:
             print("get point error")
         return numpy.array(point)
+    
+    def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
+                        originPoint_L, selectedPoint_L, regMatrix_L):
+        PlanningPath = []
+        
+        for p in selectedPoint_H:
+            PlanningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
+        for p in selectedPoint_L:
+            PlanningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+        
+        self.PlanningPath = PlanningPath
+        
+        return PlanningPath
+        
+            
     
 "使用範例"
 if __name__ == "__main__":

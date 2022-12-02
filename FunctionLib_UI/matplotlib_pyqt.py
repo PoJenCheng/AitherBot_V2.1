@@ -821,25 +821,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             print('show points error')
             return
     
-    def SetPlanningPath(self):
-        PlanningPath = []
+    def ShowPlanningPath(self):
         try:
-            originPoint_H = self.dcmHigh.get("regBall")[0]
-            for p in self.dcmHigh.get("selectedPoint"):
-                PlanningPath.append(numpy.dot(self.dcmHigh.get("regMatrix"),(p-originPoint_H)))
-                # shift = (p-originPoint_H)
-                # print("shift high: ", shift)
-                # print(self.dcmHigh.get("regMatrix"))
-                # print((numpy.dot(self.dcmHigh.get("regMatrix"),(p-originPoint_H))))
-            
-            originPoint_L = self.dcmLow.get("regBall")[0]
-            for p in self.dcmLow.get("selectedPoint"):
-                PlanningPath.append(numpy.dot(self.dcmLow.get("regMatrix"),(p-originPoint_L)))
-                # shift = (p-originPoint_L)
-                # print("shift low: ", shift)
-                # print((numpy.dot(self.dcmLow.get("regMatrix"),(p-originPoint_L))))
-            
-            self.PlanningPath = numpy.array(PlanningPath)
+            self.PlanningPath = self.regFn.GetPlanningPath(self.dcmHigh.get("regBall")[0], self.dcmHigh.get("selectedPoint"), self.dcmHigh.get("regMatrix"), 
+                                   self.dcmLow.get("regBall")[0], self.dcmLow.get("selectedPoint"), self.dcmLow.get("regMatrix"))
             
             print("PlanningPath: (in mm unit)")
             for p in self.PlanningPath:
@@ -850,6 +835,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             print("fail to Set Planning Path / SetPlanningPath error")
             QMessageBox.critical(self, "error", "fail to Set Planning Path")
         return 
+            
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def __init__(self, dcm):

@@ -1,79 +1,132 @@
-2022-12-01 16:37:00,824 - UI - INFO - initial UI
-2022-12-01 16:37:00,824 - UI - DEBUG - initial main UI
-2022-12-01 16:43:00,551 - UI - INFO - Import Dicom inhale/_Low
-2022-12-01 16:43:08,547 - UI - INFO - Load inhale/Low Dicom: C:/Users/tinac/OneDrive/Tina on OneDrive/brain navi/LCGS/CT/20220615/S43420/
-2022-12-01 16:43:10,979 - UI - DEBUG - Show Low Dicom Axial
-2022-12-01 16:43:11,220 - UI - DEBUG - Show Low Dicom Sagittal
-2022-12-01 16:43:11,452 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:43:11,647 - UI - DEBUG - Show Low Dicom Axial
-2022-12-01 16:43:11,853 - UI - DEBUG - Show Low Dicom Sagittal
-2022-12-01 16:43:12,056 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:43:12,056 - UI - DEBUG - Set Low Dicom Window Width
-2022-12-01 16:43:12,188 - UI - DEBUG - Show Low Dicom Axial
-2022-12-01 16:43:12,393 - UI - DEBUG - Show Low Dicom Sagittal
-2022-12-01 16:43:12,584 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:43:12,585 - UI - DEBUG - Set Low Dicom Window Level
-2022-12-01 16:43:12,585 - UI - DEBUG - Loaded inhale/Low Dicom
-2022-12-01 16:43:12,714 - UI - DEBUG - Show Low Dicom Axial
-2022-12-01 16:43:12,922 - UI - DEBUG - Show Low Dicom Sagittal
-2022-12-01 16:43:13,113 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:51:52,837 - UI - INFO - get candidate ball:
-2022-12-01 16:51:52,838 - UI - INFO - [ 37.84946746 110.42346119 305.21759078]
-2022-12-01 16:51:52,838 - UI - INFO - [177.77344197 108.54947219 305.17101808]
-2022-12-01 16:51:52,839 - UI - INFO - [ 37.51945869 109.76505737 454.92136364]
-2022-12-01 16:51:52,839 - UI - INFO - [177.27884359 107.54300279 454.88662355]
-2022-12-01 16:52:03,149 - UI - INFO - get selected balls
-2022-12-01 16:52:03,149 - UI - INFO - get registration balls:
-2022-12-01 16:52:03,149 - UI - INFO - [ 177.27884359  107.54300279 -454.88662355]
-2022-12-01 16:52:03,150 - UI - INFO - [ 177.77344197  108.54947219 -305.17101808]
-2022-12-01 16:52:03,150 - UI - INFO - [  37.51945869  109.76505737 -454.92136364]
-2022-12-01 16:52:03,150 - UI - INFO - registration error (min, max, mean): [10.22294751875944, 65.17754133676473, 43.621176244028526]
-2022-12-01 16:52:03,151 - UI - INFO - get registration matrix: 
-2022-12-01 16:52:03,151 - UI - INFO - [1.07846188e-04 6.77323548e-03 9.99977056e-01]
-2022-12-01 16:52:03,152 - UI - INFO - [-0.99987326  0.01592039  0.        ]
-2022-12-01 16:52:03,152 - UI - INFO - [-0.01592002 -0.99985032  0.00677409]
-2022-12-01 16:52:07,250 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:07,550 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:07,902 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:08,296 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:08,895 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:10,528 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:10,990 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:11,253 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:11,485 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:11,686 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:11,941 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:13,302 - UI - DEBUG - Show Low Dicom Coronal
-2022-12-01 16:52:30,064 - UI - INFO - Import Dicom inhale/_Low
-2022-12-01 16:52:32,751 - UI - INFO - Import Dicom exhale/_High
-2022-12-01 16:52:37,865 - UI - INFO - Load exhale/High Dicom: C:/Users/tinac/OneDrive/Tina on OneDrive/brain navi/LCGS/CT/20220615/S43420/
-2022-12-01 16:52:40,183 - UI - DEBUG - Show High Dicom Axial
-2022-12-01 16:52:40,415 - UI - DEBUG - Show High Dicom Sagittal
-2022-12-01 16:52:40,643 - UI - DEBUG - Show High Dicom Coronal
-2022-12-01 16:52:40,853 - UI - DEBUG - Show High Dicom Axial
-2022-12-01 16:52:41,060 - UI - DEBUG - Show High Dicom Sagittal
-2022-12-01 16:52:41,247 - UI - DEBUG - Show High Dicom Coronal
-2022-12-01 16:52:41,247 - UI - DEBUG - Set High Dicom Window Width
-2022-12-01 16:52:41,375 - UI - DEBUG - Show High Dicom Axial
-2022-12-01 16:52:41,579 - UI - DEBUG - Show High Dicom Sagittal
-2022-12-01 16:52:41,767 - UI - DEBUG - Show High Dicom Coronal
-2022-12-01 16:52:41,768 - UI - DEBUG - Set High Dicom Window Level
-2022-12-01 16:52:41,768 - UI - DEBUG - Loaded exhale/High Dicom
-2022-12-01 16:52:41,895 - UI - DEBUG - Show High Dicom Axial
-2022-12-01 16:52:42,114 - UI - DEBUG - Show High Dicom Sagittal
-2022-12-01 16:52:42,299 - UI - DEBUG - Show High Dicom Coronal
-2022-12-01 17:14:29,330 - UI - INFO - get candidate ball:
-2022-12-01 17:14:29,330 - UI - INFO - [ 37.84946746 110.42346119 305.21759078]
-2022-12-01 17:14:29,331 - UI - INFO - [177.77344197 108.54947219 305.17101808]
-2022-12-01 17:14:29,331 - UI - INFO - [ 37.51945869 109.76505737 454.92136364]
-2022-12-01 17:14:29,331 - UI - INFO - [177.27884359 107.54300279 454.88662355]
-2022-12-01 17:14:37,627 - UI - INFO - get selected balls
-2022-12-01 17:14:37,628 - UI - INFO - get registration balls:
-2022-12-01 17:14:37,628 - UI - INFO - [ 177.27884359  107.54300279 -454.88662355]
-2022-12-01 17:14:37,628 - UI - INFO - [ 177.77344197  108.54947219 -305.17101808]
-2022-12-01 17:14:37,628 - UI - INFO - [  37.51945869  109.76505737 -454.92136364]
-2022-12-01 17:14:37,629 - UI - INFO - registration error (min, max, mean): [10.22294751875944, 65.17754133676473, 43.621176244028526]
-2022-12-01 17:14:37,629 - UI - INFO - get registration matrix: 
-2022-12-01 17:14:37,629 - UI - INFO - [1.07846188e-04 6.77323548e-03 9.99977056e-01]
-2022-12-01 17:14:37,629 - UI - INFO - [-0.99987326  0.01592039  0.        ]
-2022-12-01 17:14:37,630 - UI - INFO - [-0.01592002 -0.99985032  0.00677409]
+2022-12-02 10:24:18,585 - UI - INFO - initial UI
+2022-12-02 10:24:18,586 - UI - DEBUG - initial main UI
+2022-12-02 10:24:46,575 - UI - INFO - Import Dicom inhale/_Low
+2022-12-02 10:24:58,219 - UI - INFO - Load inhale/Low Dicom: C:/Users/tinac/OneDrive/Tina on OneDrive/brain navi/LCGS/CT/20220615/S43480/
+2022-12-02 10:25:00,522 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 10:25:00,767 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 10:25:00,991 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:01,186 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 10:25:01,391 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 10:25:01,582 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:01,582 - UI - DEBUG - Set Low Dicom Window Width
+2022-12-02 10:25:01,712 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 10:25:01,921 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 10:25:02,112 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:02,113 - UI - DEBUG - Set Low Dicom Window Level
+2022-12-02 10:25:02,113 - UI - DEBUG - Loaded inhale/Low Dicom
+2022-12-02 10:25:02,240 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 10:25:02,443 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 10:25:02,633 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:08,966 - UI - INFO - get candidate ball:
+2022-12-02 10:25:08,966 - UI - INFO - [ 34.07695642  74.96734134 324.33094422]
+2022-12-02 10:25:08,967 - UI - INFO - [173.96952445  72.87602136 324.05954675]
+2022-12-02 10:25:08,967 - UI - INFO - [ 33.85626457  74.29914459 474.03226117]
+2022-12-02 10:25:08,967 - UI - INFO - [173.89659049  72.119988   473.71374398]
+2022-12-02 10:25:18,700 - UI - INFO - get selected balls
+2022-12-02 10:25:18,700 - UI - INFO - get registration balls:
+2022-12-02 10:25:18,700 - UI - INFO - [ 173.89659049   72.119988   -473.71374398]
+2022-12-02 10:25:18,700 - UI - INFO - [ 173.96952445   72.87602136 -324.05954675]
+2022-12-02 10:25:18,700 - UI - INFO - [  33.85626457   74.29914459 -474.03226117]
+2022-12-02 10:25:18,704 - UI - INFO - registration error (min, max, mean): [9.942358073097665, 65.2451362290879, 43.57140496913484]
+2022-12-02 10:25:18,707 - UI - INFO - get registration matrix: 
+2022-12-02 10:25:18,707 - UI - INFO - [7.87783989e-05 5.05816685e-03 9.99987204e-01]
+2022-12-02 10:25:18,708 - UI - INFO - [-0.99987874  0.01557261  0.        ]
+2022-12-02 10:25:18,708 - UI - INFO - [-0.01557241 -0.99986595  0.00505878]
+2022-12-02 10:25:24,985 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:25,178 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:25,368 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:25,559 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:26,439 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:26,629 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:26,817 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:27,415 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:27,605 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:27,795 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:27,984 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:28,352 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:28,543 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:29,329 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:29,517 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:29,895 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:30,087 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:30,277 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:30,468 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:30,660 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:30,850 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:31,144 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:31,335 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:31,526 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:31,824 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:32,016 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:32,377 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:32,752 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:32,944 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:33,134 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:33,431 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:33,619 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:35,870 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:36,064 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:36,254 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:36,470 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:37,294 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:37,483 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:39,336 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 10:25:54,776 - UI - INFO - reset selected point (Low)
+2022-12-02 10:26:06,375 - UI - INFO - Import Dicom exhale/_High
+2022-12-02 10:26:10,120 - UI - INFO - Load exhale/High Dicom: C:/Users/tinac/OneDrive/Tina on OneDrive/brain navi/LCGS/CT/20220615/S43480/
+2022-12-02 10:26:12,336 - UI - DEBUG - Show High Dicom Axial
+2022-12-02 10:26:12,592 - UI - DEBUG - Show High Dicom Sagittal
+2022-12-02 10:26:12,826 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:26:13,020 - UI - DEBUG - Show High Dicom Axial
+2022-12-02 10:26:13,229 - UI - DEBUG - Show High Dicom Sagittal
+2022-12-02 10:26:13,430 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:26:13,430 - UI - DEBUG - Set High Dicom Window Width
+2022-12-02 10:26:13,559 - UI - DEBUG - Show High Dicom Axial
+2022-12-02 10:26:13,765 - UI - DEBUG - Show High Dicom Sagittal
+2022-12-02 10:26:13,952 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:26:13,952 - UI - DEBUG - Set High Dicom Window Level
+2022-12-02 10:26:13,952 - UI - DEBUG - Loaded exhale/High Dicom
+2022-12-02 10:26:14,081 - UI - DEBUG - Show High Dicom Axial
+2022-12-02 10:26:14,290 - UI - DEBUG - Show High Dicom Sagittal
+2022-12-02 10:26:14,509 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:26:41,084 - UI - INFO - get candidate ball:
+2022-12-02 10:26:41,084 - UI - INFO - [ 34.07695642  74.96734134 324.33094422]
+2022-12-02 10:26:41,084 - UI - INFO - [173.96952445  72.87602136 324.05954675]
+2022-12-02 10:26:41,085 - UI - INFO - [ 33.85626457  74.29914459 474.03226117]
+2022-12-02 10:26:41,085 - UI - INFO - [173.89659049  72.119988   473.71374398]
+2022-12-02 10:26:51,323 - UI - INFO - get selected balls
+2022-12-02 10:26:51,323 - UI - INFO - get registration balls:
+2022-12-02 10:26:51,323 - UI - INFO - [ 173.89659049   72.119988   -473.71374398]
+2022-12-02 10:26:51,323 - UI - INFO - [ 173.96952445   72.87602136 -324.05954675]
+2022-12-02 10:26:51,324 - UI - INFO - [  33.85626457   74.29914459 -474.03226117]
+2022-12-02 10:26:51,324 - UI - INFO - registration error (min, max, mean): [9.942358073097665, 65.2451362290879, 43.57140496913484]
+2022-12-02 10:26:51,324 - UI - INFO - get registration matrix: 
+2022-12-02 10:26:51,325 - UI - INFO - [7.87783989e-05 5.05816685e-03 9.99987204e-01]
+2022-12-02 10:26:51,325 - UI - INFO - [-0.99987874  0.01557261  0.        ]
+2022-12-02 10:26:51,325 - UI - INFO - [-0.01557241 -0.99986595  0.00505878]
+2022-12-02 10:26:54,915 - UI - WARNING - show points error
+2022-12-02 10:27:00,123 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:00,313 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:00,503 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:01,047 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:01,236 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:01,600 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:01,792 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:01,985 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:05,136 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:05,329 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:05,521 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:05,711 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:06,146 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:06,338 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:06,554 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:06,745 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:07,025 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:07,218 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:08,644 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:08,835 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:09,027 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:09,219 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:09,503 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:09,697 - UI - DEBUG - Show High Dicom Coronal
+2022-12-02 10:27:10,070 - UI - DEBUG - Show High Dicom Coronal
