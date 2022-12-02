@@ -1467,7 +1467,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1674</x>
-     <y>230</y>
+     <y>258</y>
     </hint>
     <hint type="destinationlabel">
      <x>1953</x>
@@ -1579,27 +1579,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>1853</x>
-     <y>281</y>
+     <y>309</y>
     </hint>
     <hint type="destinationlabel">
      <x>2012</x>
      <y>286</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_Planning</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>SetPlanningPath()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1838</x>
-     <y>281</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1993</x>
-     <y>276</y>
     </hint>
    </hints>
   </connection>
@@ -1699,6 +1683,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Button_Planning</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPlanningPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1883</x>
+     <y>282</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1979</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>SetRegistration_L()</slot>
@@ -1711,6 +1711,6 @@
   <slot>ShowRegistrationDifference_H()</slot>
   <slot>SetPoint_H()</slot>
   <slot>ShowPoint_H()</slot>
-  <slot>SetPlanningPath()</slot>
+  <slot>ShowPlanningPath()</slot>
  </slots>
 </ui>
