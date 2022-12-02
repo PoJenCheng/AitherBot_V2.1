@@ -1,2 +1,62 @@
-2022-12-02 14:40:42,061 - UI - INFO - initial UI
-2022-12-02 14:40:42,065 - UI - DEBUG - initial main UI
+2022-12-02 14:53:16,263 - UI - INFO - initial UI
+2022-12-02 14:53:16,268 - UI - DEBUG - initial main UI
+2022-12-02 14:53:41,903 - UI - INFO - Import Dicom inhale/_Low
+2022-12-02 14:54:13,440 - UI - INFO - Load inhale/Low Dicom: D:/Lung Cancer Ablation/1st 產品開發/S2010/
+2022-12-02 14:55:15,664 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 14:55:16,410 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 14:55:16,786 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:55:17,094 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 14:55:17,433 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 14:55:17,755 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:55:17,756 - UI - DEBUG - Set Low Dicom Window Width
+2022-12-02 14:55:17,969 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 14:55:18,307 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 14:55:18,640 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:55:18,641 - UI - DEBUG - Set Low Dicom Window Level
+2022-12-02 14:55:18,641 - UI - DEBUG - Loaded inhale/Low Dicom
+2022-12-02 14:55:18,856 - UI - DEBUG - Show Low Dicom Axial
+2022-12-02 14:55:19,229 - UI - DEBUG - Show Low Dicom Sagittal
+2022-12-02 14:55:19,567 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:55:39,374 - UI - INFO - get candidate ball:
+2022-12-02 14:55:39,381 - UI - INFO - [ 39.2326515   79.69522682 345.23365694]
+2022-12-02 14:55:39,393 - UI - INFO - [179.07444575  77.83056076 347.10288425]
+2022-12-02 14:55:39,394 - UI - INFO - [ 36.76881556  80.23388123 494.97371972]
+2022-12-02 14:55:39,394 - UI - INFO - [176.63176656  78.10218076 496.75256146]
+2022-12-02 14:56:12,372 - UI - INFO - get selected balls
+2022-12-02 14:56:12,374 - UI - INFO - get registration balls:
+2022-12-02 14:56:12,374 - UI - INFO - [ 176.63176656   78.10218076 -496.75256146]
+2022-12-02 14:56:12,375 - UI - INFO - [ 179.07444575   77.83056076 -347.10288425]
+2022-12-02 14:56:12,375 - UI - INFO - [  36.76881556   80.23388123 -494.97371972]
+2022-12-02 14:56:12,380 - UI - INFO - registration error (min, max, mean): [10.109494654039054, 65.23755094243703, 43.62001101212999]
+2022-12-02 14:56:12,399 - UI - INFO - get registration matrix: 
+2022-12-02 14:56:12,399 - UI - INFO - [-1.83273736e-03 -2.99623334e-05  9.99998320e-01]
+2022-12-02 14:56:12,401 - UI - INFO - [-0.01634622  0.99986639  0.        ]
+2022-12-02 14:56:12,401 - UI - INFO - [-0.99986471 -0.01634619 -0.00183298]
+2022-12-02 14:56:23,781 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:24,229 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:24,566 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:25,015 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:25,401 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:25,808 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:26,181 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:26,493 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:26,947 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:27,364 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:27,802 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:29,840 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:30,212 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:30,653 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:31,031 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:31,467 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:31,858 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:32,252 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:32,616 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:32,982 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:33,405 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:34,122 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:34,448 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:34,782 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:56:35,124 - UI - DEBUG - Show Low Dicom Coronal
+2022-12-02 14:57:22,003 - UI - INFO - reset selected point (Low)
+2022-12-02 14:58:18,954 - UI - INFO - Import Dicom exhale/_High
+2022-12-02 14:58:36,912 - UI - INFO - Load exhale/High Dicom: D:/Lung Cancer Ablation/1st 產品開發/S2010/

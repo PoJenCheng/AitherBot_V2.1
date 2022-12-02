@@ -2,6 +2,7 @@ import pyads
 import math
 from time import sleep
 from FunctionLib_Robot.__init__ import *
+from FunctionLib_Vision._class import REGISTRATION
 from ._globalVar import *
 
 upper_G_length = 0
@@ -10,7 +11,7 @@ lower_G_length = 0
 lower_G_angle = 0
 
 
-class MotorControl():
+class MOTORCONTROL():
     def __init__(self, motorAxis):
         self.motorAxis = motorAxis
         self.bServoEnableLabel = 'GVL.bServoEnable_' + str(self.motorAxis)
@@ -248,16 +249,16 @@ class MotorControl():
             moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
 
 
-class MotorSubFunction(MotorControl):
+class MotorSubFunction(MOTORCONTROL, REGISTRATION):
     def __init__(self):
         robotCheckStatus = False
         while robotCheckStatus is False:
             try:
                 # Setting Motor ID
-                self.FLDC_Up = MotorControl(1)
-                self.BLDC_Up = MotorControl(2)
-                self.FLDC_Down = MotorControl(3)
-                self.BLDC_Down = MotorControl(4)
+                self.FLDC_Up = MOTORCONTROL(1)
+                self.BLDC_Up = MOTORCONTROL(2)
+                self.FLDC_Down = MOTORCONTROL(3)
+                self.BLDC_Down = MOTORCONTROL(4)
 
                 # Motor Initial
                 self.FLDC_Up.MotorInitial()
@@ -520,12 +521,13 @@ class MotorSubFunction(MotorControl):
             target4 = 0
 
     def CapturePoint(self):
-        entry_full = np.array([215, 80, 35.5])
-        target_full = np.array([215, 80, 5.5])
-        entry_halt = np.array([215, 80, 35.5])
-        target_halt = np.array([215, 80, 5.5])
-        pointTest = np.array(
-            [entry_full, target_full, entry_halt, target_halt])
+        # entry_full = np.array([215, 80, 35.5])
+        # target_full = np.array([215, 80, 5.5])
+        # entry_halt = np.array([215, 80, 35.5])
+        # target_halt = np.array([215, 80, 5.5])
+        # pointTest = np.array(
+        #     [entry_full, target_full, entry_halt, target_halt])
+        pointTest = self.PlanningPath
 
         "translate base from ball to robot"
         calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
