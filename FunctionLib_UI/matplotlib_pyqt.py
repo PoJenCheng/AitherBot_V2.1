@@ -19,7 +19,7 @@ import FunctionLib_Vision._class
 from FunctionLib_Robot._globalVar import *
 
 
-class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MotorSubFunction):
+class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION):
     def __init__(self):
         """initial main UI
         """
@@ -100,19 +100,19 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('initial main UI')
 
         "機器人控Initial"
-        MotorSubFunction.__init__(self)
+        MOTORSUBFUNCTION.__init__(self)
         global g_homeStatus
         g_homeStatus = False
         self.homeStatus = g_homeStatus
 
     def HomeProcessing(self):
-        MotorSubFunction.HomeProcessing(self)
+        MOTORSUBFUNCTION.HomeProcessing(self)
         print("Home processing is done!")
         self.homeStatus = True
 
     def RobotRun(self):
         if self.homeStatus is True:
-            MotorSubFunction.P2P(self)
+            MOTORSUBFUNCTION.P2P(self)
         else:
             print("Please execute home processing first.")
 

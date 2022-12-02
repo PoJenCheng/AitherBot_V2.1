@@ -249,7 +249,7 @@ class MOTORCONTROL():
             moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
 
 
-class MotorSubFunction(MOTORCONTROL, REGISTRATION):
+class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
     def __init__(self):
         robotCheckStatus = False
         while robotCheckStatus is False:
