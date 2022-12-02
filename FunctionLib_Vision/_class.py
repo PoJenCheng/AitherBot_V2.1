@@ -210,6 +210,14 @@ class REGISTRATION():
         
     
     def TransformationMatrix(self, ballCenterMm):
+        """算轉換矩陣
+
+        Args:
+            ballCenterMm (_numpy.array_): 已配對定位球中心點
+
+        Returns:
+            TransformationMatrix(_numpy.array_): numpy.dot(R_y,R_z) Transformation Matrix
+        """
         "ball_center_mm(1,:);   原點"
         "ball_center_mm(2,:);   x 軸"
         "ball_center_mm(3,:);   y 軸"  
@@ -219,13 +227,10 @@ class REGISTRATION():
         vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
         vectorX = numpy.array(ball_vector_x)
         vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
-        
         new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        
         "計算單位向量"
         unit_new_vector = []
         for vector in new_vector:
-            # print(self.GetNorm(vector))
             unit_new_vector.append(vector / self.GetNorm(vector))
         unit_new_vector = numpy.array(unit_new_vector)
         "計算選轉角度"
@@ -236,17 +241,15 @@ class REGISTRATION():
             down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
-        
+        "轉動矩陣"
         R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
                [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
                [0, 0, 1]])
-
-        "算出轉後的單位向量"
+        "算出轉後的單位向量 + 建立新座標(向量兩兩垂直)"
         new_vector = unit_new_vector
         unit_new_vector = []
         for vector in new_vector:
             unit_new_vector.append(numpy.dot(R_z,vector))
-            
         "計算選轉角度"
         angle_radian = []
         unit = numpy.eye(3, dtype = 'int')
@@ -255,7 +258,6 @@ class REGISTRATION():
             down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
-        
         "轉動矩陣"
         R_y = numpy.array([[math.cos(angle_radian[0]), 0, math.sin(angle_radian[0])],
         [0, 1, 0],
@@ -725,7 +727,7 @@ class REGISTRATION():
         
         "組別裡元素個數大於15mm且小於25mm"
         if len(matrix)<=25:
-            same = 0    # same = -1 ?????
+            same = 0
             small2big = 0
             for i in range(len(matrix)-1):
                 if matrix[i] < matrix[i+1] or matrix[i] < matrix[int(len(matrix)/2)]:

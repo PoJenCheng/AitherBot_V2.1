@@ -3,9 +3,6 @@ from turtle import update
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from matplotlib import image
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
@@ -143,7 +140,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         handler.setFormatter(formatter)
 
         self.logUI.addHandler(handler)
-        # self.log_INFO.addHandler(handler)
 
     def _init_ui(self):
         "DICOM planning UI Disable"
@@ -285,21 +281,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.label_Coronal_L.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
         
-        # self.matplotAxial_L.axis.imshow(imageHu2DAxial_, cmap='gray')
-        # self.matplotAxial_L.canvas.draw()
-        
-        # self.matplotSagittal_L.axis.imshow(imageHu2DSagittal_, cmap='gray')
-        # self.matplotSagittal_L.canvas.draw()
-        
-        # self.matplotCoronal_L.axis.imshow(imageHu2DCoronal_, cmap='gray')
-        # self.matplotCoronal_L.canvas.draw()
-        
-        
-        # imgHeight, imgWidth = imageHu2DAxial_.shape
-        # gray = numpy.uint8(imageHu2DAxial_)
-        # gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        # bytesPerline = 3 * imgWidth
-        # qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return
 
     def ScrollBarChangeAxial_L(self):
@@ -307,8 +288,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DAxial = self.dcmLow.get("imageHuMm")[self.SliceSelect_Axial_L.value(),:,:]
         imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmLow.get("ww"), self.dcmLow.get("wl")) 
-        # self.matplotAxial_L.axis.imshow(imageHu2DAxial_, cmap='gray')
-        # self.matplotAxial_L.canvas.draw()
         qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
         self.label_Axial_L.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show Low Dicom Axial')
@@ -318,8 +297,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DSagittal = self.dcmLow.get("imageHuMm")[:,:,self.SliceSelect_Sagittal_L.value()]
         imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmLow.get("ww"), self.dcmLow.get("wl"))
-        # self.matplotSagittal_L.axis.imshow(imageHu2DSagittal_, cmap='gray')
-        # self.matplotSagittal_L.canvas.draw()
         qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
         self.label_Sagittal_L.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show Low Dicom Sagittal')
@@ -329,8 +306,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DCoronal = self.dcmLow.get("imageHuMm")[:,self.SliceSelect_Coronal_L.value(),:]
         imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmLow.get("ww"), self.dcmLow.get("wl"))
-        # self.matplotCoronal_L.axis.imshow(imageHu2DCoronal_, cmap='gray')
-        # self.matplotCoronal_L.canvas.draw()
         qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
         self.label_Coronal_L.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
@@ -414,10 +389,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         
         max = int(numpy.max(self.dcmHigh.get("imageHuMm")))
         min = int(numpy.min(self.dcmHigh.get("imageHuMm")))
-        # WindowWidth
+        "WindowWidth"
         self.Slider_WW_H.setMinimum(1)
         self.Slider_WW_H.setMaximum(max)
-        # WindowCenter / WindowLevel
+        "WindowCenter / WindowLevel"
         self.Slider_WL_H.setMinimum(min)
         self.Slider_WL_H.setMaximum(max)
         self.dcmHigh.update({"ww":int(self.dcmHigh.get("imageTag")[0].WindowWidth[0])})
@@ -458,15 +433,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.label_Coronal_H.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show High Dicom Coronal')
         
-        
-        # self.matplotAxial_H.axis.imshow(imageHu2DAxial_, cmap='gray')
-        # self.matplotAxial_H.canvas.draw()
-        
-        # self.matplotSagittal_H.axis.imshow(imageHu2DSagittal_, cmap='gray')
-        # self.matplotSagittal_H.canvas.draw()
-        
-        # self.matplotCoronal_H.axis.imshow(imageHu2DCoronal_, cmap='gray')
-        # self.matplotCoronal_H.canvas.draw()
         return
 
     def ScrollBarChangeAxial_H(self):
@@ -474,8 +440,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DAxial = self.dcmHigh.get("imageHuMm")[self.SliceSelect_Axial_H.value(),:,:]
         imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmHigh.get("ww"), self.dcmHigh.get("wl")) 
-        # self.matplotAxial_H.axis.imshow(imageHu2DAxial_, cmap='gray')
-        # self.matplotAxial_H.canvas.draw()
         qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
         self.label_Axial_H.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show High Dicom Axial')
@@ -485,8 +449,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DSagittal = self.dcmHigh.get("imageHuMm")[:,:,self.SliceSelect_Sagittal_H.value()]
         imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmHigh.get("ww"), self.dcmHigh.get("wl"))
-        # self.matplotSagittal_H.axis.imshow(imageHu2DSagittal_, cmap='gray')
-        # self.matplotSagittal_H.canvas.draw()
         qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
         self.label_Sagittal_H.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show High Dicom Sagittal')
@@ -496,8 +458,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         imageHu2DCoronal = self.dcmHigh.get("imageHuMm")[:,self.SliceSelect_Coronal_H.value(),:]
         imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmHigh.get("ww"), self.dcmHigh.get("wl"))
-        # self.matplotCoronal_H.axis.imshow(imageHu2DCoronal_, cmap='gray')
-        # self.matplotCoronal_H.canvas.draw()
         qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
         self.label_Coronal_H.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show High Dicom Coronal')
@@ -542,16 +502,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.info('get candidate ball:')
         for tmp in candidateBall:
             self.logUI.info(tmp)
-        # self.regFn.GetDirection(candidateBall,self.dcmLow.get("pixel2Mm"))
         self.dcmLow.update({"candidateBall":candidateBall})
         "按照順序 (origin -> NO.1 -> NO.2) 手點/選擇ball"
         try:
             tmp = self.regFn.GetBallSection(self.dcmLow.get("candidateBall"))
             self.dcmLow.update({"showAxis":tmp[0]})
             self.dcmLow.update({"showSlice":tmp[1]})
-            
-            
-            # print(self.dcmLow.get("flageSelectedBall"))
             self.ui_CS = CoordinateSystem(self.dcmLow)
             self.ui_CS.show()
             self.Button_show_Registration_L.setEnabled(True)
@@ -560,7 +516,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L error / candidateBall could be []')
         return
-        # print("Registration")
 
     def ShowRegistrationDifference_L(self):
         """把找到的中心點與手點的mapping起來
@@ -590,7 +545,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 print("Choose Point error / ShowRegistrationDifference error")
                 self.logUI.warning('Choose Point error / ShowRegistrationDifference error')
             
-            if flagePair == True:   # ball位置已配對
+            if flagePair == True:
+                "ball位置已配對"
                 self.dcmLow.update({"regBall":(numpy.array(ball)*[1,1,-1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmLow.get("regBall"):
@@ -651,8 +607,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def ShowPoint_L(self):
-        # gray = numpy.uint8(imageHu2D_)
-        # self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         try:
             print("inhale/Low DICOM entry / target point position (in image coodinate)")
             "in this case, z 軸 * -1 , 改方向"
@@ -660,7 +614,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.dcmLow.update({"selectedPoint":(point*[1,1,-1])})
             for tmp in self.dcmLow.get("selectedPoint"):
                 print(tmp)
-                # cv2.circle(self.gray3Channel,(int(Cx),int(Cy)),20,(256/2,200,100),2)
             print("-------------------------------------------------------------------")
             
             self.dcmLow.update({"flageShowPointButton":True})
@@ -745,7 +698,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 print("Choose Point error / ShowRegistrationDifference error")
                 self.logUI.warning('Choose Point error / ShowRegistrationDifference error')
             
-            if flagePair == True:   # ball位置已配對
+            if flagePair == True:
+                "ball位置已配對"
                 self.dcmHigh.update({"regBall":(numpy.array(ball)*[1,1,-1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmHigh.get("regBall"):
@@ -842,7 +796,6 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         "提示: self.dcmLow = dcmLow"
         super(CoordinateSystem, self).__init__()
         self.setupUi(self)
-        # self.ui = FunctionLib_UI.ui_coordinate_system.Ui_Form()
         
         self.dcm = dcm
         self.dcmFn = FunctionLib_Vision._class.DICOM()
@@ -857,11 +810,9 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         pixel2Mm = self.dcm.get("pixel2Mm")
         ww = self.dcm.get("ww")
         wl = self.dcm.get("wl")
-        # match self.dcmLow.get("showAxis"):
-        # imageHu[z,y,x]
-        if showAxis == 0:   # x axis
+        if showAxis == 0:
+            "x axis"
             imageHu2D = self.dcm.get("imageHu")[:,:,int(showSlice/pixel2Mm[0])]
-            # imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, self.dcmLow.get("ww"), self.dcmLow.get("wl"))
             "pixel2Mm一大一小的resize沒有考慮進去"
             if pixel2Mm[0]<1 and abs(pixel2Mm[2])<=1:
                 imageHu2D = cv2.resize(imageHu2D,dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[2],interpolation=cv2.INTER_AREA)
@@ -869,9 +820,9 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
                 imageHu2D = cv2.resize(imageHu2D,dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[2],interpolation=cv2.INTER_CUBIC)
             else:
                 pass
-        elif showAxis == 1: # y axis
+        elif showAxis == 1:
+            "y axis"
             imageHu2D = self.dcm.get("imageHu")[:,int(showSlice/pixel2Mm[1]),:]
-            # imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, self.dcmLow.get("ww"), self.dcmLow.get("wl"))
             "pixel2Mm一大一小的resize沒有考慮進去"
             if pixel2Mm[1]<1 and abs(pixel2Mm[2])<=1:
                 imageHu2D = cv2.resize(imageHu2D,dsize=None,fx=pixel2Mm[1],fy=pixel2Mm[2],interpolation=cv2.INTER_AREA)
@@ -879,33 +830,32 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
                 imageHu2D = cv2.resize(imageHu2D,dsize=None,fx=pixel2Mm[1],fy=pixel2Mm[2],interpolation=cv2.INTER_CUBIC)
             else:
                 pass
-        elif showAxis == 2: # z axis
+        elif showAxis == 2:
+            "z axis"
             imageHu2D = self.dcm.get("imageHu")[int(showSlice/pixel2Mm[2]),:,:]
-            # imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, self.dcmLow.get("ww"), self.dcmLow.get("wl")) 
         else:
             print("Coordinate System error")
             return
-        # print(imageHu2D.shape[0])
         if imageHu2D.shape[0] != 0:
             imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D,ww,wl)
             self.imgHeight, self.imgWidth = imageHu2D_.shape
             gray = numpy.uint8(imageHu2D_)
-            # shape = (height, width)
-            # black_image = numpy.zeros(shape, numpy.uint8)
-            # img = numpy.stack([img,black_image,black_image])
             self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             "標出找到的球"
-            if showAxis == 0:   # x axis
+            if showAxis == 0:
+                "x axis"
                 for C in self.dcm.get("candidateBall"):
                     Cx = C[1]
                     Cy = C[2]
                     cv2.circle(self.gray3Channel,(int(Cx),int(Cy)),20,(256/2,200,100),2)
-            elif showAxis == 1: # y axis
+            elif showAxis == 1:
+                "y axis"
                 for C in self.dcm.get("candidateBall"):
                     Cx = C[0]
                     Cy = C[2]
                     cv2.circle(self.gray3Channel,(int(Cx),int(Cy)),20,(256/2,200,100),2)
-            elif showAxis == 2: # z axis
+            elif showAxis == 2:
+                "z axis"
                 for C in self.dcm.get("candidateBall"):
                     Cx = C[0]
                     Cy = C[1]
@@ -921,9 +871,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def UpdateImage(self):
         "顯示"
         bytesPerline = 3 * self.imgWidth
-        # bytesPerline = 1
         self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
-        # self.qimg = QImage(img, width, height, QImage.Format_RGB888)
         self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
         "GetClickedPosition不用加(), 會產生下方error: "
         "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
@@ -938,20 +886,19 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.flage = self.flage + 1
         if self.flage > 3:
             QMessageBox.critical(self, "error", "there are already selected 3 balls")
-            # self.log_UI.info('there are already selected 3 balls')
             return
         else:
-            if showAxis == 0:   # x axis
+            if showAxis == 0:
+                "x axis"
                 self.point.append([showSlice,x,y])
-                # print(f"(x, y, z) = ({showSlice}, {x}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-            elif showAxis == 1: # y axis
+            elif showAxis == 1:
+                "y axis"
                 self.point.append([x,showSlice,y])
-                # print(f"(x, y, z) = ({x}, {showSlice}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-            elif showAxis == 2: # z axis
+            elif showAxis == 2:
+                "z axis"
                 self.point.append([x,y,showSlice])
-                # print(f"(x, y, z) = ({x}, {y}, {showSlice})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
             else:
                 print("Coordinate System error")
@@ -960,7 +907,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         return
             
     def drawPoint(self,x,y):
-        color = (0, 0, 255) # red
+        "red"
+        color = (0, 0, 255)
         point = (int(x),int(y))
         point_size = 1
         thickness = 4
@@ -974,13 +922,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
             self.close()
         else:
             QMessageBox.critical(self, "error", "there are not selected 3 balls")
-            # self.log_UI.info('there are already selected 3 balls')
             return
     
-    def closeEvent(self, event):
-        # print('window close _2')
-        pass
-
 class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
     def __init__(self, dcm, comboBox, scrollBar):
         "提示: self.dcmLow = dcmLow"
@@ -993,7 +936,6 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
         self.scrollBar = scrollBar
         self.DisplayImage()
         self.flage = 0
-        # self.point = []
     
     def DisplayImage(self):
         pixel2Mm = self.dcm.get("pixel2Mm")
@@ -1002,7 +944,7 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
         ww = self.dcm.get("ww")
         wl = self.dcm.get("wl")
         
-        if showSection == "Axial":  # 
+        if showSection == "Axial":
             imageHu2D = self.dcm.get("imageHuMm")[int(showSlice),:,:]
         elif showSection == "Coronal":
             imageHu2D = self.dcm.get("imageHuMm")[:,int(showSlice),:]
@@ -1038,14 +980,13 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
         showSlice = self.scrollBar
         
         self.flage = self.SavePoints(x, y, showSection, showSlice)
-        # print("self.flage  :", self.flage)
         if self.flage == 1 or self.flage == 2:
             self.drawPoint(x,y)
             self.UpdateImage()
-        # elif
     
     def drawPoint(self,x,y):
-        color = (0, 0, 255) # red
+        "red"
+        color = (0, 0, 255)
         point = (int(x),int(y))
         point_size = 1
         thickness = 4
@@ -1053,21 +994,18 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
         return
 
     def SavePoints(self, x, y, showSection, showSlice):
-        if numpy.array(self.dcm.get("selectedPoint")).shape[0] >= 2: # or len(self.point) >= 2:
+        if numpy.array(self.dcm.get("selectedPoint")).shape[0] >= 2:
             QMessageBox.critical(self, "error", "there are already selected 2 points")
             return 3
         elif numpy.array(self.dcm.get("selectedPoint")).shape[0] == 0:
             if showSection == "Axial":
                 self.dcm.update({"selectedPoint":numpy.array([[x,y,showSlice]])})
-                # print(f"(x, y, z) = ({x}, {y}, {showSlice})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
             elif showSection == "Coronal":
                 self.dcm.update({"selectedPoint":numpy.array([[x,showSlice,y]])})
-                # print(f"(x, y, z) = ({x}, {showSlice}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
             elif showSection == "Sagittal":
                 self.dcm.update({"selectedPoint":numpy.array([[showSlice,x,y]])})
-                # print(f"(x, y, z) = ({showSlice}, {x}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
             else:
                 print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 0")
@@ -1076,17 +1014,14 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
             if showSection == "Axial":
                 tmp = numpy.insert(self.dcm.get("selectedPoint"),1,numpy.array([x,y,showSlice]),0)
                 self.dcm.update({"selectedPoint":tmp})
-                # print(f"(x, y, z) = ({x}, {y}, {showSlice})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
             elif showSection == "Coronal":
                 tmp = numpy.insert(self.dcm.get("selectedPoint"),1,numpy.array([x,showSlice,y]),0)
                 self.dcm.update({"selectedPoint":tmp})
-                # print(f"(x, y, z) = ({x}, {showSlice}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
             elif showSection == "Sagittal":
                 tmp = numpy.insert(self.dcm.get("selectedPoint"),1,numpy.array([showSlice,x,y]),0)
                 self.dcm.update({"selectedPoint":tmp})
-                # print(f"(x, y, z) = ({showSlice}, {x}, {y})")
                 self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
             else:
                 print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 1")
