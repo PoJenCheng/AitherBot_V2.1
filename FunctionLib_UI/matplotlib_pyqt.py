@@ -37,24 +37,33 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmFn = FunctionLib_Vision._class.DICOM()
         self.regFn = FunctionLib_Vision._class.REGISTRATION()
 
+        self.tabWidget.setCurrentWidget(self.tabWidget_Low)
+        
+        "Low"
         self.dcmLow = {}
         self.dcmLow.update({"ww": 1})
         self.dcmLow.update({"wl": 1})
         "為registration ball做準備"
         self.dcmLow.update({"selectedBall": []})
+        self.dcmLow.update({"regBall": []})
         self.dcmLow.update({"flageSelectedBall": False})
         "為set point做準備"
         self.dcmLow.update({"selectedPoint": []})
         self.dcmLow.update({"flageSelectedPoint": False})
+        self.dcmLow.update({"flageShowPointButton":False})
+        
+        "High"
         self.dcmHigh = {}
         self.dcmHigh.update({"ww": 1})
         self.dcmHigh.update({"wl": 1})
         "為registration ball做準備"
         self.dcmHigh.update({"selectedBall":[]})
+        self.dcmHigh.update({"regBall":[]})
         self.dcmHigh.update({"flageSelectedBall":False})
         "為set point做準備"
         self.dcmHigh.update({"selectedPoint":[]})
         self.dcmHigh.update({"flageSelectedPoint":False})
+        self.dcmHigh.update({"flageShowPointButton":False})
 
         self.Slider_WW_L.setMinimum(1)
         self.Slider_WW_L.setMaximum(3071)
@@ -210,11 +219,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmLow.update({"imageHuMm":numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmLow.get("imageHu"),self.dcmLow.get("pixel2Mm")))})
         patientPosition = self.dcmLow.get("imageTag")[0].PatientPosition
         if patientPosition == 'HFS':
-            self.label_dcmL_L_side.setText("Right")
-            self.label_dcmL_R_side.setText("Left")
-        elif patientPosition == 'HFP':
             self.label_dcmL_L_side.setText("Left")
             self.label_dcmL_R_side.setText("Right")
+        elif patientPosition == 'HFP':
+            self.label_dcmL_L_side.setText("Right")
+            self.label_dcmL_R_side.setText("Left")
         else:
             self.label_dcmL_L_side.setText("error")
             self.label_dcmL_R_side.setText("error")
@@ -383,11 +392,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmHigh.update({"imageHuMm":numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmHigh.get("imageHu"),self.dcmHigh.get("pixel2Mm")))})
         patientPosition = self.dcmHigh.get("imageTag")[0].PatientPosition
         if patientPosition == 'HFS':
-            self.label_dcmH_L_side.setText("Right")
-            self.label_dcmH_R_side.setText("Left")
-        elif patientPosition == 'HFP':
             self.label_dcmH_L_side.setText("Left")
             self.label_dcmH_R_side.setText("Right")
+        elif patientPosition == 'HFP':
+            self.label_dcmH_L_side.setText("Right")
+            self.label_dcmH_R_side.setText("Left")
         else:
             self.label_dcmH_L_side.setText("error")
             self.label_dcmH_R_side.setText("error")
@@ -511,6 +520,18 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """自動找球中心 + 按照順序 (origin -> NO.1 -> NO.2) 選擇ball
         """
         "自動找球中心"
+        if self.dcmLow.get("regBall") != []:
+            reply = QMessageBox.information(self, "提示", "已經有註冊了，要重設嗎?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.dcmLow.update({"selectedBall": []})
+                self.dcmLow.update({"regBall": []})
+                self.dcmLow.update({"flageSelectedBall": False})
+                self.logUI.info('reset selected ball (Low)')
+                print("reset selected ball (Low)")
+                return
+            else:
+                pass
+            
         try:
             candidateBall = self.regFn.GetBall(self.dcmLow.get("imageHu"), self.dcmLow.get("pixel2Mm"))
         except:
@@ -570,7 +591,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.logUI.warning('Choose Point error / ShowRegistrationDifference error')
             
             if flagePair == True:   # ball位置已配對
-                self.dcmLow.update({"regBall":numpy.array(ball)})
+                self.dcmLow.update({"regBall":(numpy.array(ball)*[1,1,-1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmLow.get("regBall"):
                     self.logUI.info(tmp)
@@ -589,7 +610,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("pair error / ShowRegistrationDifference error")
                 self.logUI.warning('pair error / ShowRegistrationDifference error')
-            # print("ShowRegistrationDifference")
             self.Button_SetPoint_L.setEnabled(True)
             self.comboBox_L.setEnabled(True)
         else:
@@ -610,37 +630,67 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("comboBox_L error / SetEntryPoint error")
                 self.logUI.warning('comboBox_L error / SetEntryPoint error')
-                return
+                
+            self.Button_ShowPoint_L.setEnabled(True)
+            return
         elif self.dcmLow.get("flageSelectedPoint") == True:
             reply = QMessageBox.information(self, "提示", "已經有選點了，要重設嗎?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmLow.update({"selectedPoint":[]})
                 self.dcmLow.update({"flageSelectedPoint":False})
-                self.logUI.info('reset selected point')
-                print("reset selected point")
-                # print("Yes clicked")
+                self.Button_Planning.setEnabled(False)
+                self.dcmLow.update({"flageShowPointButton":False})
+                self.logUI.info('reset selected point (Low)')
+                print("reset selected point (LoW)")
+                self.Button_ShowPoint_L.setEnabled(False)
+                return
             else:
                 pass
-        # else
-
-        self.Button_ShowPoint_L.setEnabled(True)
+            return
+        
         return
 
     def ShowPoint_L(self):
         # gray = numpy.uint8(imageHu2D_)
         # self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        print("inhale/Low DICOM entry / target point position (in image coodinate)")
-        for tmp in self.dcmLow.get("selectedPoint"):
-            print(tmp)
-            # cv2.circle(self.gray3Channel,(int(Cx),int(Cy)),20,(256/2,200,100),2)
-        print("-------------------------------------------------------------------")
-        self.Button_Planning.setEnabled(True)
-        return
+        try:
+            print("inhale/Low DICOM entry / target point position (in image coodinate)")
+            "in this case, z 軸 * -1 , 改方向"
+            point = self.dcmLow.get("selectedPoint")
+            self.dcmLow.update({"selectedPoint":(point*[1,1,-1])})
+            for tmp in self.dcmLow.get("selectedPoint"):
+                print(tmp)
+                # cv2.circle(self.gray3Channel,(int(Cx),int(Cy)),20,(256/2,200,100),2)
+            print("-------------------------------------------------------------------")
+            
+            self.dcmLow.update({"flageShowPointButton":True})
+            if self.dcmLow.get("flageShowPointButton") is True and self.dcmHigh.get("flageShowPointButton") is True:
+                self.Button_Planning.setEnabled(True)
+            return
+        except:
+            self.logUI.warning('show points error')
+            QMessageBox.critical(self, "error", "show points error")
+            print('show points error')
+            return
+        
+        
 
     def SetRegistration_H(self):
         """自動找球中心 + 按照順序 (origin -> NO.1 -> NO.2) 選擇ball
         """
         "自動找球中心"
+        if self.dcmHigh.get("regBall") != []:
+            reply = QMessageBox.information(self, "提示", "已經有註冊了，要重設嗎?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.dcmHigh.update({"selectedBall": []})
+                self.dcmHigh.update({"regBall": []})
+                self.dcmHigh.update({"flageSelectedBall": False})
+                self.logUI.info('reset selected ball (High)')
+                print("reset selected ball (High)")
+                return
+            else:
+                pass
+        
         try:
             candidateBall = self.regFn.GetBall(self.dcmHigh.get("imageHu"), self.dcmHigh.get("pixel2Mm"))
         except:
@@ -696,7 +746,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.logUI.warning('Choose Point error / ShowRegistrationDifference error')
             
             if flagePair == True:   # ball位置已配對
-                self.dcmHigh.update({"regBall":numpy.array(ball)})
+                self.dcmHigh.update({"regBall":(numpy.array(ball)*[1,1,-1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmHigh.get("regBall"):
                     self.logUI.info(tmp)
@@ -741,8 +791,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             if reply == QMessageBox.Yes:
                 self.dcmHigh.update({"selectedPoint":[]})
                 self.dcmHigh.update({"flageSelectedPoint":False})
-                self.logUI.info('reset selected point')
-                print("reset selected point")
+                self.Button_Planning.setEnabled(False)
+                self.dcmHigh.update({"flageShowPointButton":False})
+                self.logUI.info('reset selected point (High)')
+                print("reset selected point (High)")
+                return
             else:
                 pass
 
@@ -750,23 +803,41 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
     
     def ShowPoint_H(self):
-        print("exhale/High DICOM entry / target point position (in image coodinate)")
-        for tmp in self.dcmHigh.get("selectedPoint"):
-            print(tmp)
-        print("-------------------------------------------------------------------")
-        self.Button_Planning.setEnabled(True)
-        return
+        try:
+            print("exhale/High DICOM entry / target point position (in image coodinate)")
+            point = self.dcmHigh.get("selectedPoint")
+            self.dcmHigh.update({"selectedPoint":(point*[1,1,-1])})
+            for tmp in self.dcmHigh.get("selectedPoint"):
+                print(tmp)
+            print("-------------------------------------------------------------------")
+            
+            self.dcmHigh.update({"flageShowPointButton":True})
+            if self.dcmLow.get("flageShowPointButton") is True and self.dcmHigh.get("flageShowPointButton") is True:
+                self.Button_Planning.setEnabled(True)
+            return
+        except:
+            self.logUI.warning('show points error')
+            QMessageBox.critical(self, "error", "show points error")
+            print('show points error')
+            return
     
     def SetPlanningPath(self):
         PlanningPath = []
         try:
-            originPoint_H = self.dcmHigh.get("selectedBall")[0]
+            originPoint_H = self.dcmHigh.get("regBall")[0]
             for p in self.dcmHigh.get("selectedPoint"):
                 PlanningPath.append(numpy.dot(self.dcmHigh.get("regMatrix"),(p-originPoint_H)))
+                # shift = (p-originPoint_H)
+                # print("shift high: ", shift)
+                # print(self.dcmHigh.get("regMatrix"))
+                # print((numpy.dot(self.dcmHigh.get("regMatrix"),(p-originPoint_H))))
             
-            originPoint_L = self.dcmLow.get("selectedBall")[0]
+            originPoint_L = self.dcmLow.get("regBall")[0]
             for p in self.dcmLow.get("selectedPoint"):
                 PlanningPath.append(numpy.dot(self.dcmLow.get("regMatrix"),(p-originPoint_L)))
+                # shift = (p-originPoint_L)
+                # print("shift low: ", shift)
+                # print((numpy.dot(self.dcmLow.get("regMatrix"),(p-originPoint_L))))
             
             self.PlanningPath = numpy.array(PlanningPath)
             

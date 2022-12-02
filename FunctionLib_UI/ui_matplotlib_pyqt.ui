@@ -662,13 +662,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_ShowPoint_L">
-         <property name="text">
-          <string>Show point</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QComboBox" name="comboBox_L">
          <item>
           <property name="text">
@@ -688,7 +681,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_Planning_L">
+        <widget class="QPushButton" name="Button_ShowPoint_L">
+         <property name="text">
+          <string>Show point</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_Planning">
          <property name="text">
           <string>Planning</string>
          </property>
@@ -696,6 +696,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="Button_SavePath_L">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Save path</string>
          </property>
@@ -846,18 +849,59 @@
        <string>L / R</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox">
+     <widget class="QWidget" name="verticalLayoutWidget_6">
       <property name="geometry">
        <rect>
-        <x>1430</x>
-        <y>230</y>
-        <width>85</width>
-        <height>19</height>
+        <x>1400</x>
+        <y>550</y>
+        <width>160</width>
+        <height>127</height>
        </rect>
       </property>
-      <property name="text">
-       <string>Test mood</string>
-      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_12">
+       <item>
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Axial</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Sagittal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Coronal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tabWidget_High">
@@ -1063,13 +1107,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_ShowPoint_H">
-         <property name="text">
-          <string>Show point</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QComboBox" name="comboBox_H">
          <item>
           <property name="text">
@@ -1086,6 +1123,67 @@
            <string>Coronal</string>
           </property>
          </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_ShowPoint_H">
+         <property name="text">
+          <string>Show point</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_10">
+      <property name="geometry">
+       <rect>
+        <x>1400</x>
+        <y>550</y>
+        <width>160</width>
+        <height>127</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_13">
+       <item>
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Axial</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_13">
+         <property name="text">
+          <string>Sagittal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_14">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>Coronal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_16">
+         <property name="text">
+          <string>0</string>
+         </property>
         </widget>
        </item>
       </layout>
@@ -1490,7 +1588,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_Planning_L</sender>
+   <sender>Button_Planning</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>SetPlanningPath()</slot>
@@ -1502,6 +1600,102 @@
     <hint type="destinationlabel">
      <x>1993</x>
      <y>276</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_3</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1368</x>
+     <y>820</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1420</x>
+     <y>720</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_9</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1371</x>
+     <y>383</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1411</x>
+     <y>630</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_7</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>736</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1455</x>
+     <y>674</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_12</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1374</x>
+     <y>405</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1408</x>
+     <y>627</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_16</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1371</x>
+     <y>760</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1439</x>
+     <y>714</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_14</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>680</x>
+     <y>727</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1477</x>
+     <y>673</y>
     </hint>
    </hints>
   </connection>
