@@ -521,20 +521,20 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             target4 = 0
 
     def CapturePoint(self):
-        # entry_full = np.array([215, 80, 35.5])
-        # target_full = np.array([215, 80, 5.5])
-        # entry_halt = np.array([215, 80, 35.5])
-        # target_halt = np.array([215, 80, 5.5])
+        # entry_full = np.array([372.785, 91.31, 20.9])
+        # target_full = np.array([372.785, 92.69, -4])
+        # entry_halt = np.array([372.785, 92.31, 20.9])
+        # target_halt = np.array([372.785, 92.72, -4])
         # pointTest = np.array(
         #     [entry_full, target_full, entry_halt, target_halt])
-        pointTest = self.PlanningPath
+        pointTemp = self.PlanningPath
 
         "translate base from ball to robot"
         calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
-        breathingFull_entry = pointTest[0]
-        breathingFull_target = pointTest[1]
-        breathingHalt_entry = pointTest[2]
-        breathingHalt_target = pointTest[3]
+        breathingFull_entry = pointTemp[0]
+        breathingFull_target = pointTemp[1]
+        breathingHalt_entry = pointTemp[2]
+        breathingHalt_target = pointTemp[3]
 
         breathingFull_entry = breathingFull_entry - calibration
         breathingFull_target = breathingFull_target - calibration
@@ -542,11 +542,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         breathingHalt_target = breathingHalt_target - calibration
 
         "取得吸飽與吐底entry與target的平均值"
-        entryPoint_X = (breathingFull_entry[0] + breathingHalt_entry[0])/2
+        entryPoint_X = ((breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
         entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
         entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
 
-        targetPoint_X = (breathingFull_target[0] + breathingHalt_target[0])/2
+        targetPoint_X = (breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
         targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
         targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
 

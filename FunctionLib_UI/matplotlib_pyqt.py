@@ -223,17 +223,17 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Axial_L.setMaximum(
             self.dcmLow.get("imageHuMm").shape[0]-1)
         self.SliceSelect_Axial_L.setValue(
-            (self.dcmLow.get("imageHuMm").shape[0])/2)
+            int((self.dcmLow.get("imageHuMm").shape[0])/2))
         self.SliceSelect_Sagittal_L.setMinimum(0)
         self.SliceSelect_Sagittal_L.setMaximum(
             self.dcmLow.get("imageHuMm").shape[1]-1)
         self.SliceSelect_Sagittal_L.setValue(
-            (self.dcmLow.get("imageHuMm").shape[1])/2)
+            int((self.dcmLow.get("imageHuMm").shape[1])/2))
         self.SliceSelect_Coronal_L.setMinimum(0)
         self.SliceSelect_Coronal_L.setMaximum(
             self.dcmLow.get("imageHuMm").shape[2]-1)
         self.SliceSelect_Coronal_L.setValue(
-            (self.dcmLow.get("imageHuMm").shape[2])/2)
+            int((self.dcmLow.get("imageHuMm").shape[2])/2))
 
         max = int(numpy.max(self.dcmLow.get("imageHuMm")))
         min = int(numpy.min(self.dcmLow.get("imageHuMm")))
@@ -398,17 +398,17 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Axial_H.setMaximum(
             self.dcmHigh.get("imageHuMm").shape[0]-1)
         self.SliceSelect_Axial_H.setValue(
-            (self.dcmHigh.get("imageHuMm").shape[0])/2)
+            int((self.dcmHigh.get("imageHuMm").shape[0])/2))
         self.SliceSelect_Sagittal_H.setMinimum(0)
         self.SliceSelect_Sagittal_H.setMaximum(
             self.dcmHigh.get("imageHuMm").shape[1]-1)
         self.SliceSelect_Sagittal_H.setValue(
-            (self.dcmHigh.get("imageHuMm").shape[1])/2)
+            int((self.dcmHigh.get("imageHuMm").shape[1])/2))
         self.SliceSelect_Coronal_H.setMinimum(0)
         self.SliceSelect_Coronal_H.setMaximum(
             self.dcmHigh.get("imageHuMm").shape[2]-1)
         self.SliceSelect_Coronal_H.setValue(
-            (self.dcmHigh.get("imageHuMm").shape[2])/2)
+            int((self.dcmHigh.get("imageHuMm").shape[2])/2))
 
         max = int(numpy.max(self.dcmHigh.get("imageHuMm")))
         min = int(numpy.min(self.dcmHigh.get("imageHuMm")))
