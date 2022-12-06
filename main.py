@@ -6,6 +6,7 @@ app = QApplication(sys.argv)
 w = mat.MainWidget()
 w.show()
 sys.exit(app.exec_())
+print("123")
 
 
 # pyuic5 -o FunctionLib_UI/ui_matplotlib_pyqt.py FunctionLib_UI/ui_matplotlib_pyqt.ui
