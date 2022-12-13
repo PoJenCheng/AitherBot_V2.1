@@ -37,7 +37,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
-        "Low"
+        "initialize dcm Low"
         self.dcmLow = {}
         self.dcmLow.update({"ww": 1})
         self.dcmLow.update({"wl": 1})
@@ -50,7 +50,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmLow.update({"flageSelectedPoint": False})
         self.dcmLow.update({"flageShowPointButton": False})
 
-        "High"
+        "initialize dcm High"
         self.dcmHigh = {}
         self.dcmHigh.update({"ww": 1})
         self.dcmHigh.update({"wl": 1})
@@ -99,7 +99,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Action_ImportDicom_H.triggered.connect(self.ImportDicom_H)
         self.logUI.debug('initial main UI')
 
-        "機器人控Initial"
+        "robot control initial"
         MOTORSUBFUNCTION.__init__(self)
         global g_homeStatus
         g_homeStatus = False
@@ -188,6 +188,22 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         logStr = 'Load inhale/Low Dicom: ' + filePath
         self.logUI.info(logStr)
 
+        "reset dcm"
+        self.dcmLow = {}
+        self.dcmLow.update({"ww": 1})
+        self.dcmLow.update({"wl": 1})
+        "registration ball"
+        self.dcmLow.update({"selectedBall": []})
+        self.dcmLow.update({"regBall": []})
+        self.dcmLow.update({"flageSelectedBall": False})
+        "set point"
+        self.dcmLow.update({"selectedPoint": []})
+        self.dcmLow.update({"flageSelectedPoint": False})
+        self.dcmLow.update({"flageShowPointButton": False})
+        "ui"
+        self.Button_Registration_L.setEnabled(False)
+        self.Button_show_Registration_L.setEnabled(False)
+
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
         self.dcmLow.update(
@@ -253,7 +269,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('Loaded inhale/Low Dicom')
         self.ShowDicom_L()
 
-        "��UI�能"
+        "Enable ui"
         self.Slider_WW_L.setEnabled(True)
         self.Slider_WL_L.setEnabled(True)
         self.SliceSelect_Axial_L.setEnabled(True)
@@ -362,6 +378,23 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         print("-------------------------------------------------------------------")
         logStr = 'Load exhale/High Dicom: ' + filePath
         self.logUI.info(logStr)
+        
+        "reset dcm"
+        self.dcmHigh = {}
+        self.dcmHigh.update({"ww": 1})
+        self.dcmHigh.update({"wl": 1})
+        "registration ball"
+        self.dcmHigh.update({"selectedBall": []})
+        self.dcmHigh.update({"regBall": []})
+        self.dcmHigh.update({"flageSelectedBall": False})
+        "set point"
+        self.dcmHigh.update({"selectedPoint": []})
+        self.dcmHigh.update({"flageSelectedPoint": False})
+        self.dcmHigh.update({"flageShowPointButton": False})
+        "ui"
+        self.Button_Registration_H.setEnabled(False)
+        self.Button_show_Registration_H.setEnabled(False)
+        
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
@@ -428,7 +461,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('Loaded exhale/High Dicom')
         self.ShowDicom_H()
 
-        "��UI�能"
+        "Enable ui"
         self.Slider_WW_H.setEnabled(True)
         self.Slider_WL_H.setEnabled(True)
         self.SliceSelect_Axial_H.setEnabled(True)
@@ -514,12 +547,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('Set High Dicom Window Level')
 
     def SetRegistration_L(self):
-        """���中� + �照�� (origin -> NO.1 -> NO.2) ��ball
+        """automatic find registration ball center + open another UI window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        "���中�"
+        "automatic find registration ball center"
         if self.dcmLow.get("regBall") != []:
             reply = QMessageBox.information(
-                self, "�示", "已�註��，�設", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmLow.update({"selectedBall": []})
                 self.dcmLow.update({"regBall": []})
@@ -528,7 +561,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 print("reset selected ball (Low)")
                 return
             else:
-                pass
+                return
 
         try:
             candidateBall = self.regFn.GetBall(
@@ -542,7 +575,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmLow.update({"candidateBall": candidateBall})
-        "�照�� (origin -> NO.1 -> NO.2) ��/��ball"
+        "open another UI window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmLow.get("candidateBall"))
             self.dcmLow.update({"showAxis": tmp[0]})
@@ -559,10 +592,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def ShowRegistrationDifference_L(self):
-        """�找��中�點��mapping起�
-           算相對誤差�error difference)
+        """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
+           calculate error/difference of relative distance
         """
-        "�找��中�點��/���mapping / Pair��起�"
+        "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
         candidateBall = self.dcmLow.get("candidateBall")
         selectedBall = self.dcmLow.get("selectedBall")
         if selectedBall != []:
@@ -590,18 +623,18 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                     'Choose Point error / ShowRegistrationDifference error')
 
             if flagePair == True:
-                "ball位置已"
+                "The ball positions are paired"
                 self.dcmLow.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmLow.get("regBall"):
                     self.logUI.info(tmp)
-                "算相對誤差(error difference)"
+                "calculate error/difference of relative distance"
                 error = self.regFn.GetError(self.dcmLow.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
                 self.label_error_L.setText(
                     'Error / Difference: {:.2f} mm'.format(error[2]))
-                "算矩"
+                "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(
                     self.dcmLow.get("regBall"))
                 self.logUI.info('get registration matrix: ')
@@ -642,7 +675,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
         elif self.dcmLow.get("flageSelectedPoint") == True:
             reply = QMessageBox.information(
-                self, "�示", "已�選點�，�設", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmLow.update({"selectedPoint": []})
                 self.dcmLow.update({"flageSelectedPoint": False})
@@ -653,8 +686,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.Button_ShowPoint_L.setEnabled(False)
                 return
             else:
-                pass
-            return
+                return
 
         return
 
@@ -679,12 +711,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
 
     def SetRegistration_H(self):
-        """���中� + �照�� (origin -> NO.1 -> NO.2) ��ball
+        """automatic find registration ball center + open another UI window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        "���中�"
+        "automatic find registration ball center"
         if self.dcmHigh.get("regBall") != []:
             reply = QMessageBox.information(
-                self, "�示", "已�註��，�設", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmHigh.update({"selectedBall": []})
                 self.dcmHigh.update({"regBall": []})
@@ -693,7 +725,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 print("reset selected ball (High)")
                 return
             else:
-                pass
+                return
 
         try:
             candidateBall = self.regFn.GetBall(
@@ -707,7 +739,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmHigh.update({"candidateBall": candidateBall})
-        "�照�� (origin -> NO.1 -> NO.2) ��/��ball"
+        "open another UI window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmHigh.get("candidateBall"))
             self.dcmHigh.update({"showAxis": tmp[0]})
@@ -725,10 +757,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def ShowRegistrationDifference_H(self):
-        """�找��中�點��mapping起�
-           算相對誤差�error difference)
+        """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
+           calculate error/difference of relative distance
         """
-        "�找��中�點��/���mapping / Pair��起�"
+        "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
         candidateBall = self.dcmHigh.get("candidateBall")
         selectedBall = self.dcmHigh.get("selectedBall")
         if selectedBall != []:
@@ -756,19 +788,19 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                     'Choose Point error / ShowRegistrationDifference error')
 
             if flagePair == True:
-                "ball位置已"
+                "The ball positions are paired"
                 self.dcmHigh.update(
                     {"regBall": (numpy.array(ball)*[1, 1, -1])})
                 self.logUI.info('get registration balls:')
                 for tmp in self.dcmHigh.get("regBall"):
                     self.logUI.info(tmp)
-                "算相對誤差�error difference)"
+                "calculate error/difference of relative distance"
                 error = self.regFn.GetError(self.dcmHigh.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
                 self.label_error_H.setText(
                     'Error / Difference: {:.2f} mm'.format(error[2]))
-                "算矩"
+                "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(
                     self.dcmHigh.get("regBall"))
                 self.logUI.info('get registration matrix: ')
@@ -804,10 +836,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("comboBox_H error / SetEntryPoint error")
                 self.logUI.warning('comboBox_H error / SetEntryPoint error')
-                return
+            
+            self.Button_ShowPoint_H.setEnabled(True)
+            return
         elif self.dcmHigh.get("flageSelectedPoint") == True:
             reply = QMessageBox.information(
-                self, "�示", "已�選點�，�設", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmHigh.update({"selectedPoint": []})
                 self.dcmHigh.update({"flageSelectedPoint": False})
@@ -815,11 +849,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.dcmHigh.update({"flageShowPointButton": False})
                 self.logUI.info('reset selected point (High)')
                 print("reset selected point (High)")
+                self.Button_ShowPoint_H.setEnabled(False)
                 return
             else:
-                pass
+                return
 
-        self.Button_ShowPoint_H.setEnabled(True)
         return
 
     def ShowPoint_H(self):
@@ -842,6 +876,13 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
 
     def ShowPlanningPath(self):
+        print("************ start: ************")
+        for key in self.dcmLow:
+            print(key)
+            print("..")
+            # print(self.dcmLow.get(key))
+            print("-------------------------------------------------------------------")
+        
         try:
             self.PlanningPath = self.regFn.GetPlanningPath(self.dcmHigh.get("regBall")[0], self.dcmHigh.get("selectedPoint"), self.dcmHigh.get("regMatrix"),
                                                            self.dcmLow.get("regBall")[0], self.dcmLow.get("selectedPoint"), self.dcmLow.get("regMatrix"))
@@ -859,10 +900,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def __init__(self, dcm):
-        "�示: self.dcmLow = dcmLow"
         super(CoordinateSystem, self).__init__()
         self.setupUi(self)
 
+        "hint: self.dcmLow = dcmLow = dcm"
         self.dcm = dcm
         self.dcmFn = FunctionLib_Vision._class.DICOM()
         self.DisplayImage()
@@ -880,7 +921,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
             "x axis"
             imageHu2D = self.dcm.get("imageHu")[
                 :, :, int(showSlice/pixel2Mm[0])]
-            "pixel2Mm一大�小�resize沒�慮�去"
+            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
             if pixel2Mm[0] < 1 and abs(pixel2Mm[2]) <= 1:
                 imageHu2D = cv2.resize(
                     imageHu2D, dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
@@ -893,7 +935,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
             "y axis"
             imageHu2D = self.dcm.get("imageHu")[
                 :, int(showSlice/pixel2Mm[1]), :]
-            "pixel2Mm一大�小�resize沒�慮�去"
+            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
             if pixel2Mm[1] < 1 and abs(pixel2Mm[2]) <= 1:
                 imageHu2D = cv2.resize(
                     imageHu2D, dsize=None, fx=pixel2Mm[1], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
@@ -904,6 +947,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
                 pass
         elif showAxis == 2:
             "z axis"
+            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
             imageHu2D = self.dcm.get("imageHu")[
                 int(showSlice/pixel2Mm[2]), :, :]
         else:
@@ -914,7 +959,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
             self.imgHeight, self.imgWidth = imageHu2D_.shape
             gray = numpy.uint8(imageHu2D_)
             self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            "標出�到��"
+            "mark out candidateBall"
             if showAxis == 0:
                 "x axis"
                 for C in self.dcm.get("candidateBall"):
@@ -939,18 +984,18 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
             else:
                 print("Coordinate System error")
                 return
-            "顯示"
+            "update and display ui"
             self.UpdateImage()
         else:
             print("Coordinate System show img error")
 
     def UpdateImage(self):
-        "顯示"
+        "update and display ui"
         bytesPerline = 3 * self.imgWidth
         self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight,
                            bytesPerline, QImage.Format_RGB888).rgbSwapped()
         self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-        "GetClickedPosition不用), �產��error: "
+        "GetClickedPosition don't +()), it could create error below: "
         "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
         self.label_img.mousePressEvent = self.GetClickedPosition
         return
@@ -1009,10 +1054,10 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
 
 class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
     def __init__(self, dcm, comboBox, scrollBar):
-        "�示: self.dcmLow = dcmLow"
         super(SetPointSystem, self).__init__()
         self.setupUi(self)
 
+        "hint: self.dcmLow = dcmLow"
         self.dcm = dcm
         self.dcmFn = FunctionLib_Vision._class.DICOM()
         self.comboBox = comboBox
@@ -1041,18 +1086,18 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
             self.imgHeight, self.imgWidth = imageHu2D_.shape
             gray = numpy.uint8(imageHu2D_)
             self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            "顯示"
+            "update and display ui"
             self.UpdateImage()
         else:
             print("DisplayImage error / Set Point System show img error")
 
     def UpdateImage(self):
-        "顯示"
+        "update and display ui"
         bytesPerline = 3 * self.imgWidth
         self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight,
                            bytesPerline, QImage.Format_RGB888).rgbSwapped()
         self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-        "GetClickedPosition不用�), �產�error"
+        "GetClickedPosition don't + ()), it could create error below: "
         "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
         self.label_img.mousePressEvent = self.GetClickedPosition
         return
