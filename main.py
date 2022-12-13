@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import *
 import sys
 
 app = QApplication(sys.argv)
+print("test")
 w = mat.MainWidget()
 w.show()
 sys.exit(app.exec_())
-print("123")
 
 
 # pyuic5 -o FunctionLib_UI/ui_matplotlib_pyqt.py FunctionLib_UI/ui_matplotlib_pyqt.ui
