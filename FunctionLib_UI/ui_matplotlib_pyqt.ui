@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -445,11 +448,11 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>5</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
-      <string>Dynamic Tracking</string>
+      <string>Dynamic tracking</string>
      </attribute>
      <widget class="QWidget" name="verticalLayoutWidget_9">
       <property name="geometry">
@@ -704,7 +707,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_SavePath_L">
+        <widget class="QPushButton" name="Button_SavePath">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1200,7 +1203,7 @@
     </widget>
     <widget class="QWidget" name="tabWidget_Robot">
      <attribute name="title">
-      <string>Navigation(robot)</string>
+      <string>Navigation (robot)</string>
      </attribute>
      <widget class="QWidget" name="verticalLayoutWidget_8">
       <property name="geometry">
@@ -1337,6 +1340,331 @@
       </layout>
      </widget>
     </widget>
+    <widget class="QWidget" name="tabWidget_SystemAccuracy">
+     <attribute name="title">
+      <string>System accuracy test</string>
+     </attribute>
+     <widget class="QWidget" name="layoutWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>30</y>
+        <width>1381</width>
+        <height>891</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="0" column="2">
+        <widget class="QLabel" name="label_Axial_SAT">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QScrollBar" name="SliceSelect_Sagittal_SAT">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QScrollBar" name="SliceSelect_Axial_SAT">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QScrollBar" name="SliceSelect_Coronal_SAT">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QWidget" name="widget_3D_SAT" native="true"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="label_Coronal_SAT">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_Sagittal_SAT">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_11">
+      <property name="geometry">
+       <rect>
+        <x>1400</x>
+        <y>380</y>
+        <width>501</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_11">
+       <item>
+        <widget class="QLabel" name="valueWW_SAT">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <italic>true</italic>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Width&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_WW_SAT">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="Slider_WW_SAT">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="valueWL_SAT">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <italic>true</italic>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_WL_SAT">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="Slider_WL_SAT">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_12">
+      <property name="geometry">
+       <rect>
+        <x>1400</x>
+        <y>550</y>
+        <width>160</width>
+        <height>127</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_14">
+       <item>
+        <widget class="QLabel" name="label_17">
+         <property name="text">
+          <string>Axial</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_18">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_19">
+         <property name="text">
+          <string>Sagittal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_20">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_21">
+         <property name="text">
+          <string>Coronal</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_22">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_13">
+      <property name="geometry">
+       <rect>
+        <x>1570</x>
+        <y>10</y>
+        <width>331</width>
+        <height>285</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_15">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QPushButton" name="Button_Registration_SAT">
+           <property name="text">
+            <string>Registration</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_show_Registration_SAT">
+           <property name="text">
+            <string>Show difference</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_error_SAT">
+         <property name="text">
+          <string>Difference: 0 mm</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="lineEdit_3"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="lineEdit_4"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="lineEdit_2"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="lineEdit_5"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_1"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_point_1">
+           <property name="text">
+            <string>point NO. 1</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="lineEdit_6"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_point_2">
+           <property name="text">
+            <string>point NO. 2</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_point_3">
+           <property name="text">
+            <string>point NO. 3</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_point_4">
+           <property name="text">
+            <string>point NO. 4</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_point_5">
+           <property name="text">
+            <string>point NO. 5</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_point_6">
+           <property name="text">
+            <string>point NO. 6</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_EnterPoint">
+         <property name="text">
+          <string>Enter</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_SavePoint">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Save point</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -1354,18 +1682,24 @@
     </property>
     <addaction name="Action_ImportDicom_L"/>
     <addaction name="Action_ImportDicom_H"/>
+    <addaction name="Action_ImportDicom_SAT"/>
    </widget>
    <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="Action_ImportDicom_L">
    <property name="text">
-    <string>Import Dicom (low)</string>
+    <string>Import DICOM (low)</string>
    </property>
   </action>
   <action name="Action_ImportDicom_H">
    <property name="text">
-    <string>Import Dicom (high)</string>
+    <string>Import DICOM (high)</string>
+   </property>
+  </action>
+  <action name="Action_ImportDicom_SAT">
+   <property name="text">
+    <string>Import DICOM (System Accuracy)</string>
    </property>
   </action>
  </widget>
@@ -1410,8 +1744,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1442</x>
-     <y>500</y>
+     <x>1445</x>
+     <y>498</y>
     </hint>
     <hint type="destinationlabel">
      <x>1430</x>
@@ -1720,6 +2054,86 @@
     <hint type="destinationlabel">
      <x>1979</x>
      <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_18</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1377</x>
+     <y>457</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1411</x>
+     <y>628</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_22</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1379</x>
+     <y>724</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1417</x>
+     <y>718</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_20</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>637</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1503</x>
+     <y>676</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WW_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WW_SAT</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1465</x>
+     <y>488</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1468</x>
+     <y>468</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WL_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WL_SAT</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1534</x>
+     <y>561</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1534</x>
+     <y>542</y>
     </hint>
    </hints>
   </connection>

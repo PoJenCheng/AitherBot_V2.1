@@ -21,7 +21,7 @@ from FunctionLib_Robot._globalVar import *
 
 class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION):
     def __init__(self):
-        """initial main UI
+        """initial main ui
         """
         super(MainWidget, self).__init__()
 
@@ -134,10 +134,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.addHandler(handler)
 
     def _init_ui(self):
-        "DICOM planning UI Disable"
+        "DICOM planning ui disable"
         self.Button_Planning.setEnabled(False)
 
-        "DICOM Low UI Disable (turn on after the function is enabled)"
+        "DICOM Low ui disable (turn on after the function is enabled)"
         self.Button_Registration_L.setEnabled(False)
         self.Button_show_Registration_L.setEnabled(False)
         self.comboBox_L.setEnabled(False)
@@ -150,7 +150,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Sagittal_L.setEnabled(False)
         self.SliceSelect_Coronal_L.setEnabled(False)
 
-        "DICOM High UI Disable (turn on after the function is enabled)"
+        "DICOM High ui disable (turn on after the function is enabled)"
         self.Button_Registration_H.setEnabled(False)
         self.Button_show_Registration_H.setEnabled(False)
         self.comboBox_H.setEnabled(False)
@@ -162,6 +162,29 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Axial_H.setEnabled(False)
         self.SliceSelect_Sagittal_H.setEnabled(False)
         self.SliceSelect_Coronal_H.setEnabled(False)
+        
+        "Navigation Robot ui disable (turn on after the function is enabled)"
+        self.Button_RobotHome.setEnabled(False)
+        self.Button_RobotAutoRun.setEnabled(False)
+        
+        "System Accuracy Test ui disable (turn on after the function is enabled)"
+        self.Button_Registration_SAT.setEnabled(False)
+        self.Button_show_Registration_SAT.setEnabled(False)
+        self.lineEdit_1.setEnabled(False)
+        self.lineEdit_2.setEnabled(False)
+        self.lineEdit_3.setEnabled(False)
+        self.lineEdit_4.setEnabled(False)
+        self.lineEdit_5.setEnabled(False)
+        self.lineEdit_6.setEnabled(False)
+        self.Button_EnterPoint.setEnabled(False)
+        
+        self.Slider_WW_SAT.setEnabled(False)
+        self.Slider_WL_SAT.setEnabled(False)
+        self.SliceSelect_Axial_SAT.setEnabled(False)
+        self.SliceSelect_Sagittal_SAT.setEnabled(False)
+        self.SliceSelect_Coronal_SAT.setEnabled(False)
+        
+        
 
     def ImportDicom_L(self):
         """load inhale (Low breath) DICOM to get image array and metadata
@@ -200,9 +223,15 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmLow.update({"selectedPoint": []})
         self.dcmLow.update({"flageSelectedPoint": False})
         self.dcmLow.update({"flageShowPointButton": False})
-        "ui"
+        "ui disable"
+        self.Button_Planning.setEnabled(False)
         self.Button_Registration_L.setEnabled(False)
         self.Button_show_Registration_L.setEnabled(False)
+        self.comboBox_L.setEnabled(False)
+        self.Button_SetPoint_L.setEnabled(False)
+        self.Button_ShowPoint_L.setEnabled(False)
+        self.Button_RobotHome.setEnabled(False)
+        self.Button_RobotAutoRun.setEnabled(False)
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
@@ -391,9 +420,15 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmHigh.update({"selectedPoint": []})
         self.dcmHigh.update({"flageSelectedPoint": False})
         self.dcmHigh.update({"flageShowPointButton": False})
-        "ui"
+        "ui disable"
+        self.Button_Planning.setEnabled(False)
         self.Button_Registration_H.setEnabled(False)
         self.Button_show_Registration_H.setEnabled(False)
+        self.comboBox_H.setEnabled(False)
+        self.Button_SetPoint_H.setEnabled(False)
+        self.Button_ShowPoint_H.setEnabled(False)
+        self.Button_RobotHome.setEnabled(False)
+        self.Button_RobotAutoRun.setEnabled(False)
         
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
@@ -547,7 +582,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('Set High Dicom Window Level')
 
     def SetRegistration_L(self):
-        """automatic find registration ball center + open another UI window to let user selects ball in order (origin -> x axis -> y axis)
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
         "automatic find registration ball center"
         if self.dcmLow.get("regBall") != []:
@@ -575,7 +610,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmLow.update({"candidateBall": candidateBall})
-        "open another UI window to let user selects ball in order (origin -> x axis -> y axis)"
+        "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmLow.get("candidateBall"))
             self.dcmLow.update({"showAxis": tmp[0]})
@@ -711,7 +746,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
 
     def SetRegistration_H(self):
-        """automatic find registration ball center + open another UI window to let user selects ball in order (origin -> x axis -> y axis)
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
         "automatic find registration ball center"
         if self.dcmHigh.get("regBall") != []:
@@ -739,7 +774,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmHigh.update({"candidateBall": candidateBall})
-        "open another UI window to let user selects ball in order (origin -> x axis -> y axis)"
+        "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmHigh.get("candidateBall"))
             self.dcmHigh.update({"showAxis": tmp[0]})
@@ -876,13 +911,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
 
     def ShowPlanningPath(self):
-        print("************ start: ************")
-        for key in self.dcmLow:
-            print(key)
-            print("..")
-            # print(self.dcmLow.get(key))
-            print("-------------------------------------------------------------------")
-        
         try:
             self.PlanningPath = self.regFn.GetPlanningPath(self.dcmHigh.get("regBall")[0], self.dcmHigh.get("selectedPoint"), self.dcmHigh.get("regMatrix"),
                                                            self.dcmLow.get("regBall")[0], self.dcmLow.get("selectedPoint"), self.dcmLow.get("regMatrix"))
@@ -891,10 +919,13 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             for p in self.PlanningPath:
                 print(p)
             print("-------------------------------------------------------------------")
+            self.Button_RobotHome.setEnabled(True)
+            self.Button_RobotAutoRun.setEnabled(True)
         except:
             self.logUI.warning('fail to Set Planning Path')
             print("fail to Set Planning Path / SetPlanningPath error")
             QMessageBox.critical(self, "error", "fail to Set Planning Path")
+        
         return
 
 
