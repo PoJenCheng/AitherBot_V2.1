@@ -139,7 +139,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
         "DICOM Low ui disable (turn on after the function is enabled)"
         self.Button_Registration_L.setEnabled(False)
-        self.Button_show_Registration_L.setEnabled(False)
+        self.Button_ShowRegistration_L.setEnabled(False)
         self.comboBox_L.setEnabled(False)
         self.Button_SetPoint_L.setEnabled(False)
         self.Button_ShowPoint_L.setEnabled(False)
@@ -152,7 +152,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
         "DICOM High ui disable (turn on after the function is enabled)"
         self.Button_Registration_H.setEnabled(False)
-        self.Button_show_Registration_H.setEnabled(False)
+        self.Button_ShowRegistration_H.setEnabled(False)
         self.comboBox_H.setEnabled(False)
         self.Button_SetPoint_H.setEnabled(False)
         self.Button_ShowPoint_H.setEnabled(False)
@@ -169,13 +169,13 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
-        self.Button_show_Registration_SAT.setEnabled(False)
-        self.Button_Select_Test_Point_SAT.setEnabled(False)
-        self.lineEdit_CMM_Test_Point_SAT.setEnabled(False)
-        self.Button_Enter_Test_Point_SAT.setEnabled(False)
-        self.Button_Robot_To_Test_Point.setEnabled(False)
-        self.lineEdit_CMM_Stylus.setEnabled(False)
-        self.Button_Enter_Stylus_SAT.setEnabled(False)
+        self.Button_ShowRegistration_SAT.setEnabled(False)
+        self.Button_SelectTestPoint_SAT.setEnabled(False)
+        self.lineEdit_CmmTestPoint_SAT.setEnabled(False)
+        self.Button_EnterTestPoint_SAT.setEnabled(False)
+        self.Button_Robot2TestPoint.setEnabled(False)
+        self.lineEdit_CmmStylus.setEnabled(False)
+        self.Button_EnterStylus_SAT.setEnabled(False)
         
         self.Slider_WW_SAT.setEnabled(False)
         self.Slider_WL_SAT.setEnabled(False)
@@ -183,8 +183,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Sagittal_SAT.setEnabled(False)
         self.SliceSelect_Coronal_SAT.setEnabled(False)
         
-        
-
     def ImportDicom_L(self):
         """load inhale (Low breath) DICOM to get image array and metadata
         """
@@ -225,7 +223,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         "ui disable"
         self.Button_Planning.setEnabled(False)
         self.Button_Registration_L.setEnabled(False)
-        self.Button_show_Registration_L.setEnabled(False)
+        self.Button_ShowRegistration_L.setEnabled(False)
         self.comboBox_L.setEnabled(False)
         self.Button_SetPoint_L.setEnabled(False)
         self.Button_ShowPoint_L.setEnabled(False)
@@ -422,7 +420,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         "ui disable"
         self.Button_Planning.setEnabled(False)
         self.Button_Registration_H.setEnabled(False)
-        self.Button_show_Registration_H.setEnabled(False)
+        self.Button_ShowRegistration_H.setEnabled(False)
         self.comboBox_H.setEnabled(False)
         self.Button_SetPoint_H.setEnabled(False)
         self.Button_ShowPoint_H.setEnabled(False)
@@ -616,7 +614,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.dcmLow.update({"showSlice": tmp[1]})
             self.ui_CS = CoordinateSystem(self.dcmLow)
             self.ui_CS.show()
-            self.Button_show_Registration_L.setEnabled(True)
+            self.Button_ShowRegistration_L.setEnabled(True)
         except:
             self.logUI.warning(
                 'get candidate ball error / SetRegistration_L error / candidateBall could be []')
@@ -666,7 +664,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 error = self.regFn.GetError(self.dcmLow.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
-                self.label_error_L.setText(
+                self.label_Error_L.setText(
                     'Error / Difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(
@@ -781,7 +779,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
             self.ui_CS = CoordinateSystem(self.dcmHigh)
             self.ui_CS.show()
-            self.Button_show_Registration_H.setEnabled(True)
+            self.Button_ShowRegistration_H.setEnabled(True)
         except:
             self.logUI.warning(
                 'get candidate ball error / SetRegistration_H error / candidateBall could be []')
@@ -832,7 +830,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 error = self.regFn.GetError(self.dcmHigh.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
-                self.label_error_H.setText(
+                self.label_Error_H.setText(
                     'Error / Difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(

@@ -448,7 +448,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>5</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -648,7 +648,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="Button_show_Registration_L">
+          <widget class="QPushButton" name="Button_ShowRegistration_L">
            <property name="text">
             <string>Show difference</string>
            </property>
@@ -657,7 +657,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QLabel" name="label_error_L">
+        <widget class="QLabel" name="label_Error_L">
          <property name="text">
           <string>Difference: 0 mm</string>
          </property>
@@ -1093,7 +1093,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="Button_show_Registration_H">
+          <widget class="QPushButton" name="Button_ShowRegistration_H">
            <property name="text">
             <string>Show difference</string>
            </property>
@@ -1102,7 +1102,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QLabel" name="label_error_H">
+        <widget class="QLabel" name="label_Error_H">
          <property name="text">
           <string>Difference: 0 mm</string>
          </property>
@@ -1545,7 +1545,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="Button_show_Registration_SAT">
+          <widget class="QPushButton" name="Button_ShowRegistration_SAT">
            <property name="text">
             <string>Show difference</string>
            </property>
@@ -1554,7 +1554,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QLabel" name="label_Registrtion_Error_SAT">
+        <widget class="QLabel" name="label_RegistrtionError_SAT">
          <property name="text">
           <string>Difference: 0 mm</string>
          </property>
@@ -1564,7 +1564,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_Select_Test_Point_SAT">
+        <widget class="QPushButton" name="Button_SelectTestPoint_SAT">
          <property name="text">
           <string>Select test point</string>
          </property>
@@ -1583,19 +1583,19 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_CMM_Test_Point_SAT"/>
+          <widget class="QLineEdit" name="lineEdit_CmmTestPoint_SAT"/>
          </item>
         </layout>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_Enter_Test_Point_SAT">
+        <widget class="QPushButton" name="Button_EnterTestPoint_SAT">
          <property name="text">
           <string>Enter</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_Image_Error_SAT">
+        <widget class="QLabel" name="label_ImageError_SAT">
          <property name="text">
           <string>Image accuracy difference: 0 mm</string>
          </property>
@@ -1605,7 +1605,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_Robot_To_Test_Point">
+        <widget class="QPushButton" name="Button_Robot2TestPoint">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -1617,7 +1617,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
-          <widget class="QLabel" name="label_point_2">
+          <widget class="QLabel" name="label_Stylus">
            <property name="text">
             <string>CMM stylus</string>
            </property>
@@ -1627,24 +1627,135 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_CMM_Stylus"/>
+          <widget class="QLineEdit" name="lineEdit_CmmStylus"/>
          </item>
         </layout>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_Enter_Stylus_SAT">
+        <widget class="QPushButton" name="Button_EnterStylus_SAT">
          <property name="text">
           <string>Enter</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_System_Error_SAT">
+        <widget class="QLabel" name="label_SystemError_SAT">
          <property name="text">
           <string>System accuracy difference: 0 mm</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tabWidget_RobotAccuracy">
+     <attribute name="title">
+      <string>Robot cycle accuracy</string>
+     </attribute>
+     <widget class="QWidget" name="verticalLayoutWidget_14">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>90</y>
+        <width>301</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_16">
+       <item>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_24">
+           <property name="text">
+            <string>Target point</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_23">
+           <property name="text">
+            <string>Entry point</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_EntryPoint_RCA"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="lineEdit_TargetPoint_RCA"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_RobotAutoRun_RCA">
+         <property name="text">
+          <string>Robot auto run</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_15">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>270</y>
+        <width>301</width>
+        <height>148</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_17">
+       <item>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_Point_1"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_Point_1">
+           <property name="text">
+            <string>Point No. 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_Point_2">
+           <property name="text">
+            <string>Point No. 2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_Point_3">
+           <property name="text">
+            <string>Point No. 3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_Point_4">
+           <property name="text">
+            <string>Point No. 4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="lineEdit_Point_2"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="lineEdit_Point_3"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="lineEdit_Point_4"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_RobotCycleRun_RCA">
+         <property name="text">
+          <string>Robot cycle run</string>
          </property>
         </widget>
        </item>
@@ -1756,7 +1867,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_show_Registration_L</sender>
+   <sender>Button_ShowRegistration_L</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>ShowRegistrationDifference_L()</slot>
@@ -1884,7 +1995,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_show_Registration_H</sender>
+   <sender>Button_ShowRegistration_H</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>ShowRegistrationDifference_H()</slot>
