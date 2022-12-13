@@ -8,13 +8,14 @@ import cv2
 import math
 from PyQt5.QtGui import *
 
-"跟DICOM有關的, 會要建立很多組DICOM"
+"DICOM function"
 class DICOM():
     def __init__(self):
         pass
         
     def LoadPath(self, folderPath):
-        """分辨是不是DICOM. 分辨是否一組UID
+        """identify whether DICOM or not
+           identify whether one UID or not
 
         Args:
             folderPath (_string_): DICOM folder path
@@ -47,8 +48,11 @@ class DICOM():
         return metadata, metadataSeriesNum
         
     def SeriesSort(self, metadata, metadataSeriesNum):
-        """依照SeriesNumber為key, 分類/分組metadata + pixel_array
-           分類/分組/SeriesNumber, 自動辨別是不是資料夾及DICOM
+        """classify SeriesNumber and metadata in {SeriesNumber : metadata + pixel_array}
+           key is SeriesNumber,
+           value is metadata + pixel_array
+           
+           auto recognize DICOM or floder
 
         Args:
             metadata (_list_):
@@ -71,11 +75,10 @@ class DICOM():
     
     def ReadDicom(self, seriesNumberLabel, dicDICOM):
         """read DICOM
-           把分類好的dicDICOM, 找到要的metadata + pixel_array
-           return pixel_array(_list_)
+           and then get metadata + pixel_array(image 3D)
 
         Args:
-            seriesNumberLabel (_numpy array_): 有幾組的SeriesNumber的Label
+            seriesNumberLabel (_numpy array_): group of SeriesNumber Label
             dicDICOM (_dictionary_): {SeriesNumber : metadata + pixel_array}
             
         Returns:
@@ -89,7 +92,7 @@ class DICOM():
         
         imageInfo = dicDICOM.get(seriesNumberLabel[index])
         imageTag = [0]*tmp
-        "照InstanceNumber排序"
+        "sort InstanceNumber"
         for i in range(len(imageInfo)):
             tmp = imageInfo[i]
             imageTag[tmp.InstanceNumber-1] = tmp
@@ -134,6 +137,15 @@ class DICOM():
         return imageHu
 
     def ImgTransfer2Mm(self, image, pixel2Mm):
+        """_summary_
+
+        Args:
+            image (_numpy.array_): DICOM image (voxel array in 3 by 3)
+            pixel2Mm (_numpy.array_): Pixel to mm array
+
+        Returns:
+            cutImagesHu (_list_): DICOM image in HU value (voxel array in 3 by 3)
+        """
         cutImagesHu=[]
         for z in range(image.shape[0]):
             "resize, 會變成mm"
@@ -150,13 +162,13 @@ class DICOM():
         return cutImagesHu
     
     def GetPixel2Mm(self, imageTag):
-        """Get Pixel to Mm array
+        """Get Pixel to mm array
 
         Args:
             imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
 
         Returns:
-            pixel2Mm (_list_): Pixel to Mm array
+            pixel2Mm (_list_): Pixel to mm array
         """
         pixel2Mm = []
         pixel2Mm.append(imageTag.PixelSpacing[0])
@@ -202,7 +214,7 @@ class DICOM():
         qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return qimg
         
-"跟對位有關"
+"registration function"
 class REGISTRATION():
     def __init__(self):
         self.PlanningPath = []
@@ -210,32 +222,31 @@ class REGISTRATION():
         
     
     def TransformationMatrix(self, ballCenterMm):
-        """算轉換矩陣
+        """calculate registration transformation matrix
 
         Args:
-            ballCenterMm (_numpy.array_): 已配對定位球中心點
+            ballCenterMm (_numpy.array_): ball center in mm (candidates matched)
 
         Returns:
             TransformationMatrix(_numpy.array_): numpy.dot(R_y,R_z) Transformation Matrix
         """
-        "ball_center_mm(1,:);   原點"
-        "ball_center_mm(2,:);   x 軸"
-        "ball_center_mm(3,:);   y 軸"  
+        "ball_center_mm(1,:);   origin"
+        "ball_center_mm(2,:);   x axis"
+        "ball_center_mm(3,:);   y axis"  
         ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
         ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
-        "建立新座標(向量兩兩垂直)"
+        "create new coordinate"
         vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
         vectorX = numpy.array(ball_vector_x)
         vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
         
         new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        
-        "計算單位向量"
+        "calculate unit vector"
         unit_new_vector = []
         for vector in new_vector:
             unit_new_vector.append(vector / self.GetNorm(vector))
         unit_new_vector = numpy.array(unit_new_vector)
-        "計算選轉角度"
+        "calculate radian"
         angle_radian = []
         unit = numpy.eye(3, dtype = 'int')
         for n in range(unit.shape[0]):
@@ -243,17 +254,17 @@ class REGISTRATION():
             down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
-        "轉動矩陣"
+        "calculate rotation matrix"
         R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
                [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
                [0, 0, 1]])
         
-        "算出轉後的單位向量 + 建立新座標(向量兩兩垂直)"
+        "calculate new unit vector"
         new_vector = unit_new_vector
         unit_new_vector = []
         for vector in new_vector:
             unit_new_vector.append(numpy.dot(R_z,vector))
-        "計算選轉角度"
+        "calculate radian"
         angle_radian = []
         unit = numpy.eye(3, dtype = 'int')
         for n in range(unit.shape[0]):
@@ -261,7 +272,7 @@ class REGISTRATION():
             down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
             angle_radian.append(math.acos(top / down))
         angle_radian = numpy.array(angle_radian)
-        "轉動矩陣"
+        "calculate rotation matrix"
         R_y = numpy.array([[math.cos(angle_radian[0]), 0, math.sin(angle_radian[0])],
         [0, 1, 0],
         [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
@@ -289,7 +300,7 @@ class REGISTRATION():
                 1 = y axis
                 2 = z axis
                 """
-                "要顯示的Axis跟Slice"
+                "display Axis and Slice"
                 showAxis = i
                 showSlice = int(tmpMean[i])
                 break
@@ -332,13 +343,14 @@ class REGISTRATION():
         return d
         
     def ThresholdFilter(self, imageHu):
-        """只保留[down_, up_]之間的圖, 並且為PIXEL_MAX, 其他為0
+        """Threshold is [down_, up_] = [-800, 300]
+           image value turn to PIXEL_MAX and 0 whitch is binarization image
 
         Args:
-            imageHu (_list_): input
+            imageHu (_list_): image in Hounsfield Unit (Hu)
 
         Returns:
-            imagesHuThr (_list_): output
+            imagesHuThr (_list_): _description_
         """ 
         imagesHuThr = []
         PIXEL_MAX = 4096-1
@@ -351,14 +363,15 @@ class REGISTRATION():
         return imagesHuThr
     
     def FindBallXY(self, imageHu, pixel2Mm):
-        """找2D(XY平面)圓心, 所以會有不是球的圓心被找到
+        """scan XY plane to  find ball centroid,
+           May find candidate ball and non-candidates
 
         Args:
-            imageHu (_numpy.array_): _description_
-            pixel2Mm (_list_): Pixel to Mm array
+            imageHu (_numpy.array_): image in Hounsfield Unit (Hu)
+            pixel2Mm (_list_): Pixel to mm array
 
         Returns:
-            result_centroid (_type_): _description_
+            result_centroid (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
         """
         y = 200
         x = 512
@@ -371,33 +384,33 @@ class REGISTRATION():
         for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
             cutImagesHu.append(imageHu[z,:y,:x])
             
-        "filter & 二值化"
+        "filter and binarization"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
         src_tmp = numpy.uint8(cutImageHuThr)
         resultCentroid_xy = []
         
-        "係數"
-        "Hough Circles找半徑跟圓心"
+        "use Hough Circles find radius and circle center"
+        "coefficient"
         ratio = 3
         low_threshold = 15
-        "Radius範圍 [4.5mm ~ (21/2)+3mm]"
+        "Radius range: [4.5mm ~ (21/2)+3mm]"
         minRadius=int((4.5/pixel2Mm[0]))
         maxRadius=int((21/pixel2Mm[0])/2)+3
         
         
-        "每一張DICOM找圓, 圓心, 半徑"
+        "find circle, radius and center of circle in each DICOM image"
         for z in range(src_tmp.shape[0]):
             "filter"
             src_tmp[z,:,:] = cv2.bilateralFilter(src_tmp[z,:,:],5,100,100)
-            "畫輪廓"
+            "draw contours"
             contours, hierarchy = cv2.findContours(src_tmp[z,:,:],
                                                 cv2.RETR_EXTERNAL,
                                                 cv2.CHAIN_APPROX_SIMPLE)
-            "建立全黑的圖片畫輪廓"
+            "create an all black picture to draw contour"
             shape = (src_tmp.shape[1], src_tmp.shape[2], 1)
             black_image = numpy.zeros(shape, numpy.uint8)
             cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
-            "用輪廓找質心"
+            "use contour to find centroid"
             centroid = []
             for c in contours:
                 if c.shape[0] > 4 and c.shape[0]<110:
@@ -406,14 +419,14 @@ class REGISTRATION():
                         Cx = (M["m10"]/M["m00"])
                         Cy = (M["m01"]/M["m00"])
                         centroid.append((Cx,Cy))
-            "Hough Circles找半徑跟圓心"
+            "use Hough Circles to find radius and center of circle"
             circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT, 1, 75,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
             if circles is not None and centroid is not None:
-                "交集"
-                "centroid = 這張圖有幾個質心"
-                "circles = 這張圖有幾個hough circle"
+                "Intersection"
+                "centroid = group of Centroid"
+                "circles = group of hough circle"
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
@@ -426,22 +439,26 @@ class REGISTRATION():
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
         return resultCentroid_xy
   
-    def SortPointXY(self, pointMatrix, pixel2Mm):
-        """Sort Point Matrix for FindBall() result
-           分類/分組所有2D圓心, 以第一點為key, 存成numpy.array
+    def ClassifyPointXY(self, pointMatrix, pixel2Mm):
+        """classify Point Matrix from FindBall() result
+           take the first point of each group as the key
+           save as numpy.array
+           = {point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])}
 
         Args:
-            pointMatrix (_list_): _description_
+            pointMatrix (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
 
         Returns:
             dictionary(_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
         """
         dictionaryTmp = {}
         dictionary = {}
-        "pointMatrix 點跟點依序倆倆比較，符合條件的為同一組"
-        "條件: "
-        "兩點XY距離不超過2mm"
-        "Z軸距離不超過20+13mm"
+        "pointMatrix, "
+        "Compare the point with the point in order, "
+        "meet the conditions are the same group"
+        "conditions: "
+        "The XY distance between two points does not exceed 2mm (<= 2 mm)"
+        "Z-axis distance does not exceed 20+13mm (< 20+13 mm)"
         for num1 in range(len(pointMatrix)-1):
             tmp=[]
             value = []
@@ -455,11 +472,13 @@ class REGISTRATION():
             value.append(pointMatrix[num1])
             value.extend(tmp)
             dictionaryTmp.update({tuple(pointMatrix[num1]):numpy.array(value)})
-
-        "刪除重複的組別 & 組別太小的"
-        "符合以下條件都刪除: "
-        "組別裡元素個數(=Z軸距離)大於15mm & key[i]與key[i+1]距離小於50mm"
-        "組別裡元素個數(=Z軸距離)小於15mm"
+        
+        "remove groups which points are repeated"
+        "remove small groups which member is less then 15 (< 15)"
+        "remove groups that meet the following conditions:"
+        "* The number/count/quantity/amount in the group is more than 15mm(> 15 mm), same as Z-axis distance is more than 15mm "
+        " & the distance between key[i] and key[i+1] is less than 50mm"
+        "* The number/count/quantity/amount in the group is less than 15mm(< 15 mm), same as Z-axis distance is less than 15mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for num1 in range(len(key_)-1):
@@ -482,10 +501,10 @@ class REGISTRATION():
                 del dictionaryTmp[dic1]
             except:
                 pass
-        "同組裡面若有斷層(不連貫), 自動分開"
-        "條件: "
-        "前-後(不連貫距離) < -3mm"
-        "自動分開以後留下組別裡元素個數大於15mm的"
+        "If there is not consecutive numbers in the same group, it will be separated automatically"
+        "conditions: "
+        "the difference between the [n] number and the [n+1] number (points distance) < -3 mm"
+        "After automatic separation, leave the group which is greater than 15 mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for dic_num in range(len(key_)):
@@ -511,8 +530,8 @@ class REGISTRATION():
             except:
                 pass
         
-        "將暫時的結果及Pr有改變的output"
-        "小 -> 大 -> 小"
+        "output 2 result, the radius which has changed (Pr) and temporary results"
+        "circle shape trend: small -> big -> small"
         for dic in dictionaryTmp:
             key = dic
             values = dictionaryTmp.get(dic)
@@ -521,11 +540,12 @@ class REGISTRATION():
         return dictionary
     
     def FindBallYZ(self, imageHu, pixel2Mm):
-        """找2D(XZ平面)圓心, 所以會有不是球的圓心被找到
+        """scan YZ plane to  find ball centroid,
+           May find candidate ball and non-candidates
 
         Args:
-            imageHu (_numpy.array_): _description_
-            pixel2Mm (_list_): Pixel to Mm array
+            imageHu (_numpy.array_): image in Hounsfield Unit (Hu)
+            pixel2Mm (_list_): Pixel to mm array
 
         Returns:
             result_centroid (_type_): _description_
@@ -547,13 +567,13 @@ class REGISTRATION():
             for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
                 cutImagesHu.append(imageHu[z,:y,:x])
             
-        "filter"
+        "filter and binarization"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
         src_tmp = numpy.uint8(cutImageHuThr)
         resultCentroid_yz = []
         
-        "係數"
-        "Hough Circles找半徑跟圓心"
+        "use Hough Circles find radius and circle center"
+        "coefficient"
         ratio = 3
         low_threshold = 15
         "in mm"
@@ -561,19 +581,19 @@ class REGISTRATION():
         "in mm"
         maxRadius = 21
         
-        "每一張DICOM找圓, 圓心, 半徑"
+        "find circle, radius and center of circle in each DICOM image"
         for x in range(src_tmp.shape[2]):
             "filter"
             src_tmp[:,:,x] = cv2.bilateralFilter(src_tmp[:,:,x],5,100,100)
-            "畫輪廓"
+            "get contour"
             contours, hierarchy = cv2.findContours(src_tmp[:,:,x],
                                                 cv2.RETR_EXTERNAL,
                                                 cv2.CHAIN_APPROX_SIMPLE)
-            "建立全黑的圖片畫輪廓"
+            "create an all black picture to draw contour"
             shape = (src_tmp[:,:,x].shape[0], src_tmp[:,:,x].shape[1], 1)
             black_image = numpy.zeros(shape, numpy.uint8)
             cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
-            "用輪廓找質心"
+            "use contour to find centroid"
             centroid = []
             for c in contours:
                 if c.shape[0] > 4 and c.shape[0]<110:
@@ -582,15 +602,15 @@ class REGISTRATION():
                         Cy = (M["m10"]/M["m00"])
                         Cz = (M["m01"]/M["m00"])+int(imageHu.shape[0]/3)
                         centroid.append((Cy,Cz))
-            "Hough Circles找半徑跟圓心"
+            "use Hough Circles to find radius and center of circle"
             circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT,1, 25,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
 
             if circles is not None and centroid is not None:
-                "交集"
-                "centroid = 這張圖有幾個質心"
-                "circles = 這張圖有幾個hough circle"
+                "Intersection"
+                "centroid = group of Centroid"
+                "circles = group of hough circle"
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-(j[1]+int(imageHu.shape[0]/3)))**2)
@@ -609,22 +629,26 @@ class REGISTRATION():
             cv2.destroyAllWindows()
         return resultCentroid_yz
 
-    def SortPointYZ(self, pointMatrix, pixel2Mm):
-        """Sort Point Matrix for FindBall() result
-           分類/分組所有2D圓心, 以第一點為key, 存成numpy.array
+    def ClassifyPointYZ(self, pointMatrix, pixel2Mm):
+        """classify Point Matrix from FindBall() result
+           take the first point of each group as the key
+           save as numpy.array
+           = {point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])}
 
         Args:
-            pointMatrix (_list_): _description_
+            pointMatrix (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
 
         Returns:
-            dictionary(_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
+            dictionary(_dictionary_): {point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])}
         """
         dictionaryTmp = {}
         dictionary = {}
-        "pointMatrix 點跟點依序倆倆比較，符合條件的為同一組"
-        "條件: "
-        "兩點YZ距離不超過3mm"
-        "X軸距離不超過20+13mm"
+        "pointMatrix, "
+        "Compare the point with the point in order, "
+        "meet the conditions are the same group"
+        "conditions: "
+        "The YZ distance between two points does not exceed 3mm (< 3 mm)"
+        "X-axis distance does not exceed 20+13mm (< 20+13 mm)"
         for num1 in range(len(pointMatrix)-1):
             tmp=[]
             value = []
@@ -639,10 +663,12 @@ class REGISTRATION():
             value.extend(tmp)
             dictionaryTmp.update({tuple(pointMatrix[num1]):numpy.array(value)})
 
-        "刪除重複的組別 & 組別太小的"
-        "符合以下條件都刪除: "
-        "組別裡元素個數(=X軸距離)大於10mm & key[i]與key[i+1]距離小於50mm"
-        "組別裡元素個數(=X軸距離)小於10mm"
+        "remove groups which points are repeated"
+        "remove small groups which member is less then 15 (< 15)"
+        "remove groups that meet the following conditions:"
+        "* The number/count/quantity/amount in the group is more than 10mm(> 10 mm), same as Z-axis distance is more than 10mm "
+        " & the distance between key[i] and key[i+1] is less than 50mm"
+        "* The number/count/quantity/amount in the group is less than 10mm(< 10 mm), same as Z-axis distance is less than 10mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for num1 in range(len(key_)-1):
@@ -664,10 +690,10 @@ class REGISTRATION():
                 del dictionaryTmp[dic1]
             except:
                 pass
-        "同組裡面若有斷層(不連貫), 自動分開"
-        "條件: "
-        "前-後(不連貫距離)<-3"
-        "自動分開以後留下組別裡元素個數大於15mm的"
+        "If there is not consecutive numbers in the same group, it will be separated automatically"
+        "conditions: "
+        "the difference between the [n] number and the [n+1] number (points distance) < -3 mm"
+        "After automatic separation, leave the group which is greater than 15 mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for dic_num in range(len(key_)):
@@ -692,8 +718,8 @@ class REGISTRATION():
             except:
                 pass
         
-        "將暫時的結果及Pr有改變的output"
-        "小 -> 大 -> 小"
+        "output 2 result, the radius which has changed (Pr) and temporary results"
+        "circle shape change: small -> big -> small"
         for dic in dictionaryTmp:
             key = dic
             values = dictionaryTmp.get(dic)
@@ -702,10 +728,10 @@ class REGISTRATION():
         return dictionary
     
     def IsRadiusChange(self, matrix):
-        """檢查分類/分組完的圓心中, Pr 有沒有改變
+        """check the radius is changed (Pr) or not from classify group
 
         Args:
-            matrix (_numpy.array_): 半徑(Pr)
+            matrix (_numpy.array_): the radius of hough circle (Pr)
 
         Returns:
             _bool_: if Radius is Change = True
@@ -713,10 +739,10 @@ class REGISTRATION():
 
         max = numpy.max(matrix)
         min = numpy.min(matrix)
-        "去除差異小於2mm的"
+        "remove difference less than 2 mm (< 2 mm)"
         if max-min < 2:
             return False
-        "去除差異 -2 < tmp <= 0"
+        "remove difference, -2 < tmp <= 0"
         tmp1 = matrix[0] - matrix[int(len(matrix)/2)]
         if tmp1 <= 0 and tmp1 > -2:
             return False
@@ -728,25 +754,25 @@ class REGISTRATION():
         if numpy.max(counts) >= 9:
             return False
         
-        "組別裡元素個數大於15mm且小於25mm"
+        "leave guoup is greater than (>=) 15 mm and less than (<=) 25 mm"
         if len(matrix)<=25:
             same = 0
             small2big = 0
             for i in range(len(matrix)-1):
                 if matrix[i] < matrix[i+1] or matrix[i] < matrix[int(len(matrix)/2)]:
-                    "代表由小變到大"
+                    "shape change small -> big"
                     small2big+=1
                 if matrix[i]>matrix[i+1] and matrix[i] == max:
+                    "shape change big -> small"
                     num = i
-                    "代表由小變到大"
                     break
                 if matrix[i] == matrix[i+1]:
                     same+=1
                     if same == len(matrix)-1:
-                        "代表全部一樣"
+                        "shape change same, no change"
                         return False
                 if i+1 == len(matrix)-1:
-                    "迴圈到底了，代表持續變大"
+                    "when for loop reaches the end, it means that radius (Pr) continues to grow (small to big until the end)"
                     return False
             if num!= len(matrix)-1 and small2big != 0:
                 change = num
@@ -754,15 +780,15 @@ class REGISTRATION():
                     if matrix[i] >= min:
                         change+=1
                         if change == len(matrix):
-                            "小->大->小，圓形"
+                            "shape change: small -> big -> small, means it is ball"
                             return True
             if same > (len(matrix)/2):
-                "橢圓形"
+                "it's oval/egg"
                 return False
         return False
 
     def AveragePoint(self, dictionaryPoint, axis=[False, False, False]):
-        """得出最後的四球影像坐標 (平均)
+        """average ball center of registration result (Px, Py, Pz)
 
         Args:
             dictionaryPoint (_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
@@ -785,7 +811,7 @@ class REGISTRATION():
                 for tmp in value:
                     tmp_str1 = str(tmp[1])
                     tmp_str2 = str(tmp[2])
-                    "去除.5及整數，留下看起來是質心候選的"
+                    "remove .5 and integer, get candidate (with centroid)"
                     if int(tmp[1]) != tmp[1] and len(tmp_str1)-(tmp_str1.find(".")+1) == 1 and tmp_str1[tmp_str1.find(".")+1] == "5":
                         if int(tmp[2]) != tmp[2] and len(tmp_str2)-(tmp_str2.find(".")+1) == 1 and tmp_str2[tmp_str2.find(".")+1] == "5":
                             pass
@@ -807,7 +833,7 @@ class REGISTRATION():
                 for tmp in value:
                     tmp_str0 = str(tmp[0])
                     tmp_str1 = str(tmp[1])
-                    "去除.5及整數，留下看起來是質心候選的"
+                    "remove .5 and integer, get candidate (with centroid)"
                     if int(tmp[0]) != tmp[0] and len(tmp_str0)-(tmp_str0.find(".")+1) == 1 and tmp_str0[tmp_str0.find(".")+1] == "5":
                         if int(tmp[1]) != tmp[1] and len(tmp_str1)-(tmp_str1.find(".")+1) == 1 and tmp_str1[tmp_str1.find(".")+1] == "5":
                             pass
@@ -824,8 +850,7 @@ class REGISTRATION():
         return point
 
     def GetBall(self, imageHu, pixel2Mm):
-        """目前目標先找到圓心
-           找到圓心之後要換成轉換矩陣, 再之後得出robot座標下的目標點
+        """get ball center
 
         Args:
             imageHu (_numpy.array_): image in Hounsfield Unit (Hu)
@@ -835,10 +860,10 @@ class REGISTRATION():
             dictionaryPoint (_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
         """
         resultCentroid_xy = self.FindBallXY(imageHu, pixel2Mm)
-        dictionaryPoint_xy = self.SortPointXY(resultCentroid_xy, pixel2Mm)
+        dictionaryPoint_xy = self.ClassifyPointXY(resultCentroid_xy, pixel2Mm)
         
         resultCentroid_yz = self.FindBallYZ(imageHu, pixel2Mm)
-        dictionaryPoint_yz = self.SortPointYZ(resultCentroid_yz, pixel2Mm)
+        dictionaryPoint_yz = self.ClassifyPointYZ(resultCentroid_yz, pixel2Mm)
         
         point_xy = self.AveragePoint(dictionaryPoint_xy,axis = [True, True, False])
         point_yz = self.AveragePoint(dictionaryPoint_yz,axis = [False, True, True])
@@ -869,7 +894,7 @@ class REGISTRATION():
         
             
     
-"使用範例"
+"example"
 if __name__ == "__main__":
     path_dicom_only = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\S2010\\"
     path_dicom = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\"
