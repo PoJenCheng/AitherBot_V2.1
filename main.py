@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import *
 import sys
 
 app = QApplication(sys.argv)
-print("test2")
 w = mat.MainWidget()
 w.show()
 sys.exit(app.exec_())
