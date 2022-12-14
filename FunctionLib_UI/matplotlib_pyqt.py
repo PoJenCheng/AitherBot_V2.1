@@ -62,6 +62,18 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmHigh.update({"selectedPoint": []})
         self.dcmHigh.update({"flageSelectedPoint": False})
         self.dcmHigh.update({"flageShowPointButton": False})
+        
+        "initialize dcm system accuracy test (SAT)"
+        self.dcmSAT = {}
+        self.dcmSAT.update({"ww": 1})
+        self.dcmSAT.update({"wl": 1})
+        "registration ball"
+        self.dcmSAT.update({"selectedBall": []})
+        self.dcmSAT.update({"regBall": []})
+        self.dcmSAT.update({"flageSelectedBall": False})
+        "set test point"
+        self.dcmSAT.update({"selectedTestPoint": []})
+        self.dcmSAT.update({"flageselectedTestPoint": False})
 
         self.Slider_WW_L.setMinimum(1)
         self.Slider_WW_L.setMaximum(3071)
@@ -69,6 +81,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Slider_WW_H.setMinimum(1)
         self.Slider_WW_H.setMaximum(3071)
         self.Slider_WW_H.setValue(0)
+        self.Slider_WW_SAT.setMinimum(1)
+        self.Slider_WW_SAT.setMaximum(3071)
+        self.Slider_WW_SAT.setValue(0)
 
         self.Slider_WL_L.setMinimum(-1024)
         self.Slider_WL_L.setMaximum(3071)
@@ -76,27 +91,30 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Slider_WL_H.setMinimum(-1024)
         self.Slider_WL_H.setMaximum(3071)
         self.Slider_WL_H.setValue(0)
+        self.Slider_WL_SAT.setMinimum(-1024)
+        self.Slider_WL_SAT.setMaximum(3071)
+        self.Slider_WL_SAT.setValue(0)
 
-        self.SliceSelect_Axial_L.valueChanged.connect(
-            self.ScrollBarChangeAxial_L)
-        self.SliceSelect_Sagittal_L.valueChanged.connect(
-            self.ScrollBarChangeSagittal_L)
-        self.SliceSelect_Coronal_L.valueChanged.connect(
-            self.ScrollBarChangeCoronal_L)
-        self.SliceSelect_Axial_H.valueChanged.connect(
-            self.ScrollBarChangeAxial_H)
-        self.SliceSelect_Sagittal_H.valueChanged.connect(
-            self.ScrollBarChangeSagittal_H)
-        self.SliceSelect_Coronal_H.valueChanged.connect(
-            self.ScrollBarChangeCoronal_H)
+        self.SliceSelect_Axial_L.valueChanged.connect(self.ScrollBarChangeAxial_L)
+        self.SliceSelect_Sagittal_L.valueChanged.connect(self.ScrollBarChangeSagittal_L)
+        self.SliceSelect_Coronal_L.valueChanged.connect(self.ScrollBarChangeCoronal_L)
+        self.SliceSelect_Axial_H.valueChanged.connect(self.ScrollBarChangeAxial_H)
+        self.SliceSelect_Sagittal_H.valueChanged.connect(self.ScrollBarChangeSagittal_H)
+        self.SliceSelect_Coronal_H.valueChanged.connect(self.ScrollBarChangeCoronal_H)
+        self.SliceSelect_Axial_SAT.valueChanged.connect(self.ScrollBarChangeAxial_SAT)
+        self.SliceSelect_Sagittal_SAT.valueChanged.connect(self.ScrollBarChangeSagittal_SAT)
+        self.SliceSelect_Coronal_SAT.valueChanged.connect(self.ScrollBarChangeCoronal_SAT)
 
         self.Slider_WW_L.valueChanged.connect(self.SetWidth_L)
         self.Slider_WL_L.valueChanged.connect(self.SetLevel_L)
         self.Slider_WW_H.valueChanged.connect(self.SetWidth_H)
         self.Slider_WL_H.valueChanged.connect(self.SetLevel_H)
+        self.Slider_WW_SAT.valueChanged.connect(self.SetWidth_SAT)
+        self.Slider_WL_SAT.valueChanged.connect(self.SetLevel_SAT)
 
         self.Action_ImportDicom_L.triggered.connect(self.ImportDicom_L)
         self.Action_ImportDicom_H.triggered.connect(self.ImportDicom_H)
+        self.Action_ImportDicom_SAT.triggered.connect(self.ImportDicom_SAT)
         self.logUI.debug('initial main UI')
 
         "robot control initial"
@@ -174,7 +192,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.lineEdit_CmmTestPoint_SAT.setEnabled(False)
         self.Button_EnterTestPoint_SAT.setEnabled(False)
         self.Button_Robot2TestPoint.setEnabled(False)
-        self.lineEdit_CmmStylus.setEnabled(False)
+        self.lineEdit_CmmStylus_SAT.setEnabled(False)
         self.Button_EnterStylus_SAT.setEnabled(False)
         
         self.Slider_WW_SAT.setEnabled(False)
@@ -925,6 +943,179 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         
         return
 
+    def ImportDicom_SAT(self):
+        """load system accuracy test (SAT) DICOM to get image array and metadata
+        """
+        self.logUI.info('Import Dicom system accuracy test (SAT)')
+        dlg = QFileDialog()
+        dlg.setFileMode(QFileDialog.Directory)
+        dlg.setFilter(QDir.Files)
+
+        if dlg.exec_():
+            filePath = dlg.selectedFiles()[0] + '/'
+        else:
+            return
+
+        metadata, metadataSeriesNum = self.dcmFn.LoadPath(filePath)
+        if metadata == 0 or metadataSeriesNum == 0:
+            QMessageBox.critical(self, "error", "please load one DICOM")
+            self.logUI.info('not loading one DICOM')
+            return
+        print("-------------------------------------------------------------------")
+        print("load system accuracy test (SAT) DICOM path:")
+        print(filePath)
+        print("-------------------------------------------------------------------")
+        logStr = 'Load system accuracy test (SAT) Dicom: ' + filePath
+        self.logUI.info(logStr)
+
+        "reset dcm"
+        self.dcmSAT = {}
+        self.dcmSAT.update({"ww": 1})
+        self.dcmSAT.update({"wl": 1})
+        "registration ball"
+        self.dcmSAT.update({"selectedBall": []})
+        self.dcmSAT.update({"regBall": []})
+        self.dcmSAT.update({"flageSelectedBall": False})
+        "set test point"
+        self.dcmSAT.update({"selectedTestPoint": []})
+        self.dcmSAT.update({"flageselectedTestPoint": False})
+        "ui disable"
+        self.Button_Registration_SAT.setEnabled(False)
+        self.Button_ShowRegistration_SAT.setEnabled(False)
+        self.Button_SelectTestPoint_SAT.setEnabled(False)
+        self.lineEdit_CmmTestPoint_SAT.setEnabled(False)
+        self.Button_EnterTestPoint_SAT.setEnabled(False)
+        self.Button_Robot2TestPoint.setEnabled(False)
+        self.lineEdit_CmmStylus_SAT.setEnabled(False)
+        self.Button_EnterStylus_SAT.setEnabled(False)
+
+        seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(metadata, metadataSeriesNum)
+        self.dcmSAT.update({"imageTag": self.dcmFn.ReadDicom(seriesNumberLabel, dicDICOM)})
+        image = self.dcmFn.GetImage(self.dcmSAT.get("imageTag"))
+        if image != 0:
+            self.dcmSAT.update({"image": numpy.array(image)})
+        else:
+            QMessageBox.critical(self, "error", "please load one DICOM")
+            self.logUI.warning('fail to get image')
+            return
+
+        rescaleSlope = self.dcmSAT.get("imageTag")[0].RescaleSlope
+        rescaleIntercept = self.dcmSAT.get("imageTag")[0].RescaleIntercept
+        self.dcmSAT.update({"imageHu": numpy.array(self.dcmFn.Transfer2Hu(self.dcmSAT.get("image"), rescaleSlope, rescaleIntercept))})
+        self.dcmSAT.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmSAT.get("imageTag")[0])})
+        self.dcmSAT.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmSAT.get("imageHu"), self.dcmSAT.get("pixel2Mm")))})
+        patientPosition = self.dcmSAT.get("imageTag")[0].PatientPosition
+        if patientPosition == 'HFS':
+            self.label_dcmSAT_L_side.setText("Left")
+            self.label_dcmSAT_R_side.setText("Right")
+        elif patientPosition == 'HFP':
+            self.label_dcmSAT_L_side.setText("Right")
+            self.label_dcmSAT_R_side.setText("Left")
+        else:
+            self.label_dcmSAT_L_side.setText("error")
+            self.label_dcmSAT_R_side.setText("error")
+
+        self.SliceSelect_Axial_SAT.setMinimum(0)
+        self.SliceSelect_Axial_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[0]-1)
+        self.SliceSelect_Axial_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[0])/2))
+        self.SliceSelect_Sagittal_SAT.setMinimum(0)
+        self.SliceSelect_Sagittal_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[1]-1)
+        self.SliceSelect_Sagittal_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[1])/2))
+        self.SliceSelect_Coronal_SAT.setMinimum(0)
+        self.SliceSelect_Coronal_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[2]-1)
+        self.SliceSelect_Coronal_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[2])/2))
+
+        max = int(numpy.max(self.dcmSAT.get("imageHuMm")))
+        min = int(numpy.min(self.dcmSAT.get("imageHuMm")))
+        "WindowWidth"
+        self.Slider_WW_SAT.setMinimum(1)
+        self.Slider_WW_SAT.setMaximum(max)
+        "WindowCenter / WindowLevel"
+        self.Slider_WL_SAT.setMinimum(min)
+        self.Slider_WL_SAT.setMaximum(max)
+        self.dcmSAT.update({"ww": int(self.dcmSAT.get("imageTag")[0].WindowWidth[0])})
+        self.dcmSAT.update({"wl": int(self.dcmSAT.get("imageTag")[0].WindowCenter[0])})
+        self.Slider_WW_SAT.setValue(self.dcmSAT.get("ww"))
+        self.Slider_WL_SAT.setValue(self.dcmSAT.get("wl"))
+
+        self.logUI.debug('Loaded system accuracy test (SAT) Dicom')
+        self.ShowDicom_SAT()
+
+        "enable ui"
+        self.Slider_WW_SAT.setEnabled(True)
+        self.Slider_WL_SAT.setEnabled(True)
+        self.SliceSelect_Axial_SAT.setEnabled(True)
+        self.SliceSelect_Sagittal_SAT.setEnabled(True)
+        self.SliceSelect_Coronal_SAT.setEnabled(True)
+        self.Button_Registration_SAT.setEnabled(True)
+        self.tabWidget.setCurrentWidget(self.tabWidget_SystemAccuracy)
+        
+        return
+    
+    def ShowDicom_SAT(self):
+        """show low dicom to ui
+        """
+        imageHu2DAxial = self.dcmSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
+        imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
+        self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
+        self.logUI.debug('Show Low Dicom Axial')
+
+        imageHu2DSagittal = self.dcmSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
+        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
+        self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
+        self.logUI.debug('Show Low Dicom Sagittal')
+
+        imageHu2DCoronal = self.dcmSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
+        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
+        self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
+        self.logUI.debug('Show Low Dicom Coronal')
+
+        return
+
+    def ScrollBarChangeAxial_SAT(self):
+        """while ScrollBar Change (Axial), update ui plot
+        """
+        imageHu2DAxial = self.dcmSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
+        imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
+        self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
+        self.logUI.debug('Show Low Dicom Axial')
+
+    def ScrollBarChangeSagittal_SAT(self):
+        """while ScrollBar Change (Sagittal), update ui plot
+        """
+        imageHu2DSagittal = self.dcmSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
+        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
+        self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
+        self.logUI.debug('Show Low Dicom Sagittal')
+
+    def ScrollBarChangeCoronal_SAT(self):
+        """while ScrollBar Change (Coronal), update ui plot
+        """
+        imageHu2DCoronal = self.dcmSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
+        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
+        self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
+        self.logUI.debug('Show Low Dicom Coronal')
+
+    def SetWidth_SAT(self):
+        """set window width and show changed DICOM to ui
+        """
+        self.dcmSAT.update({"ww": int(self.Slider_WW_SAT.value())})
+        self.ShowDicom_SAT()
+        self.logUI.debug('Set Low Dicom Window Width')
+
+    def SetLevel_SAT(self):
+        """set window center/level and show changed DICOM to ui
+        """
+        self.dcmSAT.update({"wl": int(self.Slider_WL_SAT.value())})
+        self.ShowDicom_SAT()
+        self.logUI.debug('Set Low Dicom Window Level')
+        
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def __init__(self, dcm):
