@@ -269,6 +269,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                 robotCheckStatus = True
                 print("Surgical robot connect success.")
             except:
+                robotCheckStatus = True
                 print("Fail to link to robot, system will re-try after 3 seconds.")
                 sleep(3)
 
@@ -285,6 +286,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                 self.SetZero()
                 print("Motor are enabled.")
             except:
+                motorEnableStatus = True
                 print("Robot control system connect fail.")
 
     def FLDC_ButtonDisable(self):
@@ -521,12 +523,6 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             target4 = 0
 
     def CapturePoint(self):
-        # entry_full = np.array([372.785, 91.31, 20.9])
-        # target_full = np.array([372.785, 92.69, -4])
-        # entry_halt = np.array([372.785, 92.31, 20.9])
-        # target_halt = np.array([372.785, 92.72, -4])
-        # pointTest = np.array(
-        #     [entry_full, target_full, entry_halt, target_halt])
         pointTemp = self.PlanningPath
 
         "translate base from ball to robot"
@@ -541,12 +537,14 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         breathingHalt_entry = breathingHalt_entry - calibration
         breathingHalt_target = breathingHalt_target - calibration
 
-        "取得吸飽與吐底entry與target的平均值"
-        entryPoint_X = ((breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
+        "calculate avg value between full breathing and halt breathing"
+        entryPoint_X = (
+            (breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
         entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
         entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
 
-        targetPoint_X = (breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
+        targetPoint_X = (
+            breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
         targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
         targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
 
@@ -555,38 +553,48 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         return entryPoint, targetPoint
 
-    def P2P(self):
-        # 取得entry point 與 target point
-        try:
-            movingPoint = self.CapturePoint()
-            entryPoint = movingPoint[0]
-            targetPoint = movingPoint[1]
-            print(entryPoint[0])
-        except:
-            pass
+    def MoveToPoint(self):
+        "obtain upper point"
+        t = (upperHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        upperPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t
+        upperPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t
 
-        # obtain upper point
-        t = (upperHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
-        upperPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
-        upperPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
+        "obtain lower point"
+        t = (lowerHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        lowerPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t
+        lowerPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t
 
-        # obtain lower point
-        t = (lowerHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
-        lowerPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
-        lowerPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
-
-        # 計算上層的旋轉與移動
+        "Calculate rotation and movement of upper layer"
         upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
         lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
-        # robot motion
-        # rotation command
+        "robot motion"
+        "rotation command"
         RotationCount_axis3 = int(
             lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
         RotationCount_axis1 = int(
             upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
-        # Linear motion command
+        "Linear motion command"
         LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
         LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
         self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                  RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+
+    def P2P(self):
+        "obtain entry point 與 target point"
+        self.movingPoint = self.CapturePoint()
+        self.entryPoint = self.movingPoint[0]
+        self.targetPoint = self.movingPoint[1]
+        self.MoveToPoint()
+
+    def P2P_Manual(self, entryPoint, targetPoint):
+        "get entry and target points manually."
+        self.entryPoint = entryPoint
+        self.targetPoint = targetPoint
+        self.MoveToPoint()

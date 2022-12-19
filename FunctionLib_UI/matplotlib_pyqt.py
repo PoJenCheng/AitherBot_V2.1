@@ -116,6 +116,33 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         else:
             print("Please execute home processing first.")
 
+    def StringSplit(self, string):
+        stringTemp = string.split(",")
+        dataTemp = []
+        for i in range(3):
+            dataTemp.append(stringTemp[i])
+        return dataTemp
+
+    def RobotAutoRun(self):
+        entryPointReturn = self.lineEdit_EntryPoint_RCA.text()
+        targetPointReturn = self.lineEdit_TargetPoint_RCA.text()
+        "decouple string"
+        entryPointReturn = self.StringSplit(self, entryPointReturn)
+        targetPointReturn = self.StringSplit(self, targetPointReturn)
+        if len(entryPointReturn) == 3 and len(targetPointReturn) == 3:
+            print(entryPointReturn)
+            print(targetPointReturn)
+            MOTORSUBFUNCTION.P2P_Manual(
+                self, entryPointReturn, targetPointReturn)
+        else:
+            print("point typing error, check your points again.")
+
+    def RobotCycleRun(self):
+        point1 = self.lineEdit_Point_1_RCA.text()
+        point2 = self.lineEdit_Point_2_RCA.text()
+        point3 = self.lineEdit_Point_3_RCA.text()
+        point4 = self.lineEdit_Point_4_RCA.text()
+
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
         self.logUI.setLevel(logging.DEBUG)
@@ -162,11 +189,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Axial_H.setEnabled(False)
         self.SliceSelect_Sagittal_H.setEnabled(False)
         self.SliceSelect_Coronal_H.setEnabled(False)
-        
+
         "Navigation Robot ui disable (turn on after the function is enabled)"
         self.Button_RobotHome.setEnabled(False)
         self.Button_RobotAutoRun.setEnabled(False)
-        
+
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
         self.Button_ShowRegistration_SAT.setEnabled(False)
@@ -176,13 +203,13 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Button_Robot2TestPoint.setEnabled(False)
         self.lineEdit_CmmStylus.setEnabled(False)
         self.Button_EnterStylus_SAT.setEnabled(False)
-        
+
         self.Slider_WW_SAT.setEnabled(False)
         self.Slider_WL_SAT.setEnabled(False)
         self.SliceSelect_Axial_SAT.setEnabled(False)
         self.SliceSelect_Sagittal_SAT.setEnabled(False)
         self.SliceSelect_Coronal_SAT.setEnabled(False)
-        
+
     def ImportDicom_L(self):
         """load inhale (Low breath) DICOM to get image array and metadata
         """
@@ -404,7 +431,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         print("-------------------------------------------------------------------")
         logStr = 'Load exhale/High Dicom: ' + filePath
         self.logUI.info(logStr)
-        
+
         "reset dcm"
         self.dcmHigh = {}
         self.dcmHigh.update({"ww": 1})
@@ -426,7 +453,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Button_ShowPoint_H.setEnabled(False)
         self.Button_RobotHome.setEnabled(False)
         self.Button_RobotAutoRun.setEnabled(False)
-        
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
@@ -868,7 +894,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("comboBox_H error / SetEntryPoint error")
                 self.logUI.warning('comboBox_H error / SetEntryPoint error')
-            
+
             self.Button_ShowPoint_H.setEnabled(True)
             return
         elif self.dcmHigh.get("flageSelectedPoint") == True:
@@ -922,7 +948,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.logUI.warning('fail to Set Planning Path')
             print("fail to Set Planning Path / SetPlanningPath error")
             QMessageBox.critical(self, "error", "fail to Set Planning Path")
-        
+
         return
 
 

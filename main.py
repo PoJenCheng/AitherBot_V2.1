@@ -4,7 +4,6 @@ import sys
 
 app = QApplication(sys.argv)
 w = mat.MainWidget()
-print("test")
 w.show()
 sys.exit(app.exec_())
 
