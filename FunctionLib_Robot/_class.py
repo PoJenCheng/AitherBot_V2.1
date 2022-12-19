@@ -587,7 +587,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                                  RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
 
     def P2P(self):
-        "obtain entry point 與 target point"
+        "obtain entry point and target point"
         self.movingPoint = self.CapturePoint()
         self.entryPoint = self.movingPoint[0]
         self.targetPoint = self.movingPoint[1]
@@ -598,3 +598,22 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         self.entryPoint = entryPoint
         self.targetPoint = targetPoint
         self.MoveToPoint()
+
+    def CycleRun(self, P1, P2, P3, P4):
+        "robot executes cycle run in 4 points"
+        try:
+            PointX = [P1[0], P2[0], P3[0], P4[0]]
+            PointY = [P1[1], P2[1], P3[1], P4[1]]
+            PointZ = [P1[2], P2[2], P3[2], P4[2]]
+
+            cycleTimes = int(input("How many times for repeat?"))
+            times = 0
+            input("Cycle processing is ready, press 'Enter' for cont.")
+            while times < cycleTimes:
+                times += 1
+                print(f"Repeat times {times}.")
+                for index in range(4):
+                    self.P2P(PointX[index], PointY[index], PointZ[index],
+                             PointX[index], PointY[index], PointZ[index])
+        except:
+            print("Wrong type. Please try it again.")

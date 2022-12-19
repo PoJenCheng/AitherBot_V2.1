@@ -142,6 +142,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         point2 = self.lineEdit_Point_2_RCA.text()
         point3 = self.lineEdit_Point_3_RCA.text()
         point4 = self.lineEdit_Point_4_RCA.text()
+        "decople string"
+        point1 = self.StringSplit(self, point1)
+        point2 = self.StringSplit(self, point2)
+        point3 = self.StringSplit(self, point3)
+        point4 = self.StringSplit(self, point4)
+        MOTORSUBFUNCTION.CycleRun(self, point1, point2, point3, point4)
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
