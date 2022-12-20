@@ -851,6 +851,7 @@ class Ui_MainWindow(object):
         self.Slider_WW_SAT.valueChanged['int'].connect(self.label_WW_SAT.setNum) # type: ignore
         self.Slider_WL_SAT.valueChanged['int'].connect(self.label_WL_SAT.setNum) # type: ignore
         self.Button_RobotAutoRun_RCA.clicked.connect(MainWindow.RobotAutoRun) # type: ignore
+        self.Button_RobotCycleRun_RCA.clicked.connect(MainWindow.RobotCycleRun) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

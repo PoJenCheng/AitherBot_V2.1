@@ -595,25 +595,44 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
     def P2P_Manual(self, entryPoint, targetPoint):
         "get entry and target points manually."
-        self.entryPoint = entryPoint
-        self.targetPoint = targetPoint
+        self.entryPoint = []
+        self.targetPoint = []
+        for item in entryPoint:
+            self.entryPoint.append(float(item))
+        for item in targetPoint:
+            self.targetPoint.append(float(item))
         self.MoveToPoint()
 
-    def CycleRun(self, P1, P2, P3, P4):
+    def CycleRun(self, P1, P2, P3, P4, cycleTimes):
         "robot executes cycle run in 4 points"
         try:
-            PointX = [P1[0], P2[0], P3[0], P4[0]]
-            PointY = [P1[1], P2[1], P3[1], P4[1]]
-            PointZ = [P1[2], P2[2], P3[2], P4[2]]
+            point1 = []
+            point2 = []
+            point3 = []
+            point4 = []
+            for item in P1:
+                point1.append(float(item))
+            for item in P2:
+                point2.append(float(item))
+            for item in P3:
+                point3.append(float(item))
+            for item in P4:
+                point4.append(float(item))
 
-            cycleTimes = int(input("How many times for repeat?"))
+            PointX = [point1[0], point2[0], point3[0], point4[0]]
+            PointY = [point1[1], point2[1], point3[1], point4[1]]
+            PointZ = [point1[2], point2[2], point3[2], point4[2]]
+
             times = 0
-            input("Cycle processing is ready, press 'Enter' for cont.")
             while times < cycleTimes:
                 times += 1
                 print(f"Repeat times {times}.")
                 for index in range(4):
-                    self.P2P(PointX[index], PointY[index], PointZ[index],
-                             PointX[index], PointY[index], PointZ[index])
+                    self.entryPoint = [PointX[index],
+                                       PointY[index], PointZ[index]]
+                    self.targetPoint = [PointX[index],
+                                        PointY[index], PointZ[index]-20]
+                    self.MoveToPoint()
+            print("Cycle Run Processing is Done!")
         except:
             print("Wrong type. Please try it again.")

@@ -2260,6 +2260,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Button_RobotCycleRun_RCA</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotCycleRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>614</x>
+     <y>484</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>625</x>
+     <y>-22</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>SetRegistration_L()</slot>
@@ -2274,5 +2290,6 @@
   <slot>ShowPoint_H()</slot>
   <slot>ShowPlanningPath()</slot>
   <slot>RobotAutoRun()</slot>
+  <slot>RobotCycleRun()</slot>
  </slots>
 </ui>

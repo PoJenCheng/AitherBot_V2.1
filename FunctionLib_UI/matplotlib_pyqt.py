@@ -124,14 +124,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return dataTemp
 
     def RobotAutoRun(self):
-        entryPointReturn = self.lineEdit_EntryPoint_RCA.text()
-        targetPointReturn = self.lineEdit_TargetPoint_RCA.text()
+        entryPointReturn = str(self.lineEdit_EntryPoint_RCA.text())
+        targetPointReturn = str(self.lineEdit_TargetPoint_RCA.text())
         "decouple string"
-        entryPointReturn = self.StringSplit(self, entryPointReturn)
-        targetPointReturn = self.StringSplit(self, targetPointReturn)
+        entryPointReturn = self.StringSplit(entryPointReturn)
+        targetPointReturn = self.StringSplit(targetPointReturn)
         if len(entryPointReturn) == 3 and len(targetPointReturn) == 3:
-            print(entryPointReturn)
-            print(targetPointReturn)
             MOTORSUBFUNCTION.P2P_Manual(
                 self, entryPointReturn, targetPointReturn)
         else:
@@ -142,12 +140,14 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         point2 = self.lineEdit_Point_2_RCA.text()
         point3 = self.lineEdit_Point_3_RCA.text()
         point4 = self.lineEdit_Point_4_RCA.text()
+        cycleTimes = self.lineEdit_CycleTimes_RCA.text()
         "decople string"
-        point1 = self.StringSplit(self, point1)
-        point2 = self.StringSplit(self, point2)
-        point3 = self.StringSplit(self, point3)
-        point4 = self.StringSplit(self, point4)
-        MOTORSUBFUNCTION.CycleRun(self, point1, point2, point3, point4)
+        point1 = self.StringSplit(point1)
+        point2 = self.StringSplit(point2)
+        point3 = self.StringSplit(point3)
+        point4 = self.StringSplit(point4)
+        MOTORSUBFUNCTION.CycleRun(
+            self, point1, point2, point3, point4, int(cycleTimes))
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
@@ -197,8 +197,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Coronal_H.setEnabled(False)
 
         "Navigation Robot ui disable (turn on after the function is enabled)"
-        self.Button_RobotHome.setEnabled(False)
-        self.Button_RobotAutoRun.setEnabled(False)
+        self.Button_RobotHome.setEnabled(True)
+        self.Button_RobotAutoRun.setEnabled(True)
 
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
