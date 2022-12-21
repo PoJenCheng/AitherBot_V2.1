@@ -197,8 +197,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Coronal_H.setEnabled(False)
 
         "Navigation Robot ui disable (turn on after the function is enabled)"
-        self.Button_RobotHome.setEnabled(True)
-        self.Button_RobotAutoRun.setEnabled(True)
+        self.Button_RobotHome.setEnabled(False)
+        self.Button_RobotAutoRun.setEnabled(False)
 
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
