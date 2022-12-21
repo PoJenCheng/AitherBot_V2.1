@@ -448,7 +448,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>6</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -1851,8 +1851,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1445</x>
-     <y>498</y>
+     <x>1448</x>
+     <y>500</y>
     </hint>
     <hint type="destinationlabel">
      <x>1430</x>
@@ -1867,11 +1867,11 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1494</x>
+     <x>1497</x>
      <y>578</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1494</x>
+     <x>1497</x>
      <y>549</y>
     </hint>
    </hints>
@@ -1947,11 +1947,11 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>598</x>
+     <x>602</x>
      <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>608</x>
+     <x>612</x>
      <y>298</y>
     </hint>
    </hints>
@@ -1979,7 +1979,7 @@
    <slot>RobotRun()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>637</x>
+     <x>640</x>
      <y>202</y>
     </hint>
     <hint type="destinationlabel">
@@ -1995,8 +1995,8 @@
    <slot>SetRegistration_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1714</x>
-     <y>95</y>
+     <x>1671</x>
+     <y>88</y>
     </hint>
     <hint type="destinationlabel">
      <x>2040</x>
@@ -2011,8 +2011,8 @@
    <slot>ShowRegistrationDifference_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1860</x>
-     <y>96</y>
+     <x>1840</x>
+     <y>114</y>
     </hint>
     <hint type="destinationlabel">
      <x>2018</x>
@@ -2027,8 +2027,8 @@
    <slot>SetPoint_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1772</x>
-     <y>249</y>
+     <x>1672</x>
+     <y>265</y>
     </hint>
     <hint type="destinationlabel">
      <x>2018</x>
@@ -2043,8 +2043,8 @@
    <slot>ShowPoint_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1853</x>
-     <y>309</y>
+     <x>1672</x>
+     <y>328</y>
     </hint>
     <hint type="destinationlabel">
      <x>2012</x>
@@ -2107,8 +2107,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1374</x>
-     <y>405</y>
+     <x>1381</x>
+     <y>109</y>
     </hint>
     <hint type="destinationlabel">
      <x>1408</x>
@@ -2123,12 +2123,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1371</x>
-     <y>760</y>
+     <x>1381</x>
+     <y>557</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1439</x>
-     <y>714</y>
+     <x>1442</x>
+     <y>724</y>
     </hint>
    </hints>
   </connection>
@@ -2139,12 +2139,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>680</x>
-     <y>727</y>
+     <x>688</x>
+     <y>557</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1477</x>
-     <y>673</y>
+     <x>1480</x>
+     <y>680</y>
     </hint>
    </hints>
   </connection>
@@ -2244,6 +2244,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Button_RobotAutoRun_RCA</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotAutoRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>567</x>
+     <y>252</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>558</x>
+     <y>-2</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_RobotCycleRun_RCA</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotCycleRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>614</x>
+     <y>484</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>625</x>
+     <y>-22</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>SetRegistration_L()</slot>
@@ -2257,5 +2289,7 @@
   <slot>SetPoint_H()</slot>
   <slot>ShowPoint_H()</slot>
   <slot>ShowPlanningPath()</slot>
+  <slot>RobotAutoRun()</slot>
+  <slot>RobotCycleRun()</slot>
  </slots>
 </ui>
