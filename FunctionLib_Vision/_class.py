@@ -7,6 +7,8 @@ from keras.models import load_model
 import cv2
 import math
 from PyQt5.QtGui import *
+from ._subFunction import *
+
 
 "DICOM function"
 class DICOM():
@@ -115,6 +117,7 @@ class DICOM():
                 else:
                     image = 0
                     break
+            image.append(imageTag[sliceNum+1].pixel_array)
         except:
             image = 0
         return image
@@ -148,7 +151,7 @@ class DICOM():
         """
         cutImagesHu=[]
         for z in range(image.shape[0]):
-            "resize, 會變成mm"
+            "resize to mm"
             if pixel2Mm[0]<1 and abs(pixel2Mm[1])<1 and abs(pixel2Mm[2])==1:
                 src_tmp = cv2.resize(image[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
                 cutImagesHu.append(src_tmp)
@@ -319,9 +322,9 @@ class REGISTRATION():
         legsA = 140
         legsB = 150
         hypotenuse = self.GetNorm(numpy.array([legsA,legsB]))
-        error.append(abs(self.GetNorm(ball[0]-ball[1])-hypotenuse))
-        error.append(abs(self.GetNorm(ball[0]-ball[2])-legsB))
-        error.append(abs(self.GetNorm(ball[1]-ball[2])-legsA))
+        error.append(abs(self.GetNorm(ball[1]-ball[2])-hypotenuse))
+        error.append(abs(self.GetNorm(ball[0]-ball[1])-legsB))
+        error.append(abs(self.GetNorm(ball[0]-ball[2])-legsA))
         return [numpy.min(error),numpy.max(error),numpy.mean(error)]
     
     def GetNorm(self, V):
@@ -338,7 +341,7 @@ class REGISTRATION():
         elif V.shape[0] == 2:
             d = math.sqrt(numpy.square(V[0])+numpy.square(V[1]))
         else:
-            print("GetNorm error")
+            print("GetNorm() error")
             return 0
         return d
         
@@ -347,7 +350,7 @@ class REGISTRATION():
            image value turn to PIXEL_MAX and 0 whitch is binarization image
 
         Args:
-            imageHu (_list_): image in Hounsfield Unit (Hu)
+            imageHu (_list_ or _numpy.array_): image in Hounsfield Unit (Hu)
 
         Returns:
             imagesHuThr (_list_): _description_
@@ -356,11 +359,30 @@ class REGISTRATION():
         PIXEL_MAX = 4096-1
         down_ = -800
         up_ = 300
-        for z in range(len(imageHu)):
-            ret, th4 = cv2.threshold(imageHu[z], up_, PIXEL_MAX, cv2.THRESH_TOZERO_INV)
-            ret, th5 = cv2.threshold(th4, down_, PIXEL_MAX, cv2.THRESH_BINARY)
-            imagesHuThr.append(th5)
-        return imagesHuThr
+        "numpy.array type"
+        try:
+            for z in range(imageHu.shape[0]):
+                ret, th4 = cv2.threshold(imageHu[z,:,:], up_, PIXEL_MAX, cv2.THRESH_TOZERO_INV)
+                ret, th5 = cv2.threshold(th4, down_, PIXEL_MAX, cv2.THRESH_BINARY)
+                imagesHuThr.append(th5)
+            return imagesHuThr
+        except:
+            # print("ThresholdFilter() input is not numpy.array type")
+            pass
+        "list type"
+        try:
+            for z in range(len(imageHu)):
+                ret, th4 = cv2.threshold(imageHu[z], up_, PIXEL_MAX, cv2.THRESH_TOZERO_INV)
+                ret, th5 = cv2.threshold(th4, down_, PIXEL_MAX, cv2.THRESH_BINARY)
+                imagesHuThr.append(th5)
+            return imagesHuThr
+        except:
+            # print("ThresholdFilter() input is not list type")
+            pass
+        
+        print("ThresholdFilter() error")
+        return
+        
     
     def FindBallXY(self, imageHu, pixel2Mm):
         """scan XY plane to  find ball centroid,
@@ -373,10 +395,12 @@ class REGISTRATION():
         Returns:
             result_centroid (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
         """
-        y = 200
-        x = 512
-        NORMALIZE=4096-1
         "cut image"
+        "y = 200"
+        "x = 512"
+        x = imageHu.shape[2]
+        y = int(imageHu.shape[1]/2)
+        NORMALIZE=4096-1
         cutImagesHu=[]
         if pixel2Mm[0]!=pixel2Mm[1]:
             print("xy plot resize is fail")
@@ -387,6 +411,7 @@ class REGISTRATION():
         "filter and binarization"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
         src_tmp = numpy.uint8(cutImageHuThr)
+        
         resultCentroid_xy = []
         
         "use Hough Circles find radius and circle center"
@@ -396,7 +421,6 @@ class REGISTRATION():
         "Radius range: [4.5mm ~ (21/2)+3mm]"
         minRadius=int((4.5/pixel2Mm[0]))
         maxRadius=int((21/pixel2Mm[0])/2)+3
-        
         
         "find circle, radius and center of circle in each DICOM image"
         for z in range(src_tmp.shape[0]):
@@ -437,9 +461,10 @@ class REGISTRATION():
                             Pr = j[2]*pixel2Mm[0]
                             
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
+            cv2.destroyAllWindows()
         return resultCentroid_xy
   
-    def ClassifyPointXY(self, pointMatrix, pixel2Mm):
+    def ClassifyPointXY(self, pointMatrix):
         """classify Point Matrix from FindBall() result
            take the first point of each group as the key
            save as numpy.array
@@ -550,10 +575,12 @@ class REGISTRATION():
         Returns:
             result_centroid (_type_): _description_
         """
-        y = 200
-        x = 512
-        NORMALIZE=4096-1
         "cut image"
+        "y = 200"
+        "x = 512"
+        x = imageHu.shape[2]
+        y = int(imageHu.shape[1]/2)
+        NORMALIZE=4096-1
         cutImagesHu=[]
         if pixel2Mm[0]<1 and abs(pixel2Mm[2])<=1:
             for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
@@ -570,6 +597,7 @@ class REGISTRATION():
         "filter and binarization"
         cutImageHuThr = self.ThresholdFilter(cutImagesHu)
         src_tmp = numpy.uint8(cutImageHuThr)
+        
         resultCentroid_yz = []
         
         "use Hough Circles find radius and circle center"
@@ -615,21 +643,21 @@ class REGISTRATION():
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-(j[1]+int(imageHu.shape[0]/3)))**2)
                         if distance <= 2:
+                            Px = x
                             Py = i[0]
                             Pz = i[1]
-                            Px = x
                             Pr = j[2]
                             resultCentroid_yz.append([Px,Py,Pz,Pr])
                         if distance > j[2]-2 and distance < j[2]+2:
+                            Px = x
                             Py = j[0]
                             Pz = (j[1]+int(imageHu.shape[0]/3))
-                            Px = x
                             Pr = j[2]
                             resultCentroid_yz.append([Px,Py,Pz,Pr])
             cv2.destroyAllWindows()
         return resultCentroid_yz
 
-    def ClassifyPointYZ(self, pointMatrix, pixel2Mm):
+    def ClassifyPointYZ(self, pointMatrix):
         """classify Point Matrix from FindBall() result
            take the first point of each group as the key
            save as numpy.array
@@ -798,10 +826,10 @@ class REGISTRATION():
         """
         point = []
         if axis == [False,False,False]:
-            print("AveragePoint error")
+            print("AveragePoint() error")
             return
         elif axis == [True,True,True]:
-            print("AveragePoint error")
+            print("AveragePoint() error")
             return
         elif axis==[False,True,True]:
             for key in dictionaryPoint:
@@ -857,13 +885,13 @@ class REGISTRATION():
             pixel2Mm (_list_): Pixel to mm array
 
         Returns:
-            dictionaryPoint (_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
+            point (_numpy.array_): point, numpy.array([[Px,Py,Pz,Pr]...])
         """
         resultCentroid_xy = self.FindBallXY(imageHu, pixel2Mm)
-        dictionaryPoint_xy = self.ClassifyPointXY(resultCentroid_xy, pixel2Mm)
+        dictionaryPoint_xy = self.ClassifyPointXY(resultCentroid_xy)
         
         resultCentroid_yz = self.FindBallYZ(imageHu, pixel2Mm)
-        dictionaryPoint_yz = self.ClassifyPointYZ(resultCentroid_yz, pixel2Mm)
+        dictionaryPoint_yz = self.ClassifyPointYZ(resultCentroid_yz)
         
         point_xy = self.AveragePoint(dictionaryPoint_xy,axis = [True, True, False])
         point_yz = self.AveragePoint(dictionaryPoint_yz,axis = [False, True, True])
@@ -876,7 +904,7 @@ class REGISTRATION():
                     if distance <= 5:
                         point.append([P1[0],P1[1],P2[2]])
         else:
-            print("get point error")
+            print("get point error / GetBall() error")
         return numpy.array(point)
     
     def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
@@ -892,7 +920,203 @@ class REGISTRATION():
         
         return PlanningPath
         
+class SAT():
+    def __init__(self):
+        self.regFn = REGISTRATION()
+        return
+    
+    def Find2dCircle(self, src_tmp):
+        
+        "use Hough Circles find radius and circle center"
+        "coefficient"
+        ratio = 3
+        low_threshold = 15
+        "Radius range: [4mm ~ 21mm]"
+        minRadius = 4
+        maxRadius = 21
+        
+        "find circle, radius and center of circle in each DICOM image"
+        cv2.imshow("src",src_tmp)
+        "filter"
+        src_tmp = cv2.bilateralFilter(src_tmp,5,100,100)
+        cv2.imshow("filter",src_tmp)
+        "draw contours"
+        contours, hierarchy = cv2.findContours(src_tmp,
+                                            cv2.RETR_EXTERNAL,
+                                            cv2.CHAIN_APPROX_SIMPLE)
+        "create an all black picture to draw contour"
+        shape = (src_tmp.shape[0], src_tmp.shape[1], 1)
+        black_image = numpy.zeros(shape, numpy.uint8)
+        cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
+        cv2.imshow("Contours",black_image)
+        "use contour to find centroid"
+        centroid = []
+        for c in contours:
+            if c.shape[0] > 4 and c.shape[0]<110:
+                M = cv2.moments(c)
+                if M["m00"] != 0:
+                    Cx = (M["m10"]/M["m00"])
+                    Cy = (M["m01"]/M["m00"])
+                    centroid.append((Cx,Cy))
+                    cv2.circle(black_image,(int(Cx),int(Cy)),1,(256/2,0,0),-1)
+        cv2.imshow("centroid",black_image)
+        "use Hough Circles to find radius and center of circle"
+        circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT, 1, 10,
+                                    param1=low_threshold*ratio, param2=low_threshold,
+                                    minRadius=minRadius, maxRadius=maxRadius)
+        if circles is not None and centroid is not None:
+                
+            for i in circles[0, :]:
+                center = (int(i[0]), int(i[1]))
+                radius = int(i[2])
+                'center and radius is required to be an integer !!!'
+                "circle center"
+                cv2.circle(black_image, center, 1, (200, 0, 0), -1)
+                "circle outline"
+                cv2.circle(black_image, center, radius, (200, 0, 0), 1)
+            cv2.imshow("HoughCircles",black_image)
             
+            # if z == 350:
+            #     print("-----------")
+            cv2.destroyAllWindows()
+            return centroid, circles
+        # centroid = [(0,0)]
+        # [(461.33129084967317, 343.17606209150324)]
+        # circles = numpy.array([[[0,0,0]]])
+        # array([[[461.5, 344.5,  11.6]]], dtype=float32)
+        centroid = None
+        circles = None
+        
+        cv2.destroyAllWindows()
+        return centroid, circles
+    
+    def FindBallXY(self, src_tmp):
+        resultCentroid_xy = []
+        for z in range(src_tmp.shape[0]):
+            centroid, circles = self.Find2dCircle(src_tmp[z,:,:])
+            # if centroid.all() != [(0,0)] and circles.all() != numpy.array([[[0,0,0]]]):
+            if circles is not None and centroid is not None:
+                "Intersection"
+                "centroid = group of Centroid"
+                "circles = group of hough circle"
+                for i in centroid:
+                    for j in circles[0, :]:
+                        distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
+                        if distance < 2:
+                            Px = i[0]
+                            Py = i[1]
+                            Pz = z
+                            Pr = j[2]
+                            
+                            resultCentroid_xy.append([Px,Py,Pz,Pr])
+        return resultCentroid_xy
+
+    def FindBallYZ(self, src_tmp):
+        resultCentroid_yz = []
+        for x in range(src_tmp.shape[2]):
+            centroid, circles = self.Find2dCircle(src_tmp[:,:,x])
+            if circles is not None and centroid is not None:
+                "Intersection"
+                "centroid = group of Centroid"
+                "circles = group of hough circle"
+                for i in centroid:
+                    for j in circles[0, :]:
+                        distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
+                        if distance < 2:
+                            Px = x
+                            Py = i[0]
+                            Pz = i[1]
+                            Pr = j[2]
+                            resultCentroid_yz.append([Px,Py,Pz,Pr])
+                        if distance > j[2]-2 and distance < j[2]+2:
+                            Px = x
+                            Py = j[0]
+                            Pz = j[1]
+                            Pr = j[2]
+                            resultCentroid_yz.append([Px,Py,Pz,Pr])
+        return resultCentroid_yz
+            
+    def GetBall(self, imageHuMm):
+        
+        "filter and binarization"
+        imageHuThr = self.regFn.ThresholdFilter(imageHuMm)
+        src_tmp = numpy.uint8(imageHuThr)
+        
+        resultCentroid_xy = self.FindBallXY(src_tmp)
+        dictionaryPoint_xy = self.regFn.ClassifyPointXY(resultCentroid_xy)
+        
+        resultCentroid_yz = self.FindBallYZ(src_tmp)
+        dictionaryPoint_yz = self.regFn.ClassifyPointYZ(resultCentroid_yz)
+        
+        # resultCentroid_xz = self.FindBallXZ(imageHuMm)
+        # dictionaryPoint_xz = self.regFn.ClassifyPointXZ(resultCentroid_xz)
+        
+        point_xy = self.regFn.AveragePoint(dictionaryPoint_xy,axis = [True, True, False])
+        point_yz = self.regFn.AveragePoint(dictionaryPoint_yz,axis = [False, True, True])
+        # point_xz = self.AveragePoint(dictionaryPoint_xz,axis = [True, False, True])
+        
+        # point = []
+        # pointResult = []
+        # if len(point_xy)==len(point_yz) && len(point_xy)==len(point_xz):
+        #     for P1 in point_xy:
+        #         for P2 in point_yz:
+        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
+        #             if distance <= 5:
+        #                 point.append([P1[0],P1[1],P2[2]])
+        #     for P1 in point:
+        #         for P2 in point_xz:
+        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
+        #             if distance <= 5:
+        #                 pointResult.append([P1[0],P1[1],P2[2]])
+        # else:
+        #     print("get point error / GetBall() error")
+        
+        return point_xy
+        # return numpy.array(pointResult)
+    
+    def GetBallSection(self, candidateBall):
+        # showAxis = []
+        # showSlice = []
+        # showDic = {}
+        # tmpMin = numpy.min(candidateBall,0)
+        # tmpMax = numpy.max(candidateBall,0)
+        # tmpMean = numpy.mean(candidateBall,0)
+        # for i in range(tmpMean.shape[0]):
+        #     if abs(tmpMax[i]-tmpMean[i]) < 2 and abs(tmpMin[i]-tmpMean[i]) < 2:
+        #         """showAxis
+        
+        #         0 = x axis
+        #         1 = y axis
+        #         2 = z axis
+        #         """
+        #         "display Axis and Slice"
+        #         # showAxis.append(i)
+        #         # showSlice.append(int(tmpMean[i]))
+        #         showDic.update({int(tmpMean[i]):i})
+        #         break
+        
+        point = numpy.array(candidateBall)
+        "Those with similar Y axis (difference < 5) are grouped together"
+        " *** for 2022/12/21 CT system accuracy test *** "
+        " *** Cannot be used in the official version of the system accuracy test *** "
+        axis = 1
+        tmpDictionary = {}
+        for P in point:
+            flageExist = False
+            if tmpDictionary == {}:
+                tmpDictionary.update({P[axis]:[P]})
+                continue
+            for key in tmpDictionary:
+                if abs(P[axis]-key) < 5:
+                    tmp=[]
+                    tmp = numpy.append(tmpDictionary.get(key),[P],axis = 0)
+                    tmpDictionary.update({key:tmp})
+                    flageExist = True
+                    break
+            if flageExist == False:
+                tmpDictionary.update({P[axis]:[P]})
+        return
+    
     
 "example"
 if __name__ == "__main__":

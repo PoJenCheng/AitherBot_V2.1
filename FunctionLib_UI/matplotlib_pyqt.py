@@ -6,6 +6,7 @@ from PyQt5.QtCore import *
 from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
+from FunctionLib_Robot._globalVar import *
 from time import sleep
 import sys
 import numpy
@@ -16,7 +17,7 @@ import FunctionLib_UI.ui_matplotlib_pyqt
 import FunctionLib_UI.ui_coordinate_system
 import FunctionLib_UI.ui_set_point_system
 import FunctionLib_Vision._class
-from FunctionLib_Robot._globalVar import *
+
 
 
 class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION):
@@ -34,6 +35,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
         self.dcmFn = FunctionLib_Vision._class.DICOM()
         self.regFn = FunctionLib_Vision._class.REGISTRATION()
+        self.satFn = FunctionLib_Vision._class.SAT()
+        
 
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
@@ -182,8 +185,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Coronal_H.setEnabled(False)
         
         "Navigation Robot ui disable (turn on after the function is enabled)"
-        self.Button_RobotHome.setEnabled(False)
-        self.Button_RobotAutoRun.setEnabled(False)
+        self.Button_RobotHome.setEnabled(True)
+        self.Button_RobotAutoRun.setEnabled(True)
+        # **************** 要記得改成False
         
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
@@ -619,7 +623,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         except:
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
-            print('get candidate ball error')
+            print('get candidate ball error / SetRegistration_L() error')
             return
         self.logUI.info('get candidate ball:')
         for tmp in candidateBall:
@@ -635,10 +639,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_ShowRegistration_L.setEnabled(True)
         except:
             self.logUI.warning(
-                'get candidate ball error / SetRegistration_L error / candidateBall could be []')
+                'get candidate ball error / SetRegistration_L() error / candidateBall could be []')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print(
-                'get candidate ball error / SetRegistration_L error / candidateBall could be []')
+                'get candidate ball error / SetRegistration_L() error / candidateBall could be []')
         return
 
     def ShowRegistrationDifference_L(self):
@@ -666,11 +670,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 else:
                     self.logUI.warning(
                         'find seleted balls error / ShowRegistrationDifference error')
-                    print("find seleted balls error / ShowRegistrationDifference error")
+                    print("find seleted balls error / ShowRegistrationDifference() error")
             else:
-                print("Choose Point error / ShowRegistrationDifference error")
+                print("Choose Point error / ShowRegistrationDifference() error")
                 self.logUI.warning(
-                    'Choose Point error / ShowRegistrationDifference error')
+                    'Choose Point error / ShowRegistrationDifference() error')
 
             if flagePair == True:
                 "The ball positions are paired"
@@ -693,9 +697,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.dcmLow.update({"regMatrix": regMatrix})
 
             else:
-                print("pair error / ShowRegistrationDifference error")
+                print("pair error / ShowRegistrationDifference() error")
                 self.logUI.warning(
-                    'pair error / ShowRegistrationDifference error')
+                    'pair error / ShowRegistrationDifference() error')
             self.Button_SetPoint_L.setEnabled(True)
             self.comboBox_L.setEnabled(True)
         else:
@@ -718,8 +722,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                     self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())
                 self.ui_SPS.show()
             else:
-                print("comboBox_L error / SetEntryPoint error")
-                self.logUI.warning('comboBox_L error / SetEntryPoint error')
+                print("comboBox_L error / SetPoint_L() error")
+                self.logUI.warning('comboBox_L error / SetPoint_L() error')
 
             self.Button_ShowPoint_L.setEnabled(True)
             return
@@ -755,9 +759,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.Button_Planning.setEnabled(True)
             return
         except:
-            self.logUI.warning('show points error')
+            self.logUI.warning('show points error / SetPoint_L() error')
             QMessageBox.critical(self, "error", "show points error")
-            print('show points error')
+            print('show points error / SetPoint_L() error')
             return
 
     def SetRegistration_H(self):
@@ -781,9 +785,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             candidateBall = self.regFn.GetBall(
                 self.dcmHigh.get("imageHu"), self.dcmHigh.get("pixel2Mm"))
         except:
-            self.logUI.warning('get candidate ball error')
+            self.logUI.warning('get candidate ball error / SetRegistration_H() error')
             QMessageBox.critical(self, "error", "get candidate ball error")
-            print('get candidate ball error')
+            print('get candidate ball error / SetRegistration_H() error')
             return
         self.logUI.info('get candidate ball:')
         for tmp in candidateBall:
@@ -800,10 +804,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_ShowRegistration_H.setEnabled(True)
         except:
             self.logUI.warning(
-                'get candidate ball error / SetRegistration_H error / candidateBall could be []')
+                'get candidate ball error / SetRegistration_H() error / candidateBall could be []')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print(
-                'get candidate ball error / SetRegistration_H error / candidateBall could be []')
+                'get candidate ball error / SetRegistration_H() error / candidateBall could be []')
         return
 
     def ShowRegistrationDifference_H(self):
@@ -830,12 +834,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                     flagePair = True
                 else:
                     self.logUI.warning(
-                        'find seleted balls error / ShowRegistrationDifference error')
-                    print("find seleted balls error / ShowRegistrationDifference error")
+                        'find seleted balls error / ShowRegistrationDifference_H() error')
+                    print("find seleted balls error / ShowRegistrationDifference_H() error")
             else:
-                print("Choose Point error / ShowRegistrationDifference error")
+                print("Choose Point error / ShowRegistrationDifference_H() error")
                 self.logUI.warning(
-                    'Choose Point error / ShowRegistrationDifference error')
+                    'Choose Point error / ShowRegistrationDifference_H() error')
 
             if flagePair == True:
                 "The ball positions are paired"
@@ -859,9 +863,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.dcmHigh.update({"regMatrix": regMatrix})
 
             else:
-                print("pair error / ShowRegistrationDifference error")
+                print("pair error / ShowRegistrationDifference_H() error")
                 self.logUI.warning(
-                    'pair error / ShowRegistrationDifference error')
+                    'pair error / ShowRegistrationDifference_H() error')
             self.Button_SetPoint_H.setEnabled(True)
             self.comboBox_H.setEnabled(True)
         else:
@@ -884,8 +888,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                     self.dcmHigh, self.comboBox_H.currentText(), self.SliceSelect_Sagittal_H.value())
                 self.ui_SPS.show()
             else:
-                print("comboBox_H error / SetEntryPoint error")
-                self.logUI.warning('comboBox_H error / SetEntryPoint error')
+                print("comboBox_H error / SetPoint_H() error")
+                self.logUI.warning('comboBox_H error / SetPoint_H() error')
             
             self.Button_ShowPoint_H.setEnabled(True)
             return
@@ -920,9 +924,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.Button_Planning.setEnabled(True)
             return
         except:
-            self.logUI.warning('show points error')
+            self.logUI.warning('show points error / ShowPoint_H() error')
             QMessageBox.critical(self, "error", "show points error")
-            print('show points error')
+            print('show points error / ShowPoint_H() error')
             return
 
     def ShowPlanningPath(self):
@@ -937,8 +941,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_RobotHome.setEnabled(True)
             self.Button_RobotAutoRun.setEnabled(True)
         except:
-            self.logUI.warning('fail to Set Planning Path')
-            print("fail to Set Planning Path / SetPlanningPath error")
+            self.logUI.warning('fail to Set Planning Path / SetPlanningPath() error')
+            print("fail to Set Planning Path / SetPlanningPath() error")
             QMessageBox.critical(self, "error", "fail to Set Planning Path")
         
         return
@@ -1115,6 +1119,36 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmSAT.update({"wl": int(self.Slider_WL_SAT.value())})
         self.ShowDicom_SAT()
         self.logUI.debug('Set Low Dicom Window Level')
+    
+    def SetRegistration_SAT(self):
+        
+        "automatic find registration ball center"
+        # if self.dcmSAT.get("regBall") != []:
+        #     reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        # if reply == QMessageBox.Yes:
+        #     self.dcmSAT.update({"selectedBall": []})
+        #     self.dcmSAT.update({"regBall": []})
+        #     self.dcmSAT.update({"flageSelectedBall": False})
+        #     self.logUI.info('reset selected ball (SAT)')
+        #     print("reset selected ball (SAT)")
+        #     return
+        # else:
+        #     return
+        
+        ""
+        # 變成找到所有的球
+        candidateBall = self.satFn.GetBall(self.dcmSAT.get("imageHuMm"))
+        
+        tmp = self.satFn.GetBallSection(candidateBall)
+        
+        
+        
+        "set test point"
+        # self.dcmSAT.update({"selectedTestPoint": []})
+        # self.dcmSAT.update({"flageselectedTestPoint": False})
+        
+        return
+        
         
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):

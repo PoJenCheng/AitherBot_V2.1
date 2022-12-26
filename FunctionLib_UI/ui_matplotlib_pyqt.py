@@ -856,6 +856,7 @@ class Ui_MainWindow(object):
         self.SliceSelect_Sagittal_SAT.valueChanged['int'].connect(self.label_20.setNum)
         self.Slider_WW_SAT.valueChanged['int'].connect(self.label_WW_SAT.setNum)
         self.Slider_WL_SAT.valueChanged['int'].connect(self.label_WL_SAT.setNum)
+        self.Button_Registration_SAT.clicked.connect(MainWindow.SetRegistration_SAT)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
