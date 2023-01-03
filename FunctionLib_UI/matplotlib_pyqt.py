@@ -603,7 +603,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        "automatic find registration ball center"
+        
         if self.dcmLow.get("regBall") != []:
             reply = QMessageBox.information(
                 self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -616,7 +616,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 return
             else:
                 return
-
+        "automatic find registration ball center"
         try:
             candidateBall = self.regFn.GetBall(
                 self.dcmLow.get("imageHu"), self.dcmLow.get("pixel2Mm"))
@@ -710,16 +710,13 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetPoint_L(self):
         if self.dcmLow.get("flageSelectedPoint") == False:
             if self.comboBox_L.currentText() == "Axial":
-                self.ui_SPS = SetPointSystem(
-                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())
+                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Coronal":
-                self.ui_SPS = SetPointSystem(
-                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value())
+                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value())
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Sagittal":
-                self.ui_SPS = SetPointSystem(
-                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())
+                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())
                 self.ui_SPS.show()
             else:
                 print("comboBox_L error / SetPoint_L() error")
@@ -728,8 +725,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_ShowPoint_L.setEnabled(True)
             return
         elif self.dcmLow.get("flageSelectedPoint") == True:
-            reply = QMessageBox.information(
-                self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = QMessageBox.information(self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmLow.update({"selectedPoint": []})
                 self.dcmLow.update({"flageSelectedPoint": False})
@@ -767,7 +763,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        "automatic find registration ball center"
+        
         if self.dcmHigh.get("regBall") != []:
             reply = QMessageBox.information(
                 self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -780,7 +776,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 return
             else:
                 return
-
+        "automatic find registration ball center"
         try:
             candidateBall = self.regFn.GetBall(
                 self.dcmHigh.get("imageHu"), self.dcmHigh.get("pixel2Mm"))
@@ -1123,33 +1119,116 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetRegistration_SAT(self):
         
         "automatic find registration ball center"
-        # if self.dcmSAT.get("regBall") != []:
-        #     reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        # if reply == QMessageBox.Yes:
-        #     self.dcmSAT.update({"selectedBall": []})
-        #     self.dcmSAT.update({"regBall": []})
-        #     self.dcmSAT.update({"flageSelectedBall": False})
-        #     self.logUI.info('reset selected ball (SAT)')
-        #     print("reset selected ball (SAT)")
-        #     return
-        # else:
-        #     return
+        if self.dcmSAT.get("regBall") != []:
+            reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.dcmSAT.update({"selectedBall": []})
+                self.dcmSAT.update({"regBall": []})
+                self.dcmSAT.update({"flageSelectedBall": False})
+                self.logUI.info('reset selected ball (SAT)')
+                print("reset selected ball (SAT)")
+                return
+            else:
+                return
         
         ""
-        # 變成找到所有的球
-        candidateBall = self.satFn.GetBall(self.dcmSAT.get("imageHuMm"))
+        try:
+            # 變成找到所有的球
+            tmpCandidateBall = self.satFn.GetBall(self.dcmSAT.get("imageHuMm"))
+            
+            # candidateBall分組
+            groupCandidateBall = self.satFn.GroupBall(tmpCandidateBall)
+            
+            for key in groupCandidateBall:
+                if groupCandidateBall.get(key).shape[0] == 4:
+                    candidateBall = groupCandidateBall.get(key)
+                elif groupCandidateBall.get(key).shape[0] == 6:
+                    candidateTestBall = groupCandidateBall.get(key)
+        except:
+            self.logUI.warning('get candidate ball error')
+            QMessageBox.critical(self, "error", "get candidate ball error")
+            print('get candidate ball error / SetRegistration_SAT() error')
+            return
+        self.logUI.info('get candidate ball:')
+        for tmp in candidateBall:
+            self.logUI.info(tmp)
+        self.dcmSAT.update({"candidateBall": candidateBall})
+        self.dcmSAT.update({"candidateTestBall": candidateTestBall})
         
-        tmp = self.satFn.GetBallSection(candidateBall)
-        
-        
-        
-        "set test point"
-        # self.dcmSAT.update({"selectedTestPoint": []})
-        # self.dcmSAT.update({"flageselectedTestPoint": False})
+        "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
+        try:
+            tmp = self.regFn.GetBallSection(self.dcmSAT.get("candidateBall"))
+            self.dcmSAT.update({"showAxis": tmp[0]})
+            self.dcmSAT.update({"showSlice": tmp[1]})
+            self.ui_CS = CoordinateSystem(self.dcmSAT)
+            self.ui_CS.show()
+            self.Button_ShowRegistration_SAT.setEnabled(True)
+        except:
+            self.logUI.warning(
+                'get candidate ball error / SetRegistration_L() error / candidateBall could be []')
+            QMessageBox.critical(self, "error", "get candidate ball error")
+            print(
+                'get candidate ball error / SetRegistration_L() error / candidateBall could be []')
         
         return
         
+    def ShowRegistrationDifference_SAT(self):
+        "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
+        candidateBall = self.dcmSAT.get("candidateBall")
+        selectedBall = self.dcmSAT.get("selectedBall")
+        if selectedBall != []:
+            flagePair = False
+            ball = []
+            if self.dcmSAT.get("flageSelectedBall") == True:
+                self.logUI.info('get selected balls')
+                for P1 in selectedBall:
+                    for P2 in candidateBall:
+                        distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+                        if distance < 10:
+                            ball.append(P2)
+                            break
+                if len(ball) == 3:
+                    flagePair = True
+                else:
+                    self.logUI.warning('find seleted balls error / ShowRegistrationDifference error')
+                    print("find seleted balls error / ShowRegistrationDifference() error")
+            else:
+                print("Choose Point error / ShowRegistrationDifference() error")
+                self.logUI.warning('Choose Point error / ShowRegistrationDifference() error')
+
+            if flagePair == True:
+                "The ball positions are paired"
+                self.dcmSAT.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
+                self.logUI.info('get registration balls:')
+                for tmp in self.dcmSAT.get("regBall"):
+                    self.logUI.info(tmp)
+                "calculate error/difference of relative distance"
+                error = self.regFn.GetError(self.dcmSAT.get("regBall"))
+                logStr = 'registration error (min, max, mean): ' + str(error)
+                self.logUI.info(logStr)
+                self.label_RegistrtionError_SAT.setText('Error / Difference: {:.2f} mm'.format(error[2]))
+                "calculate transformation matrix"
+                regMatrix = self.regFn.TransformationMatrix(self.dcmSAT.get("regBall"))
+                self.logUI.info('get registration matrix: ')
+                for tmp in regMatrix:
+                    self.logUI.info(tmp)
+                self.dcmSAT.update({"regMatrix": regMatrix})
+
+            else:
+                print("pair error / ShowRegistrationDifference() error")
+                self.logUI.warning('pair error / ShowRegistrationDifference() error')
+            self.Button_SelectTestPoint_SAT.setEnabled(True)
+            self.Button_EnterTestPoint_SAT.setEnabled(True)
+        else:
+            QMessageBox.critical(self, "error", "there are not selected 3 balls")
+        return
+    
+    def SetTestPoint_SAT(self):
         
+        
+        self.Button_Robot2TestPoint.setEnabled(True)
+        self.Button_EnterStylus_SAT.setEnabled(True)
+        return
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def __init__(self, dcm):

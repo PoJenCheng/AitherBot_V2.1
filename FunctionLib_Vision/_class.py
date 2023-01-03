@@ -1322,36 +1322,54 @@ class SAT():
         
         point = []
         pointDictionary = {}
+        # if len(point_xy)==len(point_yz) and len(point_xy)==len(point_xz):
+        #     for P1 in point_xy:
+        #         for P2 in point_yz:
+        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
+        #             if distance <= 10:
+        #                 # point.append([P1[0],P1[1],P2[2]])
+        #                 point.append(P1)
+        #                 point.append(P2)
+        #                 # = numpy.array([P1,P2])
+        #                 pointDictionary.update({tuple(P1):point})
+        #                 point = []
+        #                 break
+        #     for P1 in pointDictionary:
+        #         for P2 in point_xz:
+        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
+        #             if distance <= 10:
+        #                 point = pointDictionary.get(P1)
+        #                 point.append(P2)
+        #                 pointDictionary.update({tuple(P1):point})
+        #                 point = []
+        #                 break
         if len(point_xy)==len(point_yz) and len(point_xy)==len(point_xz):
             for P1 in point_xy:
                 for P2 in point_yz:
                     distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
                     if distance <= 10:
-                        # point.append([P1[0],P1[1],P2[2]])
-                        point.append(P1)
-                        point.append(P2)
-                        # = numpy.array([P1,P2])
-                        pointDictionary.update({tuple(P1):point})
-                        point = []
+                        Py = (P1[1]+P2[1])/2
+                        tmpPz = P2[2]
                         break
-            for P1 in pointDictionary:
-                for P2 in point_xz:
-                    distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
+                for P3 in point_xz:
+                    distance = math.sqrt((P1[0]-P3[0])**2+(P1[1]-P3[1])**2+(P1[2]-P3[2])**2)
                     if distance <= 10:
-                        point = pointDictionary.get(P1)
-                        point.append(P2)
-                        pointDictionary.update({tuple(P1):point})
-                         point = []
+                        Px = (P1[0]+P3[0])/2
+                        Pz = (tmpPz+P3[2])/2
                         break
-                        
-                    
+                point.append([Px,Py,Pz])
+                del Px
+                del Py
+                del Pz
+                del tmpPz
         else:
             print("get point error / GetBall() error")
         
-        return pointDictionary
+        return point
+        # return pointDictionary
         # return numpy.array(pointResult)
     
-    def GetBallSection(self, candidateBall):
+    def GroupBall(self, candidateBall):
         # showAxis = []
         # showSlice = []
         # showDic = {}
@@ -1392,7 +1410,7 @@ class SAT():
                     break
             if flageExist == False:
                 tmpDictionary.update({P[axis]:[P]})
-        return
+        return tmpDictionary
     
     
 "example"
