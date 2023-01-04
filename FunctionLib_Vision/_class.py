@@ -1412,6 +1412,9 @@ class SAT():
                 tmpDictionary.update({P[axis]:[P]})
         return tmpDictionary
     
+    # def SortCandidateTestBall(self, candidateTestBall):
+    #     # 排序候選測試球
+    #     # self.candidateTestBall = 
     
 "example"
 if __name__ == "__main__":

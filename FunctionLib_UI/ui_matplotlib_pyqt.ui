@@ -1531,7 +1531,7 @@
         <x>1570</x>
         <y>10</y>
         <width>331</width>
-        <height>300</height>
+        <height>310</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_15">
@@ -1556,7 +1556,7 @@
        <item>
         <widget class="QLabel" name="label_RegistrtionError_SAT">
          <property name="text">
-          <string>Difference: 0 mm</string>
+          <string>Registration difference: 0 mm</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -1564,43 +1564,23 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_SetTestPoint_SAT">
+        <widget class="QPushButton" name="Button_ShowTestPoint_SAT">
          <property name="text">
-          <string>Select test point</string>
+          <string>Show test point</string>
          </property>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_test_point">
-           <property name="text">
-            <string>CMM test point</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="lineEdit_CmmTestPoint_SAT"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="Button_EnterTestPoint_SAT">
-         <property name="text">
-          <string>Enter</string>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_ImageError_SAT">
+        <widget class="QLabel" name="label_TestBallNum_SAT">
          <property name="text">
-          <string>Image accuracy difference: 0 mm</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <string>NO. 0 test ball</string>
          </property>
         </widget>
        </item>
@@ -1611,40 +1591,6 @@
          </property>
          <property name="text">
           <string>Robot go to test point</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
-          <widget class="QLabel" name="label_Stylus">
-           <property name="text">
-            <string>CMM stylus</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="lineEdit_CmmStylus_SAT"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="Button_EnterStylus_SAT">
-         <property name="text">
-          <string>Enter</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_SystemError_SAT">
-         <property name="text">
-          <string>System accuracy difference: 0 mm</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -2277,8 +2223,8 @@
    <slot>SetRegistration_SAT()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1677</x>
-     <y>69</y>
+     <x>1681</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>1681</x>
@@ -2293,8 +2239,8 @@
    <slot>ShowRegistrationDifference_SAT()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1794</x>
-     <y>67</y>
+     <x>1900</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>1788</x>
@@ -2303,18 +2249,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_SetTestPoint_SAT</sender>
+   <sender>Button_ShowTestPoint_SAT</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>SetTestPoint_SAT()</slot>
+   <slot>ShowTestPoint_SAT()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1874</x>
-     <y>130</y>
+     <x>1879</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
-     <x>2028</x>
-     <y>129</y>
+     <x>2090</x>
+     <y>230</y>
     </hint>
    </hints>
   </connection>
@@ -2334,5 +2280,6 @@
   <slot>SetRegistration_SAT()</slot>
   <slot>ShowRegistrationDifference_SAT()</slot>
   <slot>SetTestPoint_SAT()</slot>
+  <slot>ShowTestPoint_SAT()</slot>
  </slots>
 </ui>

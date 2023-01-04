@@ -192,12 +192,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
         self.Button_ShowRegistration_SAT.setEnabled(False)
-        self.Button_SelectTestPoint_SAT.setEnabled(False)
-        self.lineEdit_CmmTestPoint_SAT.setEnabled(False)
-        self.Button_EnterTestPoint_SAT.setEnabled(False)
+        self.Button_ShowTestPoint_SAT.setEnabled(False)
         self.Button_Robot2TestPoint.setEnabled(False)
-        self.lineEdit_CmmStylus_SAT.setEnabled(False)
-        self.Button_EnterStylus_SAT.setEnabled(False)
         
         self.Slider_WW_SAT.setEnabled(False)
         self.Slider_WL_SAT.setEnabled(False)
@@ -687,7 +683,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
                 self.label_Error_L.setText(
-                    'Error / Difference: {:.2f} mm'.format(error[2]))
+                    'Registration difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(
                     self.dcmLow.get("regBall"))
@@ -849,7 +845,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
                 self.label_Error_H.setText(
-                    'Error / Difference: {:.2f} mm'.format(error[2]))
+                    'Registration difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(
                     self.dcmHigh.get("regBall"))
@@ -1206,7 +1202,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 error = self.regFn.GetError(self.dcmSAT.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
-                self.label_RegistrtionError_SAT.setText('Error / Difference: {:.2f} mm'.format(error[2]))
+                self.label_RegistrtionError_SAT.setText('Registration difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(self.dcmSAT.get("regBall"))
                 self.logUI.info('get registration matrix: ')
@@ -1217,17 +1213,15 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("pair error / ShowRegistrationDifference() error")
                 self.logUI.warning('pair error / ShowRegistrationDifference() error')
-            self.Button_SelectTestPoint_SAT.setEnabled(True)
-            self.Button_EnterTestPoint_SAT.setEnabled(True)
+            self.Button_ShowTestPoint_SAT.setEnabled(True)
+            self.Button_Robot2TestPoint.setEnabled(True)
         else:
             QMessageBox.critical(self, "error", "there are not selected 3 balls")
         return
     
-    def SetTestPoint_SAT(self):
+    def ShowTestPoint_SAT(self):
         
         
-        self.Button_Robot2TestPoint.setEnabled(True)
-        self.Button_EnterStylus_SAT.setEnabled(True)
         return
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
