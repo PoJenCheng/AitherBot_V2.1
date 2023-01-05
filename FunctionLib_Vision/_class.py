@@ -932,16 +932,16 @@ class REGISTRATION():
     
     def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
                         originPoint_L, selectedPoint_L, regMatrix_L):
-        PlanningPath = []
+        planningPath = []
         
         for p in selectedPoint_H:
-            PlanningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
+            planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
         for p in selectedPoint_L:
-            PlanningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+            planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
         
-        self.PlanningPath = PlanningPath
+        self.PlanningPath = planningPath
         
-        return PlanningPath
+        return planningPath
         
 class SAT():
     def __init__(self):
@@ -1412,9 +1412,49 @@ class SAT():
                 tmpDictionary.update({P[axis]:[P]})
         return tmpDictionary
     
-    # def SortCandidateTestBall(self, candidateTestBall):
-    #     # 排序候選測試球
-    #     # self.candidateTestBall = 
+    def SortCandidateTestBall(self, candidateTestBall):
+        # 排序候選測試球
+        tmpMin = numpy.min(candidateTestBall,0)
+        tmpMax = numpy.max(candidateTestBall,0)
+        tmpMean = numpy.mean(candidateTestBall,0)
+        tmpBall = numpy.zeros((6,3))
+        
+        for ball in candidateTestBall:
+            if abs(ball[0]-tmpMax[0]) < 2 and abs(ball[2]-tmpMin[2]) < 2:
+                tmpBall[0,:] = ball
+                continue
+            elif abs(ball[0]-tmpMean[0]) < 2 and abs(ball[2]-tmpMin[2]) < 2:
+                tmpBall[1,:] = ball
+                continue
+            elif abs(ball[0]-tmpMin[0]) < 2 and abs(ball[2]-tmpMin[2]) < 2:
+                tmpBall[2,:] = ball
+                continue
+            elif abs(ball[0]-tmpMax[0]) < 2 and abs(ball[2]-tmpMax[2]) < 2:
+                tmpBall[3,:] = ball
+                continue
+            elif abs(ball[0]-tmpMean[0]) < 2 and abs(ball[2]-tmpMax[2]) < 2:
+                tmpBall[4,:] = ball
+                continue
+            elif abs(ball[0]-tmpMin[0]) < 2 and abs(ball[2]-tmpMax[2]) < 2:
+                tmpBall[5,:] = ball
+                continue
+            
+        
+        del tmpMin
+        del tmpMax
+        del tmpMean
+        
+        
+        return tmpBall
+    
+    def GetTestBall(self, tmpBall, originPoint, regMatrix):
+        tmpBall = tmpBall*[1, 1, -1]
+        
+        testBall = []
+        for p in tmpBall:
+            testBall.append(numpy.dot(regMatrix,(p-originPoint)))
+        self.TestBall = testBall
+        return testBall
     
 "example"
 if __name__ == "__main__":

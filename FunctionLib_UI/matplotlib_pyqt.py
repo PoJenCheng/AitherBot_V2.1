@@ -8,6 +8,7 @@ from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot._globalVar import *
 from time import sleep
+from datetime import datetime
 import sys
 import numpy
 import math
@@ -978,12 +979,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         "ui disable"
         self.Button_Registration_SAT.setEnabled(False)
         self.Button_ShowRegistration_SAT.setEnabled(False)
-        self.Button_SelectTestPoint_SAT.setEnabled(False)
-        self.lineEdit_CmmTestPoint_SAT.setEnabled(False)
-        self.Button_EnterTestPoint_SAT.setEnabled(False)
+        self.Button_ShowTestPoint_SAT.setEnabled(False)
         self.Button_Robot2TestPoint.setEnabled(False)
-        self.lineEdit_CmmStylus_SAT.setEnabled(False)
-        self.Button_EnterStylus_SAT.setEnabled(False)
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(metadata, metadataSeriesNum)
         self.dcmSAT.update({"imageTag": self.dcmFn.ReadDicom(seriesNumberLabel, dicDICOM)})
@@ -1221,7 +1218,42 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     
     def ShowTestPoint_SAT(self):
         
+        tmpBall = self.satFn.SortCandidateTestBall(self.dcmSAT.get("candidateTestBall"))
+        testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[0], self.dcmSAT.get("regMatrix"))
         
+        # 畫圖? 出數字? excel?
+        tmpSection = self.regFn.GetBallSection(tmpBall)
+        # showAxis = tmp[0]
+        showSlice = tmpSection[1]
+        imageHu2DMm = self.dcmSAT.get("imageHuMm")[:,showSlice, :]
+        gray = numpy.uint8(imageHu2DMm)
+        gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        with open(str(fileName)+'.txt','w') as f:
+            f.write("test ball (x,y,z) in image coordinate system:\n")
+        for i in range(tmpBall.shape[0]):
+            # org = tmpBall[i,0:3:2]
+            org = (int(tmpBall[i,0]),int(tmpBall[i,2]))
+            cv2.putText(gray3Channel,str(i+1), org,cv2.FONT_HERSHEY_COMPLEX,1,(0,100,255),1)
+            
+            # output .txt
+            with open(str(fileName)+'.txt','a') as f:
+                f.write(str(tmpBall[i]))
+                f.write('\n')
+            
+        # output .txt
+        with open(str(fileName)+'.txt','a') as f:
+            f.write("\ntest ball (x,y,z) in regBall coordinate system:\n")
+        for p in testBall:
+            with open(str(fileName)+'.txt','a') as f:
+                f.write(str(p))
+                f.write("\n")
+            
+        cv2.imshow("ball", gray3Channel)
+        # 寫入圖檔
+        # cv2.imwrite('2023_test_ball_output.jpg', gray3Channel)
+        cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
+        # cv2.destroyAllWindows()
         return
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
