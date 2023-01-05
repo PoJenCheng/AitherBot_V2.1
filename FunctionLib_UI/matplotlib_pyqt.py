@@ -1230,7 +1230,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
         with open(str(fileName)+'.txt','w') as f:
-            f.write("test ball (x,y,z) in image coordinate system:\n")
+            f.write("test ball (x,y,z) in the image coordinate system:\n")
         for i in range(tmpBall.shape[0]):
             # org = tmpBall[i,0:3:2]
             org = (int(tmpBall[i,0]),int(tmpBall[i,2]))
@@ -1243,7 +1243,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             
         # output .txt
         with open(str(fileName)+'.txt','a') as f:
-            f.write("\ntest ball (x,y,z) in regBall coordinate system:\n")
+            f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
         for p in testBall:
             with open(str(fileName)+'.txt','a') as f:
                 f.write(str(p))
