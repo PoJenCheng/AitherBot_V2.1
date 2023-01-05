@@ -705,6 +705,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def SetPoint_L(self):
+        """set/select entry and target points
+        """
         if self.dcmLow.get("flageSelectedPoint") == False:
             if self.comboBox_L.currentText() == "Axial":
                 self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())
@@ -738,6 +740,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def ShowPoint_L(self):
+        """show selected entry and target points 
+        """
         try:
             print("inhale/Low DICOM entry / target point position (in image coodinate)")
             "in this case"
@@ -760,7 +764,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        
         if self.dcmHigh.get("regBall") != []:
             reply = QMessageBox.information(
                 self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -786,6 +789,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmHigh.update({"candidateBall": candidateBall})
+        
         "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmHigh.get("candidateBall"))
@@ -834,6 +838,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.logUI.warning(
                     'Choose Point error / ShowRegistrationDifference_H() error')
 
+            "calculate error/difference of relative distance"
             if flagePair == True:
                 "The ball positions are paired"
                 self.dcmHigh.update(
@@ -867,6 +872,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def SetPoint_H(self):
+        """set/select entry and target points
+        """
         if self.dcmHigh.get("flageSelectedPoint") == False:
             if self.comboBox_H.currentText() == "Axial":
                 self.ui_SPS = SetPointSystem(
@@ -904,6 +911,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
 
     def ShowPoint_H(self):
+        """show selected entry and target points 
+        """
         try:
             print("exhale/High DICOM entry / target point position (in image coodinate)")
             point = self.dcmHigh.get("selectedPoint")
@@ -923,6 +932,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
 
     def ShowPlanningPath(self):
+        """show planning path in regBall coordinate system
+           (high entry and target points + low entry and target points )
+        """
         try:
             self.PlanningPath = self.regFn.GetPlanningPath(self.dcmHigh.get("regBall")[0], self.dcmHigh.get("selectedPoint"), self.dcmHigh.get("regMatrix"),
                                                            self.dcmLow.get("regBall")[0], self.dcmLow.get("selectedPoint"), self.dcmLow.get("regMatrix"))
@@ -1046,7 +1058,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
     
     def ShowDicom_SAT(self):
-        """show low dicom to ui
+        """show SAT dicom to ui
         """
         imageHu2DAxial = self.dcmSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
         imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
@@ -1110,8 +1122,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.logUI.debug('Set Low Dicom Window Level')
     
     def SetRegistration_SAT(self):
-        
-        "automatic find registration ball center"
+        """automatic find registration ball center and test ball center
+           + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
+        """
         if self.dcmSAT.get("regBall") != []:
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
@@ -1124,18 +1137,19 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 return
         
-        ""
+        "automatic find registration ball center"
         try:
-            # 變成找到所有的球
+            "get/find the center of each ball"
             tmpCandidateBall = self.satFn.GetBall(self.dcmSAT.get("imageHuMm"))
             
-            # candidateBall分組
+            "Group regBalls and test balls"
             groupCandidateBall = self.satFn.GroupBall(tmpCandidateBall)
-            
             for key in groupCandidateBall:
                 if groupCandidateBall.get(key).shape[0] == 4:
+                    "regBall"
                     candidateBall = groupCandidateBall.get(key)
                 elif groupCandidateBall.get(key).shape[0] == 6:
+                    "test ball"
                     candidateTestBall = groupCandidateBall.get(key)
         except:
             self.logUI.warning('get candidate ball error')
@@ -1144,6 +1158,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             return
         self.logUI.info('get candidate ball:')
         for tmp in candidateBall:
+            self.logUI.info(tmp)
+        self.logUI.info('get test ball:')
+        for tmp in candidateTestBall:
             self.logUI.info(tmp)
         self.dcmSAT.update({"candidateBall": candidateBall})
         self.dcmSAT.update({"candidateTestBall": candidateTestBall})
@@ -1166,6 +1183,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
         
     def ShowRegistrationDifference_SAT(self):
+        """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
+           calculate error/difference of relative distance
+        """
         "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
         candidateBall = self.dcmSAT.get("candidateBall")
         selectedBall = self.dcmSAT.get("selectedBall")
@@ -1189,6 +1209,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 print("Choose Point error / ShowRegistrationDifference() error")
                 self.logUI.warning('Choose Point error / ShowRegistrationDifference() error')
 
+            "calculate error/difference of relative distance"
             if flagePair == True:
                 "The ball positions are paired"
                 self.dcmSAT.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
@@ -1217,43 +1238,42 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         return
     
     def ShowTestPoint_SAT(self):
-        
+        """show test ball position and save as .jpg and .txt files name with date and time
+        """
         tmpBall = self.satFn.SortCandidateTestBall(self.dcmSAT.get("candidateTestBall"))
         testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[0], self.dcmSAT.get("regMatrix"))
         
-        # 畫圖? 出數字? excel?
+        "test ball image result"
         tmpSection = self.regFn.GetBallSection(tmpBall)
-        # showAxis = tmp[0]
         showSlice = tmpSection[1]
         imageHu2DMm = self.dcmSAT.get("imageHuMm")[:,showSlice, :]
         gray = numpy.uint8(imageHu2DMm)
         gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        "teat balls position save as .txt"
         fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
         with open(str(fileName)+'.txt','w') as f:
             f.write("test ball (x,y,z) in the image coordinate system:\n")
         for i in range(tmpBall.shape[0]):
-            # org = tmpBall[i,0:3:2]
             org = (int(tmpBall[i,0]),int(tmpBall[i,2]))
             cv2.putText(gray3Channel,str(i+1), org,cv2.FONT_HERSHEY_COMPLEX,1,(0,100,255),1)
             
-            # output .txt
             with open(str(fileName)+'.txt','a') as f:
                 f.write(str(tmpBall[i]))
                 f.write('\n')
             
-        # output .txt
         with open(str(fileName)+'.txt','a') as f:
             f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
         for p in testBall:
             with open(str(fileName)+'.txt','a') as f:
                 f.write(str(p))
                 f.write("\n")
-            
+        
+        "show test ball position in ui"
         cv2.imshow("ball", gray3Channel)
-        # 寫入圖檔
-        # cv2.imwrite('2023_test_ball_output.jpg', gray3Channel)
+        
+        "teat balls image save as .jpg"
         cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
-        # cv2.destroyAllWindows()
+
         return
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):

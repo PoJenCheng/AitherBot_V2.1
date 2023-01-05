@@ -367,7 +367,6 @@ class REGISTRATION():
                 imagesHuThr.append(th5)
             return imagesHuThr
         except:
-            # print("ThresholdFilter() input is not numpy.array type")
             pass
         "list type"
         try:
@@ -377,7 +376,6 @@ class REGISTRATION():
                 imagesHuThr.append(th5)
             return imagesHuThr
         except:
-            # print("ThresholdFilter() input is not list type")
             pass
         
         print("ThresholdFilter() error")
@@ -820,6 +818,7 @@ class REGISTRATION():
 
         Args:
             dictionaryPoint (_dictionary_): point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
+            axis (list, optional): Defaults to [False, False, False]. mark the axis to be calculated
 
         Returns:
             point (_numpy.array_): point, (Px,Py,Pz)
@@ -949,7 +948,15 @@ class SAT():
         return
     
     def Find2dCircle(self, src_tmp):
-        
+        """find 2d circle
+
+        Args:
+            src_tmp (_numpy.uint8_): 2d image
+
+        Returns:
+            centroid (_list_): centroid of contour
+            circles (_numpy.array_): Hough Circles result
+        """
         "use Hough Circles find radius and circle center"
         "coefficient"
         ratio = 3
@@ -959,10 +966,8 @@ class SAT():
         maxRadius = 21
         
         "find circle, radius and center of circle in each DICOM image"
-        # cv2.imshow("src",src_tmp)
         "filter"
         src_tmp = cv2.bilateralFilter(src_tmp,5,100,100)
-        # cv2.imshow("filter",src_tmp)
         "draw contours"
         contours, hierarchy = cv2.findContours(src_tmp,
                                             cv2.RETR_EXTERNAL,
@@ -971,7 +976,6 @@ class SAT():
         shape = (src_tmp.shape[0], src_tmp.shape[1], 1)
         black_image = numpy.zeros(shape, numpy.uint8)
         cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
-        # cv2.imshow("Contours",black_image)
         "use contour to find centroid"
         centroid = []
         for c in contours:
@@ -981,30 +985,13 @@ class SAT():
                     Cx = (M["m10"]/M["m00"])
                     Cy = (M["m01"]/M["m00"])
                     centroid.append((Cx,Cy))
-                    # cv2.circle(black_image,(int(Cx),int(Cy)),1,(256/2,0,0),-1)
-        # cv2.imshow("centroid",black_image)
         "use Hough Circles to find radius and center of circle"
         circles = cv2.HoughCircles(black_image, cv2.HOUGH_GRADIENT, 1, 10,
                                     param1=low_threshold*ratio, param2=low_threshold,
                                     minRadius=minRadius, maxRadius=maxRadius)
         if circles is not None and centroid is not None:
-                
-            # for i in circles[0, :]:
-            #     center = (int(i[0]), int(i[1]))
-            #     radius = int(i[2])
-            #     'center and radius is required to be an integer !!!'
-            #     "circle center"
-            #     cv2.circle(black_image, center, 1, (200, 0, 0), -1)
-            #     "circle outline"
-            #     cv2.circle(black_image, center, radius, (200, 0, 0), 1)
-            # cv2.imshow("HoughCircles",black_image)
-            
             cv2.destroyAllWindows()
             return centroid, circles
-        # centroid = [(0,0)]
-        # [(461.33129084967317, 343.17606209150324)]
-        # circles = numpy.array([[[0,0,0]]])
-        # array([[[461.5, 344.5,  11.6]]], dtype=float32)
         centroid = None
         circles = None
         
@@ -1012,10 +999,17 @@ class SAT():
         return centroid, circles
     
     def FindBallXY(self, src_tmp):
+        """find ball in XY plane
+
+        Args:
+            src_tmp (_numpy.uint8_): 3d image
+
+        Returns:
+            resultCentroid_xy (_list_): ball centroid
+        """
         resultCentroid_xy = []
         for z in range(src_tmp.shape[0]):
             centroid, circles = self.Find2dCircle(src_tmp[z,:,:])
-            # if centroid.all() != [(0,0)] and circles.all() != numpy.array([[[0,0,0]]]):
             if circles is not None and centroid is not None:
                 "Intersection"
                 "centroid = group of Centroid"
@@ -1033,6 +1027,14 @@ class SAT():
         return resultCentroid_xy
 
     def FindBallYZ(self, src_tmp):
+        """find ball in YZ plane
+
+        Args:
+            src_tmp (_numpy.uint8_): 3d image
+
+        Returns:
+            resultCentroid_yz (_list_): ball centroid
+        """
         resultCentroid_yz = []
         for x in range(src_tmp.shape[2]):
             centroid, circles = self.Find2dCircle(src_tmp[:,:,x])
@@ -1058,6 +1060,14 @@ class SAT():
         return resultCentroid_yz
 
     def FindBallXZ(self, src_tmp):
+        """find ball in XZ plane
+
+        Args:
+            src_tmp (_numpy.uint8_): 3d image
+
+        Returns:
+            resultCentroid_xz (_list_): ball centroid
+        """
         resultCentroid_xz = []
         for y in range(src_tmp.shape[1]):
             centroid, circles = self.Find2dCircle(src_tmp[:,y,:])
@@ -1083,6 +1093,18 @@ class SAT():
         return resultCentroid_xz
 
     def ClassifyPoint(self, pointMatrix, axis=[False, False, False]):
+        """classify Point Matrix from FindBallXY(), FindBallYZ(), FindBallXZ() result
+           take the first point of each group as the key
+           save as numpy.array
+           = {point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])}
+
+        Args:
+            pointMatrix (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
+            axis (list, optional): Defaults to [False, False, False]. mark the axis to be calculated
+
+        Returns:
+            dictionary (_dictionary_): {point, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])}
+        """
         dictionaryTmp = {}
         tmpDictionary = {}
         dictionary = {}
@@ -1130,54 +1152,38 @@ class SAT():
                 distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
                 dz = abs(P1[2]-P2[2])
                 if distance <= 2 and dz <= 24:
-                    # tmp.append(pointMatrix[num2])
                     tmp.append(P2)
-            # value.append(P1)
-            # value.append(pointMatrix[num1])
-            # value.append(tmp)
             
             if tmp != []:
                 value = numpy.append(numpy.array([P1]), numpy.array(tmp), axis = 0)
             else:
-                # print("error")
                 value = numpy.array([P1])
-            
-            
-            # value.extend(tmp)
-            # dictionaryTmp.update({tuple(pointMatrix[num1]):numpy.array(value)})
+
             dictionaryTmp.update({tuple(P1):numpy.array(value)})
         
         del tmp
         del value
         del tmpArray
 
-
         "remove groups which points are repeated"
-        "remove small groups which member is less then 9 (< 9)"
+        "remove small groups which member is less then 9 ( < 9)"
         "remove groups that meet the following conditions:"
-        "* "
+        "* dz <= 10 mm, scan axial distance <= 10 mm"
         " & "
-        "* "
+        "* dxy <= 6 mm, scan plane distance <= 6 mm"
         key_ = list(dictionaryTmp.keys())
         delete_label = []
         for num1 in range(len(key_)-1):
             key = key_[num1]
             values = dictionaryTmp.get(key)
-            # print(delete_label.index(key))
             if key in delete_label:
                 continue
-            # if values.shape[0] >= 10 and key[3] <= 8:
             if values.shape[0] >= 10:
                 for num2 in range(num1+1,len(key_)):
                     P1 = key_[num1]
                     P2 = key_[num2]
-                    distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
                     dxy = math.sqrt(numpy.square(P1[0]-P2[0]) + numpy.square(P1[1]-P2[1]))
                     dz = abs(P1[2]-P2[2])
-                    # if distance <= 6 or distance >= 31:
-                    # if distance >= 31:
-                    # if dz <= 20:
-                    # if dz <= 20 and dxy <= 6 and abs(P1[3]-P2[3]) >= 0.5:
                     if dz <= 10 and dxy <= 6:
                         delete_label.append(tuple(P2))
             else:
@@ -1190,36 +1196,8 @@ class SAT():
                 del dictionaryTmp[dic1]
             except:
                 pass
-        # "If there is not consecutive numbers in the same group, it will be separated automatically"
-        # "conditions: "
-        # "the difference between the [n] number and the [n+1] number (points distance) < -3 mm"
-        # "After automatic separation, leave the group which is greater than 15 mm"
-        # key_ = list(dictionaryTmp.keys())
-        # delete_label = []
-        # for dic_num in range(len(key_)):
-        #     key = key_[dic_num]
-        #     values = dictionaryTmp.get(key)
-        #     tmp1=[]
-        #     tmp2=[]
-        #     for num in range(values.shape[0]-1):
-        #         if values[num,2]-values[num+1,2] < (-3):
-        #             tmp1 = values[:num,:]
-        #             tmp2 = values[num+1:,:]
-        #             if tmp1.shape[0]>=15:
-        #                 dictionaryTmp.update({tuple(tmp1[0,:]):tmp1})
-        #             else:
-        #                 delete_label.append(tuple(key))
-        #             if tmp2.shape[0]>=15:
-        #                 dictionaryTmp.update({tuple(tmp2[0,:]):tmp2})
-                    
-        #             break
-        # for dic in delete_label:
-        #     try:
-        #         del dictionaryTmp[dic]
-        #     except:
-        #         pass
         
-        ""
+        "Remove the group whose the first radius greater than or equal to 8 (<= 8 mm)"
         delete_label = []
         for key in dictionaryTmp:
             if key[3] >= 8:
@@ -1241,11 +1219,9 @@ class SAT():
         "Classify pointMatrix by axis"
         "according to the scanning results of the xyz 3 axes, "
         "the meaning of Pxy and Pz will be different"
-        
         if axis == [True, True, False]:
             "xy plane"
             dictionary = tmpDictionary
-            
         elif axis == [True,False,True]:
             "xz plane"
             for key in tmpDictionary:
@@ -1258,12 +1234,10 @@ class SAT():
                 valueR = numpy.array(tmpDictionary.get(key)[:,3])
                 valueR.resize(valueR.shape[0],1)
                 
-                
                 keyX = numpy.array([key[0]])
                 keyY = numpy.array([key[2]])
                 keyZ = numpy.array([key[1]])
                 keyR = numpy.array([key[3]])
-                
                 
                 tmpValue1 = numpy.append(valueX,valueY,axis = 1)
                 tmpValue2 = numpy.append(tmpValue1,valueZ,axis = 1)
@@ -1273,9 +1247,6 @@ class SAT():
                 key = numpy.append(tmpKey2,keyR,axis = 0)
                 
                 dictionary.update({tuple(key):values})
-                
-            
-                
         elif axis == [False,True,True]:
             "yz plane"
             for key in tmpDictionary:
@@ -1300,9 +1271,16 @@ class SAT():
         
         return dictionary
 
-            
     def GetBall(self, imageHuMm):
-        
+        """get/find candidate ball in 3d image
+           (the center of each ball)
+
+        Args:
+            imageHuMm (_numpy.array_): 3d image, image in Hounsfield Unit (Hu), in mm unit
+
+        Returns:
+            point (_list_): the center of each ball, [Px,Py,Pz]
+        """
         "filter and binarization"
         imageHuThr = self.regFn.ThresholdFilter(imageHuMm)
         src_tmp = numpy.uint8(imageHuThr)
@@ -1321,28 +1299,7 @@ class SAT():
         point_xz = self.regFn.AveragePoint(dictionaryPoint_xz,axis = [True, False, True])
         
         point = []
-        pointDictionary = {}
-        # if len(point_xy)==len(point_yz) and len(point_xy)==len(point_xz):
-        #     for P1 in point_xy:
-        #         for P2 in point_yz:
-        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
-        #             if distance <= 10:
-        #                 # point.append([P1[0],P1[1],P2[2]])
-        #                 point.append(P1)
-        #                 point.append(P2)
-        #                 # = numpy.array([P1,P2])
-        #                 pointDictionary.update({tuple(P1):point})
-        #                 point = []
-        #                 break
-        #     for P1 in pointDictionary:
-        #         for P2 in point_xz:
-        #             distance = math.sqrt((P1[0]-P2[0])**2+(P1[1]-P2[1])**2+(P1[2]-P2[2])**2)
-        #             if distance <= 10:
-        #                 point = pointDictionary.get(P1)
-        #                 point.append(P2)
-        #                 pointDictionary.update({tuple(P1):point})
-        #                 point = []
-        #                 break
+        
         if len(point_xy)==len(point_yz) and len(point_xy)==len(point_xz):
             for P1 in point_xy:
                 for P2 in point_yz:
@@ -1366,29 +1323,16 @@ class SAT():
             print("get point error / GetBall() error")
         
         return point
-        # return pointDictionary
-        # return numpy.array(pointResult)
     
     def GroupBall(self, candidateBall):
-        # showAxis = []
-        # showSlice = []
-        # showDic = {}
-        # tmpMin = numpy.min(candidateBall,0)
-        # tmpMax = numpy.max(candidateBall,0)
-        # tmpMean = numpy.mean(candidateBall,0)
-        # for i in range(tmpMean.shape[0]):
-        #     if abs(tmpMax[i]-tmpMean[i]) < 2 and abs(tmpMin[i]-tmpMean[i]) < 2:
-        #         """showAxis
-        
-        #         0 = x axis
-        #         1 = y axis
-        #         2 = z axis
-        #         """
-        #         "display Axis and Slice"
-        #         # showAxis.append(i)
-        #         # showSlice.append(int(tmpMean[i]))
-        #         showDic.update({int(tmpMean[i]):i})
-        #         break
+        """group the ball with the same Y axis
+
+        Args:
+            candidateBall (_list_): the centroid of each candinate ball (regBall + test ball)
+
+        Returns:
+            tmpDictionary (_dictionary_): {axis, key(Py):numpy.array([[Px,Py,Pz,Pr]...])}
+        """
         
         point = numpy.array(candidateBall)
         "Those with similar Y axis (difference < 5) are grouped together"
@@ -1413,7 +1357,19 @@ class SAT():
         return tmpDictionary
     
     def SortCandidateTestBall(self, candidateTestBall):
-        # 排序候選測試球
+        """sort candinate test ball
+           condition:
+           in image coordinate system - 
+           Px ranks from big to small
+           Py is the same in this case (20221221 CT /S51480)
+           Pz ranks from small to big
+
+        Args:
+            candidateTestBall (_numpy.array_): candinate test ball centroid, numpy.array([[Px,Py,Pz]...])
+
+        Returns:
+            tmpBall (_numpy.array_): candinate test ball centroid after sort, numpy.array([[Px,Py,Pz]...])
+        """
         tmpMin = numpy.min(candidateTestBall,0)
         tmpMax = numpy.max(candidateTestBall,0)
         tmpMean = numpy.mean(candidateTestBall,0)
@@ -1438,16 +1394,25 @@ class SAT():
             elif abs(ball[0]-tmpMin[0]) < 2 and abs(ball[2]-tmpMax[2]) < 2:
                 tmpBall[5,:] = ball
                 continue
-            
         
         del tmpMin
         del tmpMax
         del tmpMean
         
-        
         return tmpBall
     
     def GetTestBall(self, tmpBall, originPoint, regMatrix):
+        """_summary_
+           in this case (20221221 CT /S51480)
+
+        Args:
+            tmpBall (_numpy.array_): candinate test ball centroid after sort, numpy.array([[Px,Py,Pz]...])
+            originPoint (_numpy.array_): origin point in regBall
+            regMatrix (_numpy.array_): registration matrix
+
+        Returns:
+            testBall (_list_): candinate test ball centroid after sort and transform, list[numpy.array([Px,Py,Pz])...]
+        """
         tmpBall = tmpBall*[1, 1, -1]
         
         testBall = []
