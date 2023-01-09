@@ -30,10 +30,10 @@ maxManualRotateSpeed = 200
 jogResolution = 1
 differential_time = 2
 normalSpeed = 1000
-shiftingFLDC_up = -5.3613 - 1283.5547
-shiftingBLDC_Up = 1187.1387
-shiftingFLDC_Down = -7.8662 - 1777.6318
-shiftingBLDC_Down = -406.6699 - (-1356.5918)
+shiftingFLDC_up = -1297.8848 + 9.2285
+shiftingBLDC_Up = 1269.3497 + 133.9453
+shiftingFLDC_Down = -1796.0449 + 8.7012
+shiftingBLDC_Down = 914.502 + 90.6152
 robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 129
@@ -42,6 +42,7 @@ lowerHigh = -8.7
 global data
 data = ''
 
+"distance between point ball and robot base"
 baseShift_X = 205
-baseShift_Y = 70
+baseShift_Y = 70 - 2.5
 baseShift_Z = 15.5

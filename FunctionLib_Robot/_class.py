@@ -465,11 +465,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         global upper_G_length
         global upper_G_angle
 
-        robotTotalLength = ((robotInitialLength + PointX)
-                            ** 2 + (PointY)**2)**0.5
+        robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         robotMovingLength = robotTotalLength - 129  # robot需要前進的距離
 
-        rotationTheta = math.atan(PointY/(PointX+129))
+        rotationTheta = math.atan(PointY/PointX)
         rotationAngle = rotationTheta*180/math.pi  # robot需要旋轉的角度
 
         # 連續點位的差異距離、角度
@@ -486,11 +485,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         global lower_G_length
         global lower_G_angle
 
-        robotTotalLength = ((robotInitialLength + PointX)
-                            ** 2 + (PointY)**2)**0.5
+        robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         robotMovingLength = robotTotalLength - 129  # robot需要前進的距離
 
-        rotationTheta = math.atan(PointY/(PointX+129))
+        rotationTheta = math.atan(PointY/PointX)
         rotationAngle = rotationTheta*180/math.pi  # robot需要旋轉的角度
 
         # 連續點位的差異距離、角度
@@ -557,27 +555,121 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         return entryPoint, targetPoint
 
-    def P2P(self):
-        # 取得entry point 與 target point
-        try:
-            movingPoint = self.CapturePoint()
-            entryPoint = movingPoint[0]
-            targetPoint = movingPoint[1]
-            print(entryPoint[0])
-        except:
-            pass
+    # def P2P(self):
+    #     # 取得entry point 與 target point
+    #     try:
+    #         movingPoint = self.CapturePoint()
+    #         entryPoint = movingPoint[0]
+    #         targetPoint = movingPoint[1]
+    #         print(entryPoint[0])
+    #     except:
+    #         pass
 
-        # obtain upper point
-        t = (upperHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
-        upperPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
-        upperPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
+    #     # obtain upper point
+    #     t = (upperHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+    #     upperPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+    #     upperPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
 
-        # obtain lower point
-        t = (lowerHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
-        lowerPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
-        lowerPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
+    #     # obtain lower point
+    #     t = (lowerHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+    #     lowerPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+    #     lowerPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
 
-        # 計算上層的旋轉與移動
+    #     # 計算上層的旋轉與移動
+    #     upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
+    #     lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+
+    #     "robot motion"
+    #     "rotation command"
+    #     RotationCount_axis3 = float(
+    #         lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+    #     RotationCount_axis1 = float(
+    #         upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+    #     # Linear motion command
+    #     LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
+    #     LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+    #     self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
+    #                              RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+
+    # def P2P_Manual(self,entryPoint, targetPoint):
+    #     # obtain upper point
+    #     t = (upperHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+    #     upperPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+    #     upperPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
+
+    #     # obtain lower point
+    #     t = (lowerHigh - entryPoint[2])/(targetPoint[2]-entryPoint[2])
+    #     lowerPointX = entryPoint[0] + (targetPoint[0]-entryPoint[0])*t
+    #     lowerPointY = entryPoint[1] + (targetPoint[1]-entryPoint[1])*t
+
+    #     # 計算上層的旋轉與移動
+    #     upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
+    #     lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+
+    #     "robot motion"
+    #     "rotation command"
+    #     RotationCount_axis3 = float(
+    #         lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+    #     RotationCount_axis1 = float(
+    #         upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+    #     # Linear motion command
+    #     LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
+    #     LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+    #     self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
+    #                              RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+
+    # def CycleRun(self, P1, P2, P3, P4, cycleTimes):
+    #     "robot executes cycle run in 4 points"
+    #     try:
+    #         point1 = []
+    #         point2 = []
+    #         point3 = []
+    #         point4 = []
+    #         for item in P1:
+    #             point1.append(float(item))
+    #         for item in P2:
+    #             point2.append(float(item))
+    #         for item in P3:
+    #             point3.append(float(item))
+    #         for item in P4:
+    #             point4.append(float(item))
+
+    #         PointX = [point1[0], point2[0], point3[0], point4[0]]
+    #         PointY = [point1[1], point2[1], point3[1], point4[1]]
+    #         PointZ = [point1[2], point2[2], point3[2], point4[2]]
+
+    #         times = 0
+    #         while times < cycleTimes:
+    #             times += 1
+    #             print(f"Repeat times {times}.")
+    #             for index in range(4):
+    #                 self.entryPoint = [PointX[index],
+    #                                    PointY[index], PointZ[index]]
+    #                 self.targetPoint = [PointX[index],
+    #                                     PointY[index], PointZ[index]-20]
+    #                 self.MoveToPoint()
+    #         print("Cycle Run Processing is Done!")
+    #     except:
+    #         print("Wrong type. Please try it again.")
+
+    def MoveToPoint(self):
+        "obtain upper point"
+        t = (upperHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        upperPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t
+        upperPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t
+
+        "obtain lower point"
+        t = (lowerHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        lowerPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t
+        lowerPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t
+
+        "Calculate rotation and movement of upper layer"
         upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
         lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
@@ -587,8 +679,59 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
         RotationCount_axis1 = float(
             upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
-        # Linear motion command
+        "Linear motion command"
         LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
         LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
         self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                  RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+
+    def P2P(self):
+        "obtain entry point and target point"
+        self.movingPoint = self.CapturePoint()
+        self.entryPoint = self.movingPoint[0]
+        self.targetPoint = self.movingPoint[1]
+        self.MoveToPoint()
+
+    def P2P_Manual(self, entryPoint, targetPoint):
+        "get entry and target points manually."
+        self.entryPoint = []
+        self.targetPoint = []
+        for item in entryPoint:
+            self.entryPoint.append(float(item))
+        for item in targetPoint:
+            self.targetPoint.append(float(item))
+        self.MoveToPoint()
+
+    def CycleRun(self, P1, P2, P3, P4, cycleTimes):
+        "robot executes cycle run in 4 points"
+        try:
+            point1 = []
+            point2 = []
+            point3 = []
+            point4 = []
+            for item in P1:
+                point1.append(float(item))
+            for item in P2:
+                point2.append(float(item))
+            for item in P3:
+                point3.append(float(item))
+            for item in P4:
+                point4.append(float(item))
+
+            PointX = [point1[0], point2[0], point3[0], point4[0]]
+            PointY = [point1[1], point2[1], point3[1], point4[1]]
+            PointZ = [point1[2], point2[2], point3[2], point4[2]]
+
+            times = 0
+            while times < cycleTimes:
+                times += 1
+                print(f"Repeat times {times}.")
+                for index in range(4):
+                    self.entryPoint = [PointX[index],
+                                       PointY[index], PointZ[index]]
+                    self.targetPoint = [PointX[index],
+                                        PointY[index], PointZ[index]-20]
+                    self.MoveToPoint()
+            print("Cycle Run Processing is Done!")
+        except:
+            print("Wrong type. Please try it again.")

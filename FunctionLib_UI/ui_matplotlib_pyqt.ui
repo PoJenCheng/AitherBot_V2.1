@@ -1585,6 +1585,20 @@
         </widget>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_26">
+           <property name="text">
+            <string>Enter number</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_EnterNumber_SAT"/>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QPushButton" name="Button_Robot2TestPoint">
          <property name="enabled">
           <bool>true</bool>
@@ -1752,7 +1766,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -2264,6 +2278,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Button_Robot2TestPoint</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotStepRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1784</x>
+     <y>353</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1782</x>
+     <y>-13</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>SetRegistration_L()</slot>
@@ -2281,5 +2311,6 @@
   <slot>ShowRegistrationDifference_SAT()</slot>
   <slot>SetTestPoint_SAT()</slot>
   <slot>ShowTestPoint_SAT()</slot>
+  <slot>RobotStepRun()</slot>
  </slots>
 </ui>

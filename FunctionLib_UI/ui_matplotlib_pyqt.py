@@ -700,6 +700,15 @@ class Ui_MainWindow(object):
         self.label_TestBallNum_SAT = QtWidgets.QLabel(self.verticalLayoutWidget_13)
         self.label_TestBallNum_SAT.setObjectName("label_TestBallNum_SAT")
         self.verticalLayout_15.addWidget(self.label_TestBallNum_SAT)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.label_26 = QtWidgets.QLabel(self.verticalLayoutWidget_13)
+        self.label_26.setObjectName("label_26")
+        self.horizontalLayout_2.addWidget(self.label_26)
+        self.lineEdit_EnterNumber_SAT = QtWidgets.QLineEdit(self.verticalLayoutWidget_13)
+        self.lineEdit_EnterNumber_SAT.setObjectName("lineEdit_EnterNumber_SAT")
+        self.horizontalLayout_2.addWidget(self.lineEdit_EnterNumber_SAT)
+        self.verticalLayout_15.addLayout(self.horizontalLayout_2)
         self.Button_Robot2TestPoint = QtWidgets.QPushButton(self.verticalLayoutWidget_13)
         self.Button_Robot2TestPoint.setEnabled(True)
         self.Button_Robot2TestPoint.setObjectName("Button_Robot2TestPoint")
@@ -782,7 +791,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tabWidget_RobotAccuracy, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))
         self.menubar.setObjectName("menubar")
         self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
@@ -803,36 +812,37 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(5)
-        self.Slider_WL_L.valueChanged['int'].connect(self.label_WL_L.setNum)
-        self.Slider_WW_L.valueChanged['int'].connect(self.label_WW_L.setNum)
-        self.Slider_WW_H.valueChanged['int'].connect(self.label_WW_H.setNum)
-        self.Slider_WL_H.valueChanged['int'].connect(self.label_WL_H.setNum)
-        self.Button_ShowRegistration_L.clicked.connect(MainWindow.ShowRegistrationDifference_L)
-        self.Button_Registration_L.clicked.connect(MainWindow.SetRegistration_L)
-        self.Button_SetPoint_L.clicked.connect(MainWindow.SetPoint_L)
-        self.Button_ShowPoint_L.clicked.connect(MainWindow.ShowPoint_L)
-        self.Slider_RobotSpeed.valueChanged['int'].connect(self.label_RobotSpeed.setNum)
-        self.Button_RobotHome.clicked.connect(MainWindow.HomeProcessing)
-        self.Button_RobotAutoRun.clicked.connect(MainWindow.RobotRun)
-        self.Button_Registration_H.clicked.connect(MainWindow.SetRegistration_H)
-        self.Button_ShowRegistration_H.clicked.connect(MainWindow.ShowRegistrationDifference_H)
-        self.Button_SetPoint_H.clicked.connect(MainWindow.SetPoint_H)
-        self.Button_ShowPoint_H.clicked.connect(MainWindow.ShowPoint_H)
-        self.SliceSelect_Coronal_L.valueChanged['int'].connect(self.label_3.setNum)
-        self.SliceSelect_Axial_L.valueChanged['int'].connect(self.label_9.setNum)
-        self.SliceSelect_Sagittal_L.valueChanged['int'].connect(self.label_7.setNum)
-        self.SliceSelect_Axial_H.valueChanged['int'].connect(self.label_12.setNum)
-        self.SliceSelect_Coronal_H.valueChanged['int'].connect(self.label_16.setNum)
-        self.SliceSelect_Sagittal_H.valueChanged['int'].connect(self.label_14.setNum)
-        self.Button_Planning.clicked.connect(MainWindow.ShowPlanningPath)
-        self.SliceSelect_Axial_SAT.valueChanged['int'].connect(self.label_18.setNum)
-        self.SliceSelect_Coronal_SAT.valueChanged['int'].connect(self.label_22.setNum)
-        self.SliceSelect_Sagittal_SAT.valueChanged['int'].connect(self.label_20.setNum)
-        self.Slider_WW_SAT.valueChanged['int'].connect(self.label_WW_SAT.setNum)
-        self.Slider_WL_SAT.valueChanged['int'].connect(self.label_WL_SAT.setNum)
-        self.Button_Registration_SAT.clicked.connect(MainWindow.SetRegistration_SAT)
-        self.Button_ShowRegistration_SAT.clicked.connect(MainWindow.ShowRegistrationDifference_SAT)
-        self.Button_ShowTestPoint_SAT.clicked.connect(MainWindow.ShowTestPoint_SAT)
+        self.Slider_WL_L.valueChanged['int'].connect(self.label_WL_L.setNum) # type: ignore
+        self.Slider_WW_L.valueChanged['int'].connect(self.label_WW_L.setNum) # type: ignore
+        self.Slider_WW_H.valueChanged['int'].connect(self.label_WW_H.setNum) # type: ignore
+        self.Slider_WL_H.valueChanged['int'].connect(self.label_WL_H.setNum) # type: ignore
+        self.Button_ShowRegistration_L.clicked.connect(MainWindow.ShowRegistrationDifference_L) # type: ignore
+        self.Button_Registration_L.clicked.connect(MainWindow.SetRegistration_L) # type: ignore
+        self.Button_SetPoint_L.clicked.connect(MainWindow.SetPoint_L) # type: ignore
+        self.Button_ShowPoint_L.clicked.connect(MainWindow.ShowPoint_L) # type: ignore
+        self.Slider_RobotSpeed.valueChanged['int'].connect(self.label_RobotSpeed.setNum) # type: ignore
+        self.Button_RobotHome.clicked.connect(MainWindow.HomeProcessing) # type: ignore
+        self.Button_RobotAutoRun.clicked.connect(MainWindow.RobotRun) # type: ignore
+        self.Button_Registration_H.clicked.connect(MainWindow.SetRegistration_H) # type: ignore
+        self.Button_ShowRegistration_H.clicked.connect(MainWindow.ShowRegistrationDifference_H) # type: ignore
+        self.Button_SetPoint_H.clicked.connect(MainWindow.SetPoint_H) # type: ignore
+        self.Button_ShowPoint_H.clicked.connect(MainWindow.ShowPoint_H) # type: ignore
+        self.SliceSelect_Coronal_L.valueChanged['int'].connect(self.label_3.setNum) # type: ignore
+        self.SliceSelect_Axial_L.valueChanged['int'].connect(self.label_9.setNum) # type: ignore
+        self.SliceSelect_Sagittal_L.valueChanged['int'].connect(self.label_7.setNum) # type: ignore
+        self.SliceSelect_Axial_H.valueChanged['int'].connect(self.label_12.setNum) # type: ignore
+        self.SliceSelect_Coronal_H.valueChanged['int'].connect(self.label_16.setNum) # type: ignore
+        self.SliceSelect_Sagittal_H.valueChanged['int'].connect(self.label_14.setNum) # type: ignore
+        self.Button_Planning.clicked.connect(MainWindow.ShowPlanningPath) # type: ignore
+        self.SliceSelect_Axial_SAT.valueChanged['int'].connect(self.label_18.setNum) # type: ignore
+        self.SliceSelect_Coronal_SAT.valueChanged['int'].connect(self.label_22.setNum) # type: ignore
+        self.SliceSelect_Sagittal_SAT.valueChanged['int'].connect(self.label_20.setNum) # type: ignore
+        self.Slider_WW_SAT.valueChanged['int'].connect(self.label_WW_SAT.setNum) # type: ignore
+        self.Slider_WL_SAT.valueChanged['int'].connect(self.label_WL_SAT.setNum) # type: ignore
+        self.Button_Registration_SAT.clicked.connect(MainWindow.SetRegistration_SAT) # type: ignore
+        self.Button_ShowRegistration_SAT.clicked.connect(MainWindow.ShowRegistrationDifference_SAT) # type: ignore
+        self.Button_ShowTestPoint_SAT.clicked.connect(MainWindow.ShowTestPoint_SAT) # type: ignore
+        self.Button_Robot2TestPoint.clicked.connect(MainWindow.RobotStepRun) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -921,6 +931,7 @@ class Ui_MainWindow(object):
         self.label_RegistrtionError_SAT.setText(_translate("MainWindow", "Registration difference: 0 mm"))
         self.Button_ShowTestPoint_SAT.setText(_translate("MainWindow", "Show test point"))
         self.label_TestBallNum_SAT.setText(_translate("MainWindow", "NO. 0 test ball"))
+        self.label_26.setText(_translate("MainWindow", "Enter number"))
         self.Button_Robot2TestPoint.setText(_translate("MainWindow", "Robot go to test point"))
         self.label_dcmSAT_L_side.setText(_translate("MainWindow", "L / R"))
         self.label_dcmSAT_R_side.setText(_translate("MainWindow", "L / R"))

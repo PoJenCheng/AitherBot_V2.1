@@ -7,6 +7,7 @@ from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot._globalVar import *
+from FunctionLib_Vision._class import SAT
 from time import sleep
 from datetime import datetime
 import sys
@@ -20,8 +21,7 @@ import FunctionLib_UI.ui_set_point_system
 import FunctionLib_Vision._class
 
 
-
-class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION):
+class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def __init__(self):
         """initial main ui
         """
@@ -37,7 +37,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmFn = FunctionLib_Vision._class.DICOM()
         self.regFn = FunctionLib_Vision._class.REGISTRATION()
         self.satFn = FunctionLib_Vision._class.SAT()
-        
 
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
@@ -66,7 +65,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmHigh.update({"selectedPoint": []})
         self.dcmHigh.update({"flageSelectedPoint": False})
         self.dcmHigh.update({"flageShowPointButton": False})
-        
+
         "initialize dcm system accuracy test (SAT)"
         self.dcmSAT = {}
         self.dcmSAT.update({"ww": 1})
@@ -99,15 +98,24 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Slider_WL_SAT.setMaximum(3071)
         self.Slider_WL_SAT.setValue(0)
 
-        self.SliceSelect_Axial_L.valueChanged.connect(self.ScrollBarChangeAxial_L)
-        self.SliceSelect_Sagittal_L.valueChanged.connect(self.ScrollBarChangeSagittal_L)
-        self.SliceSelect_Coronal_L.valueChanged.connect(self.ScrollBarChangeCoronal_L)
-        self.SliceSelect_Axial_H.valueChanged.connect(self.ScrollBarChangeAxial_H)
-        self.SliceSelect_Sagittal_H.valueChanged.connect(self.ScrollBarChangeSagittal_H)
-        self.SliceSelect_Coronal_H.valueChanged.connect(self.ScrollBarChangeCoronal_H)
-        self.SliceSelect_Axial_SAT.valueChanged.connect(self.ScrollBarChangeAxial_SAT)
-        self.SliceSelect_Sagittal_SAT.valueChanged.connect(self.ScrollBarChangeSagittal_SAT)
-        self.SliceSelect_Coronal_SAT.valueChanged.connect(self.ScrollBarChangeCoronal_SAT)
+        self.SliceSelect_Axial_L.valueChanged.connect(
+            self.ScrollBarChangeAxial_L)
+        self.SliceSelect_Sagittal_L.valueChanged.connect(
+            self.ScrollBarChangeSagittal_L)
+        self.SliceSelect_Coronal_L.valueChanged.connect(
+            self.ScrollBarChangeCoronal_L)
+        self.SliceSelect_Axial_H.valueChanged.connect(
+            self.ScrollBarChangeAxial_H)
+        self.SliceSelect_Sagittal_H.valueChanged.connect(
+            self.ScrollBarChangeSagittal_H)
+        self.SliceSelect_Coronal_H.valueChanged.connect(
+            self.ScrollBarChangeCoronal_H)
+        self.SliceSelect_Axial_SAT.valueChanged.connect(
+            self.ScrollBarChangeAxial_SAT)
+        self.SliceSelect_Sagittal_SAT.valueChanged.connect(
+            self.ScrollBarChangeSagittal_SAT)
+        self.SliceSelect_Coronal_SAT.valueChanged.connect(
+            self.ScrollBarChangeCoronal_SAT)
 
         self.Slider_WW_L.valueChanged.connect(self.SetWidth_L)
         self.Slider_WL_L.valueChanged.connect(self.SetLevel_L)
@@ -126,6 +134,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         global g_homeStatus
         g_homeStatus = False
         self.homeStatus = g_homeStatus
+
+        SAT.__init__(self)
 
     def HomeProcessing(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
@@ -170,6 +180,20 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         point4 = self.StringSplit(point4)
         MOTORSUBFUNCTION.CycleRun(
             self, point1, point2, point3, point4, int(cycleTimes))
+
+    def RobotStepRun(self):
+        testBallPosition = self.satFn.TestBall
+        testBallSelect = int(self.lineEdit_EnterNumber_SAT.text())-1
+        if testBallSelect >= 0 and testBallSelect <= 5:
+            selectBallPosition = testBallPosition[testBallSelect]
+            calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
+            entryTestBall = selectBallPosition - calibration
+            targetTestBall = selectBallPosition - \
+                calibration - np.array([0, 0, -20])
+            MOTORSUBFUNCTION.P2P_Manual(
+                self, entryTestBall, targetTestBall)
+        else:
+            print("select target ball is wrong")
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
@@ -219,15 +243,15 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Coronal_H.setEnabled(False)
 
         "Navigation Robot ui disable (turn on after the function is enabled)"
-        self.Button_RobotHome.setEnabled(False)
-        self.Button_RobotAutoRun.setEnabled(False)
+        # self.Button_RobotHome.setEnabled(False)
+        # self.Button_RobotAutoRun.setEnabled(False)
 
         "System Accuracy Test ui disable (turn on after the function is enabled)"
         self.Button_Registration_SAT.setEnabled(False)
         self.Button_ShowRegistration_SAT.setEnabled(False)
         self.Button_ShowTestPoint_SAT.setEnabled(False)
         self.Button_Robot2TestPoint.setEnabled(False)
-        
+
         self.Slider_WW_SAT.setEnabled(False)
         self.Slider_WL_SAT.setEnabled(False)
         self.SliceSelect_Axial_SAT.setEnabled(False)
@@ -278,8 +302,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.comboBox_L.setEnabled(False)
         self.Button_SetPoint_L.setEnabled(False)
         self.Button_ShowPoint_L.setEnabled(False)
-        self.Button_RobotHome.setEnabled(False)
-        self.Button_RobotAutoRun.setEnabled(False)
+        # self.Button_RobotHome.setEnabled(False)
+        # self.Button_RobotAutoRun.setEnabled(False)
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
@@ -475,8 +499,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.comboBox_H.setEnabled(False)
         self.Button_SetPoint_H.setEnabled(False)
         self.Button_ShowPoint_H.setEnabled(False)
-        self.Button_RobotHome.setEnabled(False)
-        self.Button_RobotAutoRun.setEnabled(False)
+        # self.Button_RobotHome.setEnabled(False)
+        # self.Button_RobotAutoRun.setEnabled(False)
 
         seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
             metadata, metadataSeriesNum)
@@ -631,7 +655,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        
+
         if self.dcmLow.get("regBall") != []:
             reply = QMessageBox.information(
                 self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -698,7 +722,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 else:
                     self.logUI.warning(
                         'find seleted balls error / ShowRegistrationDifference error')
-                    print("find seleted balls error / ShowRegistrationDifference() error")
+                    print(
+                        "find seleted balls error / ShowRegistrationDifference() error")
             else:
                 print("Choose Point error / ShowRegistrationDifference() error")
                 self.logUI.warning(
@@ -740,13 +765,16 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         """
         if self.dcmLow.get("flageSelectedPoint") == False:
             if self.comboBox_L.currentText() == "Axial":
-                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())
+                self.ui_SPS = SetPointSystem(
+                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Coronal":
-                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value())
+                self.ui_SPS = SetPointSystem(
+                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value())
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Sagittal":
-                self.ui_SPS = SetPointSystem(self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())
+                self.ui_SPS = SetPointSystem(
+                    self.dcmLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())
                 self.ui_SPS.show()
             else:
                 print("comboBox_L error / SetPoint_L() error")
@@ -755,7 +783,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_ShowPoint_L.setEnabled(True)
             return
         elif self.dcmLow.get("flageSelectedPoint") == True:
-            reply = QMessageBox.information(self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = QMessageBox.information(
+                self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmLow.update({"selectedPoint": []})
                 self.dcmLow.update({"flageSelectedPoint": False})
@@ -812,7 +841,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             candidateBall = self.regFn.GetBall(
                 self.dcmHigh.get("imageHu"), self.dcmHigh.get("pixel2Mm"))
         except:
-            self.logUI.warning('get candidate ball error / SetRegistration_H() error')
+            self.logUI.warning(
+                'get candidate ball error / SetRegistration_H() error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_H() error')
             return
@@ -820,7 +850,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmHigh.update({"candidateBall": candidateBall})
-        
+
         "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmHigh.get("candidateBall"))
@@ -863,7 +893,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 else:
                     self.logUI.warning(
                         'find seleted balls error / ShowRegistrationDifference_H() error')
-                    print("find seleted balls error / ShowRegistrationDifference_H() error")
+                    print(
+                        "find seleted balls error / ShowRegistrationDifference_H() error")
             else:
                 print("Choose Point error / ShowRegistrationDifference_H() error")
                 self.logUI.warning(
@@ -921,7 +952,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             else:
                 print("comboBox_H error / SetPoint_H() error")
                 self.logUI.warning('comboBox_H error / SetPoint_H() error')
-            
+
             self.Button_ShowPoint_H.setEnabled(True)
             return
         elif self.dcmHigh.get("flageSelectedPoint") == True:
@@ -977,7 +1008,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.Button_RobotHome.setEnabled(True)
             self.Button_RobotAutoRun.setEnabled(True)
         except:
-            self.logUI.warning('fail to Set Planning Path / SetPlanningPath() error')
+            self.logUI.warning(
+                'fail to Set Planning Path / SetPlanningPath() error')
             print("fail to Set Planning Path / SetPlanningPath() error")
             QMessageBox.critical(self, "error", "fail to Set Planning Path")
 
@@ -1025,8 +1057,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.Button_ShowTestPoint_SAT.setEnabled(False)
         self.Button_Robot2TestPoint.setEnabled(False)
 
-        seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(metadata, metadataSeriesNum)
-        self.dcmSAT.update({"imageTag": self.dcmFn.ReadDicom(seriesNumberLabel, dicDICOM)})
+        seriesNumberLabel, dicDICOM = self.dcmFn.SeriesSort(
+            metadata, metadataSeriesNum)
+        self.dcmSAT.update(
+            {"imageTag": self.dcmFn.ReadDicom(seriesNumberLabel, dicDICOM)})
         image = self.dcmFn.GetImage(self.dcmSAT.get("imageTag"))
         if image != 0:
             self.dcmSAT.update({"image": numpy.array(image)})
@@ -1037,9 +1071,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
         rescaleSlope = self.dcmSAT.get("imageTag")[0].RescaleSlope
         rescaleIntercept = self.dcmSAT.get("imageTag")[0].RescaleIntercept
-        self.dcmSAT.update({"imageHu": numpy.array(self.dcmFn.Transfer2Hu(self.dcmSAT.get("image"), rescaleSlope, rescaleIntercept))})
-        self.dcmSAT.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmSAT.get("imageTag")[0])})
-        self.dcmSAT.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmSAT.get("imageHu"), self.dcmSAT.get("pixel2Mm")))})
+        self.dcmSAT.update({"imageHu": numpy.array(self.dcmFn.Transfer2Hu(
+            self.dcmSAT.get("image"), rescaleSlope, rescaleIntercept))})
+        self.dcmSAT.update(
+            {"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmSAT.get("imageTag")[0])})
+        self.dcmSAT.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(
+            self.dcmSAT.get("imageHu"), self.dcmSAT.get("pixel2Mm")))})
         patientPosition = self.dcmSAT.get("imageTag")[0].PatientPosition
         if patientPosition == 'HFS':
             self.label_dcmSAT_L_side.setText("Left")
@@ -1052,14 +1089,20 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.label_dcmSAT_R_side.setText("error")
 
         self.SliceSelect_Axial_SAT.setMinimum(0)
-        self.SliceSelect_Axial_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[0]-1)
-        self.SliceSelect_Axial_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[0])/2))
+        self.SliceSelect_Axial_SAT.setMaximum(
+            self.dcmSAT.get("imageHuMm").shape[0]-1)
+        self.SliceSelect_Axial_SAT.setValue(
+            int((self.dcmSAT.get("imageHuMm").shape[0])/2))
         self.SliceSelect_Sagittal_SAT.setMinimum(0)
-        self.SliceSelect_Sagittal_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[1]-1)
-        self.SliceSelect_Sagittal_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[1])/2))
+        self.SliceSelect_Sagittal_SAT.setMaximum(
+            self.dcmSAT.get("imageHuMm").shape[1]-1)
+        self.SliceSelect_Sagittal_SAT.setValue(
+            int((self.dcmSAT.get("imageHuMm").shape[1])/2))
         self.SliceSelect_Coronal_SAT.setMinimum(0)
-        self.SliceSelect_Coronal_SAT.setMaximum(self.dcmSAT.get("imageHuMm").shape[2]-1)
-        self.SliceSelect_Coronal_SAT.setValue(int((self.dcmSAT.get("imageHuMm").shape[2])/2))
+        self.SliceSelect_Coronal_SAT.setMaximum(
+            self.dcmSAT.get("imageHuMm").shape[2]-1)
+        self.SliceSelect_Coronal_SAT.setValue(
+            int((self.dcmSAT.get("imageHuMm").shape[2])/2))
 
         max = int(numpy.max(self.dcmSAT.get("imageHuMm")))
         min = int(numpy.min(self.dcmSAT.get("imageHuMm")))
@@ -1069,8 +1112,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         "WindowCenter / WindowLevel"
         self.Slider_WL_SAT.setMinimum(min)
         self.Slider_WL_SAT.setMaximum(max)
-        self.dcmSAT.update({"ww": int(self.dcmSAT.get("imageTag")[0].WindowWidth[0])})
-        self.dcmSAT.update({"wl": int(self.dcmSAT.get("imageTag")[0].WindowCenter[0])})
+        self.dcmSAT.update(
+            {"ww": int(self.dcmSAT.get("imageTag")[0].WindowWidth[0])})
+        self.dcmSAT.update(
+            {"wl": int(self.dcmSAT.get("imageTag")[0].WindowCenter[0])})
         self.Slider_WW_SAT.setValue(self.dcmSAT.get("ww"))
         self.Slider_WL_SAT.setValue(self.dcmSAT.get("wl"))
 
@@ -1085,26 +1130,32 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.SliceSelect_Coronal_SAT.setEnabled(True)
         self.Button_Registration_SAT.setEnabled(True)
         self.tabWidget.setCurrentWidget(self.tabWidget_SystemAccuracy)
-        
+
         return
-    
+
     def ShowDicom_SAT(self):
         """show SAT dicom to ui
         """
-        imageHu2DAxial = self.dcmSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
-        imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DAxial = self.dcmSAT.get(
+            "imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
+        imageHu2DAxial_ = self.dcmFn.GetGrayImg(
+            imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
         self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show Low Dicom Axial')
 
-        imageHu2DSagittal = self.dcmSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
-        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DSagittal = self.dcmSAT.get(
+            "imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
+        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(
+            imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
         self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show Low Dicom Sagittal')
 
-        imageHu2DCoronal = self.dcmSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
-        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DCoronal = self.dcmSAT.get(
+            "imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
+        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(
+            imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
         self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
@@ -1114,8 +1165,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def ScrollBarChangeAxial_SAT(self):
         """while ScrollBar Change (Axial), update ui plot
         """
-        imageHu2DAxial = self.dcmSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
-        imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DAxial = self.dcmSAT.get(
+            "imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
+        imageHu2DAxial_ = self.dcmFn.GetGrayImg(
+            imageHu2DAxial, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
         self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show Low Dicom Axial')
@@ -1123,8 +1176,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def ScrollBarChangeSagittal_SAT(self):
         """while ScrollBar Change (Sagittal), update ui plot
         """
-        imageHu2DSagittal = self.dcmSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
-        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DSagittal = self.dcmSAT.get(
+            "imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
+        imageHu2DSagittal_ = self.dcmFn.GetGrayImg(
+            imageHu2DSagittal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
         self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show Low Dicom Sagittal')
@@ -1132,8 +1187,10 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def ScrollBarChangeCoronal_SAT(self):
         """while ScrollBar Change (Coronal), update ui plot
         """
-        imageHu2DCoronal = self.dcmSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
-        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
+        imageHu2DCoronal = self.dcmSAT.get(
+            "imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
+        imageHu2DCoronal_ = self.dcmFn.GetGrayImg(
+            imageHu2DCoronal, self.dcmSAT.get("ww"), self.dcmSAT.get("wl"))
         qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
         self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
@@ -1151,13 +1208,14 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self.dcmSAT.update({"wl": int(self.Slider_WL_SAT.value())})
         self.ShowDicom_SAT()
         self.logUI.debug('Set Low Dicom Window Level')
-    
+
     def SetRegistration_SAT(self):
         """automatic find registration ball center and test ball center
            + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
         if self.dcmSAT.get("regBall") != []:
-            reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = QMessageBox.information(
+                self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmSAT.update({"selectedBall": []})
                 self.dcmSAT.update({"regBall": []})
@@ -1167,12 +1225,12 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 return
             else:
                 return
-        
+
         "automatic find registration ball center"
         try:
             "get/find the center of each ball"
             tmpCandidateBall = self.satFn.GetBall(self.dcmSAT.get("imageHuMm"))
-            
+
             "Group regBalls and test balls"
             groupCandidateBall = self.satFn.GroupBall(tmpCandidateBall)
             for key in groupCandidateBall:
@@ -1195,7 +1253,7 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             self.logUI.info(tmp)
         self.dcmSAT.update({"candidateBall": candidateBall})
         self.dcmSAT.update({"candidateTestBall": candidateTestBall})
-        
+
         "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         try:
             tmp = self.regFn.GetBallSection(self.dcmSAT.get("candidateBall"))
@@ -1210,9 +1268,9 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
             QMessageBox.critical(self, "error", "get candidate ball error")
             print(
                 'get candidate ball error / SetRegistration_L() error / candidateBall could be []')
-        
+
         return
-        
+
     def ShowRegistrationDifference_SAT(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
            calculate error/difference of relative distance
@@ -1227,18 +1285,22 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 self.logUI.info('get selected balls')
                 for P1 in selectedBall:
                     for P2 in candidateBall:
-                        distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+                        distance = math.sqrt(numpy.square(
+                            P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
                         if distance < 10:
                             ball.append(P2)
                             break
                 if len(ball) == 3:
                     flagePair = True
                 else:
-                    self.logUI.warning('find seleted balls error / ShowRegistrationDifference error')
-                    print("find seleted balls error / ShowRegistrationDifference() error")
+                    self.logUI.warning(
+                        'find seleted balls error / ShowRegistrationDifference error')
+                    print(
+                        "find seleted balls error / ShowRegistrationDifference() error")
             else:
                 print("Choose Point error / ShowRegistrationDifference() error")
-                self.logUI.warning('Choose Point error / ShowRegistrationDifference() error')
+                self.logUI.warning(
+                    'Choose Point error / ShowRegistrationDifference() error')
 
             "calculate error/difference of relative distance"
             if flagePair == True:
@@ -1251,9 +1313,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
                 error = self.regFn.GetError(self.dcmSAT.get("regBall"))
                 logStr = 'registration error (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
-                self.label_RegistrtionError_SAT.setText('Registration difference: {:.2f} mm'.format(error[2]))
+                self.label_RegistrtionError_SAT.setText(
+                    'Registration difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
-                regMatrix = self.regFn.TransformationMatrix(self.dcmSAT.get("regBall"))
+                regMatrix = self.regFn.TransformationMatrix(
+                    self.dcmSAT.get("regBall"))
                 self.logUI.info('get registration matrix: ')
                 for tmp in regMatrix:
                     self.logUI.info(tmp)
@@ -1261,51 +1325,60 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
 
             else:
                 print("pair error / ShowRegistrationDifference() error")
-                self.logUI.warning('pair error / ShowRegistrationDifference() error')
+                self.logUI.warning(
+                    'pair error / ShowRegistrationDifference() error')
             self.Button_ShowTestPoint_SAT.setEnabled(True)
             self.Button_Robot2TestPoint.setEnabled(True)
         else:
-            QMessageBox.critical(self, "error", "there are not selected 3 balls")
+            QMessageBox.critical(
+                self, "error", "there are not selected 3 balls")
         return
-    
+
     def ShowTestPoint_SAT(self):
         """show test ball position and save as .jpg and .txt files name with date and time
         """
-        tmpBall = self.satFn.SortCandidateTestBall(self.dcmSAT.get("candidateTestBall"))
-        testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[0], self.dcmSAT.get("regMatrix"))
-        
+        tmpBall = self.satFn.SortCandidateTestBall(
+            self.dcmSAT.get("candidateTestBall"))
+        testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[
+                                          0], self.dcmSAT.get("regMatrix"))
+
+        print(self.satFn.TestBall)
+        print(self.TestBall)
+
         "test ball image result"
         tmpSection = self.regFn.GetBallSection(tmpBall)
         showSlice = tmpSection[1]
-        imageHu2DMm = self.dcmSAT.get("imageHuMm")[:,showSlice, :]
+        imageHu2DMm = self.dcmSAT.get("imageHuMm")[:, showSlice, :]
         gray = numpy.uint8(imageHu2DMm)
         gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         "teat balls position save as .txt"
-        fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-        with open(str(fileName)+'.txt','w') as f:
-            f.write("test ball (x,y,z) in the image coordinate system:\n")
+        # fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        # with open(str(fileName)+'.txt', 'w') as f:
+        #     f.write("test ball (x,y,z) in the image coordinate system:\n")
         for i in range(tmpBall.shape[0]):
-            org = (int(tmpBall[i,0]),int(tmpBall[i,2]))
-            cv2.putText(gray3Channel,str(i+1), org,cv2.FONT_HERSHEY_COMPLEX,1,(0,100,255),1)
-            
-            with open(str(fileName)+'.txt','a') as f:
-                f.write(str(tmpBall[i]))
-                f.write('\n')
-            
-        with open(str(fileName)+'.txt','a') as f:
-            f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
-        for p in testBall:
-            with open(str(fileName)+'.txt','a') as f:
-                f.write(str(p))
-                f.write("\n")
-        
+            org = (int(tmpBall[i, 0]), int(tmpBall[i, 2]))
+            cv2.putText(gray3Channel, str(i+1), org,
+                        cv2.FONT_HERSHEY_COMPLEX, 1, (0, 100, 255), 1)
+
+            # with open(str(fileName)+'.txt', 'a') as f:
+            #     f.write(str(tmpBall[i]))
+            #     f.write('\n')
+
+        # with open(str(fileName)+'.txt', 'a') as f:
+        #     f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
+        # for p in testBall:
+        #     with open(str(fileName)+'.txt', 'a') as f:
+        #         f.write(str(p))
+        #         f.write("\n")
+
         "show test ball position in ui"
         cv2.imshow("ball", gray3Channel)
-        
-        "teat balls image save as .jpg"
-        cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
 
+        "teat balls image save as .jpg"
+        # cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
+        print(self.satFn.TestBall)
         return
+
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def __init__(self, dcm):
