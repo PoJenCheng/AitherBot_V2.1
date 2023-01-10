@@ -541,12 +541,14 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         breathingHalt_entry = breathingHalt_entry - calibration
         breathingHalt_target = breathingHalt_target - calibration
 
-        "取得吸飽與吐底entry與target的平均值"
-        entryPoint_X = ((breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
+        "calculate avg value between full breathing and halt breathing"
+        entryPoint_X = (
+            (breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
         entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
         entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
 
-        targetPoint_X = (breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
+        targetPoint_X = (
+            breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
         targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
         targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
 
@@ -579,11 +581,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
         lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
-        # robot motion
-        # rotation command
-        RotationCount_axis3 = int(
+        "robot motion"
+        "rotation command"
+        RotationCount_axis3 = float(
             lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-        RotationCount_axis1 = int(
+        RotationCount_axis1 = float(
             upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
         # Linear motion command
         LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
