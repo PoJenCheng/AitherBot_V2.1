@@ -1342,9 +1342,6 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[
                                           0], self.dcmSAT.get("regMatrix"))
 
-        print(self.satFn.TestBall)
-        print(self.TestBall)
-
         "test ball image result"
         tmpSection = self.regFn.GetBallSection(tmpBall)
         showSlice = tmpSection[1]
