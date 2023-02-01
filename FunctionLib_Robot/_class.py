@@ -254,13 +254,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         robotCheckStatus = False
         while robotCheckStatus is False:
             try:
-                # Setting Motor ID
+                "Setting Motor ID"
                 self.FLDC_Up = MOTORCONTROL(1)
                 self.BLDC_Up = MOTORCONTROL(2)
                 self.FLDC_Down = MOTORCONTROL(3)
                 self.BLDC_Down = MOTORCONTROL(4)
 
-                # Motor Initial
+                "Motor Initial"
                 self.FLDC_Up.MotorInitial()
                 self.BLDC_Up.MotorInitial()
                 self.FLDC_Down.MotorInitial()
@@ -272,11 +272,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                 print("Fail to link to robot, system will re-try after 3 seconds.")
                 sleep(3)
 
-        # Motor Enable
+        "Motor Enable"
         motorEnableStatus = False
         while motorEnableStatus is False:
             try:
-                # Motor Enable
+                "Motor Enable"
                 self.BLDC_Up.MotorDriverEnable()
                 self.BLDC_Down.MotorDriverEnable()
                 self.FLDC_Up.MotorDriverEnable()
@@ -350,7 +350,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
     def HomeLinearMotion(self, shifting_Up, Shifting_Down, speed):
         self.BLDC_Stop()
-        # 直線移動特定距離
+        "move a relative distance in a straight line"
         self.BLDC_Up.MoveRelativeSetting(shifting_Up, speed)
         self.BLDC_Down.MoveRelativeSetting(Shifting_Down, speed)
         self.BLDC_Up.bMoveRelativeEnable()
@@ -382,7 +382,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             Target = 0
 
     def HomeRotation(self):
-        ############### 第一次定位 #################
+        "first positioning"
         homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
         homeStatus_Enable = False
         while homeSwitch == 0:
@@ -402,10 +402,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                     self.FLDC_Down.MC_Stop()
         self.FLDC_Stop()
 
-        # 旋轉移動特定角度
+        "Rotate to a specific angle"
         self.DualRotatePositionMotion(-350, 400)
 
-        ############### 第二次定位 #################
+        "second positioning"
         homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
         while self.FLDC_Up.homeValue() == 1 or self.FLDC_Down.homeValue() == 1:
             homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
@@ -428,7 +428,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                     self.FLDC_Down.MC_Stop()
         self.FLDC_Stop()
 
-        # 旋轉移動特定角度
+        "Rotate to a specific angle"
         self.FLDC_Up.MoveRelativeSetting(shiftingFLDC_up, 200)
         self.FLDC_Down.MoveRelativeSetting(shiftingFLDC_Down, 200)
         self.FLDC_Up.bMoveRelativeEnable()
@@ -466,16 +466,18 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         global upper_G_angle
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
-        robotMovingLength = robotTotalLength - 129  # robot需要前進的距離
+        "The distance of the robot needs to travel"
+        robotMovingLength = robotTotalLength - 129
 
         rotationTheta = math.atan(PointY/PointX)
-        rotationAngle = rotationTheta*180/math.pi  # robot需要旋轉的角度
+        "The angle of the robot needs to rotate"
+        rotationAngle = rotationTheta*180/math.pi
 
-        # 連續點位的差異距離、角度
+        "the difference length and angle of the continuous point"
         diffLength = robotMovingLength - upper_G_length
         diffAngle = rotationAngle - upper_G_angle
 
-        # 更新Global點位與角度
+        "update global length and angle"
         upper_G_length = robotMovingLength
         upper_G_angle = rotationAngle
 
@@ -486,16 +488,18 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         global lower_G_angle
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
-        robotMovingLength = robotTotalLength - 129  # robot需要前進的距離
+        "The distance of the robot needs to travel"
+        robotMovingLength = robotTotalLength - 129
 
         rotationTheta = math.atan(PointY/PointX)
-        rotationAngle = rotationTheta*180/math.pi  # robot需要旋轉的角度
+        "The angle of the robot needs to rotate"
+        rotationAngle = rotationTheta*180/math.pi
 
-        # 連續點位的差異距離、角度
+        "the difference length and angle of the continuous point"
         diffLength = robotMovingLength - lower_G_length
         diffAngle = rotationAngle - lower_G_angle
 
-        # 更新Global點位與角度
+        "update global length and angle"
         lower_G_length = robotMovingLength
         lower_G_angle = rotationAngle
 

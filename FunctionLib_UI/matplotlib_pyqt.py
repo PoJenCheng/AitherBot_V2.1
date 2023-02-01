@@ -1337,10 +1337,8 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
     def ShowTestPoint_SAT(self):
         """show test ball position and save as .jpg and .txt files name with date and time
         """
-        tmpBall = self.satFn.SortCandidateTestBall(
-            self.dcmSAT.get("candidateTestBall"))
-        testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[
-                                          0], self.dcmSAT.get("regMatrix"))
+        tmpBall = self.satFn.SortCandidateTestBall(self.dcmSAT.get("candidateTestBall"))
+        testBall = self.satFn.GetTestBall(tmpBall, self.dcmSAT.get("regBall")[0], self.dcmSAT.get("regMatrix"))
 
         "test ball image result"
         tmpSection = self.regFn.GetBallSection(tmpBall)
@@ -1349,31 +1347,30 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         gray = numpy.uint8(imageHu2DMm)
         gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         "teat balls position save as .txt"
-        # fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-        # with open(str(fileName)+'.txt', 'w') as f:
-        #     f.write("test ball (x,y,z) in the image coordinate system:\n")
+        fileName = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        with open(str(fileName)+'.txt', 'w') as f:
+            f.write("test ball (x,y,z) in the image coordinate system:\n")
         for i in range(tmpBall.shape[0]):
             org = (int(tmpBall[i, 0]), int(tmpBall[i, 2]))
             cv2.putText(gray3Channel, str(i+1), org,
                         cv2.FONT_HERSHEY_COMPLEX, 1, (0, 100, 255), 1)
 
-            # with open(str(fileName)+'.txt', 'a') as f:
-            #     f.write(str(tmpBall[i]))
-            #     f.write('\n')
+            with open(str(fileName)+'.txt', 'a') as f:
+                f.write(str(tmpBall[i]))
+                f.write('\n')
 
-        # with open(str(fileName)+'.txt', 'a') as f:
-        #     f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
-        # for p in testBall:
-        #     with open(str(fileName)+'.txt', 'a') as f:
-        #         f.write(str(p))
-        #         f.write("\n")
+        with open(str(fileName)+'.txt', 'a') as f:
+            f.write("\ntest ball (x,y,z) in the regBall coordinate system:\n")
+        for p in testBall:
+            with open(str(fileName)+'.txt', 'a') as f:
+                f.write(str(p))
+                f.write("\n")
 
         "show test ball position in ui"
         cv2.imshow("ball", gray3Channel)
 
         "teat balls image save as .jpg"
-        # cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
-        print(self.satFn.TestBall)
+        cv2.imwrite(str(fileName)+'.jpg', gray3Channel)
         return
 
 
