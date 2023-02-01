@@ -15,13 +15,13 @@ import numpy
 import math
 import cv2
 import logging
-import FunctionLib_UI.ui_matplotlib_pyqt
 import FunctionLib_UI.ui_coordinate_system
 import FunctionLib_UI.ui_set_point_system
-import FunctionLib_Vision._class
+from FunctionLib_UI.ui_matplotlib_pyqt import *
+from FunctionLib_Vision._class import *
 
 
-class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, MOTORSUBFUNCTION, SAT):
+class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def __init__(self):
         """initial main ui
         """
@@ -32,11 +32,11 @@ class MainWidget(QMainWindow, FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow, M
         self._init_ui()
         self.logUI.info('initial UI')
 
-        self.ui = FunctionLib_UI.ui_matplotlib_pyqt.Ui_MainWindow()
+        self.ui = Ui_MainWindow()
 
-        self.dcmFn = FunctionLib_Vision._class.DICOM()
-        self.regFn = FunctionLib_Vision._class.REGISTRATION()
-        self.satFn = FunctionLib_Vision._class.SAT()
+        self.dcmFn = DICOM()
+        self.regFn = REGISTRATION()
+        self.satFn = SAT()
 
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
@@ -1381,7 +1381,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
 
         "hint: self.dcmLow = dcmLow = dcm"
         self.dcm = dcm
-        self.dcmFn = FunctionLib_Vision._class.DICOM()
+        self.dcmFn = DICOM()
         self.DisplayImage()
         self.flage = 0
         self.point = []
@@ -1535,7 +1535,7 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
 
         "hint: self.dcmLow = dcmLow"
         self.dcm = dcm
-        self.dcmFn = FunctionLib_Vision._class.DICOM()
+        self.dcmFn = DICOM()
         self.comboBox = comboBox
         self.scrollBar = scrollBar
         self.DisplayImage()
