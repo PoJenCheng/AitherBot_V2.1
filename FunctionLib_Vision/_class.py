@@ -9,8 +9,6 @@ import math
 from PyQt5.QtGui import *
 from ._subFunction import *
 
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-
 # noinspection PyUnresolvedReferences
 # import vtkmodules.vtkInteractionStyle
 # noinspection PyUnresolvedReferences
@@ -131,14 +129,12 @@ class DICOM():
         imageInfo = dicDICOM.get(seriesNumberLabel[index])
         imageDir = dirDICOM.get(seriesNumberLabel[index])
         
-        
         tmpDir = imageDir[0].rfind('\\')
         if tmpDir == -1:
             tmpDir_ = imageDir[0].rfind('/')
             folderDir = imageDir[0][0:tmpDir_]
         else:
             folderDir = imageDir[0][0:tmpDir]
-        
         
         "sort InstanceNumber"
         imageTag = [0]*tmpSeries
@@ -445,7 +441,7 @@ class REGISTRATION():
         "x = 512"
         x = imageHu.shape[2]
         y = int(imageHu.shape[1]/2)
-        NORMALIZE=4096-1
+        NORMALIZE = 4096-1
         cutImagesHu=[]
         if pixel2Mm[0]!=pixel2Mm[1]:
             print("xy plot resize is fail")
@@ -592,7 +588,6 @@ class REGISTRATION():
                         delete_label.append(tuple(key))
                     if tmp2.shape[0]>=15:
                         dictionaryTmp.update({tuple(tmp2[0,:]):tmp2})
-                    
                     break
         for dic in delete_label:
             try:
@@ -625,8 +620,8 @@ class REGISTRATION():
         "x = 512"
         x = imageHu.shape[2]
         y = int(imageHu.shape[1]/2)
-        NORMALIZE=4096-1
-        cutImagesHu=[]
+        NORMALIZE = 4096-1
+        cutImagesHu = []
         if pixel2Mm[0]<1 and abs(pixel2Mm[2])<=1:
             for z in range(int(imageHu.shape[0]/3),imageHu.shape[0]):
                 src_tmp = cv2.resize(imageHu[z,:y,:x],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
@@ -976,42 +971,14 @@ class REGISTRATION():
             print("get point error / GetBall() error")
         return numpy.array(point)
     
-    # def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
-    #                     originPoint_L, selectedPoint_L, regMatrix_L):
-    #     planningPath = []
-        
-    #     for p in selectedPoint_H:
-    #         planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
-    #     for p in selectedPoint_L:
-    #         planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
-        
-        
-    #     self.PlanningPath = planningPath
-        
-    #     return planningPath
-    
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
         
         for p in selectedPoint:
             planningPath.append(numpy.dot(regMatrix,(p-originPoint)))
         
-        # self.PlanningPath = planningPath
-        
         return planningPath
     
-    # def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
-    #                     originPoint_L, selectedPoint_L, regMatrix_L):
-    #     planningPath = []
-        
-    #     for p in selectedPoint_H:
-    #         planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
-    #     for p in selectedPoint_L:
-    #         planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
-        
-    #     self.PlanningPath = planningPath
-        
-    #     return planningPath
         
 class SAT():
     def __init__(self):
@@ -1522,9 +1489,6 @@ class DISPLAY():
         self.actorPointEntry = vtkActor()
         self.actorPointTarget = vtkActor()
         
-        
-        
-        
         self.reader.SetDirectoryName(folderPath)
         self.reader.Update()
         
@@ -1533,7 +1497,6 @@ class DISPLAY():
         self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
         self.dicomBoundsRange = self.vtkImage.GetBounds()
         self.imageDimensions = self.vtkImage.GetDimensions()
-        # self.dicomSpacing = self.vtkImage.GetSpacing()
         self.pixel2Mm = self.vtkImage.GetSpacing()
         
         self.SetMapColor()
@@ -1545,7 +1508,6 @@ class DISPLAY():
         self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
         self.windowLevelLookup.SetLevel(thresholdValue)
 
-        
         self.mapColors.SetInputConnection(self.reader.GetOutputPort())
         self.mapColors.SetLookupTable(self.windowLevelLookup)
         self.mapColors.Update()
@@ -1589,7 +1551,6 @@ class DISPLAY():
         "Axial"
         self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], value, value)
-
         
         "render"
         "Sagittal"
@@ -1669,27 +1630,6 @@ class DISPLAY():
         self.renderer3D.AddActor(self.actorPointTarget)
         
     def CreatePoint(self, planningPointCenter, sectionGroup):
-        # if section == "Axial":
-        #     pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[0])) * [-1, 1, 1]
-        #     pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[1])) * [-1, 1, 1]
-        # elif section == "Coronal":
-        #     pointCenterEntry = (planningPointCenter[0] * self.pixel2Mm) * [1, 1, -1]
-        #     pointCenterTarget = (planningPointCenter[1] * self.pixel2Mm) * [1, 1, -1]
-        # elif section == "Sagittal":
-        #     pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - planningPointCenter[0] * self.pixel2Mm) * [-1, 1, 1]
-        #     pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - planningPointCenter[1] * self.pixel2Mm) * [-1, 1, 1]
-        
-        # for section in sectionGroup:
-        #     if section == "Coronal":
-        #         pointCenterEntry = (planningPointCenter[0]) * [1, 1, -1]
-        #         pointCenterTarget = (planningPointCenter[1]) * [1, 1, -1]
-        #         self.CreateEntry(pointCenterEntry)
-        #         self.CreateTarget(pointCenterTarget)
-        #     else:
-        #         pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[0])) * [-1, 1, 1]
-        #         pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[1])) * [-1, 1, 1]
-        #         self.CreateEntry(pointCenterEntry)
-        #         self.CreateTarget(pointCenterTarget)
         pointCenter = []
         for n in range(sectionGroup.shape[0]):
             if sectionGroup[n] == "Coronal":
@@ -1704,9 +1644,6 @@ class DISPLAY():
         self.CreateTarget(pointCenter[1])
         pass
         
-
-        
-                
     def RemovePoint(self):
         self.rendererSagittal.RemoveActor(self.actorPointEntry)
         self.rendererAxial.RemoveActor(self.actorPointEntry)
