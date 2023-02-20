@@ -448,7 +448,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>5</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -511,13 +511,6 @@
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_Axial_L">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
        <item row="1" column="1">
         <widget class="QScrollBar" name="SliceSelect_Sagittal_L">
          <property name="orientation">
@@ -532,6 +525,9 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="0">
+        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_L"/>
+       </item>
        <item row="1" column="3">
         <widget class="QScrollBar" name="SliceSelect_Coronal_L">
          <property name="orientation">
@@ -539,22 +535,14 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QWidget" name="widget_3D_L" native="true"/>
-       </item>
        <item row="1" column="2">
-        <widget class="QLabel" name="label_Coronal_L">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+        <widget class="QVTKWidget" name="qvtkWidget_Coronal_L"/>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_Sagittal_L">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+       <item row="0" column="2">
+        <widget class="QVTKWidget" name="qvtkWidget_Axial_L"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QVTKWidget" name="qvtkWidget_3D_L"/>
        </item>
       </layout>
      </widget>
@@ -930,9 +918,6 @@
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QWidget" name="widget_3D_H" native="true"/>
-       </item>
        <item row="0" column="3">
         <widget class="QScrollBar" name="SliceSelect_Axial_H">
          <property name="orientation">
@@ -954,26 +939,17 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_Axial_H">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+       <item row="0" column="0">
+        <widget class="QVTKWidget" name="qvtkWidget_3D_H"/>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_Sagittal_H">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_H"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QVTKWidget" name="qvtkWidget_Axial_H"/>
        </item>
        <item row="1" column="2">
-        <widget class="QLabel" name="label_Coronal_H">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+        <widget class="QVTKWidget" name="qvtkWidget_Coronal_H"/>
        </item>
       </layout>
      </widget>
@@ -1766,7 +1742,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -1796,6 +1772,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKWidget</class>
+   <extends>QWidget</extends>
+   <header>QVTKWidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -2237,8 +2220,8 @@
    <slot>SetRegistration_SAT()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1681</x>
-     <y>108</y>
+     <x>1685</x>
+     <y>99</y>
     </hint>
     <hint type="destinationlabel">
      <x>1681</x>
@@ -2254,7 +2237,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1900</x>
-     <y>108</y>
+     <y>99</y>
     </hint>
     <hint type="destinationlabel">
      <x>1788</x>
@@ -2269,8 +2252,8 @@
    <slot>ShowTestPoint_SAT()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1879</x>
-     <y>236</y>
+     <x>1882</x>
+     <y>205</y>
     </hint>
     <hint type="destinationlabel">
      <x>2090</x>
@@ -2294,6 +2277,150 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeSagittal_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>919</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>685</x>
+     <y>1031</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeCoronal_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1368</x>
+     <y>928</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1368</x>
+     <y>1030</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeAxial_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1370</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1366</x>
+     <y>-61</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeSagittal_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>673</x>
+     <y>838</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>683</x>
+     <y>1025</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeCoronal_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1363</x>
+     <y>918</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1378</x>
+     <y>1007</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeAxial_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1369</x>
+     <y>101</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1377</x>
+     <y>-60</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeSagittal_SAT()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>676</x>
+     <y>947</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>692</x>
+     <y>1008</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeCoronal_SAT()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1370</x>
+     <y>943</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1379</x>
+     <y>1049</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_SAT</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ScrollBarChangeAxial_SAT()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1369</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1376</x>
+     <y>-35</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>SetRegistration_L()</slot>
@@ -2312,5 +2439,14 @@
   <slot>SetTestPoint_SAT()</slot>
   <slot>ShowTestPoint_SAT()</slot>
   <slot>RobotStepRun()</slot>
+  <slot>ScrollBarChangeAxial_L()</slot>
+  <slot>ScrollBarChangeSagittal_L()</slot>
+  <slot>ScrollBarChangeCoronal_L()</slot>
+  <slot>ScrollBarChangeAxial_H()</slot>
+  <slot>ScrollBarChangeSagittal_H()</slot>
+  <slot>ScrollBarChangeCoronal_H()</slot>
+  <slot>ScrollBarChangeAxial_SAT()</slot>
+  <slot>ScrollBarChangeSagittal_SAT()</slot>
+  <slot>ScrollBarChangeCoronal_SAT()</slot>
  </slots>
 </ui>

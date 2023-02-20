@@ -9,6 +9,32 @@ import math
 from PyQt5.QtGui import *
 from ._subFunction import *
 
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+
+# noinspection PyUnresolvedReferences
+# import vtkmodules.vtkInteractionStyle
+# noinspection PyUnresolvedReferences
+# import vtkmodules.vtkRenderingOpenGL2
+
+from vtkmodules.vtkIOImage import vtkDICOMImageReader
+from vtkmodules.vtkImagingCore import vtkImageMapToColors
+from vtkmodules.vtkFiltersSources import vtkSphereSource
+from vtkmodules.vtkRenderingCore import (
+    vtkCamera,
+    vtkImageActor,
+    # vtkRenderWindow,
+    vtkActor,
+    vtkPolyDataMapper,
+    # vtkRenderWindowInteractor,
+    vtkRenderer,
+    vtkWindowLevelLookupTable
+    # vtkCellPicker,
+)
+# from vtkmodules.vtkFiltersSources import (
+#     vtkLineSource
+# )
+
+
 
 "DICOM function"
 class DICOM():
@@ -26,20 +52,24 @@ class DICOM():
             metadata (_list_):
             metadataSeriesNum (_list_):
         """
-        filePath = []
+        filePathList = []
+        dir = []
         metadata = []
         metadataSeriesNum = []
         metadataStudy = []
+        metadataFileList = []
         for dirPath, dirNames, fileNames in os.walk(folderPath):
+            dir.append(dirPath)
             for f in fileNames:
-                dir = os.path.join(dirPath, f)
-                filePath.append(dir)
+                tmpDir = os.path.join(dirPath, f)
+                filePathList.append(tmpDir)
         n=0
-        for s in filePath:
+        for s in filePathList:
             try:
                 metadata.append(pydicom.read_file(s))
                 metadataSeriesNum.append(metadata[n].SeriesInstanceUID)
                 metadataStudy.append(metadata[n].StudyInstanceUID)
+                metadataFileList.append(s)
                 n+=1
             except:
                 continue
@@ -47,9 +77,10 @@ class DICOM():
         if seriesNumber.shape[0]>1 or len(metadataStudy)==0:
             metadata = 0
             metadataSeriesNum = 0
-        return metadata, metadataSeriesNum
+                
+        return metadata, metadataSeriesNum, metadataFileList
         
-    def SeriesSort(self, metadata, metadataSeriesNum):
+    def SeriesSort(self, metadata, metadataSeriesNum, metadataFileList):
         """classify SeriesNumber and metadata in {SeriesNumber : metadata + pixel_array}
            key is SeriesNumber,
            value is metadata + pixel_array
@@ -66,16 +97,21 @@ class DICOM():
         """
         seriesNumberLabel = numpy.unique(metadataSeriesNum)
         matrix=[]
+        matrixFile = []
         dicDICOM = {}
+        dirDICOM = {}
         for n in seriesNumberLabel:
             for i in range(len(metadata)):
                 if metadata[i].SeriesInstanceUID == n:
                     matrix.append(metadata[i])
+                    matrixFile.append(metadataFileList[i])
             dicDICOM.update({n:matrix})
+            dirDICOM.update({n:matrixFile})
             matrix=[]
-        return seriesNumberLabel, dicDICOM
+            matrixFile = []
+        return seriesNumberLabel, dicDICOM, dirDICOM
     
-    def ReadDicom(self, seriesNumberLabel, dicDICOM):
+    def ReadDicom(self, seriesNumberLabel, dicDICOM, dirDICOM):
         """read DICOM
            and then get metadata + pixel_array(image 3D)
 
@@ -89,16 +125,27 @@ class DICOM():
         seriesN=[]
         for s in seriesNumberLabel:
             seriesN.append(len(dicDICOM.get(s)))
-        tmp = max(seriesN)
-        index = seriesN.index(tmp)
+        tmpSeries = max(seriesN)
+        index = seriesN.index(tmpSeries)
         
         imageInfo = dicDICOM.get(seriesNumberLabel[index])
-        imageTag = [0]*tmp
+        imageDir = dirDICOM.get(seriesNumberLabel[index])
+        
+        
+        tmpDir = imageDir[0].rfind('\\')
+        if tmpDir == -1:
+            tmpDir_ = imageDir[0].rfind('/')
+            folderDir = imageDir[0][0:tmpDir_]
+        else:
+            folderDir = imageDir[0][0:tmpDir]
+        
+        
         "sort InstanceNumber"
+        imageTag = [0]*tmpSeries
         for i in range(len(imageInfo)):
-            tmp = imageInfo[i]
-            imageTag[tmp.InstanceNumber-1] = tmp
-        return imageTag
+            tmpSeries = imageInfo[i]
+            imageTag[tmpSeries.InstanceNumber-1] = tmpSeries
+        return imageTag, folderDir
     
     def GetImage(self, imageTag):
         """get image from image DICOM
@@ -929,18 +976,42 @@ class REGISTRATION():
             print("get point error / GetBall() error")
         return numpy.array(point)
     
-    def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
-                        originPoint_L, selectedPoint_L, regMatrix_L):
+    # def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
+    #                     originPoint_L, selectedPoint_L, regMatrix_L):
+    #     planningPath = []
+        
+    #     for p in selectedPoint_H:
+    #         planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
+    #     for p in selectedPoint_L:
+    #         planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+        
+        
+    #     self.PlanningPath = planningPath
+        
+    #     return planningPath
+    
+    def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
         
-        for p in selectedPoint_H:
-            planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
-        for p in selectedPoint_L:
-            planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+        for p in selectedPoint:
+            planningPath.append(numpy.dot(regMatrix,(p-originPoint)))
         
-        self.PlanningPath = planningPath
+        # self.PlanningPath = planningPath
         
         return planningPath
+    
+    # def GetPlanningPath(self, originPoint_H, selectedPoint_H, regMatrix_H,
+    #                     originPoint_L, selectedPoint_L, regMatrix_L):
+    #     planningPath = []
+        
+    #     for p in selectedPoint_H:
+    #         planningPath.append(numpy.dot(regMatrix_H,(p-originPoint_H)))
+    #     for p in selectedPoint_L:
+    #         planningPath.append(numpy.dot(regMatrix_L,(p-originPoint_L)))
+        
+    #     self.PlanningPath = planningPath
+        
+    #     return planningPath
         
 class SAT():
     def __init__(self):
@@ -1421,6 +1492,232 @@ class SAT():
         self.TestBall = testBall
         return testBall
     
+class DISPLAY():
+    def __init__(self):
+        pass
+    
+    def LoadImage(self, folderPath):
+        "init"
+        self.radius = 3.5
+        
+        self.reader = vtkDICOMImageReader()
+        self.windowLevelLookup = vtkWindowLevelLookupTable()
+        self.mapColors = vtkImageMapToColors()
+        
+        self.cameraSagittal = vtkCamera()
+        self.cameraCoronal = vtkCamera()
+        self.cameraAxial = vtkCamera()
+        self.camera3D = vtkCamera()
+        
+        self.actorSagittal = vtkImageActor()
+        self.actorCoronal = vtkImageActor()
+        self.actorAxial = vtkImageActor()
+        
+        self.rendererSagittal = vtkRenderer()
+        self.rendererCoronal = vtkRenderer()
+        self.rendererAxial = vtkRenderer()
+        self.renderer3D = vtkRenderer()
+        
+        "planningPointCenter"
+        self.actorPointEntry = vtkActor()
+        self.actorPointTarget = vtkActor()
+        
+        
+        
+        
+        self.reader.SetDirectoryName(folderPath)
+        self.reader.Update()
+        
+        self.vtkImage = self.reader.GetOutput()
+        self.vtkImage.SetOrigin(0, 0, 0)
+        self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
+        self.dicomBoundsRange = self.vtkImage.GetBounds()
+        self.imageDimensions = self.vtkImage.GetDimensions()
+        # self.dicomSpacing = self.vtkImage.GetSpacing()
+        self.pixel2Mm = self.vtkImage.GetSpacing()
+        
+        self.SetMapColor()
+        
+    def SetMapColor(self):
+        
+        self.windowLevelLookup.Build()
+        thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
+        self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
+        self.windowLevelLookup.SetLevel(thresholdValue)
+
+        
+        self.mapColors.SetInputConnection(self.reader.GetOutputPort())
+        self.mapColors.SetLookupTable(self.windowLevelLookup)
+        self.mapColors.Update()
+        
+        self.SetCamera()
+        
+    def SetCamera(self):
+        "differen section, differen camera"
+        
+        self.cameraSagittal.SetViewUp(0, 0, -1)
+        self.cameraSagittal.SetPosition(1, 0, 0)
+        self.cameraSagittal.SetFocalPoint(0, 0, 0)
+        self.cameraSagittal.ComputeViewPlaneNormal()
+        self.cameraSagittal.ParallelProjectionOn()
+        
+        self.cameraCoronal.SetViewUp(0, 0, -1)
+        self.cameraCoronal.SetPosition(0, 1, 0)
+        self.cameraCoronal.SetFocalPoint(0, 0, 0)
+        self.cameraCoronal.ComputeViewPlaneNormal()
+        self.cameraCoronal.ParallelProjectionOn()
+        
+        self.cameraAxial.SetViewUp(0, 1, 0)
+        self.cameraAxial.SetPosition(0, 0, 1)
+        self.cameraAxial.SetFocalPoint(0, 0, 0)
+        self.cameraAxial.ComputeViewPlaneNormal()
+        self.cameraAxial.ParallelProjectionOn()
+        
+        self.camera3D.SetViewUp(0, 1, 0);
+        self.camera3D.SetPosition(0.8, 0.3, 1);
+        self.camera3D.SetFocalPoint(0, 0, 0);
+        self.camera3D.ComputeViewPlaneNormal();
+        
+    def CreateActorAndRender(self, value):
+        "actor"
+        "Sagittal"
+        self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorSagittal.SetDisplayExtent(value, value, 0, self.imageDimensions[1], 0, self.imageDimensions[2])
+        "Coronal"
+        self.actorCoronal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorCoronal.SetDisplayExtent(0, self.imageDimensions[0], value, value, 0, self.imageDimensions[2])
+        "Axial"
+        self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], value, value)
+
+        
+        "render"
+        "Sagittal"
+        self.rendererSagittal.SetBackground(0, 0, 0)
+        self.rendererSagittal.AddActor(self.actorSagittal)
+        self.rendererSagittal.SetActiveCamera(self.cameraSagittal)
+        self.rendererSagittal.ResetCamera(self.dicomBoundsRange)
+        "Coronal"
+        self.rendererCoronal.SetBackground(0, 0, 0)
+        self.rendererCoronal.AddActor(self.actorCoronal)
+        self.rendererCoronal.SetActiveCamera(self.cameraCoronal)
+        self.rendererCoronal.ResetCamera(self.dicomBoundsRange)
+        "Axial"
+        self.rendererAxial.SetBackground(0, 0, 0)
+        self.rendererAxial.AddActor(self.actorAxial)
+        self.rendererAxial.SetActiveCamera(self.cameraAxial)
+        self.rendererAxial.ResetCamera(self.dicomBoundsRange)
+        "3D"
+        self.renderer3D.SetBackground(0, 0, 0)
+        self.renderer3D.AddActor(self.actorSagittal)
+        self.renderer3D.AddActor(self.actorAxial)
+        self.renderer3D.AddActor(self.actorCoronal)
+        self.renderer3D.SetActiveCamera(self.camera3D)
+        self.renderer3D.ResetCamera(self.dicomBoundsRange)
+        
+        "- return renderer -"
+        
+    def ChangeSagittalView(self, value):
+        self.actorSagittal.SetDisplayExtent(value, value, 0, self.imageDimensions[1], 0, self.imageDimensions[2])
+    
+    def ChangeCoronalView(self, value):
+        self.actorCoronal.SetDisplayExtent(0, self.imageDimensions[0]-1, value, value, 0, self.imageDimensions[2]-1)
+
+    def ChangeAxialView(self, value):
+        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, value, value)
+    
+    def ChangeWindowWidthView(self, value):
+        self.windowLevelLookup.SetWindow(value)
+        self.mapColors.Update()
+        
+    def ChangeWindowLevelView(self, value):
+        self.windowLevelLookup.SetLevel(value)
+        self.mapColors.Update()
+    
+    def CreateEntry(self, Center):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(Center)
+        sphereSource.SetRadius(self.radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorPointEntry.SetMapper(mapper)
+        self.actorPointEntry.GetProperty().SetColor(0, 1, 0)
+        
+        self.rendererSagittal.AddActor(self.actorPointEntry)
+        self.rendererAxial.AddActor(self.actorPointEntry)
+        self.rendererCoronal.AddActor(self.actorPointEntry)
+        self.renderer3D.AddActor(self.actorPointEntry)
+    
+    def CreateTarget(self, Center):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(Center)
+        sphereSource.SetRadius(self.radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorPointTarget.SetMapper(mapper)
+        self.actorPointTarget.GetProperty().SetColor(1, 0, 0)
+        
+        self.rendererSagittal.AddActor(self.actorPointTarget)
+        self.rendererAxial.AddActor(self.actorPointTarget)
+        self.rendererCoronal.AddActor(self.actorPointTarget)
+        self.renderer3D.AddActor(self.actorPointTarget)
+        
+    def CreatePoint(self, planningPointCenter, sectionGroup):
+        # if section == "Axial":
+        #     pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[0])) * [-1, 1, 1]
+        #     pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[1])) * [-1, 1, 1]
+        # elif section == "Coronal":
+        #     pointCenterEntry = (planningPointCenter[0] * self.pixel2Mm) * [1, 1, -1]
+        #     pointCenterTarget = (planningPointCenter[1] * self.pixel2Mm) * [1, 1, -1]
+        # elif section == "Sagittal":
+        #     pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - planningPointCenter[0] * self.pixel2Mm) * [-1, 1, 1]
+        #     pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - planningPointCenter[1] * self.pixel2Mm) * [-1, 1, 1]
+        
+        # for section in sectionGroup:
+        #     if section == "Coronal":
+        #         pointCenterEntry = (planningPointCenter[0]) * [1, 1, -1]
+        #         pointCenterTarget = (planningPointCenter[1]) * [1, 1, -1]
+        #         self.CreateEntry(pointCenterEntry)
+        #         self.CreateTarget(pointCenterTarget)
+        #     else:
+        #         pointCenterEntry = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[0])) * [-1, 1, 1]
+        #         pointCenterTarget = ([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[1])) * [-1, 1, 1]
+        #         self.CreateEntry(pointCenterEntry)
+        #         self.CreateTarget(pointCenterTarget)
+        pointCenter = []
+        for n in range(sectionGroup.shape[0]):
+            if sectionGroup[n] == "Coronal":
+                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            elif sectionGroup[n] == "Coron":
+                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            elif sectionGroup[n] == "Coronal ":
+                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            else:
+                pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
+        self.CreateEntry(pointCenter[0])
+        self.CreateTarget(pointCenter[1])
+        pass
+        
+
+        
+                
+    def RemovePoint(self):
+        self.rendererSagittal.RemoveActor(self.actorPointEntry)
+        self.rendererAxial.RemoveActor(self.actorPointEntry)
+        self.rendererCoronal.RemoveActor(self.actorPointEntry)
+        self.renderer3D.RemoveActor(self.actorPointEntry)
+        
+        self.rendererSagittal.RemoveActor(self.actorPointTarget)
+        self.rendererAxial.RemoveActor(self.actorPointTarget)
+        self.rendererCoronal.RemoveActor(self.actorPointTarget)
+        self.renderer3D.RemoveActor(self.actorPointTarget)
+
 "example"
 if __name__ == "__main__":
     path_dicom_only = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\S2010\\"
