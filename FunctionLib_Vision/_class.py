@@ -17,6 +17,9 @@ from ._subFunction import *
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
 from vtkmodules.vtkImagingCore import vtkImageMapToColors
 from vtkmodules.vtkFiltersSources import vtkSphereSource
+from vtkmodules.vtkFiltersCore import vtkTubeFilter
+from vtkmodules.vtkFiltersSources import vtkLineSource
+from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkRenderingCore import (
     vtkCamera,
     vtkImageActor,
@@ -1628,8 +1631,54 @@ class DISPLAY():
         self.rendererAxial.AddActor(self.actorPointTarget)
         self.rendererCoronal.AddActor(self.actorPointTarget)
         self.renderer3D.AddActor(self.actorPointTarget)
+       
+    def CreateLine(self, startPoint, endPoint):
+        colors = vtkNamedColors()
+
+        # Create a line
+        lineSource = vtkLineSource()
+        lineSource.SetPoint1(startPoint)
+        lineSource.SetPoint2(endPoint)
+
+        # Setup actor and mapper
+        lineMapper = vtkPolyDataMapper()
+        lineMapper.SetInputConnection(lineSource.GetOutputPort())
+
+        self.actorLine = vtkActor()
+        self.actorLine.SetMapper(lineMapper)
+        self.actorLine.GetProperty().SetColor(colors.GetColor3d('Red'))
+
+        # Create tube filter
+        tubeFilter = vtkTubeFilter()
+        tubeFilter.SetInputConnection(lineSource.GetOutputPort())
+        tubeFilter.SetRadius(3)
+        tubeFilter.SetNumberOfSides(50)
+        tubeFilter.Update()
+
+        # Setup actor and mapper
+        tubeMapper = vtkPolyDataMapper()
+        tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
+
+        self.actorTube = vtkActor()
+        self.actorTube.SetMapper(tubeMapper)
+        # Make the tube have some transparency.
+        self.actorTube.GetProperty().SetOpacity(0.5)
         
-    def CreatePoint(self, planningPointCenter, sectionGroup):
+        # Visualise the arrow
+        # renderer.AddActor(lineActor)
+        # renderer.AddActor(tubeActor)
+        self.rendererSagittal.AddActor(self.actorLine)
+        self.rendererAxial.AddActor(self.actorLine)
+        self.rendererCoronal.AddActor(self.actorLine)
+        self.renderer3D.AddActor(self.actorLine)
+        
+        self.rendererSagittal.AddActor(self.actorTube)
+        self.rendererAxial.AddActor(self.actorTube)
+        self.rendererCoronal.AddActor(self.actorTube)
+        self.renderer3D.AddActor(self.actorTube)
+
+     
+    def CreatePath(self, planningPointCenter, sectionGroup):
         pointCenter = []
         for n in range(sectionGroup.shape[0]):
             if sectionGroup[n] == "Coronal":
@@ -1642,7 +1691,8 @@ class DISPLAY():
                 pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
         self.CreateEntry(pointCenter[0])
         self.CreateTarget(pointCenter[1])
-        pass
+        self.CreateLine(pointCenter[0], pointCenter[1])
+        # pass
         
     def RemovePoint(self):
         self.rendererSagittal.RemoveActor(self.actorPointEntry)
@@ -1654,6 +1704,16 @@ class DISPLAY():
         self.rendererAxial.RemoveActor(self.actorPointTarget)
         self.rendererCoronal.RemoveActor(self.actorPointTarget)
         self.renderer3D.RemoveActor(self.actorPointTarget)
+        
+        self.rendererSagittal.RemoveActor(self.actorLine)
+        self.rendererAxial.RemoveActor(self.actorLine)
+        self.rendererCoronal.RemoveActor(self.actorLine)
+        self.renderer3D.RemoveActor(self.actorLine)
+        
+        self.rendererSagittal.RemoveActor(self.actorTube)
+        self.rendererAxial.RemoveActor(self.actorTube)
+        self.rendererCoronal.RemoveActor(self.actorTube)
+        self.renderer3D.RemoveActor(self.actorTube)
 
 "example"
 if __name__ == "__main__":
