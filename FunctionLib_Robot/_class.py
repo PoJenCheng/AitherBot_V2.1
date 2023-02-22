@@ -467,9 +467,9 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
-        robotMovingLength = robotTotalLength - 129
+        robotMovingLength = robotTotalLength
 
-        rotationTheta = math.atan(PointY/PointX)
+        rotationTheta = math.atan(PointY/(PointX + 129))
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
@@ -489,9 +489,9 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
-        robotMovingLength = robotTotalLength - 129
+        robotMovingLength = robotTotalLength
 
-        rotationTheta = math.atan(PointY/PointX)
+        rotationTheta = math.atan(PointY/(PointX + 129))
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
