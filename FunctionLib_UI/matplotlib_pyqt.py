@@ -132,13 +132,17 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def HomeProcessing(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
         print("Home processing is done!")
+        QMessageBox.information(self, "information", "Home processing is done!")
         self.homeStatus = True
 
     def RobotRun(self):
         if self.homeStatus is True:
             MOTORSUBFUNCTION.P2P(self)
+            print("Robot run processing is done!")
+            QMessageBox.information(self, "information", "Robot run processing is done!")
         else:
             print("Please execute home processing first.")
+            QMessageBox.information(self, "information", "Please execute home processing first.")
 
     def StringSplit(self, string):
         stringTemp = string.split(",")
