@@ -362,23 +362,23 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         
         self.SliceSelect_Sagittal_L.setMinimum(1)
         self.SliceSelect_Sagittal_L.setMaximum(self.dicomLow.imageDimensions[0]-1)
-        self.SliceSelect_Sagittal_L.setValue((self.dicomLow.imageDimensions[0])/2)
+        self.SliceSelect_Sagittal_L.setValue(int((self.dicomLow.imageDimensions[0])/2))
         self.SliceSelect_Coronal_L.setMinimum(1)
         self.SliceSelect_Coronal_L.setMaximum(self.dicomLow.imageDimensions[1]-1)
-        self.SliceSelect_Coronal_L.setValue((self.dicomLow.imageDimensions[1])/2)
+        self.SliceSelect_Coronal_L.setValue(int((self.dicomLow.imageDimensions[1])/2))
         self.SliceSelect_Axial_L.setMinimum(1)
         self.SliceSelect_Axial_L.setMaximum(self.dicomLow.imageDimensions[2]-1)
-        self.SliceSelect_Axial_L.setValue((self.dicomLow.imageDimensions[2])/2)
+        self.SliceSelect_Axial_L.setValue(int((self.dicomLow.imageDimensions[2])/2))
 
         thresholdValue = int(((self.dicomLow.dicomGrayscaleRange[1] - self.dicomLow.dicomGrayscaleRange[0]) / 6) + self.dicomLow.dicomGrayscaleRange[0])
         "WindowWidth"
         self.Slider_WW_L.setMinimum(0)
-        self.Slider_WW_L.setMaximum(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1])
+        self.Slider_WW_L.setMaximum(int(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1]))
         self.dcmTagLow.update({"ww": abs(thresholdValue*2)})
         self.Slider_WW_L.setValue(self.dcmTagLow.get("ww"))
         "WindowCenter / WindowLevel"
-        self.Slider_WL_L.setMinimum(self.dicomLow.dicomGrayscaleRange[0])
-        self.Slider_WL_L.setMaximum(self.dicomLow.dicomGrayscaleRange[1])
+        self.Slider_WL_L.setMinimum(int(self.dicomLow.dicomGrayscaleRange[0]))
+        self.Slider_WL_L.setMaximum(int(self.dicomLow.dicomGrayscaleRange[1]))
         self.dcmTagLow.update({"wl": thresholdValue})
         self.Slider_WL_L.setValue(self.dcmTagLow.get("wl"))
 
@@ -619,23 +619,23 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         
         self.SliceSelect_Sagittal_H.setMinimum(1)
         self.SliceSelect_Sagittal_H.setMaximum(self.dicomHigh.imageDimensions[0]-1)
-        self.SliceSelect_Sagittal_H.setValue((self.dicomHigh.imageDimensions[0])/2)
+        self.SliceSelect_Sagittal_H.setValue(int((self.dicomHigh.imageDimensions[0])/2))
         self.SliceSelect_Coronal_H.setMinimum(1)
         self.SliceSelect_Coronal_H.setMaximum(self.dicomHigh.imageDimensions[1]-1)
-        self.SliceSelect_Coronal_H.setValue((self.dicomHigh.imageDimensions[1])/2)
+        self.SliceSelect_Coronal_H.setValue(int((self.dicomHigh.imageDimensions[1])/2))
         self.SliceSelect_Axial_H.setMinimum(1)
         self.SliceSelect_Axial_H.setMaximum(self.dicomHigh.imageDimensions[2]-1)
-        self.SliceSelect_Axial_H.setValue((self.dicomHigh.imageDimensions[2])/2)
+        self.SliceSelect_Axial_H.setValue(int((self.dicomHigh.imageDimensions[2])/2))
 
         thresholdValue = int(((self.dicomHigh.dicomGrayscaleRange[1] - self.dicomHigh.dicomGrayscaleRange[0]) / 6) + self.dicomHigh.dicomGrayscaleRange[0])
         "WindowWidth"
         self.Slider_WW_H.setMinimum(0)
-        self.Slider_WW_H.setMaximum(abs(self.dicomHigh.dicomGrayscaleRange[0]) + self.dicomHigh.dicomGrayscaleRange[1])
+        self.Slider_WW_H.setMaximum(int(abs(self.dicomHigh.dicomGrayscaleRange[0]) + self.dicomHigh.dicomGrayscaleRange[1]))
         self.dcmTagHigh.update({"ww": abs(thresholdValue*2)})
         self.Slider_WW_H.setValue(self.dcmTagHigh.get("ww"))
         "WindowCenter / WindowLevel"
-        self.Slider_WL_H.setMinimum(self.dicomHigh.dicomGrayscaleRange[0])
-        self.Slider_WL_H.setMaximum(self.dicomHigh.dicomGrayscaleRange[1])
+        self.Slider_WL_H.setMinimum(int(self.dicomHigh.dicomGrayscaleRange[0]))
+        self.Slider_WL_H.setMaximum(int(self.dicomHigh.dicomGrayscaleRange[1]))
         self.dcmTagHigh.update({"wl": thresholdValue})
         self.Slider_WL_H.setValue(self.dcmTagHigh.get("wl"))
 
@@ -923,7 +923,10 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
                 self.Button_ShowPoint_L.setEnabled(False)
                 
                 "VTK"
-                self.dicomLow.RemovePoint()
+                try:
+                    self.dicomLow.RemovePoint()
+                except:
+                    pass
                 self.irenSagittal_L.Initialize()
                 self.irenCoronal_L.Initialize()
                 self.irenAxial_L.Initialize()
@@ -1144,7 +1147,10 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
                 self.Button_ShowPoint_H.setEnabled(False)
                 
                 "VTK"
-                self.dicomHigh.RemovePoint()
+                try:
+                    self.dicomHigh.RemovePoint()
+                except:
+                    pass
                 self.irenSagittal_H.Initialize()
                 self.irenCoronal_H.Initialize()
                 self.irenAxial_H.Initialize()
