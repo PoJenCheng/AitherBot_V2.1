@@ -193,7 +193,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
-        self.logUI.setLevel(logging.DEBUG)
+        self.logUI.setLevel(logging.INFO)
         "set log level"
         # self.log_INFO: logging.Logger = logging.getLogger(name='INFO')
         # self.log_INFO.setLevel(logging.DEBUG)
@@ -922,8 +922,9 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
                 self.Button_Planning.setEnabled(False)
                 self.dcmTagLow.update({"flageShowPointButton": False})
                 self.dcmTagLow.update({"sectionTag":[]})
-                self.logUI.info('reset selected point (Low)')
-                print("reset selected point (LoW)")
+                strInfo = "reset selected point (LoW)"
+                self.logUI.info(strInfo)
+                print(strInfo)
                 self.Button_ShowPoint_L.setEnabled(False)
                 
                 "VTK"
@@ -949,12 +950,35 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def ShowPoint_L(self):
         """show selected entry and target points 
         """
+        tmpResult = []
         try:
-            print("inhale/Low DICOM entry / target point position (in image coodinate)")
+            for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
+                tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
+                tmpTag = self.dcmTagLow.get("sectionTag")[n]
+                if tmpTag == "Coronal":
+                    # self.dcmTagLow.update({"selectedPoint":tmpPoint})
+                    pass
+                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+                elif tmpTag == "Coron":
+                    pass
+                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+                elif tmpTag == "Coronal ":
+                    pass
+                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+                else:
+                    tmpResult.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, 1])
+                    # pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
+            self.dcmTagLow.update({"selectedPoint":tmpResult})
+            
+            strInfo = "inhale/Low DICOM entry / target point position (in image coodinate)"
+            print(strInfo)
+            self.logUI.info(strInfo)
             "in this case"
             print(self.dcmTagLow.get("sectionTag"))
+            self.logUI.info(self.dcmTagLow.get("sectionTag"))
             for tmp in self.dcmTagLow.get("selectedPoint"):
                 print(tmp)
+                self.logUI.info(tmp)
             print("-------------------------------------------------------------------")
             
             self.dcmTagLow.update({"flageShowPointButton": True})
@@ -1146,8 +1170,9 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
                 self.Button_Planning.setEnabled(False)
                 self.dcmTagHigh.update({"flageShowPointButton": False})
                 self.dcmTagHigh.update({"sectionTag":[]})
-                self.logUI.info('reset selected point (High)')
-                print("reset selected point (High)")
+                strInfo = "reset selected point (High)"
+                self.logUI.info(strInfo)
+                print()
                 self.Button_ShowPoint_H.setEnabled(False)
                 
                 "VTK"
@@ -1174,10 +1199,14 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         """show selected entry and target points 
         """
         try:
-            print("exhale/High DICOM entry / target point position (in image coodinate)")
+            strInfo = "exhale/High DICOM entry / target point position (in image coodinate)"
+            print(strInfo)
+            self.logUI.info(strInfo)
             print(self.dcmTagHigh.get("sectionTag"))
+            self.logUI.info(self.dcmTagHigh.get("sectionTag"))
             for tmp in self.dcmTagHigh.get("selectedPoint"):
                 print(tmp)
+                self.logUI.info(tmp)
             print("-------------------------------------------------------------------")
 
             self.dcmTagHigh.update({"flageShowPointButton": True})
@@ -1256,9 +1285,12 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
             for tmpPoint in self.dcmTagLow.get("PlanningPath"):
                 self.PlanningPath.append(tmpPoint)
             
-            print("PlanningPath: (in mm unit)")
+            strInfo = "PlanningPath: (in mm unit, High: entry-target, Low: entry-target)"
+            print(strInfo)
+            self.logUI.info(strInfo)
             for p in self.PlanningPath:
                 print(p)
+                self.logUI.info(p)
             print("-------------------------------------------------------------------")
             self.Button_RobotHome.setEnabled(True)
             self.Button_RobotAutoRun.setEnabled(True)
