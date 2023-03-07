@@ -467,9 +467,9 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
-        robotMovingLength = robotTotalLength
+        robotMovingLength = robotTotalLength - 129
 
-        rotationTheta = math.atan(PointY/(PointX + 129))
+        rotationTheta = math.atan(PointY/(PointX))
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
@@ -489,9 +489,9 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
 
         robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
-        robotMovingLength = robotTotalLength
+        robotMovingLength = robotTotalLength - 129
 
-        rotationTheta = math.atan(PointY/(PointX + 129))
+        rotationTheta = math.atan(PointY/(PointX))
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
@@ -542,22 +542,22 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         breathingFull_target = breathingFull_target - calibration
         breathingHalt_entry = breathingHalt_entry - calibration
         breathingHalt_target = breathingHalt_target - calibration
-
+        
         "calculate avg value between full breathing and halt breathing"
-        entryPoint_X = (
-            (breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
-        entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
-        entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
+#         entryPoint_X = (
+#             (breathingFull_entry[0] + breathingHalt_entry[0])/2)-robotInitialLength
+#         entryPoint_Y = (breathingFull_entry[1] + breathingHalt_entry[1])/2
+#         entryPoint_Z = (breathingFull_entry[2] + breathingHalt_entry[2])/2
 
-        targetPoint_X = (
-            breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
-        targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
-        targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
+#         targetPoint_X = (
+#             breathingFull_target[0] + breathingHalt_target[0])/2-robotInitialLength
+#         targetPoint_Y = (breathingFull_target[1] + breathingHalt_target[1])/2
+#         targetPoint_Z = (breathingFull_target[2] + breathingHalt_target[2])/2
 
-        entryPoint = np.array([entryPoint_X, entryPoint_Y, entryPoint_Z])
-        targetPoint = np.array([targetPoint_X, targetPoint_Y, targetPoint_Z])
+#         entryPoint = np.array([entryPoint_X, entryPoint_Y, entryPoint_Z])
+#         targetPoint = np.array([targetPoint_X, targetPoint_Y, targetPoint_Z])
 
-        return entryPoint, targetPoint
+        return breathingFull_entry, breathingFull_target
 
     # def P2P(self):
     #     # 取得entry point 與 target point
