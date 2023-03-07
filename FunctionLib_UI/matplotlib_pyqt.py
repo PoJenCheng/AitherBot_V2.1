@@ -952,23 +952,23 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         """
         tmpResult = []
         try:
-            for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
-                tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
-                tmpTag = self.dcmTagLow.get("sectionTag")[n]
-                if tmpTag == "Coronal":
-                    # self.dcmTagLow.update({"selectedPoint":tmpPoint})
-                    pass
-                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-                elif tmpTag == "Coron":
-                    pass
-                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-                elif tmpTag == "Coronal ":
-                    pass
-                    # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-                else:
-                    tmpResult.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, 1])
-                    # pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
-            self.dcmTagLow.update({"selectedPoint":tmpResult})
+            # for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
+            #     tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
+            #     tmpTag = self.dcmTagLow.get("sectionTag")[n]
+            #     if tmpTag == "Coronal":
+            #         # self.dcmTagLow.update({"selectedPoint":tmpPoint})
+            #         pass
+            #         # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            #     elif tmpTag == "Coron":
+            #         pass
+            #         # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            #     elif tmpTag == "Coronal ":
+            #         pass
+            #         # pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
+            #     else:
+            #         tmpResult.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, 1])
+            #         # pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
+            # self.dcmTagLow.update({"selectedPoint":tmpResult})
             
             strInfo = "inhale/Low DICOM entry / target point position (in image coodinate)"
             print(strInfo)
@@ -1202,6 +1202,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
             strInfo = "exhale/High DICOM entry / target point position (in image coodinate)"
             print(strInfo)
             self.logUI.info(strInfo)
+            "in this case"
             print(self.dcmTagHigh.get("sectionTag"))
             self.logUI.info(self.dcmTagHigh.get("sectionTag"))
             for tmp in self.dcmTagHigh.get("selectedPoint"):
@@ -1269,11 +1270,45 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         """show planning path in regBall coordinate system
            (high entry and target points + low entry and target points )
         """
+        
         try:
-            tmpLowSelectedPoint = ([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - self.dcmTagLow.get("selectedPoint")) * [-1, 1, -1]
+            tmpLowSelectedPoint = []
+            for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
+                tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
+                tmpTag = self.dcmTagLow.get("sectionTag")[n]
+                if tmpTag == "Coronal":
+                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                elif tmpTag == "Coron":
+                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                elif tmpTag == "Coronal ":
+                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                else:
+                    # tmpLowSelectedPoint.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
+                    tmpLowSelectedPoint.append(tmpPoint)
+                    pass
             self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpLowSelectedPoint, self.dcmTagLow.get("regMatrix"))})
 
-            tmpHighSelectedPoint = ([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - self.dcmTagHigh.get("selectedPoint")) * [-1, 1, -1]
+            tmpHighSelectedPoint = []
+            for n in range(self.dcmTagHigh.get("sectionTag").shape[0]):
+                tmpPoint = self.dcmTagHigh.get("selectedPoint")[n]
+                tmpTag = self.dcmTagHigh.get("sectionTag")[n]
+                if tmpTag == "Coronal":
+                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                elif tmpTag == "Coron":
+                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                elif tmpTag == "Coronal ":
+                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+                    # pass
+                else:
+                    # tmpHighSelectedPoint.append(([0, self.dicomHigh.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
+                    tmpHighSelectedPoint.append(tmpPoint)
+                    pass
+            # tmpHighSelectedPoint = ([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - self.dcmTagHigh.get("selectedPoint")) * [-1, 1, -1]
             self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpHighSelectedPoint, self.dcmTagHigh.get("regMatrix"))})
 
             
@@ -1801,7 +1836,10 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
         self.dcm = dcm
         self.dcmFn = DICOM()
         self.comboBox = comboBox
-        self.scrollBar = scrollBar
+        if scrollBar < 1:
+           self.scrollBar = 1
+        else:
+            self.scrollBar = scrollBar
         self.DisplayImage()
         self.flage = 0
 

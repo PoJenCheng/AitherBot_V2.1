@@ -1491,6 +1491,8 @@ class DISPLAY():
         "planningPointCenter"
         self.actorPointEntry = vtkActor()
         self.actorPointTarget = vtkActor()
+        self.actorLine = vtkActor()
+        self.actorTube = vtkActor()
         
         self.reader.SetDirectoryName(folderPath)
         self.reader.Update()
@@ -1644,7 +1646,7 @@ class DISPLAY():
         lineMapper = vtkPolyDataMapper()
         lineMapper.SetInputConnection(lineSource.GetOutputPort())
 
-        self.actorLine = vtkActor()
+        
         self.actorLine.SetMapper(lineMapper)
         self.actorLine.GetProperty().SetColor(colors.GetColor3d('Red'))
 
@@ -1659,7 +1661,7 @@ class DISPLAY():
         tubeMapper = vtkPolyDataMapper()
         tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
 
-        self.actorTube = vtkActor()
+        
         self.actorTube.SetMapper(tubeMapper)
         # Make the tube have some transparency.
         self.actorTube.GetProperty().SetOpacity(0.5)
