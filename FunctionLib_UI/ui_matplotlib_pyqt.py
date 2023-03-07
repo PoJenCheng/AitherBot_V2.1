@@ -164,7 +164,7 @@ class Ui_MainWindow(object):
         self.tabWidget_Dynamic = QtWidgets.QWidget()
         self.tabWidget_Dynamic.setObjectName("tabWidget_Dynamic")
         self.verticalLayoutWidget_9 = QtWidgets.QWidget(self.tabWidget_Dynamic)
-        self.verticalLayoutWidget_9.setGeometry(QtCore.QRect(550, 80, 160, 191))
+        self.verticalLayoutWidget_9.setGeometry(QtCore.QRect(1440, 90, 160, 191))
         self.verticalLayoutWidget_9.setObjectName("verticalLayoutWidget_9")
         self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_9)
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
@@ -181,6 +181,9 @@ class Ui_MainWindow(object):
         self.Button_StartTracking.setEnabled(False)
         self.Button_StartTracking.setObjectName("Button_StartTracking")
         self.verticalLayout_9.addWidget(self.Button_StartTracking)
+        self.widget_TrackingPlot = QtWidgets.QWidget(self.tabWidget_Dynamic)
+        self.widget_TrackingPlot.setGeometry(QtCore.QRect(820, 90, 601, 511))
+        self.widget_TrackingPlot.setObjectName("widget_TrackingPlot")
         self.tabWidget.addTab(self.tabWidget_Dynamic, "")
         self.tabWidget_Low = QtWidgets.QWidget()
         self.tabWidget_Low.setObjectName("tabWidget_Low")
@@ -806,7 +809,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         self.Slider_WL_L.valueChanged['int'].connect(self.label_WL_L.setNum)
         self.Slider_WW_L.valueChanged['int'].connect(self.label_WW_L.setNum)
         self.Slider_WW_H.valueChanged['int'].connect(self.label_WW_H.setNum)
@@ -954,3 +957,4 @@ class Ui_MainWindow(object):
         self.Action_ImportDicom_L.setText(_translate("MainWindow", "Import DICOM (low)"))
         self.Action_ImportDicom_H.setText(_translate("MainWindow", "Import DICOM (high)"))
         self.Action_ImportDicom_SAT.setText(_translate("MainWindow", "Import DICOM (System Accuracy)"))
+

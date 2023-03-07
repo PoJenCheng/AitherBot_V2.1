@@ -448,7 +448,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -457,8 +457,8 @@
      <widget class="QWidget" name="verticalLayoutWidget_9">
       <property name="geometry">
        <rect>
-        <x>550</x>
-        <y>80</y>
+        <x>1440</x>
+        <y>90</y>
         <width>160</width>
         <height>191</height>
        </rect>
@@ -495,6 +495,16 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QWidget" name="widget_TrackingPlot" native="true">
+      <property name="geometry">
+       <rect>
+        <x>820</x>
+        <y>90</y>
+        <width>601</width>
+        <height>511</height>
+       </rect>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabWidget_Low">
