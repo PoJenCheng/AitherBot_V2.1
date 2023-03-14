@@ -486,7 +486,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="widget_TrackingPlot" native="true">
+     <widget class="QWidget" name="widget_TrackingPlot3D" native="true">
       <property name="geometry">
        <rect>
         <x>820</x>

@@ -11,7 +11,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -169,21 +168,17 @@ class Ui_MainWindow(object):
         self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_9)
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_9.setObjectName("verticalLayout_9")
-        self.Button_Tracking_L = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
-        self.Button_Tracking_L.setEnabled(False)
-        self.Button_Tracking_L.setObjectName("Button_Tracking_L")
-        self.verticalLayout_9.addWidget(self.Button_Tracking_L)
-        self.Button_Tracking_H = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
-        self.Button_Tracking_H.setEnabled(False)
-        self.Button_Tracking_H.setObjectName("Button_Tracking_H")
-        self.verticalLayout_9.addWidget(self.Button_Tracking_H)
+        self.Button_TrackingCycle = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
+        self.Button_TrackingCycle.setEnabled(True)
+        self.Button_TrackingCycle.setObjectName("Button_TrackingCycle")
+        self.verticalLayout_9.addWidget(self.Button_TrackingCycle)
         self.Button_StartTracking = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
-        self.Button_StartTracking.setEnabled(False)
+        self.Button_StartTracking.setEnabled(True)
         self.Button_StartTracking.setObjectName("Button_StartTracking")
         self.verticalLayout_9.addWidget(self.Button_StartTracking)
-        self.widget_TrackingPlot = QtWidgets.QWidget(self.tabWidget_Dynamic)
-        self.widget_TrackingPlot.setGeometry(QtCore.QRect(820, 90, 601, 511))
-        self.widget_TrackingPlot.setObjectName("widget_TrackingPlot")
+        self.widget_TrackingPlot3D = QtWidgets.QWidget(self.tabWidget_Dynamic)
+        self.widget_TrackingPlot3D.setGeometry(QtCore.QRect(820, 90, 601, 511))
+        self.widget_TrackingPlot3D.setObjectName("widget_TrackingPlot3D")
         self.tabWidget.addTab(self.tabWidget_Dynamic, "")
         self.tabWidget_Low = QtWidgets.QWidget()
         self.tabWidget_Low.setObjectName("tabWidget_Low")
@@ -855,8 +850,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.Button_Tracking_L.setText(_translate("MainWindow", "Tracking Low"))
-        self.Button_Tracking_H.setText(_translate("MainWindow", "Tracking High"))
+        self.Button_TrackingCycle.setText(_translate("MainWindow", "Tracking breathing cycle"))
         self.Button_StartTracking.setText(_translate("MainWindow", "Start tracking"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabWidget_Dynamic), _translate("MainWindow", "Dynamic tracking"))
         self.valueWW_L.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-style:normal;\">Window Width</span></p></body></html>"))
@@ -957,4 +951,3 @@ class Ui_MainWindow(object):
         self.Action_ImportDicom_L.setText(_translate("MainWindow", "Import DICOM (low)"))
         self.Action_ImportDicom_H.setText(_translate("MainWindow", "Import DICOM (high)"))
         self.Action_ImportDicom_SAT.setText(_translate("MainWindow", "Import DICOM (System Accuracy)"))
-
