@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -168,6 +169,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_9)
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_9.setObjectName("verticalLayout_9")
+        self.Button_ = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
+        self.Button_.setObjectName("Button_")
+        self.verticalLayout_9.addWidget(self.Button_)
         self.Button_TrackingCycle = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
         self.Button_TrackingCycle.setEnabled(True)
         self.Button_TrackingCycle.setObjectName("Button_TrackingCycle")
@@ -850,6 +854,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.Button_.setText(_translate("MainWindow", "Connect dynamic tracking"))
         self.Button_TrackingCycle.setText(_translate("MainWindow", "Tracking breathing cycle"))
         self.Button_StartTracking.setText(_translate("MainWindow", "Start tracking"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabWidget_Dynamic), _translate("MainWindow", "Dynamic tracking"))

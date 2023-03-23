@@ -465,6 +465,13 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
+        <widget class="QPushButton" name="Button_">
+         <property name="text">
+          <string>Connect dynamic tracking</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="Button_TrackingCycle">
          <property name="enabled">
           <bool>true</bool>
