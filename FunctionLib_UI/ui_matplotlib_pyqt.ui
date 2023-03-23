@@ -448,7 +448,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -465,19 +465,19 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QPushButton" name="Button_">
+        <widget class="QPushButton" name="Button_ConnectDynamicTracking">
          <property name="text">
           <string>Connect dynamic tracking</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="Button_TrackingCycle">
+        <widget class="QPushButton" name="Button_RecordCycle">
          <property name="enabled">
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Tracking breathing cycle</string>
+          <string>Record breathing cycle</string>
          </property>
         </widget>
        </item>
@@ -1194,7 +1194,7 @@
         <x>540</x>
         <y>90</y>
         <width>231</width>
-        <height>191</height>
+        <height>224</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -1209,6 +1209,13 @@
         <widget class="QPushButton" name="Button_RobotAutoRun">
          <property name="text">
           <string>Confirm path and run</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Button_CompensateRun">
+         <property name="text">
+          <string>Compensate and run</string>
          </property>
         </widget>
        </item>

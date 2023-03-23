@@ -11,7 +11,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -169,13 +168,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_9)
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_9.setObjectName("verticalLayout_9")
-        self.Button_ = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
-        self.Button_.setObjectName("Button_")
-        self.verticalLayout_9.addWidget(self.Button_)
-        self.Button_TrackingCycle = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
-        self.Button_TrackingCycle.setEnabled(True)
-        self.Button_TrackingCycle.setObjectName("Button_TrackingCycle")
-        self.verticalLayout_9.addWidget(self.Button_TrackingCycle)
+        self.Button_ConnectDynamicTracking = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
+        self.Button_ConnectDynamicTracking.setObjectName("Button_ConnectDynamicTracking")
+        self.verticalLayout_9.addWidget(self.Button_ConnectDynamicTracking)
+        self.Button_RecordCycle = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
+        self.Button_RecordCycle.setEnabled(True)
+        self.Button_RecordCycle.setObjectName("Button_RecordCycle")
+        self.verticalLayout_9.addWidget(self.Button_RecordCycle)
         self.Button_StartTracking = QtWidgets.QPushButton(self.verticalLayoutWidget_9)
         self.Button_StartTracking.setEnabled(True)
         self.Button_StartTracking.setObjectName("Button_StartTracking")
@@ -506,7 +505,7 @@ class Ui_MainWindow(object):
         self.tabWidget_Robot = QtWidgets.QWidget()
         self.tabWidget_Robot.setObjectName("tabWidget_Robot")
         self.verticalLayoutWidget_8 = QtWidgets.QWidget(self.tabWidget_Robot)
-        self.verticalLayoutWidget_8.setGeometry(QtCore.QRect(540, 90, 231, 191))
+        self.verticalLayoutWidget_8.setGeometry(QtCore.QRect(540, 90, 231, 224))
         self.verticalLayoutWidget_8.setObjectName("verticalLayoutWidget_8")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_8)
         self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
@@ -517,6 +516,9 @@ class Ui_MainWindow(object):
         self.Button_RobotAutoRun = QtWidgets.QPushButton(self.verticalLayoutWidget_8)
         self.Button_RobotAutoRun.setObjectName("Button_RobotAutoRun")
         self.verticalLayout_8.addWidget(self.Button_RobotAutoRun)
+        self.Button_CompensateRun = QtWidgets.QPushButton(self.verticalLayoutWidget_8)
+        self.Button_CompensateRun.setObjectName("Button_CompensateRun")
+        self.verticalLayout_8.addWidget(self.Button_CompensateRun)
         self.Button_RobotStop = QtWidgets.QPushButton(self.verticalLayoutWidget_8)
         self.Button_RobotStop.setEnabled(False)
         font = QtGui.QFont()
@@ -808,7 +810,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(3)
         self.Slider_WL_L.valueChanged['int'].connect(self.label_WL_L.setNum)
         self.Slider_WW_L.valueChanged['int'].connect(self.label_WW_L.setNum)
         self.Slider_WW_H.valueChanged['int'].connect(self.label_WW_H.setNum)
@@ -854,8 +856,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.Button_.setText(_translate("MainWindow", "Connect dynamic tracking"))
-        self.Button_TrackingCycle.setText(_translate("MainWindow", "Tracking breathing cycle"))
+        self.Button_ConnectDynamicTracking.setText(_translate("MainWindow", "Connect dynamic tracking"))
+        self.Button_RecordCycle.setText(_translate("MainWindow", "Record breathing cycle"))
         self.Button_StartTracking.setText(_translate("MainWindow", "Start tracking"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabWidget_Dynamic), _translate("MainWindow", "Dynamic tracking"))
         self.valueWW_L.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-style:normal;\">Window Width</span></p></body></html>"))
@@ -913,6 +915,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabWidget_High), _translate("MainWindow", "Inhale(high)"))
         self.Button_RobotHome.setText(_translate("MainWindow", "Home"))
         self.Button_RobotAutoRun.setText(_translate("MainWindow", "Confirm path and run"))
+        self.Button_CompensateRun.setText(_translate("MainWindow", "Compensate and run"))
         self.Button_RobotStop.setText(_translate("MainWindow", "Emergency Stop"))
         self.label.setText(_translate("MainWindow", "Speed"))
         self.label_RobotSpeed.setText(_translate("MainWindow", "0"))
