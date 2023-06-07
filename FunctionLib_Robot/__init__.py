@@ -47,4 +47,13 @@ baseShift_X = 205
 baseShift_Y = 70 - 2.5
 baseShift_Z = 15.5
 
-"test"
+
+"Laser setting parameter"
+laserDataRepeatRange = 1
+filterTolerance = 1
+yellowLightCriteria_LowAccuracy = 75
+greenLightCriteria_LowAccuracy = 85
+yellowLightCriteria_HighAccuracy = 80
+greenLightCriteria_HighAccuracy = 95
+laserStartPoint = 100 # the start point to measure
+laserEndPoint = 550 # measure laser point to the end point
