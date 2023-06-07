@@ -15,119 +15,149 @@ import numpy
 import math
 import cv2
 import logging
+import threading
+import os
 import FunctionLib_UI.ui_coordinate_system
 import FunctionLib_UI.ui_set_point_system
 from FunctionLib_UI.ui_matplotlib_pyqt import *
 from FunctionLib_Vision._class import *
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 
 class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def __init__(self):
-        """initial main ui
-        """
-        super(MainWidget, self).__init__()
+        try:
+            """initial main ui
+            """
+            super(MainWidget, self).__init__()
 
-        self.setupUi(self)
-        self._init_log()
-        self._init_ui()
-        self.logUI.info('initial UI')
+            self.setupUi(self)
+            self._init_log()
+            self._init_ui()
+            self.logUI.info('initial UI')
 
-        self.ui = Ui_MainWindow()
+            self.ui = Ui_MainWindow()
 
-        self.dcmFn = DICOM()
-        self.regFn = REGISTRATION()
-        self.satFn = SAT()
-        self.dicomLow = DISPLAY()
-        self.dicomHigh = DISPLAY()
+            self.dcmFn = DICOM()
+            self.regFn = REGISTRATION()
+            self.satFn = SAT()
+            self.dicomLow = DISPLAY()
+            self.dicomHigh = DISPLAY()
 
-        self.tabWidget.setCurrentWidget(self.tabWidget_Low)
+            self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
-        self.PlanningPath = []
-        
+            self.PlanningPath = []
+            
 
-        "initialize dcm Low"
-        self.dcmTagLow = {}
-        self.dcmTagLow.update({"ww": 1})
-        self.dcmTagLow.update({"wl": 1})
-        self.dcmTagLow.update({"imageTag": []})
-        "registration ball"
-        self.dcmTagLow.update({"selectedBall": []})
-        self.dcmTagLow.update({"regBall": []})
-        self.dcmTagLow.update({"flageSelectedBall": False})
-        "set point"
-        self.dcmTagLow.update({"selectedPoint": []})
-        self.dcmTagLow.update({"flageSelectedPoint": False})
-        self.dcmTagLow.update({"flageShowPointButton": False})
-        "show point"
-        self.dcmTagLow.update({"sectionTag":[]})
+            "initialize dcm Low"
+            self.dcmTagLow = {}
+            self.dcmTagLow.update({"ww": 1})
+            self.dcmTagLow.update({"wl": 1})
+            self.dcmTagLow.update({"imageTag": []})
+            "registration ball"
+            self.dcmTagLow.update({"selectedBall": []})
+            self.dcmTagLow.update({"regBall": []})
+            self.dcmTagLow.update({"flageSelectedBall": False})
+            "set point"
+            self.dcmTagLow.update({"selectedPoint": []})
+            self.dcmTagLow.update({"flageSelectedPoint": False})
+            self.dcmTagLow.update({"flageShowPointButton": False})
+            "show point"
+            self.dcmTagLow.update({"sectionTag":[]})
 
-        "initialize dcm High"
-        self.dcmTagHigh = {}
-        self.dcmTagHigh.update({"ww": 1})
-        self.dcmTagHigh.update({"wl": 1})
-        "registration ball"
-        self.dcmTagHigh.update({"selectedBall": []})
-        self.dcmTagHigh.update({"regBall": []})
-        self.dcmTagHigh.update({"flageSelectedBall": False})
-        "set point"
-        self.dcmTagHigh.update({"selectedPoint": []})
-        self.dcmTagHigh.update({"flageSelectedPoint": False})
-        self.dcmTagHigh.update({"flageShowPointButton": False})
-        "show point"
-        self.dcmTagHigh.update({"sectionTag":[]})
+            "initialize dcm High"
+            self.dcmTagHigh = {}
+            self.dcmTagHigh.update({"ww": 1})
+            self.dcmTagHigh.update({"wl": 1})
+            "registration ball"
+            self.dcmTagHigh.update({"selectedBall": []})
+            self.dcmTagHigh.update({"regBall": []})
+            self.dcmTagHigh.update({"flageSelectedBall": False})
+            "set point"
+            self.dcmTagHigh.update({"selectedPoint": []})
+            self.dcmTagHigh.update({"flageSelectedPoint": False})
+            self.dcmTagHigh.update({"flageShowPointButton": False})
+            "show point"
+            self.dcmTagHigh.update({"sectionTag":[]})
 
-        "initialize dcm system accuracy test (SAT)"
-        self.dcmTagSAT = {}
-        self.dcmTagSAT.update({"ww": 1})
-        self.dcmTagSAT.update({"wl": 1})
-        "registration ball"
-        self.dcmTagSAT.update({"selectedBall": []})
-        self.dcmTagSAT.update({"regBall": []})
-        self.dcmTagSAT.update({"flageSelectedBall": False})
-        "set test point"
-        self.dcmTagSAT.update({"selectedTestPoint": []})
-        self.dcmTagSAT.update({"flageselectedTestPoint": False})
+            "initialize dcm system accuracy test (SAT)"
+            self.dcmTagSAT = {}
+            self.dcmTagSAT.update({"ww": 1})
+            self.dcmTagSAT.update({"wl": 1})
+            "registration ball"
+            self.dcmTagSAT.update({"selectedBall": []})
+            self.dcmTagSAT.update({"regBall": []})
+            self.dcmTagSAT.update({"flageSelectedBall": False})
+            "set test point"
+            self.dcmTagSAT.update({"selectedTestPoint": []})
+            self.dcmTagSAT.update({"flageselectedTestPoint": False})
 
-        self.Slider_WW_L.setMinimum(1)
-        self.Slider_WW_L.setMaximum(3071)
-        self.Slider_WW_L.setValue(0)
-        self.Slider_WW_H.setMinimum(1)
-        self.Slider_WW_H.setMaximum(3071)
-        self.Slider_WW_H.setValue(0)
-        self.Slider_WW_SAT.setMinimum(1)
-        self.Slider_WW_SAT.setMaximum(3071)
-        self.Slider_WW_SAT.setValue(0)
+            self.Slider_WW_L.setMinimum(1)
+            self.Slider_WW_L.setMaximum(3071)
+            self.Slider_WW_L.setValue(0)
+            self.Slider_WW_H.setMinimum(1)
+            self.Slider_WW_H.setMaximum(3071)
+            self.Slider_WW_H.setValue(0)
+            self.Slider_WW_SAT.setMinimum(1)
+            self.Slider_WW_SAT.setMaximum(3071)
+            self.Slider_WW_SAT.setValue(0)
 
-        self.Slider_WL_L.setMinimum(-1024)
-        self.Slider_WL_L.setMaximum(3071)
-        self.Slider_WL_L.setValue(0)
-        self.Slider_WL_H.setMinimum(-1024)
-        self.Slider_WL_H.setMaximum(3071)
-        self.Slider_WL_H.setValue(0)
-        self.Slider_WL_SAT.setMinimum(-1024)
-        self.Slider_WL_SAT.setMaximum(3071)
-        self.Slider_WL_SAT.setValue(0)
+            self.Slider_WL_L.setMinimum(-1024)
+            self.Slider_WL_L.setMaximum(3071)
+            self.Slider_WL_L.setValue(0)
+            self.Slider_WL_H.setMinimum(-1024)
+            self.Slider_WL_H.setMaximum(3071)
+            self.Slider_WL_H.setValue(0)
+            self.Slider_WL_SAT.setMinimum(-1024)
+            self.Slider_WL_SAT.setMaximum(3071)
+            self.Slider_WL_SAT.setValue(0)
 
-        self.Slider_WW_L.valueChanged.connect(self.SetWidth_L)
-        self.Slider_WL_L.valueChanged.connect(self.SetLevel_L)
-        self.Slider_WW_H.valueChanged.connect(self.SetWidth_H)
-        self.Slider_WL_H.valueChanged.connect(self.SetLevel_H)
-        self.Slider_WW_SAT.valueChanged.connect(self.SetWidth_SAT)
-        self.Slider_WL_SAT.valueChanged.connect(self.SetLevel_SAT)
+            self.Slider_WW_L.valueChanged.connect(self.SetWidth_L)
+            self.Slider_WL_L.valueChanged.connect(self.SetLevel_L)
+            self.Slider_WW_H.valueChanged.connect(self.SetWidth_H)
+            self.Slider_WL_H.valueChanged.connect(self.SetLevel_H)
+            self.Slider_WW_SAT.valueChanged.connect(self.SetWidth_SAT)
+            self.Slider_WL_SAT.valueChanged.connect(self.SetLevel_SAT)
 
-        self.Action_ImportDicom_L.triggered.connect(self.ImportDicom_L)
-        self.Action_ImportDicom_H.triggered.connect(self.ImportDicom_H)
-        self.Action_ImportDicom_SAT.triggered.connect(self.ImportDicom_SAT)
-        self.logUI.debug('initial main UI')
+            self.Action_ImportDicom_L.triggered.connect(self.ImportDicom_L)
+            self.Action_ImportDicom_H.triggered.connect(self.ImportDicom_H)
+            self.Action_ImportDicom_SAT.triggered.connect(self.ImportDicom_SAT)
+            self.logUI.debug('initial main UI')
 
-        "robot control initial"
-        MOTORSUBFUNCTION.__init__(self)
-        global g_homeStatus
-        g_homeStatus = False
-        self.homeStatus = g_homeStatus
-
-        SAT.__init__(self)
+            "robot control initial"
+            MOTORSUBFUNCTION.__init__(self)
+            global g_homeStatus
+            g_homeStatus = False
+            self.homeStatus = g_homeStatus
+            
+            "Line Laser initial"
+            LineLaser.__init__(self)
+            LineLaser.TriggerSetting(self)
+            # self.recordBreathingBase = False        
+            
+            "Laser Button Color Initialization"
+            self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+            
+            "Laser Button Disable Setting"
+            self.Button_StartLaserDisplay.setEnabled(True)
+            self.Button_StopLaserDisplay.setEnabled(False)
+            self.Button_RecordCycle.setEnabled(False)
+            self.Button_StopRecording.setEnabled(False)
+            self.Button_StartTracking.setEnabled(False)
+            self.Button_StopLaserTracking.setEnabled(False)
+            
+            self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
+            self.greenLightCriteria = greenLightCriteria_LowAccuracy
+            
+        except:
+            print("Initial System Error")
 
     def HomeProcessing(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
@@ -143,6 +173,104 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         else:
             print("Please execute home processing first.")
             QMessageBox.information(self, "information", "Please execute home processing first.")
+    
+    def LaserAdjustment(self):
+        while self.showLaserProfileCommand:
+            self.laserProfileFigure.update_figure(self.PlotProfile())
+        print("Laser Adjust Done!")
+        
+    def ShowLaserProfile(self):
+        self.Button_StartLaserDisplay.setStyleSheet("background-color:#4DE680")
+        self.Button_StopLaserDisplay.setEnabled(True)
+        self.laserProfileFigure = Canvas(self,dpi=200)
+        layout = QtWidgets.QVBoxLayout(self.MplWidget)
+        layout.addWidget(self.laserProfileFigure)
+        self.showLaserProfileCommand = True
+        t = threading.Thread(target=self.LaserAdjustment)
+        t.start()        
+
+    def StopLaserProfile(self):
+        if self.Button_StopLaserDisplay.isChecked():
+            self.Button_StopLaserDisplay.setStyleSheet("background-color:#4DE680")
+            self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StartLaserDisplay.setEnabled(False)
+            self.Button_RecordCycle.setEnabled(True)
+            self.showLaserProfileCommand = False
+        self.Button_StopLaserDisplay.setChecked(False)
+        
+    def RecordBreathing(self):
+        receiveDataTemp = []
+        receiveData = []
+        # self.TriggerSetting()
+        print("Cheast Breathing Measure Start")
+        while self.recordBreathingCommand is True:
+            receiveDataTemp.append(self.ModelBuilding())
+            self.recordBreathingBase = True
+        print("Breathing recording stopped.")
+        receiveDataTemp = [subarray for subarray in receiveDataTemp if subarray]
+        # rearrange receiveData
+        for item in receiveDataTemp:
+            receiveData.append(item[0]) 
+        self.DataBaseChecking(receiveData) # make sure no data lost
+        self.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria)
+        
+    def StartRecordBreathingBase(self):
+        self.Button_StopLaserDisplay.setEnabled(False)
+        self.Button_StopRecording.setEnabled(True)
+        self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        self.Button_RecordCycle.setStyleSheet("background-color:#4DE680")
+        self.recordBreathingBase = False
+        self.recordBreathingCommand = True
+        t = threading.Thread(target = self.RecordBreathing)
+        t.start()
+        
+    def StopRecordBreathingBase(self):
+        print("Stop")
+        if self.Button_StopRecording.isChecked():
+            self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopRecording.setStyleSheet("background-color:#4DE680")
+            self.Button_StartTracking.setEnabled(True)
+            self.recordBreathingCommand = False
+            self.Button_StopRecording.setChecked(False)
+        else:
+            self.recordBreathingCommand = True
+        print("Stop Breathing Recording")
+        
+    def Fun_LaserTracking(self):
+        while self.trackingBreathingCommand is True:
+            breathingPercentageTemp = self.RealTimeHeightAvg(self.yellowLightCriteria, self.greenLightCriteria) #透過計算出即時的HeightAvg, 顯示燈號
+            if type(breathingPercentageTemp) is np.float64:
+                self.breathingPercentage = breathingPercentageTemp                
+                print(self.breathingPercentage)
+                
+    def AdjustTrackingAccuracy(self):
+        self.Button_Accuracy.setStyleSheet("background-color:#0066FF")
+        self.yellowLightCriteria = yellowLightCriteria_HighAccuracy
+        self.greenLightCriteria = greenLightCriteria_HighAccuracy
+            
+    def LaserTracking(self):
+        print("即時量測呼吸狀態")
+        if self.recordBreathingBase is True:
+            self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StartTracking.setStyleSheet("background-color:#4DE680")
+            self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopLaserTracking.setEnabled(True)
+            self.trackingBreathingCommand = True
+            t = threading.Thread(target = self.Fun_LaserTracking)
+            t.start()
+        else:
+            print("Please build cheast breathing model first.")
+            
+    def StopLaserTracking(self):
+        if self.Button_StopLaserTracking.isChecked():
+            self.Button_StartTracking.setStyleSheet("backgroudn-color:#DCDCDC")
+            self.Button_StopLaserTracking.setStyleSheet("background-color:#4DE680")
+            self.trackingBreathingCommand = False
+            self.Button_StopLaserTracking.setChecked(False)
+            self.RealTimeTracking(self.breathingPercentage)
+            self.MoveToPoint()
+        else:
+            self.trackingBreathingCommand = True
 
     def StringSplit(self, string):
         stringTemp = string.split(",")
@@ -190,6 +318,12 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
                 self, entryTestBall, targetTestBall)
         else:
             print("select target ball is wrong")
+            
+    def CloseRobotSystem(self):
+        MOTORSUBFUNCTION.HomeProcessing(self)
+        print("Home processing is done!")
+        QMessageBox.information(self, "information", "AitherBot will be closed!")
+        os.system("shutdown -s -t 0 ")
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
@@ -1976,6 +2110,23 @@ class MyInteractorStyle3D(vtkInteractorStyleTrackballCamera):
     def right_button_press_event(self, obj, event):
         return
 
+#画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
+class Canvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
+        self.axes = fig.add_subplot(111)#
+        FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
+        self.setParent(parent)
+        FigureCanvasQTAgg.updateGeometry(self)
+        
+    def update_figure(self,receiveData):
+        self.axes.cla()#清除已绘的图形
+        self.axes.set_xlim([1,640])
+        self.axes.set_ylim([-125,-65])
+        self.axes.set_xticks([])
+        self.axes.set_yticks([])
+        self.axes.plot(receiveData[0])
+        self.draw()#重新绘制
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
