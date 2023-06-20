@@ -11,7 +11,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -203,6 +202,18 @@ class Ui_MainWindow(object):
         self.Button_Accuracy.setEnabled(True)
         self.Button_Accuracy.setGeometry(QtCore.QRect(1630, 260, 175, 28))
         self.Button_Accuracy.setObjectName("Button_Accuracy")
+        self.breathingRatio = QtWidgets.QLCDNumber(self.tabWidget_Dynamic)
+        self.breathingRatio.setGeometry(QtCore.QRect(1440, 465, 191, 81))
+        self.breathingRatio.setObjectName("breathingRatio")
+        self.label_27 = QtWidgets.QLabel(self.tabWidget_Dynamic)
+        self.label_27.setGeometry(QtCore.QRect(1450, 425, 171, 31))
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_27.setFont(font)
+        self.label_27.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_27.setObjectName("label_27")
         self.tabWidget.addTab(self.tabWidget_Dynamic, "")
         self.tabWidget_Low = QtWidgets.QWidget()
         self.tabWidget_Low.setObjectName("tabWidget_Low")
@@ -811,7 +822,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tabWidget_RobotAccuracy, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))
         self.menubar.setObjectName("menubar")
         self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
@@ -831,7 +842,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(0)
         self.Slider_WL_L.valueChanged['int'].connect(self.label_WL_L.setNum) # type: ignore
         self.Slider_WW_L.valueChanged['int'].connect(self.label_WW_L.setNum) # type: ignore
         self.Slider_WW_H.valueChanged['int'].connect(self.label_WW_H.setNum) # type: ignore
@@ -892,6 +903,7 @@ class Ui_MainWindow(object):
         self.Button_StartTracking.setText(_translate("MainWindow", "Start Laser Tracking"))
         self.Button_StopLaserTracking.setText(_translate("MainWindow", "Robot Compensation"))
         self.Button_Accuracy.setText(_translate("MainWindow", "HIGH Tracking Accuracy"))
+        self.label_27.setText(_translate("MainWindow", "Breathing Ratio"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabWidget_Dynamic), _translate("MainWindow", "Dynamic tracking"))
         self.valueWW_L.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-style:normal;\">Window Width</span></p></body></html>"))
         self.label_WW_L.setText(_translate("MainWindow", "0"))

@@ -26,12 +26,14 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as Navigati
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 
-class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
-    def __init__(self):
+class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
+    def __init__(self, parent = None):
         try:
             """initial main ui
-            """
+            """       
             super(MainWidget, self).__init__()
+            QMainWindow.__init__(self)
+            SAT.__init__(self)
 
             self.setupUi(self)
             self._init_log()
@@ -48,8 +50,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
 
             self.tabWidget.setCurrentWidget(self.tabWidget_Low)
 
-            self.PlanningPath = []
-            
+            self.PlanningPath = []        
 
             "initialize dcm Low"
             self.dcmTagLow = {}
@@ -156,6 +157,9 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
             self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
             self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
+            "LCD setting"
+            self.breathingRatio.setDecMode()
+                    
         except:
             print("Initial System Error")
 
@@ -173,31 +177,32 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         else:
             print("Please execute home processing first.")
             QMessageBox.information(self, "information", "Please execute home processing first.")
-    
+        
     def LaserAdjustment(self):
         while self.showLaserProfileCommand:
             self.laserProfileFigure.update_figure(self.PlotProfile())
         print("Laser Adjust Done!")
-        
+        # LineLaser.CloseLaser(self)
+            
     def ShowLaserProfile(self):
         self.Button_StartLaserDisplay.setStyleSheet("background-color:#4DE680")
         self.Button_StopLaserDisplay.setEnabled(True)
         self.laserProfileFigure = Canvas(self,dpi=200)
-        layout = QtWidgets.QVBoxLayout(self.MplWidget)
-        layout.addWidget(self.laserProfileFigure)
+        self.layout = QtWidgets.QVBoxLayout(self.MplWidget)
+        self.layout.addWidget(self.laserProfileFigure)
         self.showLaserProfileCommand = True
         t = threading.Thread(target=self.LaserAdjustment)
-        t.start()        
-
+        t.start()
+        
     def StopLaserProfile(self):
         if self.Button_StopLaserDisplay.isChecked():
             self.Button_StopLaserDisplay.setStyleSheet("background-color:#4DE680")
             self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
             self.Button_StartLaserDisplay.setEnabled(False)
             self.Button_RecordCycle.setEnabled(True)
-            self.showLaserProfileCommand = False
+            self.showLaserProfileCommand  = False
         self.Button_StopLaserDisplay.setChecked(False)
-        
+                        
     def RecordBreathing(self):
         receiveDataTemp = []
         receiveData = []
@@ -205,6 +210,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         print("Cheast Breathing Measure Start")
         while self.recordBreathingCommand is True:
             receiveDataTemp.append(self.ModelBuilding())
+            self.laserProfileFigure.update_figure(self.PlotProfile())
             self.recordBreathingBase = True
         print("Breathing recording stopped.")
         receiveDataTemp = [subarray for subarray in receiveDataTemp if subarray]
@@ -212,8 +218,8 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         for item in receiveDataTemp:
             receiveData.append(item[0]) 
         self.DataBaseChecking(receiveData) # make sure no data lost
-        self.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria)
-        
+        self.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria) 
+    
     def StartRecordBreathingBase(self):
         self.Button_StopLaserDisplay.setEnabled(False)
         self.Button_StopRecording.setEnabled(True)
@@ -221,6 +227,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         self.Button_RecordCycle.setStyleSheet("background-color:#4DE680")
         self.recordBreathingBase = False
         self.recordBreathingCommand = True
+        
         t = threading.Thread(target = self.RecordBreathing)
         t.start()
         
@@ -239,6 +246,14 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
     def Fun_LaserTracking(self):
         while self.trackingBreathingCommand is True:
             breathingPercentageTemp = self.RealTimeHeightAvg(self.yellowLightCriteria, self.greenLightCriteria) #透過計算出即時的HeightAvg, 顯示燈號
+            self.breathingRatio.display(breathingPercentageTemp)
+            if breathingPercentageTemp >= self.greenLightCriteria:  #綠燈
+                self.breathingRatio.setStyleSheet("border: 2px solid black; color: green; background: silver;")
+            elif breathingPercentageTemp >= self.yellowLightCriteria and breathingPercentageTemp < self.greenLightCriteria: #黃燈
+                self.breathingRatio.setStyleSheet("border: 2px solid black; color: yellow; background: silver;")
+            else:
+                self.breathingRatio.setStyleSheet("border: 2px solid black; color: red; background: silver;")
+            self.laserProfileFigure.update_figure(self.PlotProfile())
             if type(breathingPercentageTemp) is np.float64:
                 self.breathingPercentage = breathingPercentageTemp                
                 print(self.breathingPercentage)
@@ -256,8 +271,9 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
             self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             self.Button_StopLaserTracking.setEnabled(True)
             self.trackingBreathingCommand = True
-            t = threading.Thread(target = self.Fun_LaserTracking)
-            t.start()
+            
+            t_laser = threading.Thread(target = self.Fun_LaserTracking)
+            t_laser.start()
         else:
             print("Please build cheast breathing model first.")
             
@@ -324,6 +340,7 @@ class MainWidget(QMainWindow, Ui_MainWindow, MOTORSUBFUNCTION, SAT):
         print("Home processing is done!")
         QMessageBox.information(self, "information", "AitherBot will be closed!")
         os.system("shutdown -s -t 0 ")
+
 
     def _init_log(self):
         self.logUI: logging.Logger = logging.getLogger(name='UI')
@@ -2109,7 +2126,7 @@ class MyInteractorStyle3D(vtkInteractorStyleTrackballCamera):
         
     def right_button_press_event(self, obj, event):
         return
-
+    
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -2127,6 +2144,23 @@ class Canvas(FigureCanvasQTAgg):
         self.axes.set_yticks([])
         self.axes.plot(receiveData[0])
         self.draw()#重新绘制
+        
+# class Canvas_Cont(FigureCanvasQTAgg):
+#     def __init__(self, parent=None, width=5, height=4, dpi=100):
+#         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
+#         self.axes = fig.add_subplot(111)#
+#         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
+#         self.setParent(parent)
+#         FigureCanvasQTAgg.updateGeometry(self)
+        
+#     def update_figure(self,receiveData):
+#         self.axes.cla()#清除已绘的图形
+#         self.axes.set_xlim([1,640])
+#         self.axes.set_ylim([-125,-65])
+#         self.axes.set_xticks([])
+#         self.axes.set_yticks([])
+#         self.axes.plot(receiveData[0])
+#         self.draw()#重新绘制
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

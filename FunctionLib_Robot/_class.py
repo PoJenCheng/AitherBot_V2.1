@@ -1162,8 +1162,8 @@ class LineLaser(MOTORCONTROL):
         for item in list(heightAvg.items()):
             avg = list(item)[0]
             self.percentage = ((maxAvg-avg)/dis)*100
-            if self.percentage >= yellowLightCriteria:
-                self.percentageBase[self.percentage] = item
+            # if self.percentage >= yellowLightCriteria:
+            self.percentageBase[self.percentage] = item
         self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
         # print(self.percentageBase)
         
