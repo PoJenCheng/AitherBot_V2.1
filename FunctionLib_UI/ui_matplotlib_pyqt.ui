@@ -442,8 +442,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>20</y>
-      <width>1921</width>
+      <y>10</y>
+      <width>1905</width>
       <height>991</height>
      </rect>
     </property>
@@ -520,7 +520,7 @@
           <bool>false</bool>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color:rgb(255, 170, 0)</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>Robot Compensation</string>
@@ -649,7 +649,7 @@
        <rect>
         <x>1400</x>
         <y>380</y>
-        <width>501</width>
+        <width>491</width>
         <height>151</height>
        </rect>
       </property>
@@ -717,7 +717,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_2">
       <property name="geometry">
        <rect>
-        <x>1570</x>
+        <x>1560</x>
         <y>10</y>
         <width>331</width>
         <height>271</height>
@@ -804,72 +804,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_3">
-      <property name="geometry">
-       <rect>
-        <x>1400</x>
-        <y>10</y>
-        <width>160</width>
-        <height>181</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <widget class="QPushButton" name="pushButton_3">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>isosurface construct</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_5">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>ruler</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_4">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>clear ruler</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>undo set point</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>clear path</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="horizontalLayoutWidget">
       <property name="geometry">
        <rect>
-        <x>1570</x>
+        <x>1560</x>
         <y>290</y>
         <width>331</width>
         <height>80</height>

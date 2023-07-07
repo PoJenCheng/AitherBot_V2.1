@@ -3,6 +3,7 @@ from turtle import update
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import QMovie
 from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
@@ -19,6 +20,7 @@ import threading
 import os
 import FunctionLib_UI.ui_coordinate_system
 import FunctionLib_UI.ui_set_point_system
+import FunctionLib_UI.ui_processing
 from FunctionLib_UI.ui_matplotlib_pyqt import *
 from FunctionLib_Vision._class import *
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
@@ -48,7 +50,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dicomLow = DISPLAY()
             self.dicomHigh = DISPLAY()
 
-            self.tabWidget.setCurrentWidget(self.tabWidget_Low)
+            # self.tabWidget.setCurrentWidget(self.tabWidget_Low)
+            self.tabWidget.setCurrentWidget(self.tabWidget_Dynamic)
+            
 
             self.PlanningPath = []        
 
@@ -126,25 +130,32 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.Action_ImportDicom_H.triggered.connect(self.ImportDicom_H)
             self.Action_ImportDicom_SAT.triggered.connect(self.ImportDicom_SAT)
             self.logUI.debug('initial main UI')
-
+            print('initial main UI')
+        except Exception as e:
+            print("Initial System Error - UI")
+            print(repr(e))
+        try:
             "robot control initial"
             MOTORSUBFUNCTION.__init__(self)
             global g_homeStatus
             g_homeStatus = False
             self.homeStatus = g_homeStatus
-            
+            print('initial main robot control')
+        except:
+            print("Initial System Error - robot control")
+        try:
             "Line Laser initial"
             LineLaser.__init__(self)
             LineLaser.TriggerSetting(self)
             # self.recordBreathingBase = False        
             
             "Laser Button Color Initialization"
-            self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
-            self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
-            self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
-            self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+            # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             
             "Laser Button Disable Setting"
             self.Button_StartLaserDisplay.setEnabled(True)
@@ -153,15 +164,16 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.Button_StopRecording.setEnabled(False)
             self.Button_StartTracking.setEnabled(False)
             self.Button_StopLaserTracking.setEnabled(False)
+            self.Button_Accuracy.setEnabled(False)
             
             self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
             self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
             "LCD setting"
             self.breathingRatio.setDecMode()
-                    
+            print('initial main Line Laser')
         except:
-            print("Initial System Error")
+            print("Initial System Error - Line Laser")
 
     def HomeProcessing(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
@@ -197,7 +209,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def StopLaserProfile(self):
         if self.Button_StopLaserDisplay.isChecked():
             self.Button_StopLaserDisplay.setStyleSheet("background-color:#4DE680")
-            self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StartLaserDisplay.setStyleSheet("")
             self.Button_StartLaserDisplay.setEnabled(False)
             self.Button_RecordCycle.setEnabled(True)
             self.showLaserProfileCommand  = False
@@ -223,7 +235,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def StartRecordBreathingBase(self):
         self.Button_StopLaserDisplay.setEnabled(False)
         self.Button_StopRecording.setEnabled(True)
-        self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        self.Button_StopLaserDisplay.setStyleSheet("")
         self.Button_RecordCycle.setStyleSheet("background-color:#4DE680")
         self.recordBreathingBase = False
         self.recordBreathingCommand = True
@@ -234,11 +246,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def StopRecordBreathingBase(self):
         print("Stop")
         if self.Button_StopRecording.isChecked():
-            self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+            self.Button_RecordCycle.setStyleSheet("")
             self.Button_StopRecording.setStyleSheet("background-color:#4DE680")
             self.Button_StartTracking.setEnabled(True)
+            self.Button_Accuracy.setEnabled(True)
             self.recordBreathingCommand = False
             self.Button_StopRecording.setChecked(False)
+            self.tabWidget.setCurrentWidget(self.tabWidget_Low)
         else:
             self.recordBreathingCommand = True
         print("Stop Breathing Recording")
@@ -256,7 +270,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.laserProfileFigure.update_figure(self.PlotProfile())
             if type(breathingPercentageTemp) is np.float64:
                 self.breathingPercentage = breathingPercentageTemp                
-                print(self.breathingPercentage)
+                # print(self.breathingPercentage)
                 
     def AdjustTrackingAccuracy(self):
         self.Button_Accuracy.setStyleSheet("background-color:#0066FF")
@@ -266,9 +280,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def LaserTracking(self):
         print("即時量測呼吸狀態")
         if self.recordBreathingBase is True:
-            self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+            self.Button_StopRecording.setStyleSheet("")
             self.Button_StartTracking.setStyleSheet("background-color:#4DE680")
-            self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+            
+            self.Button_StopLaserTracking.setStyleSheet("")
             self.Button_StopLaserTracking.setEnabled(True)
             self.trackingBreathingCommand = True
             
@@ -279,12 +294,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             
     def StopLaserTracking(self):
         if self.Button_StopLaserTracking.isChecked():
-            self.Button_StartTracking.setStyleSheet("backgroudn-color:#DCDCDC")
+            self.Button_StartTracking.setStyleSheet("")
             self.Button_StopLaserTracking.setStyleSheet("background-color:#4DE680")
             self.trackingBreathingCommand = False
             self.Button_StopLaserTracking.setChecked(False)
-            self.RealTimeTracking(self.breathingPercentage)
-            self.MoveToPoint()
+            try:
+                self.RealTimeTracking(self.breathingPercentage)
+                self.MoveToPoint()
+            except:
+                print("Robot Compensation error")
         else:
             self.trackingBreathingCommand = True
 
@@ -417,8 +435,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             return
         
         "pydicom stage"
+        self.ui_SP = SystemProcessing()
+        
+        self.ui_SP.show()
+        # self.ui_SP.StartThread()
+        
         metadata, metadataSeriesNum, filePathList = self.dcmFn.LoadPath(filePath)
         if metadata == 0 or metadataSeriesNum == 0:
+            self.ui_SP.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.info('not loading one DICOM')
             return
@@ -486,6 +510,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         if image != 0:
             self.dcmTagLow.update({"image": numpy.array(image)})
         else:
+            self.ui_SP.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.warning('fail to get image')
             return
@@ -548,6 +573,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.SliceSelect_Coronal_L.setEnabled(True)
         self.Button_Registration_L.setEnabled(True)
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
+        
+        self.ui_SP.close()
+        return
 
     def ShowDicom_L(self):
         """show low dicom to ui
@@ -2103,6 +2131,40 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
 
     def okAndClose(self):
         self.close()
+
+# class WorkThread(QThread):
+#     def __init__(self):
+#         super(WorkThread, self).__init__()
+        
+#     def run(self):
+#         while True:
+#             print("thread running")
+#             self.sleep(1)
+
+
+class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
+    def __init__(self):
+        super(SystemProcessing, self).__init__()
+        self.setupUi(self)
+        
+        self.Start()
+        
+        # current_dir = os.getcwd()
+        # print(current_dir)
+        # # gifPath = current_dir + "\\gif\\loading.gif"
+        # gifPath = "./gif/loading.gif"
+        # self.movie = QMovie(gifPath)
+        # self.label_Processing.setMovie(self.movie)
+        # self.movie.start()
+        
+        # self.label_Processing.setText("loading")
+        
+    # def StartThread(self):
+    #     self.workThread = WorkThread()
+    #     self.workThread.start()
+        
+    def Start(self):
+        self.label_Processing.setText("loading")
 
 class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         
