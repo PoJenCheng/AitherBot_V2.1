@@ -15,6 +15,7 @@ sys.exit(app.exec_())
 
 # from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # QVTKWidget(self.layoutWidget replace as QVTKRenderWindowInteractor(self.layoutWidget
+# QVTKWidget(Form) replace as QVTKRenderWindowInteractor(Form)
 
 # self.MplWidget = MplWidget(self.tabWidget_Dynamic)
 # replace as

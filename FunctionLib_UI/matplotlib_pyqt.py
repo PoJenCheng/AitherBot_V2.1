@@ -1917,133 +1917,136 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.dcm = dcm
         self.dcmFn = DICOM()
         self.DisplayImage()
-        self.flage = 0
-        self.point = []
+        # self.flage = 0
+        # self.point = []
 
     def DisplayImage(self):
-        imageHu2D = numpy.array([])
-        showAxis = self.dcm.get("showAxis")
-        showSlice = self.dcm.get("showSlice")
-        pixel2Mm = self.dcm.get("pixel2Mm")
-        ww = self.dcm.get("ww")
-        wl = self.dcm.get("wl")
-        if showAxis == 0:
-            "x axis"
-            imageHu2D = self.dcm.get("imageHu")[:, :, int(showSlice/pixel2Mm[0])]
-            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
-            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
-            if pixel2Mm[0] < 1 and abs(pixel2Mm[2]) <= 1:
-                imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
-            elif pixel2Mm[0] > 1 and abs(pixel2Mm[2]) >= 1:
-                imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[2], interpolation=cv2.INTER_CUBIC)
-            else:
-                pass
-        elif showAxis == 1:
-            "y axis"
-            imageHu2D = self.dcm.get("imageHu")[:, int(showSlice/pixel2Mm[1]), :]
-            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
-            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
-            if pixel2Mm[1] < 1 and abs(pixel2Mm[2]) <= 1:
-                imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[1], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
-            elif pixel2Mm[1] > 1 and abs(pixel2Mm[2]) >= 1:
-                imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[1], fy=pixel2Mm[2], interpolation=cv2.INTER_CUBIC)
-            else:
-                pass
-        elif showAxis == 2:
-            "z axis"
-            """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
-            """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
-            imageHu2D = self.dcm.get("imageHu")[int(showSlice/pixel2Mm[2]), :, :]
-        else:
-            print("Coordinate System error")
-            return
-        if imageHu2D.shape[0] != 0:
-            imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, ww, wl)
-            self.imgHeight, self.imgWidth = imageHu2D_.shape
-            gray = numpy.uint8(imageHu2D_)
-            self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            "mark out candidateBall"
-            if showAxis == 0:
-                "x axis"
-                for C in self.dcm.get("candidateBall"):
-                    Cx = C[1]
-                    Cy = C[2]
-                    cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
-            elif showAxis == 1:
-                "y axis"
-                for C in self.dcm.get("candidateBall"):
-                    Cx = C[0]
-                    Cy = C[2]
-                    cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
-            elif showAxis == 2:
-                "z axis"
-                for C in self.dcm.get("candidateBall"):
-                    Cx = C[0]
-                    Cy = C[1]
-                    cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
-            else:
-                print("Coordinate System error")
-                return
-            "update and display ui"
-            self.UpdateImage()
-        else:
-            print("Coordinate System show img error")
-
-    def UpdateImage(self):
-        "update and display ui"
-        bytesPerline = 3 * self.imgWidth
-        self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
-        self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-        "GetClickedPosition don't +()), it could create error below: "
-        "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
-        self.label_img.mousePressEvent = self.GetClickedPosition
+        # imageHu2D = numpy.array([])
+        # showAxis = self.dcm.get("showAxis")
+        # showSlice = self.dcm.get("showSlice")
+        # pixel2Mm = self.dcm.get("pixel2Mm")
+        # ww = self.dcm.get("ww")
+        # wl = self.dcm.get("wl")
+        # if showAxis == 0:
+        #     "x axis"
+        #     imageHu2D = self.dcm.get("imageHu")[:, :, int(showSlice/pixel2Mm[0])]
+        #     """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+        #     """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
+        #     if pixel2Mm[0] < 1 and abs(pixel2Mm[2]) <= 1:
+        #         imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
+        #     elif pixel2Mm[0] > 1 and abs(pixel2Mm[2]) >= 1:
+        #         imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[2], interpolation=cv2.INTER_CUBIC)
+        #     else:
+        #         pass
+        # elif showAxis == 1:
+        #     "y axis"
+        #     imageHu2D = self.dcm.get("imageHu")[:, int(showSlice/pixel2Mm[1]), :]
+        #     """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+        #     """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
+        #     if pixel2Mm[1] < 1 and abs(pixel2Mm[2]) <= 1:
+        #         imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[1], fy=pixel2Mm[2], interpolation=cv2.INTER_AREA)
+        #     elif pixel2Mm[1] > 1 and abs(pixel2Mm[2]) >= 1:
+        #         imageHu2D = cv2.resize(imageHu2D, dsize=None, fx=pixel2Mm[1], fy=pixel2Mm[2], interpolation=cv2.INTER_CUBIC)
+        #     else:
+        #         pass
+        # elif showAxis == 2:
+        #     "z axis"
+        #     """Didn't consider when one of pixel2Mm > 1 and one of pixel2Mm < 1,"""
+        #     """(which is pixel2Mm[n] != pixel2Mm[n+1])"""
+        #     imageHu2D = self.dcm.get("imageHu")[int(showSlice/pixel2Mm[2]), :, :]
+        # else:
+        #     print("Coordinate System error")
+        #     return
+        # if imageHu2D.shape[0] != 0:
+        #     imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, ww, wl)
+        #     self.imgHeight, self.imgWidth = imageHu2D_.shape
+        #     gray = numpy.uint8(imageHu2D_)
+        #     self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        #     "mark out candidateBall"
+        #     if showAxis == 0:
+        #         "x axis"
+        #         for C in self.dcm.get("candidateBall"):
+        #             Cx = C[1]
+        #             Cy = C[2]
+        #             cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
+        #     elif showAxis == 1:
+        #         "y axis"
+        #         for C in self.dcm.get("candidateBall"):
+        #             Cx = C[0]
+        #             Cy = C[2]
+        #             cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
+        #     elif showAxis == 2:
+        #         "z axis"
+        #         for C in self.dcm.get("candidateBall"):
+        #             Cx = C[0]
+        #             Cy = C[1]
+        #             cv2.circle(self.gray3Channel, (int(Cx), int(Cy)), 20, (256/2, 200, 100), 2)
+        #     else:
+        #         print("Coordinate System error")
+        #         return
+        #     "update and display ui"
+        #     self.UpdateImage()
+        # else:
+        #     print("Coordinate System show img error")
         return
 
-    def GetClickedPosition(self, event):
-        showAxis = self.dcm.get("showAxis")
-        showSlice = self.dcm.get("showSlice")
-        x = event.pos().x()
-        y = event.pos().y()
-        self.flage = self.flage + 1
-        if self.flage > 3:
-            QMessageBox.critical(self, "error", "there are already selected 3 balls")
-            return
-        else:
-            if showAxis == 0:
-                "x axis"
-                self.point.append([showSlice, x, y])
-                self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-            elif showAxis == 1:
-                "y axis"
-                self.point.append([x, showSlice, y])
-                self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-            elif showAxis == 2:
-                "z axis"
-                self.point.append([x, y, showSlice])
-                self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-            else:
-                print("Coordinate System error")
-        self.drawPoint(x, y)
-        self.UpdateImage()
-        return
+    # def UpdateImage(self):
+    #     "update and display ui"
+    #     bytesPerline = 3 * self.imgWidth
+    #     self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
+    #     self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
+    #     "GetClickedPosition don't +()), it could create error below: "
+    #     "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
+    #     self.label_img.mousePressEvent = self.GetClickedPosition
+    #     return
 
-    def drawPoint(self, x, y):
-        "red"
-        color = (0, 0, 255)
-        point = (int(x), int(y))
-        point_size = 1
-        thickness = 4
-        cv2.circle(self.gray3Channel, point, point_size, color, thickness)
-        return
+    # def GetClickedPosition(self, event):
+    #     showAxis = self.dcm.get("showAxis")
+    #     showSlice = self.dcm.get("showSlice")
+    #     x = event.pos().x()
+    #     y = event.pos().y()
+    #     self.flage = self.flage + 1
+    #     if self.flage > 3:
+    #         QMessageBox.critical(self, "error", "there are already selected 3 balls")
+    #         return
+    #     else:
+    #         if showAxis == 0:
+    #             "x axis"
+    #             self.point.append([showSlice, x, y])
+    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
+    #         elif showAxis == 1:
+    #             "y axis"
+    #             self.point.append([x, showSlice, y])
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
+    #         elif showAxis == 2:
+    #             "z axis"
+    #             self.point.append([x, y, showSlice])
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
+    #         else:
+    #             print("Coordinate System error")
+    #     self.drawPoint(x, y)
+    #     self.UpdateImage()
+    #     return
+
+    # def drawPoint(self, x, y):
+    #     "red"
+    #     color = (0, 0, 255)
+    #     point = (int(x), int(y))
+    #     point_size = 1
+    #     thickness = 4
+    #     cv2.circle(self.gray3Channel, point, point_size, color, thickness)
+    #     return
 
     def okAndClose(self):
-        if len(self.point) == 3:
-            self.dcm.update({"flageSelectedBall": True})
-            self.dcm.update({"selectedBall": numpy.array(self.point)})
-            self.close()
-        else:
-            QMessageBox.critical(self, "error", "there are not selected 3 balls")
-            return
+        self.close()
+        return
+    #     if len(self.point) == 3:
+    #         self.dcm.update({"flageSelectedBall": True})
+    #         self.dcm.update({"selectedBall": numpy.array(self.point)})
+    #         self.close()
+    #     else:
+    #         QMessageBox.critical(self, "error", "there are not selected 3 balls")
+    #         return
 
 
 class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
