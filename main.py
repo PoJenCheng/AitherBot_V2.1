@@ -11,6 +11,7 @@ sys.exit(app.exec_())
 # pyuic5 -o FunctionLib_UI/ui_coordinate_system.py FunctionLib_UI/ui_coordinate_system.ui
 # pyuic5 -o FunctionLib_UI/ui_set_point_system.py FunctionLib_UI/ui_set_point_system.ui
 # pyuic5 -o FunctionLib_UI/ui_processing.py FunctionLib_UI/ui_processing.ui
+# pyrcc5 -o images_rc.py images/images.qrc
 
 # from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # QVTKWidget(self.layoutWidget replace as QVTKRenderWindowInteractor(self.layoutWidget

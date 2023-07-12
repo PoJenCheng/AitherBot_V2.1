@@ -3,7 +3,7 @@ from turtle import update
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QMovie
+# from PyQt5.QtGui import QMovie
 from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
@@ -436,13 +436,24 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         
         "pydicom stage"
         self.ui_SP = SystemProcessing()
-        
+        # self.ui_SP.label_Processing.setText("loading")
         self.ui_SP.show()
-        # self.ui_SP.StartThread()
+        QApplication.processEvents()
+        # self.ui_SP.Run()
+        # self.ui_SP.label_Processing.setText("loading")
+        # # self.ui_SP.StartThread()
+        # loadingGitWin = LoadingGifWin()
+        # loadingGitWin.show()
+        # timer = QTimer()
+        # timer.start(50)
+        # self.workThread = WorkThread()
+        # self.workThread.start()
+        
         
         metadata, metadataSeriesNum, filePathList = self.dcmFn.LoadPath(filePath)
         if metadata == 0 or metadataSeriesNum == 0:
             self.ui_SP.close()
+            # loadingGitWin.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.info('not loading one DICOM')
             return
@@ -511,6 +522,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"image": numpy.array(image)})
         else:
             self.ui_SP.close()
+            # loadingGitWin.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.warning('fail to get image')
             return
@@ -575,6 +587,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
         
         self.ui_SP.close()
+        # loadingGitWin.close()
         return
 
     def ShowDicom_L(self):
@@ -989,11 +1002,12 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
         "automatic find registration ball center"
         try:
-            candidateBall = self.regFn.GetBall(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm"))
-        except:
+            candidateBall = self.regFn.GetBall(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
+        except Exception as e:
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L() error')
+            print(e)
             return
         self.logUI.info('get candidate ball:')
         for tmp in candidateBall:
@@ -2137,22 +2151,42 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
 #         super(WorkThread, self).__init__()
         
 #     def run(self):
-#         while True:
-#             print("thread running")
-#             self.sleep(1)
+# #         # while True:
+# #             # print("thread running")
+# #             # self.sleep(1)
+# #         loadingGitWin = LoadingGifWin()
+# #         loadingGitWin.show()
+#         self.ui_SP = SystemProcessing()
+#         self.ui_SP.show()
 
+# class ImportDICOMThread(QThread):
+#     def __init__(self):
+#         super(ImportDICOMThread, self).__init__()
+        
+#     def
+
+
+# class LoadingGifWin( QWidget):
+#     def __init__(self,parent=None):
+#         super(LoadingGifWin, self).__init__(parent)
+#         self.label =  QLabel('', self)
+#         self.setFixedSize(128,128)
+#         self.setWindowFlags( Qt.Dialog| Qt.CustomizeWindowHint)
+#         self.movie =  QMovie("./images/loading.gif")
+#         self.label.setMovie(self.movie)
+#         self.movie.start()
 
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         
-        self.Start()
+        # self.Start()
         
         # current_dir = os.getcwd()
         # print(current_dir)
-        # # gifPath = current_dir + "\\gif\\loading.gif"
-        # gifPath = "./gif/loading.gif"
+        # gifPath = current_dir + "\\images\\loading.gif"
+        # gifPath = "./images/loading.gif"
         # self.movie = QMovie(gifPath)
         # self.label_Processing.setMovie(self.movie)
         # self.movie.start()
@@ -2163,8 +2197,17 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     #     self.workThread = WorkThread()
     #     self.workThread.start()
         
-    def Start(self):
-        self.label_Processing.setText("loading")
+    # def Start(self):
+    #     self.label_Processing.setText("loading")
+    #     timer = QTimer()
+    #     timer.start(50)
+        
+    # def Run(self):
+    #     self.show()
+        # QTimer.singleShot(50)
+        
+        
+        
 
 class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         

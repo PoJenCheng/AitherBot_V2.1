@@ -559,8 +559,8 @@ class REGISTRATION():
             result_centroid (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
         """
 
-
-        src_tmp = numpy.uint8(imageHu)
+        imageHuThr = self.ThresholdFilter(imageHu)
+        src_tmp = numpy.uint8(imageHuThr)
         
         resultCentroid_xy = []
         
@@ -733,8 +733,10 @@ class REGISTRATION():
             P1 = pointMatrixSorted[i]
             P2 = pointMatrixSorted[i+1]
             distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
-            if distance > 2:
+            dz = abs(P1[2]-P2[2])
+            if distance > 2 and dz > 20 :
                 keyMatrix.append(P1)
+                keyMatrix.append(P2)
         for key in keyMatrix:
             dictionaryTmp.update({tuple(key):[]})
         for tmp in pointMatrixSorted:
@@ -742,7 +744,8 @@ class REGISTRATION():
                 P1 = tmp
                 P2 = key
                 distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
-                if distance < 3:
+                dz = abs(P1[2]-P2[2])
+                if distance < 3 and dz < 30:
                     value = dictionaryTmp.get(key)
                     value.append(P1)
                     dictionaryTmp.update({key:value})
@@ -786,7 +789,8 @@ class REGISTRATION():
                     pass
         
         "dz > DZ"
-        DZ = 20 + 5
+        "組內有中斷的分成兩組"
+        DZ = 20 + 10
         # delete_label = []
         valueSorted = []
         # valueTmp = []
@@ -814,24 +818,24 @@ class REGISTRATION():
         
         
         "abs(r[0]-r[-1]) <= DR"
-        DR = 2
-        delete_label = []
-        valueSorted = []
-        for key, value in categories.items():
-            # value = categories.get(key)
-            # valueSorted = numpy.array(sorted(value, key=lambda tmp: (tmp[3])))
-            valueArray = numpy.array(value)
-            valueMax = numpy.max(valueArray[:, 3])
-            valueMin = numpy.min(valueArray[:, 3])
-            dr = valueMax - valueMin
-            if dr < DR:
-            # print(abs(valueSorted[0,3]-valueSorted[-1,3]))
-                delete_label.append(key)
-        for dic1 in delete_label:
-                try:
-                    del categories[dic1]
-                except:
-                    pass
+        # # DR = 2
+        # # delete_label = []
+        # # valueSorted = []
+        # # for key, value in categories.items():
+        # #     # value = categories.get(key)
+        # #     # valueSorted = numpy.array(sorted(value, key=lambda tmp: (tmp[3])))
+        # #     valueArray = numpy.array(value)
+        # #     valueMax = numpy.max(valueArray[:, 3])
+        # #     valueMin = numpy.min(valueArray[:, 3])
+        # #     dr = valueMax - valueMin
+        # #     if dr < DR:
+        # #     # print(abs(valueSorted[0,3]-valueSorted[-1,3]))
+        # #         delete_label.append(key)
+        # # for dic1 in delete_label:
+        # #         try:
+        # #             del categories[dic1]
+        # #         except:
+        # #             pass
         
 
         
@@ -948,7 +952,7 @@ class REGISTRATION():
     #                         resultCentroid_yz.append([Px,Py,Pz,Pr])
     #         cv2.destroyAllWindows()
     #     return resultCentroid_yz
-    def FindBallYZ(imageHu):
+    def FindBallYZ(self, imageHu):
         """scan YZ plane to  find ball centroid,
             May find candidate ball and non-candidates
 
@@ -959,8 +963,8 @@ class REGISTRATION():
             result_centroid (_list_): [Px,Py,Pz,Pr], ball center and radius of candidate ball and non-candidates ball
         """
 
-
-        src_tmp = numpy.uint8(imageHu)
+        imageHuThr = self.ThresholdFilter(imageHu)
+        src_tmp = numpy.uint8(imageHuThr)
         
         resultCentroid_yz = []
         
@@ -1035,7 +1039,7 @@ class REGISTRATION():
             cv2.destroyAllWindows()
         return resultCentroid_yz
 
-    def ClassifyPointYZ(self, pointMatrix):
+    def ClassifyPointYZ(self, pointMatrix, interestPoint):
         """classify Point Matrix from FindBall() result
            take the first point of each group as the key
            save as numpy.array
@@ -1171,7 +1175,8 @@ class REGISTRATION():
         """
 
 
-        src_tmp = numpy.uint8(imageHu)
+        imageHuThr = self.ThresholdFilter(imageHu)
+        src_tmp = numpy.uint8(imageHuThr)
         
         resultCentroid_xz = []
         
@@ -1246,7 +1251,7 @@ class REGISTRATION():
             cv2.destroyAllWindows()
         return resultCentroid_xz
 
-    def ClassifyPointXZ(pointMatrix, interestPoint):
+    def ClassifyPointXZ(self, pointMatrix, interestPoint):
         """classify Point Matrix from FindBall() result
             take the first point of each group as the key
             save as numpy.array
@@ -1430,7 +1435,7 @@ class REGISTRATION():
     #             point.append(numpy.mean(array,0))
 
     #     return point
-    def AveragePoint(dictionaryPoint):
+    def AveragePoint(self, dictionaryPoint):
         point = []
         for key in dictionaryPoint:
             value = dictionaryPoint.get(key)
@@ -1441,7 +1446,7 @@ class REGISTRATION():
         return numpy.array(point)
 
     # def GetBall(self, imageHu, pixel2Mm):
-    def GetBall(self, imageHu, imageTag):
+    def GetBall(self, imageHu, pixel2Mm, imageTag):
         """get ball center
 
         Args:
@@ -1471,11 +1476,27 @@ class REGISTRATION():
         #     print("get point error / GetBall() error")
         # return numpy.array(point)
 
-        resultCentroid_xy = self.FindBallXY(imageHu)
+        imageHuMm = []
+        # for z in range(imageHu.shape[0]):
+        #     imageHuMm.append(imageHu[z,:,:])
+        if pixel2Mm[0] < 1:
+            for z in range(imageHu.shape[0]):
+                src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
+                imageHuMm.append(src_tmp)
+        elif pixel2Mm[0] > 1:
+            for z in range(imageHu.shape[0]):
+                src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
+                imageHuMm.append(src_tmp)
+        else:
+            pass
+        
+        imageHuMm = numpy.array(imageHuMm)
+        
+        resultCentroid_xy = self.FindBallXY(imageHuMm)
         dictionaryPoint = self.ClassifyPointXY(resultCentroid_xy)
-        resultCentroid_yz = self.FindBallYZ(imageHu)
+        resultCentroid_yz = self.FindBallYZ(imageHuMm)
         dictionaryPoint = self.ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
-        resultCentroid_xz = self.FindBallXZ(imageHu)
+        resultCentroid_xz = self.FindBallXZ(imageHuMm)
         dictionaryPoint = self.ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
         
         averagePoint = self.AveragePoint(dictionaryPoint)
@@ -1483,9 +1504,9 @@ class REGISTRATION():
         resultPoint = []
         self.dcmFn = DICOM()
         for p in averagePoint:
-            pTmp1 = [p[0],p[1],int(p[2])]
+            pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
             tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
-            pTmp2 = [p[0],p[1],int(p[2])+1]
+            pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
             tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
             # Pz = tmpPoint[2]*(p[2]/int(p[2]))
             X1 = int(p[2])

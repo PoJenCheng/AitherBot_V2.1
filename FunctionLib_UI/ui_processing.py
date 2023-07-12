@@ -14,18 +14,24 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(846, 579)
+        Form.resize(842, 579)
         Form.setStyleSheet("#label_Background {\n"
 "background-color:rgba(0,0,0,120);\n"
 "}")
-        self.label_Processing = QtWidgets.QLabel(Form)
-        self.label_Processing.setGeometry(QtCore.QRect(300, 220, 211, 121))
+        self.gridLayoutWidget = QtWidgets.QWidget(Form)
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(10, 10, 821, 561))
+        self.gridLayoutWidget.setObjectName("gridLayoutWidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setObjectName("gridLayout")
+        self.label_Processing = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
-        font.setPointSize(20)
+        font.setPointSize(40)
         self.label_Processing.setFont(font)
         self.label_Processing.setScaledContents(True)
         self.label_Processing.setAlignment(QtCore.Qt.AlignCenter)
         self.label_Processing.setObjectName("label_Processing")
+        self.gridLayout.addWidget(self.label_Processing, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -33,4 +39,4 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label_Processing.setText(_translate("Form", "loading"))
+        self.label_Processing.setText(_translate("Form", "Loading"))
