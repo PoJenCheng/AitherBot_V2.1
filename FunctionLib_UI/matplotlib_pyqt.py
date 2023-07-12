@@ -1041,16 +1041,22 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print('get candidate ball error / SetRegistration_L() error')
             print(e)
             return
-        self.logUI.info('get candidate ball:')
-        for tmp in candidateBall:
-            self.logUI.info(tmp)
-        self.dcmTagLow.update({"candidateBall": candidateBall})
-        self.ui_SP.close()
-        "open another ui window to check registration result"
-        self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
-        self.ui_CS.show()
-        self.Button_ShowRegistration_L.setEnabled(True)
-        
+        if candidateBall != []:
+            self.logUI.info('get candidate ball:')
+            for tmp in candidateBall:
+                self.logUI.info(tmp)
+            self.dcmTagLow.update({"candidateBall": candidateBall})
+            self.ui_SP.close()
+            "open another ui window to check registration result"
+            self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
+            self.ui_CS.show()
+            self.Button_ShowRegistration_L.setEnabled(True)
+        else:
+            self.logUI.warning('get candidate ball error')
+            QMessageBox.critical(self, "error", "get candidate ball error")
+            print('get candidate ball error / SetRegistration_L() error')
+            print(e)
+            return
         
         
         # "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
@@ -1972,7 +1978,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorSagittal = self.dicomVTK.actorSagittal
         self.actorCoronal = self.dicomVTK.actorCoronal
         self.actorAxial = self.dicomVTK.actorAxial
-        value = [100, 110, 120]
+        # value = [100, 110, 120]
+        value = candidateBall[0]
         self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
         self.actorSagittal.SetDisplayExtent(value[0], value[0], 0, self.imageDimensions[1], 0, self.imageDimensions[2])
         self.actorCoronal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())

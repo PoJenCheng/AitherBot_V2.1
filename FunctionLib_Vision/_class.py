@@ -1460,13 +1460,39 @@ class REGISTRATION():
         longSide = 65
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error = 1
-        
+        # 計算三個點之間的距離
         for p1, p2, p3 in itertools.combinations(point, 3):
             d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
             d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
             d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
             
-            
+            # 檢查邊長是否符合條件
+            if d12 > shortSide-error and d12 < shortSide+error:
+                if d23 > longSide-error and d23 < longSide+error:
+                    if d31 > hypotenuse-error and d31 < hypotenuse+error:
+                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p2, p1, p3)
+                        result.append(p2)
+                        result.append(p1)
+                        result.append(p3)
+                        continue
+            elif d23 > shortSide-error and d23 < shortSide+error:
+                if d31 > longSide-error and d31 < longSide+error:
+                    if d12 > hypotenuse-error and d31 < hypotenuse+error:
+                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p3, p2, p1)
+                        result.append(p3)
+                        result.append(p2)
+                        result.append(p1)
+                        continue
+            elif d31 > shortSide-error and d31 < shortSide+error:
+                if d12 > longSide-error and d12 < longSide+error:
+                    if d23 > hypotenuse-error and d31 < hypotenuse+error:
+                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p1, p3, p2)
+                        result.append(p1)
+                        result.append(p3)
+                        result.append(p2)
+                        continue
+
+        return numpy.array(result)
             
             
             
@@ -1541,8 +1567,10 @@ class REGISTRATION():
             X = p[2]
             Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
             resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz])
-        
-        ball = self.IdentifyPoint(numpy.array(resultPoint))
+        try:
+            ball = self.IdentifyPoint(numpy.array(resultPoint))
+        except:
+            ball = []
         # return numpy.array(resultPoint)
         return ball
     
