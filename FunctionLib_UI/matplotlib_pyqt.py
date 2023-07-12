@@ -76,6 +76,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh = {}
             self.dcmTagHigh.update({"ww": 1})
             self.dcmTagHigh.update({"wl": 1})
+            self.dcmTagHigh.update({"imageTag": []})
             "registration ball"
             self.dcmTagHigh.update({"selectedBall": []})
             self.dcmTagHigh.update({"regBall": []})
@@ -434,26 +435,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         else:
             return
         
-        "pydicom stage"
         self.ui_SP = SystemProcessing()
-        # self.ui_SP.label_Processing.setText("loading")
         self.ui_SP.show()
         QApplication.processEvents()
-        # self.ui_SP.Run()
-        # self.ui_SP.label_Processing.setText("loading")
-        # # self.ui_SP.StartThread()
-        # loadingGitWin = LoadingGifWin()
-        # loadingGitWin.show()
-        # timer = QTimer()
-        # timer.start(50)
-        # self.workThread = WorkThread()
-        # self.workThread.start()
         
-        
+        "pydicom stage"
         metadata, metadataSeriesNum, filePathList = self.dcmFn.LoadPath(filePath)
         if metadata == 0 or metadataSeriesNum == 0:
             self.ui_SP.close()
-            # loadingGitWin.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.info('not loading one DICOM')
             return
@@ -494,6 +483,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow = {}
         self.dcmTagLow.update({"ww": 1})
         self.dcmTagLow.update({"wl": 1})
+        self.dcmTagLow.update({"imageTag": []})
         "registration ball"
         self.dcmTagLow.update({"selectedBall": []})
         self.dcmTagLow.update({"regBall": []})
@@ -522,7 +512,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"image": numpy.array(image)})
         else:
             self.ui_SP.close()
-            # loadingGitWin.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.warning('fail to get image')
             return
@@ -587,7 +576,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
         
         self.ui_SP.close()
-        # loadingGitWin.close()
         return
 
     def ShowDicom_L(self):
@@ -741,9 +729,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             filePath = dlg.selectedFiles()[0] + '/'
         else:
             return
-
+        
+        self.ui_SP = SystemProcessing()
+        self.ui_SP.show()
+        QApplication.processEvents()
+        
+        "pydicom stage"
         metadata, metadataSeriesNum, filePathList = self.dcmFn.LoadPath(filePath)
         if metadata == 0 or metadataSeriesNum == 0:
+            self.ui_SP.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.info('not loading one DICOM')
             return
@@ -754,10 +748,37 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         logStr = 'Load exhale/High Dicom: ' + filePath
         self.logUI.info(logStr)
 
+        "reset VTK"
+        if self.dcmTagHigh.get("imageTag") != []:
+            "render"
+            "Sagittal"
+            self.dicomHigh.rendererSagittal.RemoveActor(self.dicomHigh.actorSagittal)
+            "Coronal"
+            self.dicomHigh.rendererCoronal.RemoveActor(self.dicomHigh.actorCoronal)
+            "Axial"
+            self.dicomHigh.rendererAxial.RemoveActor(self.dicomHigh.actorAxial)
+            "3D"
+            self.dicomHigh.renderer3D.RemoveActor(self.dicomHigh.actorSagittal)
+            self.dicomHigh.renderer3D.RemoveActor(self.dicomHigh.actorAxial)
+            self.dicomHigh.renderer3D.RemoveActor(self.dicomHigh.actorCoronal)
+            
+            self.dicomHigh.rendererSagittal.RemoveActor(self.dicomHigh.actorPointEntry)
+            
+            self.irenSagittal_H.Initialize()
+            self.irenCoronal_H.Initialize()
+            self.irenAxial_H.Initialize()
+            self.iren3D_H.Initialize()
+            
+            self.irenSagittal_H.Start()
+            self.irenCoronal_H.Start()
+            self.irenAxial_H.Start()
+            self.iren3D_H.Start()
+        
         "reset dcm"
         self.dcmTagHigh = {}
         self.dcmTagHigh.update({"ww": 1})
         self.dcmTagHigh.update({"wl": 1})
+        self.dcmTagHigh.update({"imageTag": []})
         "registration ball"
         self.dcmTagHigh.update({"selectedBall": []})
         self.dcmTagHigh.update({"regBall": []})
@@ -785,6 +806,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         if image != 0:
             self.dcmTagHigh.update({"image": numpy.array(image)})
         else:
+            self.ui_SP.close()
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.warning('fail to get image')
             return
@@ -846,6 +868,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.SliceSelect_Coronal_H.setEnabled(True)
         self.Button_Registration_H.setEnabled(True)
         self.tabWidget.setCurrentWidget(self.tabWidget_High)
+        
+        self.ui_SP.close()
+        return
 
     def ShowDicom_H(self):
         """show high dicom to ui
@@ -1013,18 +1038,19 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmTagLow.update({"candidateBall": candidateBall})
-        "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
-        try:
-            tmp = self.regFn.GetBallSection(self.dcmTagLow.get("candidateBall"))
-            self.dcmTagLow.update({"showAxis": tmp[0]})
-            self.dcmTagLow.update({"showSlice": tmp[1]})
-            self.ui_CS = CoordinateSystem(self.dcmTagLow)
-            self.ui_CS.show()
-            self.Button_ShowRegistration_L.setEnabled(True)
-        except:
-            self.logUI.warning('get candidate ball error / SetRegistration_L() error / candidateBall could be []')
-            QMessageBox.critical(self, "error", "get candidate ball error")
-            print('get candidate ball error / SetRegistration_L() error / candidateBall could be []')
+        "open another ui window to check registration result"
+        # "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
+        # try:
+        #     tmp = self.regFn.GetBallSection(self.dcmTagLow.get("candidateBall"))
+        #     self.dcmTagLow.update({"showAxis": tmp[0]})
+        #     self.dcmTagLow.update({"showSlice": tmp[1]})
+        #     self.ui_CS = CoordinateSystem(self.dcmTagLow)
+        #     self.ui_CS.show()
+        #     self.Button_ShowRegistration_L.setEnabled(True)
+        # except:
+        #     self.logUI.warning('get candidate ball error / SetRegistration_L() error / candidateBall could be []')
+        #     QMessageBox.critical(self, "error", "get candidate ball error")
+        #     print('get candidate ball error / SetRegistration_L() error / candidateBall could be []')
         return
 
     def ShowRegistrationDifference_L(self):
@@ -1032,60 +1058,60 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
            calculate error/difference of relative distance
         """
         "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
-        candidateBall = self.dcmTagLow.get("candidateBall")
-        selectedBall = self.dcmTagLow.get("selectedBall")
-        if selectedBall != []:
-            flagePair = False
-            ball = []
-            if self.dcmTagLow.get("flageSelectedBall") == True:
-                self.logUI.info('get selected balls')
-                for P1 in selectedBall:
-                    for P2 in candidateBall:
-                        distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
-                        if distance < 10:
-                            ball.append(P2)
-                        else:
-                            pass
-                if len(ball) == 3:
-                    flagePair = True
-                else:
-                    QMessageBox.critical(self, "error", "please redo registration")
-                    self.logUI.warning('find seleted balls error / ShowRegistrationDifference_L error')
-                    print("find seleted balls error / ShowRegistrationDifference_L() error")
-                    return
-            else:
-                QMessageBox.critical(self, "error", "please redo registration")
-                print("Choose Point error / ShowRegistrationDifference_L() error")
-                self.logUI.warning('Choose Point error / ShowRegistrationDifference_L() error')
-                return
+        # candidateBall = self.dcmTagLow.get("candidateBall")
+        # selectedBall = self.dcmTagLow.get("selectedBall")
+        # if selectedBall != []:
+        #     flagePair = False
+        #     ball = []
+        #     if self.dcmTagLow.get("flageSelectedBall") == True:
+        #         self.logUI.info('get selected balls')
+        #         for P1 in selectedBall:
+        #             for P2 in candidateBall:
+        #                 distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+        #                 if distance < 10:
+        #                     ball.append(P2)
+        #                 else:
+        #                     pass
+        #         if len(ball) == 3:
+        #             flagePair = True
+        #         else:
+        #             QMessageBox.critical(self, "error", "please redo registration")
+        #             self.logUI.warning('find seleted balls error / ShowRegistrationDifference_L error')
+        #             print("find seleted balls error / ShowRegistrationDifference_L() error")
+        #             return
+        #     else:
+        #         QMessageBox.critical(self, "error", "please redo registration")
+        #         print("Choose Point error / ShowRegistrationDifference_L() error")
+        #         self.logUI.warning('Choose Point error / ShowRegistrationDifference_L() error')
+        #         return
 
-            if flagePair == True:
-                "The ball positions are paired"
-                self.dcmTagLow.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
-                self.logUI.info('get registration balls:')
-                for tmp in self.dcmTagLow.get("regBall"):
-                    self.logUI.info(tmp)
-                "calculate error/difference of relative distance"
-                error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
-                logStr = 'registration error (min, max, mean): ' + str(error)
-                self.logUI.info(logStr)
-                self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
-                "calculate transformation matrix"
-                regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
-                self.logUI.info('get registration matrix: ')
-                for tmp in regMatrix:
-                    self.logUI.info(tmp)
-                self.dcmTagLow.update({"regMatrix": regMatrix})
+        #     if flagePair == True:
+        #         "The ball positions are paired"
+        #         self.dcmTagLow.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
+        #         self.logUI.info('get registration balls:')
+        #         for tmp in self.dcmTagLow.get("regBall"):
+        #             self.logUI.info(tmp)
+        #         "calculate error/difference of relative distance"
+        #         error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
+        #         logStr = 'registration error (min, max, mean): ' + str(error)
+        #         self.logUI.info(logStr)
+        #         self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
+        #         "calculate transformation matrix"
+        #         regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
+        #         self.logUI.info('get registration matrix: ')
+        #         for tmp in regMatrix:
+        #             self.logUI.info(tmp)
+        #         self.dcmTagLow.update({"regMatrix": regMatrix})
 
-            else:
-                QMessageBox.critical(self, "error", "please redo registration")
-                print("pair error / ShowRegistrationDifference_L() error")
-                self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
-                return
-            self.Button_SetPoint_L.setEnabled(True)
-            self.comboBox_L.setEnabled(True)
-        else:
-            QMessageBox.critical(self, "error", "there are not selected 3 balls")
+        #     else:
+        #         QMessageBox.critical(self, "error", "please redo registration")
+        #         print("pair error / ShowRegistrationDifference_L() error")
+        #         self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
+        #         return
+        #     self.Button_SetPoint_L.setEnabled(True)
+        #     self.comboBox_L.setEnabled(True)
+        # else:
+        #     QMessageBox.critical(self, "error", "there are not selected 3 balls")
         return
 
     def SetPoint_L(self):
@@ -2146,68 +2172,10 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
     def okAndClose(self):
         self.close()
 
-# class WorkThread(QThread):
-#     def __init__(self):
-#         super(WorkThread, self).__init__()
-        
-#     def run(self):
-# #         # while True:
-# #             # print("thread running")
-# #             # self.sleep(1)
-# #         loadingGitWin = LoadingGifWin()
-# #         loadingGitWin.show()
-#         self.ui_SP = SystemProcessing()
-#         self.ui_SP.show()
-
-# class ImportDICOMThread(QThread):
-#     def __init__(self):
-#         super(ImportDICOMThread, self).__init__()
-        
-#     def
-
-
-# class LoadingGifWin( QWidget):
-#     def __init__(self,parent=None):
-#         super(LoadingGifWin, self).__init__(parent)
-#         self.label =  QLabel('', self)
-#         self.setFixedSize(128,128)
-#         self.setWindowFlags( Qt.Dialog| Qt.CustomizeWindowHint)
-#         self.movie =  QMovie("./images/loading.gif")
-#         self.label.setMovie(self.movie)
-#         self.movie.start()
-
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
-        
-        # self.Start()
-        
-        # current_dir = os.getcwd()
-        # print(current_dir)
-        # gifPath = current_dir + "\\images\\loading.gif"
-        # gifPath = "./images/loading.gif"
-        # self.movie = QMovie(gifPath)
-        # self.label_Processing.setMovie(self.movie)
-        # self.movie.start()
-        
-        # self.label_Processing.setText("loading")
-        
-    # def StartThread(self):
-    #     self.workThread = WorkThread()
-    #     self.workThread.start()
-        
-    # def Start(self):
-    #     self.label_Processing.setText("loading")
-    #     timer = QTimer()
-    #     timer.start(50)
-        
-    # def Run(self):
-    #     self.show()
-        # QTimer.singleShot(50)
-        
-        
-        
 
 class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         
