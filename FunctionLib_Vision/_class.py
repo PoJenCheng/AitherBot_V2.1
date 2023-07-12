@@ -6,6 +6,7 @@ import os
 from keras.models import load_model
 import cv2
 import math
+import itertools
 from PyQt5.QtGui import *
 from ._subFunction import *
 
@@ -1445,6 +1446,30 @@ class REGISTRATION():
             point.append([Px,Py,Pz])
         return numpy.array(point)
 
+    def IdentifyPoint(self, point):
+        """_summary_
+
+        Args:
+            point (_type_): _description_
+            
+        Returns:
+            ball (_numpy.array_): 
+        """
+        result = []
+        shortSide = 30
+        longSide = 65
+        hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
+        error = 1
+        
+        for p1, p2, p3 in itertools.combinations(point, 3):
+            d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
+            d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
+            d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
+            
+            
+            
+            
+            
     # def GetBall(self, imageHu, pixel2Mm):
     def GetBall(self, imageHu, pixel2Mm, imageTag):
         """get ball center
@@ -1517,7 +1542,9 @@ class REGISTRATION():
             Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
             resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz])
         
-        return numpy.array(resultPoint)
+        ball = self.IdentifyPoint(numpy.array(resultPoint))
+        # return numpy.array(resultPoint)
+        return ball
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
@@ -2085,10 +2112,10 @@ class DISPLAY():
         self.cameraAxial.ComputeViewPlaneNormal()
         self.cameraAxial.ParallelProjectionOn()
         
-        self.camera3D.SetViewUp(0, 1, 0);
-        self.camera3D.SetPosition(0.8, 0.3, 1);
-        self.camera3D.SetFocalPoint(0, 0, 0);
-        self.camera3D.ComputeViewPlaneNormal();
+        self.camera3D.SetViewUp(0, 1, 0)
+        self.camera3D.SetPosition(0.8, 0.3, 1)
+        self.camera3D.SetFocalPoint(0, 0, 0)
+        self.camera3D.ComputeViewPlaneNormal()
         
     def CreateActorAndRender(self, value):
         "actor"

@@ -534,6 +534,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
 
 
         "VTK stage"
+        self.dcmTagLow.update({"folderDir":folderDir})
         self.dicomLow.LoadImage(folderDir)
         self.dicomLow.CreateActorAndRender(128)
         self.irenSagittal_L = self.qvtkWidget_Sagittal_L.GetRenderWindow().GetInteractor()
@@ -828,6 +829,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.label_dcmH_R_side.setText("error")
 
         "VTK stage"
+        self.dcmTagHigh.update({"folderDir":folderDir})
         self.dicomHigh.LoadImage(folderDir)
         self.dicomHigh.CreateActorAndRender(128)
         self.irenSagittal_H = self.qvtkWidget_Sagittal_H.GetRenderWindow().GetInteractor()
@@ -1014,6 +1016,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
+        self.ui_SP = SystemProcessing()
+        self.ui_SP.show()
+        QApplication.processEvents()
         if self.dcmTagLow.get("regBall") != []:
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
@@ -1022,8 +1027,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagLow.update({"flageSelectedBall": False})
                 self.logUI.info('reset selected ball (Low)')
                 print("reset selected ball (Low)")
+                self.ui_SP.close()
                 return
             else:
+                self.ui_SP.close()
                 return
         "automatic find registration ball center"
         try:
@@ -1038,7 +1045,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.dcmTagLow.update({"candidateBall": candidateBall})
+        self.ui_SP.close()
         "open another ui window to check registration result"
+        self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
+        self.ui_CS.show()
+        self.Button_ShowRegistration_L.setEnabled(True)
+        
+        
+        
         # "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
         # try:
         #     tmp = self.regFn.GetBallSection(self.dcmTagLow.get("candidateBall"))
@@ -1909,18 +1923,92 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
 
 
 class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
-    def __init__(self, dcm):
+    def __init__(self, dcmTag, dicomVTK):
         super(CoordinateSystem, self).__init__()
         self.setupUi(self)
 
         "hint: self.dcmLow = dcmLow = dcm"
-        self.dcm = dcm
+        self.dcmTag = dcmTag
+        self.dicomVTK = dicomVTK
         self.dcmFn = DICOM()
         self.DisplayImage()
         # self.flage = 0
         # self.point = []
 
     def DisplayImage(self):
+        candidateBall = self.dcmTag.get("candidateBall")
+        "folderPath"
+        folderDir = self.dcmTag.get("folderDir")
+        "vtk"
+        self.reader = vtkDICOMImageReader()
+        self.reader.SetDirectoryName(folderDir)
+        self.reader.Update()
+        self.vtkImage = self.reader.GetOutput()
+        self.vtkImage.SetOrigin(0, 0, 0)
+        self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
+        self.dicomBoundsRange = self.vtkImage.GetBounds()
+        self.imageDimensions = self.vtkImage.GetDimensions()
+        
+        self.windowLevelLookup = vtkWindowLevelLookupTable()
+        self.windowLevelLookup.Build()
+        thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
+        self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
+        self.windowLevelLookup.SetLevel(thresholdValue)
+        
+        self.mapColors = vtkImageMapToColors()
+        self.mapColors.SetInputConnection(self.reader.GetOutputPort())
+        self.mapColors.SetLookupTable(self.windowLevelLookup)
+        self.mapColors.Update()
+        
+        self.camera3D = vtkCamera()
+        self.camera3D.SetViewUp(0, 1, 0)
+        self.camera3D.SetPosition(0.8, 0.3, 1)
+        self.camera3D.SetFocalPoint(0, 0, 0)
+        self.camera3D.ComputeViewPlaneNormal()
+        
+        # self.actorSagittal = vtkImageActor()
+        # self.actorCoronal = vtkImageActor()
+        # self.actorAxial = vtkImageActor()
+        self.actorSagittal = self.dicomVTK.actorSagittal
+        self.actorCoronal = self.dicomVTK.actorCoronal
+        self.actorAxial = self.dicomVTK.actorAxial
+        value = [100, 110, 120]
+        self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorSagittal.SetDisplayExtent(value[0], value[0], 0, self.imageDimensions[1], 0, self.imageDimensions[2])
+        self.actorCoronal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorCoronal.SetDisplayExtent(0, self.imageDimensions[0], value[1], value[1], 0, self.imageDimensions[2])
+        self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], value[2], value[2])
+        
+    
+
+        
+        self.renderer3D = vtkRenderer()
+        
+        "registration ball"
+        self.actorPointR = vtkActor()
+        self.actorPointG = vtkActor()
+        self.actorPointB = vtkActor()
+        "create registration ball actor"
+        
+        "render 3D"
+        self.renderer3D.SetBackground(0, 0, 0)
+        self.renderer3D.AddActor(self.actorSagittal)
+        self.renderer3D.AddActor(self.actorAxial)
+        self.renderer3D.AddActor(self.actorCoronal)
+        self.renderer3D.SetActiveCamera(self.camera3D)
+        self.renderer3D.ResetCamera(self.dicomBoundsRange)
+        
+        "show"
+        self.iren3D_L = self.qvtkWidget_registrtion.GetRenderWindow().GetInteractor()
+        self.qvtkWidget_registrtion.GetRenderWindow().AddRenderer(self.renderer3D)
+        self.iren3D_L.SetInteractorStyle(MyInteractorStyle3D(self.renderer3D))
+        
+        self.iren3D_L.Initialize()
+        self.iren3D_L.Start()
+        
+        return
+        
         # imageHu2D = numpy.array([])
         # showAxis = self.dcm.get("showAxis")
         # showSlice = self.dcm.get("showSlice")
