@@ -306,7 +306,7 @@ class DICOM():
     
     
 "registration function"
-class REGISTRATION():
+class REGISTRATION(DICOM):
     def __init__(self):
         self.PlanningPath = []
         return
@@ -592,7 +592,8 @@ class REGISTRATION():
             # print("z = ", z)
             for c in contours:
                 # print("輪廓數量:", c.shape[0])
-                if c.shape[0] > 5 and c.shape[0]<110:
+                # if c.shape[0] > 5 and c.shape[0]<110:
+                if c.shape[0] > 5:
                     M = cv2.moments(c)
                     if M["m00"] != 0:
                         Cx = (M["m10"]/M["m00"])
@@ -733,20 +734,41 @@ class REGISTRATION():
         for i in range(len(pointMatrixSorted)-1):
             P1 = pointMatrixSorted[i]
             P2 = pointMatrixSorted[i+1]
-            distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
+            distanceXY = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
+            distanceXYZ = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+            dx = abs(P1[0]-P2[0])
+            dy = abs(P1[1]-P2[1])
             dz = abs(P1[2]-P2[2])
-            if distance > 2 and dz > 20 :
-                keyMatrix.append(P1)
+            
+            # if distance > 2 and dz > 20:
+            #     keyMatrix.append(P1)
+            #     keyMatrix.append(P2)
+            # elif distance <= 2 and dz > 2:
+            #     keyMatrix.append(P1)
+            #     keyMatrix.append(P2)
+            # elif distance > 10 and dz == 0:
+            #     keyMatrix.append(P1)
+            #     keyMatrix.append(P2)
+            # elif dx > 2 and dy > 2 and dz > 2:
+            #     keyMatrix.append(P1)
+            #     keyMatrix.append(P2)
+            # elif 
+            if  dx > 2 and dy > 2 and dz > 2:
+                # keyMatrix.append(P1)
                 keyMatrix.append(P2)
+            elif distanceXYZ > 5:
+                # keyMatrix.append(P1)
+                keyMatrix.append(P2)
+        keyMatrix.insert(0, pointMatrixSorted[0])
         for key in keyMatrix:
             dictionaryTmp.update({tuple(key):[]})
         for tmp in pointMatrixSorted:
             for key in dictionaryTmp.keys():
                 P1 = tmp
                 P2 = key
-                distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
+                distanceXY = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
                 dz = abs(P1[2]-P2[2])
-                if distance < 3 and dz < 30:
+                if distanceXY < 5 and dz < 31:
                     value = dictionaryTmp.get(key)
                     value.append(P1)
                     dictionaryTmp.update({key:value})
@@ -806,8 +828,8 @@ class REGISTRATION():
                     # 檢查是否與現有組別的第一個元素之距離或震幅不超過 DZ
                     dz1 = abs(row[2] - category[0][2])
                     dz2 = abs(row[2] - category[-1][2])
-                    distance = math.sqrt(numpy.square(row[0]-category[0][0])+numpy.square(row[1]-category[0][1]))
-                    if dz1 <= DZ and dz2 <= DZ and distance < 3:
+                    distanceXY = math.sqrt(numpy.square(row[0]-category[0][0])+numpy.square(row[1]-category[0][1]))
+                    if dz1 <= DZ and dz2 <= DZ and distanceXY < 3:
                     # if dz <= DZ:
                         category.append(row)
                         added = True
@@ -981,23 +1003,24 @@ class REGISTRATION():
         for x in range(src_tmp.shape[2]):
             # "filter"
             # src_tmp[:,:,x] = cv2.bilateralFilter(src_tmp[:,:,x],5,100,100)
-            wwwwwwww = src_tmp[:,:,x]
+            # wwwwwwww = src_tmp[:,:,x]
             "draw contours"
             contours, hierarchy = cv2.findContours(src_tmp[:,:,x],
                                                 cv2.RETR_EXTERNAL,
                                                 cv2.CHAIN_APPROX_SIMPLE)
             "create an all black picture to draw contour"
             shape = (src_tmp.shape[0], src_tmp.shape[1], 1)
-            # black_image = numpy.zeros(shape, numpy.uint8)
+            black_image_1 = numpy.zeros(shape, numpy.uint8)
             black_image_2 = numpy.zeros(shape, numpy.uint8)
-            # cv2.drawContours(black_image,contours,-1,(256/2, 0, 0),1)
+            cv2.drawContours(black_image_1,contours,-1,(256/2, 0, 0),1)
             "use contour to find centroid"
             centroid = []
             tmpContours = []
             # print("z = ", z)
             for c in contours:
                 # print("輪廓數量:", c.shape[0])
-                if c.shape[0] > 5 and c.shape[0]<110:
+                # if c.shape[0] > 5 and c.shape[0]<110:
+                if c.shape[0] > 5:
                     M = cv2.moments(c)
                     if M["m00"] != 0:
                         Cy = (M["m10"]/M["m00"])
@@ -1005,18 +1028,43 @@ class REGISTRATION():
                         centroid.append((Cy,Cz))
                         tmpContours.append(c)
             cv2.drawContours(black_image_2,tmpContours,-1,(256/2, 0, 0),1)
-            # cv2.imshow('black_image',black_image)
+            # cv2.imshow('black_image',black_image_1)
             # cv2.imshow('black_image_2',black_image_2)
             "use Hough Circles to find radius and center of circle"
-            circles = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
+            
+            circles_1 = cv2.HoughCircles(black_image_1, cv2.HOUGH_GRADIENT, 1, 10,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
-            if circles is not None and centroid is not None:
+            if circles_1 is not None and centroid is not None:
                 "Intersection"
                 "centroid = group of Centroid"
                 "circles = group of hough circle"
                 for i in centroid:
-                    for j in circles[0, :]:
+                    for j in circles_1[0, :]:
+                        distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
+                        if distance < 2:
+                            Px = x
+                            Py = i[0]
+                            Pz = i[1]
+                            Pr = j[2]
+                            resultCentroid_yz.append([Px,Py,Pz,Pr])
+                            # cv2.imshow('wwwwwwww',wwwwwwww)
+                            # cv2.waitKey(0)
+                
+                # cv2.destroyAllWindows()
+
+
+
+            
+            circles_2 = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
+                                        param1=low_threshold*ratio, param2=low_threshold,
+                                        minRadius=minRadius, maxRadius=maxRadius)
+            if circles_2 is not None and centroid is not None:
+                "Intersection"
+                "centroid = group of Centroid"
+                "circles = group of hough circle"
+                for i in centroid:
+                    for j in circles_2[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
                         if distance < 2:
                             Px = x
@@ -1035,7 +1083,11 @@ class REGISTRATION():
                             resultCentroid_yz.append([Px,Py,Pz,Pr])
                             # cv2.imshow('wwwwwwww',wwwwwwww)
                             # cv2.waitKey(0)
-                            # cv2.destroyAllWindows()
+                
+                # cv2.destroyAllWindows()
+                
+            
+                
             # cv2.waitKey(0)
             cv2.destroyAllWindows()
         return resultCentroid_yz
@@ -1153,7 +1205,7 @@ class REGISTRATION():
             for key in interestPoint.keys():
                 distance = math.sqrt(numpy.square(p1[1]-key[1])+numpy.square(p1[2]-key[2]))
                 dx = math.sqrt(numpy.square(p1[0]-key[0]))
-                if distance < 3 and dx <30:
+                if distance < 5 and dx < 30:
                     tmpKey = key
                     tmpValue = numpy.array([p1])
                     addFlage = True
@@ -1193,7 +1245,7 @@ class REGISTRATION():
         for y in range(src_tmp.shape[1]):
             # "filter"
             # src_tmp[:,y,:] = cv2.bilateralFilter(src_tmp[:,y,:],5,100,100)
-            wwwwwwww = src_tmp[:,y,:]
+            # wwwwwwww = src_tmp[:,y,:]
             "draw contours"
             contours, hierarchy = cv2.findContours(src_tmp[:,y,:],
                                                 cv2.RETR_EXTERNAL,
@@ -1209,7 +1261,8 @@ class REGISTRATION():
             # print("z = ", z)
             for c in contours:
                 # print("輪廓數量:", c.shape[0])
-                if c.shape[0] > 5 and c.shape[0]<110:
+                # if c.shape[0] > 5 and c.shape[0]<110:
+                if c.shape[0] > 5:
                     M = cv2.moments(c)
                     if M["m00"] != 0:
                         Cx = (M["m10"]/M["m00"])
@@ -1280,7 +1333,7 @@ class REGISTRATION():
             for key in interestPoint.keys():
                 distance = math.sqrt(numpy.square(p1[0]-key[0])+numpy.square(p1[2]-key[2]))
                 dy = math.sqrt(numpy.square(p1[1]-key[1]))
-                if distance < 3 and dy <30:
+                if distance < 5 and dy < 30:
                     tmpKey = key
                     tmpValue = numpy.array([p1])
                     addFlage = True
@@ -1350,6 +1403,29 @@ class REGISTRATION():
                 "it's oval/egg"
                 return False
         return False
+
+    def XXX(self, interestPoint):
+        """_summary_
+
+        Args:
+            interestPoint (_type_): _description_
+
+        Returns:
+            tmpPoint (_number_): _description_
+        """
+        array = []
+        for tmp in interestPoint:
+            "remove .5 and integer, get candidate (with centroid)"
+            tmp_str0 = str(tmp)
+            if int(tmp) != tmp and len(tmp_str0)-(tmp_str0.find(".")+1) == 1 and tmp_str0[tmp_str0.find(".")+1] == "5":
+                pass
+            elif int(tmp) == tmp:
+                pass
+            else:
+                    array.append(tmp)
+            
+        tmpPoint = numpy.mean(array,0)
+        return tmpPoint
 
     # def AveragePoint(self, dictionaryPoint, axis=[False, False, False]):
     #     """average ball center of registration result (Px, Py, Pz)
@@ -1437,14 +1513,23 @@ class REGISTRATION():
 
     #     return point
     def AveragePoint(self, dictionaryPoint):
-        point = []
-        for key in dictionaryPoint:
-            value = dictionaryPoint.get(key)
-            Px = numpy.mean(value[:,0])
-            Py = numpy.mean(value[:,1])
-            Pz = numpy.mean(value[:,2])
-            point.append([Px,Py,Pz])
-        return numpy.array(point)
+        # point = [0, 0, 0]
+        resultPoint = []
+        # for key in dictionaryPoint:
+        #     value = dictionaryPoint.get(key)
+        #     Px = numpy.mean(value[:,0])
+        #     Py = numpy.mean(value[:,1])
+        #     Pz = numpy.mean(value[:,2])
+        #     point.append([Px,Py,Pz])
+        
+        for key, value in dictionaryPoint.items():
+            point = [0, 0, 0]
+            for n in range(3):
+                # tmpPoint = self.XXX(dictionaryPoint[n])
+                point[n] = self.XXX(value[:, n])
+            resultPoint.append(point)
+        
+        return numpy.array(resultPoint)
 
     def IdentifyPoint(self, point):
         """_summary_
@@ -1456,12 +1541,16 @@ class REGISTRATION():
             ball (_numpy.array_): 
         """
         result = []
-        shortSide = 30
-        longSide = 65
+        tmpDic = {}
+        # shortSide = 30
+        shortSide = 140
+        # longSide = 65
+        longSide = 150
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error = 1
         # 計算三個點之間的距離
         for p1, p2, p3 in itertools.combinations(point, 3):
+            result = []
             d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
             d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
             d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
@@ -1470,29 +1559,33 @@ class REGISTRATION():
             if d12 > shortSide-error and d12 < shortSide+error:
                 if d23 > longSide-error and d23 < longSide+error:
                     if d31 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p2, p1, p3)
+                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p2, p1, p3)
                         result.append(p2)
                         result.append(p1)
                         result.append(p3)
+                        tmpDic.update({tuple(p2):result})
                         continue
             elif d23 > shortSide-error and d23 < shortSide+error:
                 if d31 > longSide-error and d31 < longSide+error:
                     if d12 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p3, p2, p1)
+                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p3, p2, p1)
                         result.append(p3)
                         result.append(p2)
                         result.append(p1)
+                        tmpDic.update({tuple(p3):result})
                         continue
             elif d31 > shortSide-error and d31 < shortSide+error:
                 if d12 > longSide-error and d12 < longSide+error:
                     if d23 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 30, 長邊為 65 的直角三角形：", p1, p3, p2)
+                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p1, p3, p2)
                         result.append(p1)
                         result.append(p3)
                         result.append(p2)
+                        tmpDic.update({tuple(p1):result})
                         continue
 
-        return numpy.array(result)
+        # return numpy.array(tmpDic)
+        return tmpDic
             
             
             
@@ -1553,12 +1646,14 @@ class REGISTRATION():
         averagePoint = self.AveragePoint(dictionaryPoint)
         
         resultPoint = []
-        self.dcmFn = DICOM()
+        # self.dcmFn = DICOM()
         for p in averagePoint:
             pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
-            tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
+            # tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
+            tmpPoint1 = self.TransformPoint(imageTag, pTmp1)
             pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
-            tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
+            # tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
+            tmpPoint2 = self.TransformPoint(imageTag, pTmp2)
             # Pz = tmpPoint[2]*(p[2]/int(p[2]))
             X1 = int(p[2])
             X2 = int(p[2])+1
@@ -1572,7 +1667,11 @@ class REGISTRATION():
         except:
             ball = []
         # return numpy.array(resultPoint)
-        return ball
+        "如果ball有多組呢?"
+        if ball == {}:
+            return False
+        else:
+            return ball
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []

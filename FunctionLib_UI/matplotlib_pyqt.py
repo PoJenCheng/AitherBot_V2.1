@@ -1036,12 +1036,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         try:
             candidateBall = self.regFn.GetBall(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
         except Exception as e:
+            self.ui_SP.close()
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L() error')
             print(e)
             return
-        if candidateBall != []:
+        if candidateBall != False:
             self.logUI.info('get candidate ball:')
             for tmp in candidateBall:
                 self.logUI.info(tmp)
@@ -1052,10 +1053,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.ui_CS.show()
             self.Button_ShowRegistration_L.setEnabled(True)
         else:
+            self.ui_SP.close()
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L() error')
-            print(e)
             return
         
         
@@ -1936,7 +1937,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         "hint: self.dcmLow = dcmLow = dcm"
         self.dcmTag = dcmTag
         self.dicomVTK = dicomVTK
-        self.dcmFn = DICOM()
+        # self.dcmFn = DICOM()
         self.DisplayImage()
         # self.flage = 0
         # self.point = []
