@@ -1648,20 +1648,23 @@ class REGISTRATION(DICOM):
         resultPoint = []
         # self.dcmFn = DICOM()
         for p in averagePoint:
-            pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
-            # tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
-            tmpPoint1 = self.TransformPoint(imageTag, pTmp1)
-            pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
-            # tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
-            tmpPoint2 = self.TransformPoint(imageTag, pTmp2)
-            # Pz = tmpPoint[2]*(p[2]/int(p[2]))
-            X1 = int(p[2])
-            X2 = int(p[2])+1
-            Y1 = tmpPoint1[2]
-            Y2 = tmpPoint2[2]
-            X = p[2]
-            Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
-            resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz])
+            try:
+                pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
+                # tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
+                tmpPoint1 = self.TransformPoint(imageTag, pTmp1)
+                pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
+                # tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
+                tmpPoint2 = self.TransformPoint(imageTag, pTmp2)
+                # Pz = tmpPoint[2]*(p[2]/int(p[2]))
+                X1 = int(p[2])
+                X2 = int(p[2])+1
+                Y1 = tmpPoint1[2]
+                Y2 = tmpPoint2[2]
+                X = p[2]
+                Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
+                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz])
+            except:
+                pass
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
         except:
@@ -1669,6 +1672,8 @@ class REGISTRATION(DICOM):
         # return numpy.array(resultPoint)
         "如果ball有多組呢?"
         if ball == {}:
+            return False
+        elif ball == []:
             return False
         else:
             return ball
