@@ -1404,14 +1404,15 @@ class REGISTRATION(DICOM):
                 return False
         return False
 
-    def XXX(self, interestPoint):
-        """_summary_
+    def AverageValue(self, interestPoint):
+        """remove .5 and integer, get candidate (with centroid)
+           average value of point array
 
         Args:
-            interestPoint (_type_): _description_
+            interestPoint (_numpy.array_): interest Point array
 
         Returns:
-            tmpPoint (_number_): _description_
+            tmpPoint (_number_): mean of interestPoint, whitch is remove .5 and integer
         """
         array = []
         for tmp in interestPoint:
@@ -1525,8 +1526,7 @@ class REGISTRATION(DICOM):
         for key, value in dictionaryPoint.items():
             point = [0, 0, 0]
             for n in range(3):
-                # tmpPoint = self.XXX(dictionaryPoint[n])
-                point[n] = self.XXX(value[:, n])
+                point[n] = self.AverageValue(value[:, n])
             resultPoint.append(point)
         
         return numpy.array(resultPoint)
@@ -1662,7 +1662,7 @@ class REGISTRATION(DICOM):
                 Y2 = tmpPoint2[2]
                 X = p[2]
                 Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
-                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz])
+                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
             except:
                 pass
         try:
