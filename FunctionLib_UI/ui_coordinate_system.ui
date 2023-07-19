@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="Button_OK_and_close">
    <property name="geometry">
     <rect>
-     <x>720</x>
-     <y>660</y>
+     <x>110</x>
+     <y>670</y>
      <width>93</width>
      <height>28</height>
     </rect>
@@ -26,7 +26,7 @@
     <string>OK and close</string>
    </property>
   </widget>
-  <widget class="QVTKWidget" name="qvtkWidget_registrtion" native="true">
+  <widget class="QVTKWidget" name="qvtkWidget_registrtion">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -46,6 +46,19 @@
     </rect>
    </property>
   </widget>
+  <widget class="QPushButton" name="Button_cancel">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>670</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>
@@ -63,8 +76,8 @@
    <slot>okAndClose()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>252</x>
-     <y>507</y>
+     <x>110</x>
+     <y>670</y>
     </hint>
     <hint type="destinationlabel">
      <x>284</x>
@@ -72,8 +85,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Button_cancel</sender>
+   <signal>clicked()</signal>
+   <receiver>Form</receiver>
+   <slot>Cancel()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>270</x>
+     <y>684</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>255</x>
+     <y>774</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>okAndClose()</slot>
+  <slot>Cancel()</slot>
  </slots>
 </ui>

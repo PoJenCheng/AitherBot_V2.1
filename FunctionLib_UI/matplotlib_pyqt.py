@@ -1057,9 +1057,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.logUI.info(tmp)
                 i += 1
             self.dcmTagLow.update({"candidateBall": candidateBall})
-            self.ui_SP.close()
+            
             "open another ui window to check registration result"
             self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
+            self.ui_SP.close()
             self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.ui_CS.show()
             self.Button_ShowRegistration_L.setEnabled(True)
@@ -1091,7 +1092,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
            calculate error/difference of relative distance
         """
         "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
-        # candidateBall = self.dcmTagLow.get("candidateBall")
+        candidateBall = self.dcmTagLow.get("candidateBall")
         # selectedBall = self.dcmTagLow.get("selectedBall")
         # if selectedBall != []:
         #     flagePair = False
@@ -1145,6 +1146,26 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         #     self.comboBox_L.setEnabled(True)
         # else:
         #     QMessageBox.critical(self, "error", "there are not selected 3 balls")
+        selectedBallKey = self.dcmTagLow.get("selectedBallKey")
+        
+        selectedBallAll = numpy.array(candidateBall.get(tuple(selectedBallKey)))
+        selectedBall = selectedBallAll[:,0:3]
+        self.dcmTagLow.update({"regBall": selectedBall})
+        self.logUI.info('get registration balls:')
+        for tmp in self.dcmTagLow.get("regBall"):
+            self.logUI.info(tmp)
+        "calculate error/difference of relative distance"
+        error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
+        logStr = 'registration error (min, max, mean): ' + str(error)
+        self.logUI.info(logStr)
+        self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
+        "calculate transformation matrix"
+        # self.regFn.TransformationMatrix()要改
+        regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
+        self.logUI.info('get registration matrix: ')
+        for tmp in regMatrix:
+            self.logUI.info(tmp)
+        self.dcmTagLow.update({"regMatrix": regMatrix})
         return
 
     def SetPoint_L(self):
@@ -1989,14 +2010,67 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def SelectionChange(self,i):
         # currentKey = self.comboBox_label.currentText()
         currentKey = self.keys[i,:]
-        currentValue = self.candidateBall.get(tuple(currentKey))
+        currentValue = numpy.array(self.candidateBall.get(tuple(currentKey)))
         
         self.DisplayImage(currentKey[3:6])
+        
+        centerBallR = ([0, self.dicomBoundsRange[1], 0] - (currentValue[0,3:6])) * [-1, 1, -1]
+        centerBallG = ([0, self.dicomBoundsRange[1], 0] - (currentValue[1,3:6])) * [-1, 1, -1]
+        centerBallB = ([0, self.dicomBoundsRange[1], 0] - (currentValue[2,3:6])) * [-1, 1, -1]
+        radius = 10
+        self.CreateBallR(centerBallR, radius)
+        self.CreateBallG(centerBallG, radius)
+        self.CreateBallB(centerBallB, radius)
+        
+        self.iren3D_L.Initialize()
+        self.iren3D_L.Start()
         
         return
     
     def CreateBallR(self, center, radius):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(center)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
         
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorBallR.SetMapper(mapper)
+        self.actorBallR.GetProperty().SetColor(1, 0, 0)
+        
+        self.renderer3D.AddActor(self.actorBallR)
+        return
+    
+    def CreateBallG(self, center, radius):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(center)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorBallG.SetMapper(mapper)
+        self.actorBallG.GetProperty().SetColor(0, 1, 0)
+        
+        self.renderer3D.AddActor(self.actorBallG)
+        return
+    
+    def CreateBallB(self, center, radius):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(center)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorBallB.SetMapper(mapper)
+        self.actorBallB.GetProperty().SetColor(0, 0, 1)
+        
+        self.renderer3D.AddActor(self.actorBallB)
+        return
     
     def DisplayImage(self, value):
         
@@ -2185,6 +2259,10 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     #     return
 
     def okAndClose(self):
+        selectLabel = self.comboBox_label.currentText()
+        selectKey = self.keys[int(selectLabel)-1,:]
+        self.dcmTag.update({"selectedBallKey":selectKey})
+        print("selectLabel = ", selectLabel, ", key = ", selectKey)
         self.close()
         return
     #     if len(self.point) == 3:
@@ -2195,6 +2273,8 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     #         QMessageBox.critical(self, "error", "there are not selected 3 balls")
     #         return
 
+    def Cancel(self):
+        self.close()
 
 class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
     def __init__(self, dcm, comboBox, scrollBar):

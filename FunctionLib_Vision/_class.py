@@ -324,51 +324,51 @@ class REGISTRATION(DICOM):
         "ball_center_mm(1,:);   origin"
         "ball_center_mm(2,:);   x axis"
         "ball_center_mm(3,:);   y axis"  
-        ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
-        ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
-        "create new coordinate"
-        vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
-        vectorX = numpy.array(ball_vector_x)
-        vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
+        # ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
+        # ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
+        # "create new coordinate"
+        # vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
+        # vectorX = numpy.array(ball_vector_x)
+        # vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
         
-        new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        "calculate unit vector"
-        unit_new_vector = []
-        for vector in new_vector:
-            unit_new_vector.append(vector / self.GetNorm(vector))
-        unit_new_vector = numpy.array(unit_new_vector)
-        "calculate radian"
-        angle_radian = []
-        unit = numpy.eye(3, dtype = 'int')
-        for n in range(unit.shape[0]):
-            top = numpy.dot(unit_new_vector[n],unit[n])
-            down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
-            angle_radian.append(math.acos(top / down))
-        angle_radian = numpy.array(angle_radian)
-        "calculate rotation matrix"
-        R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
-               [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
-               [0, 0, 1]])
+        # new_vector = numpy.array([vectorX,vectorY,vectorZ])
+        # "calculate unit vector"
+        # unit_new_vector = []
+        # for vector in new_vector:
+        #     unit_new_vector.append(vector / self.GetNorm(vector))
+        # unit_new_vector = numpy.array(unit_new_vector)
+        # "calculate radian"
+        # angle_radian = []
+        # unit = numpy.eye(3, dtype = 'int')
+        # for n in range(unit.shape[0]):
+        #     top = numpy.dot(unit_new_vector[n],unit[n])
+        #     down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
+        #     angle_radian.append(math.acos(top / down))
+        # angle_radian = numpy.array(angle_radian)
+        # "calculate rotation matrix"
+        # R_z = numpy.array([[math.cos(-angle_radian[1]), -math.sin(-angle_radian[1]), 0],
+        #        [math.sin(-angle_radian[1]), math.cos(-angle_radian[1]), 0],
+        #        [0, 0, 1]])
         
-        "calculate new unit vector"
-        new_vector = unit_new_vector
-        unit_new_vector = []
-        for vector in new_vector:
-            unit_new_vector.append(numpy.dot(R_z,vector))
-        "calculate radian"
-        angle_radian = []
-        unit = numpy.eye(3, dtype = 'int')
-        for n in range(unit.shape[0]):
-            top = numpy.dot(unit_new_vector[n],unit[n])
-            down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
-            angle_radian.append(math.acos(top / down))
-        angle_radian = numpy.array(angle_radian)
-        "calculate rotation matrix"
-        R_y = numpy.array([[math.cos(angle_radian[0]), 0, math.sin(angle_radian[0])],
-        [0, 1, 0],
-        [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
+        # "calculate new unit vector"
+        # new_vector = unit_new_vector
+        # unit_new_vector = []
+        # for vector in new_vector:
+        #     unit_new_vector.append(numpy.dot(R_z,vector))
+        # "calculate radian"
+        # angle_radian = []
+        # unit = numpy.eye(3, dtype = 'int')
+        # for n in range(unit.shape[0]):
+        #     top = numpy.dot(unit_new_vector[n],unit[n])
+        #     down = self.GetNorm(unit_new_vector[n])*self.GetNorm(unit[n])
+        #     angle_radian.append(math.acos(top / down))
+        # angle_radian = numpy.array(angle_radian)
+        # "calculate rotation matrix"
+        # R_y = numpy.array([[math.cos(angle_radian[0]), 0, math.sin(angle_radian[0])],
+        # [0, 1, 0],
+        # [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
         
-        return numpy.dot(R_y,R_z)
+        # return numpy.dot(R_y,R_z)
     
     def GetBallSection(self,candidateBall):
         """calculate Transformation Matrix
@@ -2304,9 +2304,9 @@ class DISPLAY():
         self.windowLevelLookup.SetLevel(value)
         self.mapColors.Update()
     
-    def CreateEntry(self, Center):
+    def CreateEntry(self, center):
         sphereSource = vtkSphereSource()
-        sphereSource.SetCenter(Center)
+        sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
         sphereSource.SetPhiResolution(100)
         sphereSource.SetThetaResolution(100)
@@ -2321,9 +2321,9 @@ class DISPLAY():
         self.rendererCoronal.AddActor(self.actorPointEntry)
         self.renderer3D.AddActor(self.actorPointEntry)
     
-    def CreateTarget(self, Center):
+    def CreateTarget(self, center):
         sphereSource = vtkSphereSource()
-        sphereSource.SetCenter(Center)
+        sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
         sphereSource.SetPhiResolution(100)
         sphereSource.SetThetaResolution(100)
