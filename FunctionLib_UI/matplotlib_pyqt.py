@@ -49,7 +49,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.satFn = SAT()
             self.dicomLow = DISPLAY()
             self.dicomHigh = DISPLAY()
-
+            
+            # global g_shortSide
+            # g_shortSide = 140
+            # global g_longSide
+            # g_longSide = 150
+            # global g_hypotenuse
+            # # g_hypotenuse = (g_shortSide**2 + g_longSide**2)**(1/2)
+            # g_hypotenuse = math.sqrt(numpy.square(g_shortSide) + numpy.square(g_longSide))
+            
             # self.tabWidget.setCurrentWidget(self.tabWidget_Low)
             self.tabWidget.setCurrentWidget(self.tabWidget_Dynamic)
             
@@ -65,6 +73,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"selectedBall": []})
             self.dcmTagLow.update({"regBall": []})
             self.dcmTagLow.update({"flageSelectedBall": False})
+            self.dcmTagLow.update({"candidateBall": []})
+            self.dcmTagLow.update({"selectedBallKey": []})
             "set point"
             self.dcmTagLow.update({"selectedPoint": []})
             self.dcmTagLow.update({"flageSelectedPoint": False})
@@ -81,6 +91,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh.update({"selectedBall": []})
             self.dcmTagHigh.update({"regBall": []})
             self.dcmTagHigh.update({"flageSelectedBall": False})
+            self.dcmTagHigh.update({"candidateBall": []})
+            self.dcmTagHigh.update({"selectedBallKey": []})
             "set point"
             self.dcmTagHigh.update({"selectedPoint": []})
             self.dcmTagHigh.update({"flageSelectedPoint": False})
@@ -491,6 +503,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"selectedBall": []})
         self.dcmTagLow.update({"regBall": []})
         self.dcmTagLow.update({"flageSelectedBall": False})
+        self.dcmTagLow.update({"candidateBall": []})
+        self.dcmTagLow.update({"selectedBallKey": []})
         "set point"
         self.dcmTagLow.update({"selectedPoint": []})
         self.dcmTagLow.update({"flageSelectedPoint": False})
@@ -788,6 +802,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"selectedBall": []})
         self.dcmTagHigh.update({"regBall": []})
         self.dcmTagHigh.update({"flageSelectedBall": False})
+        self.dcmTagHigh.update({"candidateBall": []})
+        self.dcmTagHigh.update({"selectedBallKey": []})
         "set point"
         self.dcmTagHigh.update({"selectedPoint": []})
         self.dcmTagHigh.update({"flageSelectedPoint": False})
@@ -1024,15 +1040,38 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.ui_SP.show()
         QApplication.processEvents()
-        if self.dcmTagLow.get("regBall") != []:
+        if self.dcmTagLow.get("regBall") != [] or self.dcmTagLow.get("candidateBall") != []:
+            self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmTagLow.update({"selectedBall": []})
                 self.dcmTagLow.update({"regBall": []})
                 self.dcmTagLow.update({"flageSelectedBall": False})
+                
+                self.dcmTagLow.update({"candidateBall": []})
+                self.dcmTagLow.update({"selectedBallKey": []})
+                self.dcmTagLow.update({"regMatrix": []})
+                self.dcmTagLow.update({"sectionTag": []})
+                self.dcmTagLow.update({"selectedPoint": []})
+                self.dcmTagLow.update({"flageSelectedPoint": False})
+                "VTK"
+                try:
+                    self.dicomLow.RemovePoint()
+                    self.irenSagittal_L.Initialize()
+                    self.irenCoronal_L.Initialize()
+                    self.irenAxial_L.Initialize()
+                    self.iren3D_L.Initialize()
+                    
+                    self.irenSagittal_L.Start()
+                    self.irenCoronal_L.Start()
+                    self.irenAxial_L.Start()
+                    self.iren3D_L.Start()
+                except:
+                    pass
+                
                 self.logUI.info('reset selected ball (Low)')
                 print("reset selected ball (Low)")
-                self.ui_SP.close()
+                
                 return
             else:
                 self.ui_SP.close()
@@ -1040,12 +1079,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         "automatic find registration ball center"
         try:
             candidateBall = self.regFn.GetBall(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
-        except Exception as e:
+        # except Exception as e:
+        except:
             self.ui_SP.close()
-            self.logUI.warning('get candidate ball error')
-            QMessageBox.critical(self, "error", "get candidate ball error")
+            self.logUI.warning('get candidate ball error / SetRegistration_L() error')
+            QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
             print('get candidate ball error / SetRegistration_L() error')
-            print(e)
+            # print(e)
             return
         if candidateBall != False:
             self.logUI.info('get candidate ball:')
@@ -1147,25 +1187,31 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         # else:
         #     QMessageBox.critical(self, "error", "there are not selected 3 balls")
         selectedBallKey = self.dcmTagLow.get("selectedBallKey")
-        
-        selectedBallAll = numpy.array(candidateBall.get(tuple(selectedBallKey)))
-        selectedBall = selectedBallAll[:,0:3]
-        self.dcmTagLow.update({"regBall": selectedBall})
-        self.logUI.info('get registration balls:')
-        for tmp in self.dcmTagLow.get("regBall"):
-            self.logUI.info(tmp)
-        "calculate error/difference of relative distance"
-        error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
-        logStr = 'registration error (min, max, mean): ' + str(error)
-        self.logUI.info(logStr)
-        self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
-        "calculate transformation matrix"
-        # self.regFn.TransformationMatrix()要改
-        regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
-        self.logUI.info('get registration matrix: ')
-        for tmp in regMatrix:
-            self.logUI.info(tmp)
-        self.dcmTagLow.update({"regMatrix": regMatrix})
+        if selectedBallKey is None:
+            QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            print("pair error / ShowRegistrationDifference_L() error")
+            self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
+            return
+        else:
+            selectedBallAll = numpy.array(candidateBall.get(tuple(selectedBallKey)))
+            selectedBall = selectedBallAll[:,0:3]
+            self.dcmTagLow.update({"regBall": selectedBall})
+            self.logUI.info('get registration balls:')
+            for tmp in self.dcmTagLow.get("regBall"):
+                self.logUI.info(tmp)
+            "calculate error/difference of relative distance"
+            error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
+            logStr = 'registration error (min, max, mean): ' + str(error)
+            self.logUI.info(logStr)
+            self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
+            "calculate transformation matrix"
+            regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
+            self.logUI.info('get registration matrix: ')
+            for tmp in regMatrix:
+                self.logUI.info(tmp)
+            self.dcmTagLow.update({"regMatrix": regMatrix})
+            self.Button_SetPoint_L.setEnabled(True)
+            self.comboBox_L.setEnabled(True)
         return
 
     def SetPoint_L(self):
@@ -1259,13 +1305,18 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.Button_Planning.setEnabled(True)
             
             "VTK"
-            self.dicomLow.CreatePath(self.dcmTagLow.get("selectedPoint"), self.dcmTagLow.get("sectionTag"))
+            # A = self.dicomLow.imageDimensions
+            # B = self.dicomLow.dicomBoundsRange
+            pointEntry = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[0]) * [-1,1,-1]
+            pointTarget = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[1]) * [-1,1,-1]
+            
+            # self.dicomLow.CreatePath(self.dcmTagLow.get("selectedPoint"), self.dcmTagLow.get("sectionTag"))
+            
+            self.dicomLow.CreatePath(numpy.array([pointEntry, pointTarget]), self.dcmTagLow.get("sectionTag"))
             
             if self.dcmTagLow.get("selectedPoint") == []:
                 pass
             else:
-                pointEntry = self.dcmTagLow.get("selectedPoint")[0]
-                pointTarget = self.dcmTagLow.get("selectedPoint")[1]
                 if abs(self.SliceSelect_Sagittal_L.value()*self.dcmTagLow.get("pixel2Mm")[0]-pointEntry[0]) < self.dicomLow.radius:
                     self.dicomLow.rendererSagittal.AddActor(self.dicomLow.actorPointEntry)
                 else:
@@ -1284,11 +1335,11 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 else:
                     self.dicomLow.rendererCoronal.RemoveActor(self.dicomLow.actorPointTarget)
                     
-                if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-(-pointEntry[2])) < self.dicomLow.radius:
+                if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-pointEntry[2]) < self.dicomLow.radius:
                     self.dicomLow.rendererAxial.AddActor(self.dicomLow.actorPointEntry)
                 else:
                     self.dicomLow.rendererAxial.RemoveActor(self.dicomLow.actorPointEntry)
-                if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-(-pointTarget[2])) < self.dicomLow.radius:
+                if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-pointTarget[2]) < self.dicomLow.radius:
                     self.dicomLow.rendererAxial.AddActor(self.dicomLow.actorPointTarget)
                 else:
                     self.dicomLow.rendererAxial.RemoveActor(self.dicomLow.actorPointTarget)
@@ -1309,48 +1360,97 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             QMessageBox.critical(self, "error", "show points error")
             print('show points error / SetPoint_L() error')
             return
+        return
 
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        if self.dcmTagHigh.get("regBall") != []:
+        self.ui_SP = SystemProcessing()
+        self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.ui_SP.show()
+        QApplication.processEvents()
+        if self.dcmTagHigh.get("regBall") != [] or self.dcmTagHigh.get("candidateBall") != []:
+            self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.dcmTagHigh.update({"selectedBall": []})
                 self.dcmTagHigh.update({"regBall": []})
                 self.dcmTagHigh.update({"flageSelectedBall": False})
+                
+                self.dcmTagHigh.update({"candidateBall": []})
+                self.dcmTagHigh.update({"selectedBallKey": []})
+                self.dcmTagHigh.update({"regMatrix": []})
+                self.dcmTagHigh.update({"sectionTag": []})
+                self.dcmTagHigh.update({"selectedPoint": []})
+                self.dcmTagHigh.update({"flageSelectedPoint": False})
+                "VTK"
+                try:
+                    self.dicomHigh.RemovePoint()
+                    self.irenSagittal_L.Initialize()
+                    self.irenCoronal_L.Initialize()
+                    self.irenAxial_L.Initialize()
+                    self.iren3D_L.Initialize()
+                    
+                    self.irenSagittal_L.Start()
+                    self.irenCoronal_L.Start()
+                    self.irenAxial_L.Start()
+                    self.iren3D_L.Start()
+                except:
+                    pass
+                
                 self.logUI.info('reset selected ball (High)')
                 print("reset selected ball (High)")
                 return
             else:
+                self.ui_SP.close()
                 return
         "automatic find registration ball center"
         try:
-            candidateBall = self.regFn.GetBall(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm"))
+            candidateBall = self.regFn.GetBall(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
         except:
+            self.ui_SP.close()
             self.logUI.warning('get candidate ball error / SetRegistration_H() error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_H() error')
             return
-        self.logUI.info('get candidate ball:')
-        for tmp in candidateBall:
-            self.logUI.info(tmp)
-        self.dcmTagHigh.update({"candidateBall": candidateBall})
-
-        "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
-        try:
-            tmp = self.regFn.GetBallSection(self.dcmTagHigh.get("candidateBall"))
-            self.dcmTagHigh.update({"showAxis": tmp[0]})
-            self.dcmTagHigh.update({"showSlice": tmp[1]})
-
-            self.ui_CS = CoordinateSystem(self.dcmTagHigh)
+        if candidateBall != False:
+            self.logUI.info('get candidate ball:')
+            # for tmp in candidateBall:
+            #     self.logUI.info(tmp)
+            i = 0
+            for key, value in candidateBall.items():
+                tmp = str(i) + ": " + str(key) + str(value)
+                self.logUI.info(tmp)
+                i += 1
+            self.dcmTagHigh.update({"candidateBall": candidateBall})
+            
+            "open another ui window to check registration result"
+            self.ui_CS = CoordinateSystem(self.dcmTagHigh, self.dicomHigh)
+            self.ui_SP.close()
             self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.ui_CS.show()
             self.Button_ShowRegistration_H.setEnabled(True)
-        except:
-            self.logUI.warning('get candidate ball error / SetRegistration_H() error / candidateBall could be []')
+        else:
+            self.ui_SP.close()
+            self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
-            print('get candidate ball error / SetRegistration_H() error / candidateBall could be []')
+            print('get candidate ball error / SetRegistration_H() error')
+            return
+
+        # "open another ui window to let user selects ball in order (origin -> x axis -> y axis)"
+        # try:
+        #     tmp = self.regFn.GetBallSection(self.dcmTagHigh.get("candidateBall"))
+        #     self.dcmTagHigh.update({"showAxis": tmp[0]})
+        #     self.dcmTagHigh.update({"showSlice": tmp[1]})
+
+        #     self.ui_CS = CoordinateSystem(self.dcmTagHigh)
+        #     self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        #     self.ui_CS.show()
+        #     self.Button_ShowRegistration_H.setEnabled(True)
+        # except:
+        #     self.logUI.warning('get candidate ball error / SetRegistration_H() error / candidateBall could be []')
+        #     QMessageBox.critical(self, "error", "get candidate ball error")
+        #     print('get candidate ball error / SetRegistration_H() error / candidateBall could be []')
         return
 
     def ShowRegistrationDifference_H(self):
@@ -1359,62 +1459,88 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
         candidateBall = self.dcmTagHigh.get("candidateBall")
-        selectedBall = self.dcmTagHigh.get("selectedBall")
-        if selectedBall != []:
-            flagePair = False
-            ball = []
-            if self.dcmTagHigh.get("flageSelectedBall") == True:
-                self.logUI.info('get selected balls')
-                for P1 in selectedBall:
-                    for P2 in candidateBall:
-                        distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
-                        if distance < 10:
-                            ball.append(P2)
-                        else:
-                            pass
-                if len(ball) == 3:
-                    flagePair = True
-                else:
-                    QMessageBox.critical(self, "error", "please redo registration")
-                    self.logUI.warning('find seleted balls error / ShowRegistrationDifference_H() error')
-                    print("find seleted balls error / ShowRegistrationDifference_H() error")
-                    return
+        # selectedBall = self.dcmTagHigh.get("selectedBall")
+        # if selectedBall != []:
+        #     flagePair = False
+        #     ball = []
+        #     if self.dcmTagHigh.get("flageSelectedBall") == True:
+        #         self.logUI.info('get selected balls')
+        #         for P1 in selectedBall:
+        #             for P2 in candidateBall:
+        #                 distance = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+        #                 if distance < 10:
+        #                     ball.append(P2)
+        #                 else:
+        #                     pass
+        #         if len(ball) == 3:
+        #             flagePair = True
+        #         else:
+        #             QMessageBox.critical(self, "error", "please redo registration")
+        #             self.logUI.warning('find seleted balls error / ShowRegistrationDifference_H() error')
+        #             print("find seleted balls error / ShowRegistrationDifference_H() error")
+        #             return
                     
-            else:
-                QMessageBox.critical(self, "error", "please redo registration")
-                print("Choose Point error / ShowRegistrationDifference_H() error")
-                self.logUI.warning('Choose Point error / ShowRegistrationDifference_H() error')
-                return
+        #     else:
+        #         QMessageBox.critical(self, "error", "please redo registration")
+        #         print("Choose Point error / ShowRegistrationDifference_H() error")
+        #         self.logUI.warning('Choose Point error / ShowRegistrationDifference_H() error')
+        #         return
 
+        #     "calculate error/difference of relative distance"
+        #     if flagePair == True:
+        #         "The ball positions are paired"
+        #         self.dcmTagHigh.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
+        #         self.logUI.info('get registration balls:')
+        #         for tmp in self.dcmTagHigh.get("regBall"):
+        #             self.logUI.info(tmp)
+        #         "calculate error/difference of relative distance"
+        #         error = self.regFn.GetError(self.dcmTagHigh.get("regBall"))
+        #         logStr = 'registration error (min, max, mean): ' + str(error)
+        #         self.logUI.info(logStr)
+        #         self.label_Error_H.setText('Registration difference: {:.2f} mm'.format(error[2]))
+        #         "calculate transformation matrix"
+        #         regMatrix = self.regFn.TransformationMatrix(self.dcmTagHigh.get("regBall"))
+        #         self.logUI.info('get registration matrix: ')
+        #         for tmp in regMatrix:
+        #             self.logUI.info(tmp)
+        #         self.dcmTagHigh.update({"regMatrix": regMatrix})
+
+        #     else:
+        #         QMessageBox.critical(self, "error", "please redo registration")
+        #         print("pair error / ShowRegistrationDifference_H() error")
+        #         self.logUI.warning('pair error / ShowRegistrationDifference_H() error')
+        #         return
+        #     self.Button_SetPoint_H.setEnabled(True)
+        #     self.comboBox_H.setEnabled(True)
+        # else:
+        #     QMessageBox.critical(self, "error", "there are not selected 3 balls")
+        #     return
+        selectedBallKey = self.dcmTagHigh.get("selectedBallKey")
+        if selectedBallKey is None:
+            QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            print("pair error / ShowRegistrationDifference_H() error")
+            self.logUI.warning('pair error / ShowRegistrationDifference_H() error')
+            return
+        else:
+            selectedBallAll = numpy.array(candidateBall.get(tuple(selectedBallKey)))
+            selectedBall = selectedBallAll[:,0:3]
+            self.dcmTagHigh.update({"regBall": selectedBall})
+            self.logUI.info('get registration balls:')
+            for tmp in self.dcmTagHigh.get("regBall"):
+                self.logUI.info(tmp)
             "calculate error/difference of relative distance"
-            if flagePair == True:
-                "The ball positions are paired"
-                self.dcmTagHigh.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
-                self.logUI.info('get registration balls:')
-                for tmp in self.dcmTagHigh.get("regBall"):
-                    self.logUI.info(tmp)
-                "calculate error/difference of relative distance"
-                error = self.regFn.GetError(self.dcmTagHigh.get("regBall"))
-                logStr = 'registration error (min, max, mean): ' + str(error)
-                self.logUI.info(logStr)
-                self.label_Error_H.setText('Registration difference: {:.2f} mm'.format(error[2]))
-                "calculate transformation matrix"
-                regMatrix = self.regFn.TransformationMatrix(self.dcmTagHigh.get("regBall"))
-                self.logUI.info('get registration matrix: ')
-                for tmp in regMatrix:
-                    self.logUI.info(tmp)
-                self.dcmTagHigh.update({"regMatrix": regMatrix})
-
-            else:
-                QMessageBox.critical(self, "error", "please redo registration")
-                print("pair error / ShowRegistrationDifference_H() error")
-                self.logUI.warning('pair error / ShowRegistrationDifference_H() error')
-                return
+            error = self.regFn.GetError(self.dcmTagHigh.get("regBall"))
+            logStr = 'registration error (min, max, mean): ' + str(error)
+            self.logUI.info(logStr)
+            self.label_Error_H.setText('Registration difference: {:.2f} mm'.format(error[2]))
+            "calculate transformation matrix"
+            regMatrix = self.regFn.TransformationMatrix(self.dcmTagHigh.get("regBall"))
+            self.logUI.info('get registration matrix: ')
+            for tmp in regMatrix:
+                self.logUI.info(tmp)
+            self.dcmTagHigh.update({"regMatrix": regMatrix})
             self.Button_SetPoint_H.setEnabled(True)
             self.comboBox_H.setEnabled(True)
-        else:
-            QMessageBox.critical(self, "error", "there are not selected 3 balls")
-            return
         return
 
     def SetPoint_H(self):
@@ -1489,13 +1615,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.Button_Planning.setEnabled(True)
             
             "VTK"
-            self.dicomHigh.CreatePath(self.dcmTagHigh.get("selectedPoint"), self.dcmTagHigh.get("sectionTag"))
+            pointEntry = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[0]) * [-1,1,-1]
+            pointTarget = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[1]) * [-1,1,-1]
+            
+            
+            self.dicomHigh.CreatePath(numpy.array([pointEntry, pointTarget]), self.dcmTagHigh.get("sectionTag"))
             
             if self.dcmTagHigh.get("selectedPoint") == []:
                 pass
             else:
-                pointEntry = self.dcmTagHigh.get("selectedPoint")[0]
-                pointTarget = self.dcmTagHigh.get("selectedPoint")[1]
                 if abs(self.SliceSelect_Sagittal_H.value()*self.dcmTagHigh.get("pixel2Mm")[0]-pointEntry[0]) < self.dicomHigh.radius:
                     self.dicomHigh.rendererSagittal.AddActor(self.dicomHigh.actorPointEntry)
                 else:
@@ -1504,7 +1632,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                     self.dicomHigh.rendererSagittal.AddActor(self.dicomHigh.actorPointTarget)
                 else:
                     self.dicomHigh.rendererSagittal.RemoveActor(self.dicomHigh.actorPointTarget)
-                
+                    
                 if abs(self.SliceSelect_Coronal_H.value()*self.dcmTagHigh.get("pixel2Mm")[1]-pointEntry[1]) < self.dicomHigh.radius:
                     self.dicomHigh.rendererCoronal.AddActor(self.dicomHigh.actorPointEntry)
                 else:
@@ -1514,15 +1642,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 else:
                     self.dicomHigh.rendererCoronal.RemoveActor(self.dicomHigh.actorPointTarget)
                     
-                if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-(-pointEntry[2])) < self.dicomHigh.radius:
+                if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-pointEntry[2]) < self.dicomHigh.radius:
                     self.dicomHigh.rendererAxial.AddActor(self.dicomHigh.actorPointEntry)
                 else:
                     self.dicomHigh.rendererAxial.RemoveActor(self.dicomHigh.actorPointEntry)
-                if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-(-pointTarget[2])) < self.dicomHigh.radius:
+                if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-pointTarget[2]) < self.dicomHigh.radius:
                     self.dicomHigh.rendererAxial.AddActor(self.dicomHigh.actorPointTarget)
                 else:
                     self.dicomHigh.rendererAxial.RemoveActor(self.dicomHigh.actorPointTarget)
-            
+                
             self.irenSagittal_H.Initialize()
             self.irenCoronal_H.Initialize()
             self.irenAxial_H.Initialize()
@@ -1535,55 +1663,59 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             
             return
         except:
-            self.logUI.warning('show points error / ShowPoint_H() error')
+            self.logUI.warning('show points error / SetPoint_H() error')
             QMessageBox.critical(self, "error", "show points error")
-            print('show points error / ShowPoint_H() error')
+            print('show points error / SetPoint_H() error')
             return
+        return
 
     def ShowPlanningPath(self):
         """show planning path in regBall coordinate system
            (high entry and target points + low entry and target points )
         """
-        
+        tmpPointLow = self.dcmTagLow.get("selectedPoint")
+        tmpPointHigh = self.dcmTagHigh.get("selectedPoint")
+        self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpPointLow, self.dcmTagLow.get("regMatrix"))})
+        self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpPointHigh, self.dcmTagHigh.get("regMatrix"))})
         try:
-            tmpLowSelectedPoint = []
-            for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
-                tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
-                tmpTag = self.dcmTagLow.get("sectionTag")[n]
-                if tmpTag == "Coronal":
-                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                elif tmpTag == "Coron":
-                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                elif tmpTag == "Coronal ":
-                    tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                else:
-                    # tmpLowSelectedPoint.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
-                    tmpLowSelectedPoint.append(tmpPoint)
-                    pass
-            self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpLowSelectedPoint, self.dcmTagLow.get("regMatrix"))})
+        #     tmpLowSelectedPoint = []
+        #     for n in range(self.dcmTagLow.get("sectionTag").shape[0]):
+        #         tmpPoint = self.dcmTagLow.get("selectedPoint")[n]
+        #         tmpTag = self.dcmTagLow.get("sectionTag")[n]
+        #         if tmpTag == "Coronal":
+        #             tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         elif tmpTag == "Coron":
+        #             tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         elif tmpTag == "Coronal ":
+        #             tmpLowSelectedPoint.append(([0, self.dicomLow.imageDimensions[1] * self.dicomLow.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         else:
+        #             # tmpLowSelectedPoint.append(([0, self.dicomLow.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             tmpLowSelectedPoint.append(tmpPoint)
+        #             pass
+        #     self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpLowSelectedPoint, self.dcmTagLow.get("regMatrix"))})
 
-            tmpHighSelectedPoint = []
-            for n in range(self.dcmTagHigh.get("sectionTag").shape[0]):
-                tmpPoint = self.dcmTagHigh.get("selectedPoint")[n]
-                tmpTag = self.dcmTagHigh.get("sectionTag")[n]
-                if tmpTag == "Coronal":
-                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                elif tmpTag == "Coron":
-                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                elif tmpTag == "Coronal ":
-                    tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
-                    # pass
-                else:
-                    # tmpHighSelectedPoint.append(([0, self.dicomHigh.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
-                    tmpHighSelectedPoint.append(tmpPoint)
-                    pass
-            # tmpHighSelectedPoint = ([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - self.dcmTagHigh.get("selectedPoint")) * [-1, 1, -1]
-            self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpHighSelectedPoint, self.dcmTagHigh.get("regMatrix"))})
+        #     tmpHighSelectedPoint = []
+        #     for n in range(self.dcmTagHigh.get("sectionTag").shape[0]):
+        #         tmpPoint = self.dcmTagHigh.get("selectedPoint")[n]
+        #         tmpTag = self.dcmTagHigh.get("sectionTag")[n]
+        #         if tmpTag == "Coronal":
+        #             tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         elif tmpTag == "Coron":
+        #             tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         elif tmpTag == "Coronal ":
+        #             tmpHighSelectedPoint.append(([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             # pass
+        #         else:
+        #             # tmpHighSelectedPoint.append(([0, self.dicomHigh.dicomBoundsRange[1], 0] - tmpPoint) * [-1, 1, -1])
+        #             tmpHighSelectedPoint.append(tmpPoint)
+        #             pass
+        #     # tmpHighSelectedPoint = ([0, self.dicomHigh.imageDimensions[1] * self.dicomHigh.pixel2Mm[1], 0] - self.dcmTagHigh.get("selectedPoint")) * [-1, 1, -1]
+        #     self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpHighSelectedPoint, self.dcmTagHigh.get("regMatrix"))})
 
             
             
@@ -2101,12 +2233,12 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.camera3D.SetFocalPoint(0, 0, 0)
         self.camera3D.ComputeViewPlaneNormal()
         
-        # self.actorSagittal = vtkImageActor()
-        # self.actorCoronal = vtkImageActor()
-        # self.actorAxial = vtkImageActor()
-        self.actorSagittal = self.dicomVTK.actorSagittal
-        self.actorCoronal = self.dicomVTK.actorCoronal
-        self.actorAxial = self.dicomVTK.actorAxial
+        self.actorSagittal = vtkImageActor()
+        self.actorCoronal = vtkImageActor()
+        self.actorAxial = vtkImageActor()
+        # self.actorSagittal = self.dicomVTK.actorSagittal
+        # self.actorCoronal = self.dicomVTK.actorCoronal
+        # self.actorAxial = self.dicomVTK.actorAxial
         # value = [100, 110, 120]
         # value = candidateBall[0]
         self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
@@ -2358,15 +2490,15 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
             return 3
         elif numpy.array(self.dcm.get("selectedPoint")).shape[0] == 0:
             if showSection == "Axial":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, y, showSlice])*[1, 1, -1]])})
+                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, y, showSlice])])}) #*[1, 1, -1]])})
                 self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
                 self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
             elif showSection == "Coronal":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, showSlice, y])*[1, 1, -1]])})
+                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, showSlice, y])])}) #*[1, 1, -1]])})
                 self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
                 self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
             elif showSection == "Sagittal":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([showSlice, x, y])*[1, 1, -1]])})
+                self.dcm.update({"selectedPoint": numpy.array([numpy.array([showSlice, x, y])])}) #*[1, 1, -1]])})
                 self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
                 self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
             else:
@@ -2374,19 +2506,19 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
             return 1
         elif numpy.array(self.dcm.get("selectedPoint")).shape[0] == 1:
             if showSection == "Axial":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, y, showSlice])*[1, 1, -1], 0)
+                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, y, showSlice]), 0) #*[1, 1, -1], 0)
                 self.dcm.update({"selectedPoint": tmp})
                 tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
                 self.dcm.update({"sectionTag":tmpTag})
                 self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
             elif showSection == "Coronal":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, showSlice, y])*[1, 1, -1], 0)
+                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, showSlice, y]), 0) #*[1, 1, -1], 0)
                 self.dcm.update({"selectedPoint": tmp})
                 tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
                 self.dcm.update({"sectionTag":tmpTag})
                 self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
             elif showSection == "Sagittal":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([showSlice, x, y])*[1, 1, -1], 0)
+                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([showSlice, x, y]), 0) #*[1, 1, -1], 0)
                 self.dcm.update({"selectedPoint": tmp})
                 tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
                 self.dcm.update({"sectionTag":tmpTag})

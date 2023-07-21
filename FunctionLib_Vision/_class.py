@@ -324,18 +324,19 @@ class REGISTRATION(DICOM):
         "ball_center_mm(1,:);   origin"
         "ball_center_mm(2,:);   x axis"
         "ball_center_mm(3,:);   y axis"  
-        # ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
-        # ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
-        # "create new coordinate"
-        # vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
-        # vectorX = numpy.array(ball_vector_x)
-        # vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
+        ball_vector_x = ballCenterMm[1] - ballCenterMm[0]
+        ball_vector_y = ballCenterMm[2] - ballCenterMm[0]
+        "create new coordinate"
+        vectorZ = numpy.array(numpy.cross(ball_vector_x, ball_vector_y))
+        vectorX = numpy.array(ball_vector_x)
+        vectorY = numpy.array(numpy.cross(vectorZ,vectorX))
+        new_vector = numpy.array([vectorX,vectorY,vectorZ])
         
-        # new_vector = numpy.array([vectorX,vectorY,vectorZ])
-        # "calculate unit vector"
-        # unit_new_vector = []
-        # for vector in new_vector:
-        #     unit_new_vector.append(vector / self.GetNorm(vector))
+        "calculate unit vector"
+        unit_new_vector = []
+        for vector in new_vector:
+            unit_new_vector.append(vector / self.GetNorm(vector))
+        inverse_matrix = numpy.linalg.inv(unit_new_vector)
         # unit_new_vector = numpy.array(unit_new_vector)
         # "calculate radian"
         # angle_radian = []
@@ -369,6 +370,7 @@ class REGISTRATION(DICOM):
         # [-math.sin(angle_radian[0]), 0, math.cos(angle_radian[0])]])
         
         # return numpy.dot(R_y,R_z)
+        return numpy.asarray(unit_new_vector)
     
     def GetBallSection(self,candidateBall):
         """calculate Transformation Matrix
@@ -407,12 +409,12 @@ class REGISTRATION(DICOM):
             [numpy.min(error),numpy.max(error),numpy.mean(error)] (_list_): [min error, max error, mean error]
         """
         error = []
-        legsA = 140
-        legsB = 150
-        hypotenuse = self.GetNorm(numpy.array([legsA,legsB]))
+        shortSide = 140
+        longSide = 150
+        hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error.append(abs(self.GetNorm(ball[1]-ball[2])-hypotenuse))
-        error.append(abs(self.GetNorm(ball[0]-ball[1])-legsB))
-        error.append(abs(self.GetNorm(ball[0]-ball[2])-legsA))
+        error.append(abs(self.GetNorm(ball[0]-ball[1])-shortSide))
+        error.append(abs(self.GetNorm(ball[0]-ball[2])-longSide))
         return [numpy.min(error),numpy.max(error),numpy.mean(error)]
     
     def GetNorm(self, V):
@@ -1559,7 +1561,8 @@ class REGISTRATION(DICOM):
             if d12 > shortSide-error and d12 < shortSide+error:
                 if d23 > longSide-error and d23 < longSide+error:
                     if d31 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p2, p1, p3)
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p2, p1, p3)
+                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
                         result.append(p2)
                         result.append(p1)
                         result.append(p3)
@@ -1568,7 +1571,8 @@ class REGISTRATION(DICOM):
             elif d23 > shortSide-error and d23 < shortSide+error:
                 if d31 > longSide-error and d31 < longSide+error:
                     if d12 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p3, p2, p1)
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p3, p2, p1)
+                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
                         result.append(p3)
                         result.append(p2)
                         result.append(p1)
@@ -1577,7 +1581,8 @@ class REGISTRATION(DICOM):
             elif d31 > shortSide-error and d31 < shortSide+error:
                 if d12 > longSide-error and d12 < longSide+error:
                     if d23 > hypotenuse-error and d31 < hypotenuse+error:
-                        print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p1, p3, p2)
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p1, p3, p2)
+                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
                         result.append(p1)
                         result.append(p3)
                         result.append(p2)
@@ -2385,19 +2390,22 @@ class DISPLAY():
 
      
     def CreatePath(self, planningPointCenter, sectionGroup):
-        pointCenter = []
-        for n in range(sectionGroup.shape[0]):
-            if sectionGroup[n] == "Coronal":
-                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-            elif sectionGroup[n] == "Coron":
-                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-            elif sectionGroup[n] == "Coronal ":
-                pointCenter.append((planningPointCenter[n]) * [1, 1, -1])
-            else:
-                pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
-        self.CreateEntry(pointCenter[0])
-        self.CreateTarget(pointCenter[1])
-        self.CreateLine(pointCenter[0], pointCenter[1])
+        # pointCenter = []
+        # for n in range(sectionGroup.shape[0]):
+        #     if sectionGroup[n] == "Coronal":
+        #         pointCenter.append((planningPointCenter[n])) # * [1, 1, -1])
+        #     elif sectionGroup[n] == "Coron":
+        #         pointCenter.append((planningPointCenter[n])) # * [1, 1, -1])
+        #     elif sectionGroup[n] == "Coronal ":
+        #         pointCenter.append((planningPointCenter[n])) # * [1, 1, -1])
+        #     else:
+        #         pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
+        # self.CreateEntry(pointCenter[0])
+        # self.CreateTarget(pointCenter[1])
+        # self.CreateLine(pointCenter[0], pointCenter[1])
+        self.CreateEntry(planningPointCenter[0])
+        self.CreateTarget(planningPointCenter[1])
+        self.CreateLine(planningPointCenter[0], planningPointCenter[1])
         # pass
         
     def RemovePoint(self):
