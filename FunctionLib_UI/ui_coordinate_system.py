@@ -14,18 +14,18 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(858, 711)
+        Form.resize(1850, 950)
         self.Button_OK_and_close = QtWidgets.QPushButton(Form)
-        self.Button_OK_and_close.setGeometry(QtCore.QRect(110, 670, 93, 28))
+        self.Button_OK_and_close.setGeometry(QtCore.QRect(110, 910, 93, 28))
         self.Button_OK_and_close.setObjectName("Button_OK_and_close")
         self.qvtkWidget_registrtion = QVTKRenderWindowInteractor(Form)
-        self.qvtkWidget_registrtion.setGeometry(QtCore.QRect(20, 20, 821, 631))
+        self.qvtkWidget_registrtion.setGeometry(QtCore.QRect(20, 20, 1761, 871))
         self.qvtkWidget_registrtion.setObjectName("qvtkWidget_registrtion")
         self.comboBox_label = QtWidgets.QComboBox(Form)
-        self.comboBox_label.setGeometry(QtCore.QRect(20, 670, 69, 22))
+        self.comboBox_label.setGeometry(QtCore.QRect(20, 910, 69, 22))
         self.comboBox_label.setObjectName("comboBox_label")
         self.Button_cancel = QtWidgets.QPushButton(Form)
-        self.Button_cancel.setGeometry(QtCore.QRect(220, 670, 93, 28))
+        self.Button_cancel.setGeometry(QtCore.QRect(220, 910, 93, 28))
         self.Button_cancel.setObjectName("Button_cancel")
 
         self.retranslateUi(Form)

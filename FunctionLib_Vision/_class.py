@@ -21,6 +21,7 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkFiltersSources import vtkLineSource
 from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtk.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkRenderingCore import (
     vtkCamera,
     vtkImageActor,
@@ -226,7 +227,8 @@ class DICOM():
         pixel2Mm = []
         pixel2Mm.append(imageTag.PixelSpacing[0])
         pixel2Mm.append(imageTag.PixelSpacing[1])
-        pixel2Mm.append(imageTag.SpacingBetweenSlices)
+        # pixel2Mm.append(imageTag.SpacingBetweenSlices)
+        pixel2Mm.append(abs(imageTag.SpacingBetweenSlices))
         return pixel2Mm
     
     def GetGrayImg(self, imageHu2D, ww, wl):
@@ -1550,45 +1552,76 @@ class REGISTRATION(DICOM):
         longSide = 150
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error = 1
+        count = 0
         # 計算三個點之間的距離
         for p1, p2, p3 in itertools.combinations(point, 3):
+            count += 1
             result = []
             d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
             d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
             d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
+            
+            # print("count: ", count, "\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
             
             # 檢查邊長是否符合條件
             if d12 > shortSide-error and d12 < shortSide+error:
                 if d23 > longSide-error and d23 < longSide+error:
                     if d31 > hypotenuse-error and d31 < hypotenuse+error:
                         # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p2, p1, p3)
-                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
                         result.append(p2)
                         result.append(p1)
                         result.append(p3)
                         tmpDic.update({tuple(p2):result})
-                        continue
+                        # continue
+                elif d31 > longSide-error and d31 < longSide+error:
+                    if d23 > hypotenuse-error and d23 < hypotenuse+error:
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p2, p1, p3)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
+                        result.append(p1)
+                        result.append(p2)
+                        result.append(p3)
+                        tmpDic.update({tuple(p1):result})
+                        # continue
             elif d23 > shortSide-error and d23 < shortSide+error:
                 if d31 > longSide-error and d31 < longSide+error:
-                    if d12 > hypotenuse-error and d31 < hypotenuse+error:
+                    if d12 > hypotenuse-error and d12 < hypotenuse+error:
                         # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p3, p2, p1)
-                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
                         result.append(p3)
                         result.append(p2)
                         result.append(p1)
                         tmpDic.update({tuple(p3):result})
-                        continue
+                        # continue
+                elif d12 > longSide-error and d12 < longSide+error:
+                    if d31 > hypotenuse-error and d31 < hypotenuse+error:
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p3, p2, p1)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
+                        result.append(p2)
+                        result.append(p3)
+                        result.append(p1)
+                        tmpDic.update({tuple(p2):result})
+                        # continue
             elif d31 > shortSide-error and d31 < shortSide+error:
                 if d12 > longSide-error and d12 < longSide+error:
-                    if d23 > hypotenuse-error and d31 < hypotenuse+error:
+                    if d23 > hypotenuse-error and d23 < hypotenuse+error:
                         # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p1, p3, p2)
-                        print("d12 = ",d12,"d23 = ",d23,"d31 = ",d31)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
                         result.append(p1)
                         result.append(p3)
                         result.append(p2)
                         tmpDic.update({tuple(p1):result})
-                        continue
-
+                        # continue
+                elif d23 > longSide-error and d23 < longSide+error:
+                    if d12 > hypotenuse-error and d12 < hypotenuse+error:
+                        # print("找到短邊為 ", shortSide, " , 長邊為 ", longSide, " 的直角三角形：", p1, p3, p2)
+                        # print("****找到\nd12 = ",d12,"d23 = ",d23,"d31 = ",d31, "\n")
+                        result.append(p3)
+                        result.append(p1)
+                        result.append(p2)
+                        tmpDic.update({tuple(p3):result})
+                        # continue
+        # print("\ntotal count: ", count)
         # return numpy.array(tmpDic)
         return tmpDic
             
@@ -1670,6 +1703,7 @@ class REGISTRATION(DICOM):
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
             except:
                 pass
+        # print("resultPoint: \n", resultPoint)
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
         except:
@@ -2176,6 +2210,17 @@ class DISPLAY():
         pass
     
     def LoadImage(self, folderPath):
+        """load image
+           use VTK
+           for diocm display
+           and image array in VTK
+
+        Args:
+            folderPath (_string_): dir + folder name (==folderDir)
+
+        Returns:
+            imageVTK (_numpy.array_): image array in VTK
+        """
         "init"
         self.radius = 3.5
         
@@ -2214,6 +2259,11 @@ class DISPLAY():
         self.pixel2Mm = self.vtkImage.GetSpacing()
         
         self.SetMapColor()
+        
+        vtkArray = self.vtkImage.GetPointData().GetScalars()
+        imageVTK = vtk_to_numpy(vtkArray).reshape(self.imageDimensions[2], self.imageDimensions[1], self.imageDimensions[0])
+        
+        return imageVTK
         
     def SetMapColor(self):
         
