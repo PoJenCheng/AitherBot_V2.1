@@ -253,7 +253,7 @@ class DICOM():
                         imageHu2D_[i,j] = 0
         return imageHu2D_
 
-    def Ready2Qimg(self, imageHu2D):
+    def ReadyQimg(self, imageHu2D):
         """ready image to show on label
 
         Args:
@@ -269,7 +269,7 @@ class DICOM():
         qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return qimg
     
-    def TransformPoint(self, imageTag, point):
+    def TransformPointImage(self, imageTag, point):
         """Transform pixel point to mm point in patient coordinates
 
         Args:
@@ -337,7 +337,7 @@ class REGISTRATION(DICOM):
         "calculate unit vector"
         unit_new_vector = []
         for vector in new_vector:
-            unit_new_vector.append(vector / self.GetNorm(vector))
+            unit_new_vector.append(vector / self.__GetNorm(vector))
         inverse_matrix = numpy.linalg.inv(unit_new_vector)
         # unit_new_vector = numpy.array(unit_new_vector)
         # "calculate radian"
@@ -414,12 +414,12 @@ class REGISTRATION(DICOM):
         shortSide = 140
         longSide = 150
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
-        error.append(abs(self.GetNorm(ball[1]-ball[2])-hypotenuse))
-        error.append(abs(self.GetNorm(ball[0]-ball[1])-shortSide))
-        error.append(abs(self.GetNorm(ball[0]-ball[2])-longSide))
+        error.append(abs(self.__GetNorm(ball[1]-ball[2])-hypotenuse))
+        error.append(abs(self.__GetNorm(ball[0]-ball[1])-shortSide))
+        error.append(abs(self.__GetNorm(ball[0]-ball[2])-longSide))
         return [numpy.min(error),numpy.max(error),numpy.mean(error)]
     
-    def GetNorm(self, V):
+    def __GetNorm(self, V):
         """get norm
 
         Args:
@@ -553,7 +553,7 @@ class REGISTRATION(DICOM):
     #                         resultCentroid_xy.append([Px,Py,Pz,Pr])
     #         cv2.destroyAllWindows()
     #     return resultCentroid_xy
-    def FindBallXY(self, imageHu):
+    def __FindBallXY(self, imageHu):
         """scan XY plane to  find ball centroid,
             May find candidate ball and non-candidates
 
@@ -630,7 +630,7 @@ class REGISTRATION(DICOM):
             cv2.destroyAllWindows()
         return resultCentroid_xy
   
-    def ClassifyPointXY(self, pointMatrix):
+    def __ClassifyPointXY(self, pointMatrix):
         """classify Point Matrix from FindBall() result
            take the first point of each group as the key
            save as numpy.array
@@ -979,7 +979,7 @@ class REGISTRATION(DICOM):
     #                         resultCentroid_yz.append([Px,Py,Pz,Pr])
     #         cv2.destroyAllWindows()
     #     return resultCentroid_yz
-    def FindBallYZ(self, imageHu):
+    def __FindBallYZ(self, imageHu):
         """scan YZ plane to  find ball centroid,
             May find candidate ball and non-candidates
 
@@ -1096,7 +1096,7 @@ class REGISTRATION(DICOM):
             cv2.destroyAllWindows()
         return resultCentroid_yz
 
-    def ClassifyPointYZ(self, pointMatrix, interestPoint):
+    def __ClassifyPointYZ(self, pointMatrix, interestPoint):
         """classify Point Matrix from FindBall() result
            take the first point of each group as the key
            save as numpy.array
@@ -1220,7 +1220,7 @@ class REGISTRATION(DICOM):
 
         return interestPoint
 
-    def FindBallXZ(self, imageHu):
+    def __FindBallXZ(self, imageHu):
         """scan XZ plane to  find ball centroid,
             May find candidate ball and non-candidates
 
@@ -1309,7 +1309,7 @@ class REGISTRATION(DICOM):
             cv2.destroyAllWindows()
         return resultCentroid_xz
 
-    def ClassifyPointXZ(self, pointMatrix, interestPoint):
+    def __ClassifyPointXZ(self, pointMatrix, interestPoint):
         """classify Point Matrix from FindBall() result
             take the first point of each group as the key
             save as numpy.array
@@ -1408,7 +1408,7 @@ class REGISTRATION(DICOM):
                 return False
         return False
 
-    def AverageValue(self, interestPoint):
+    def __AverageValue(self, interestPoint):
         """remove .5 and integer, get candidate (with centroid)
            average value of point array
 
@@ -1517,7 +1517,7 @@ class REGISTRATION(DICOM):
     #             point.append(numpy.mean(array,0))
 
     #     return point
-    def AveragePoint(self, dictionaryPoint):
+    def __AveragePoint(self, dictionaryPoint):
         # point = [0, 0, 0]
         resultPoint = []
         # for key in dictionaryPoint:
@@ -1530,12 +1530,12 @@ class REGISTRATION(DICOM):
         for key, value in dictionaryPoint.items():
             point = [0, 0, 0]
             for n in range(3):
-                point[n] = self.AverageValue(value[:, n])
+                point[n] = self.__AverageValue(value[:, n])
             resultPoint.append(point)
         
         return numpy.array(resultPoint)
 
-    def IdentifyPoint(self, point):
+    def __IdentifyPoint(self, point):
         """_summary_
 
         Args:
@@ -1674,14 +1674,14 @@ class REGISTRATION(DICOM):
         
         imageHuMm = numpy.array(imageHuMm)
         
-        resultCentroid_xy = self.FindBallXY(imageHuMm)
-        dictionaryPoint = self.ClassifyPointXY(resultCentroid_xy)
-        resultCentroid_yz = self.FindBallYZ(imageHuMm)
-        dictionaryPoint = self.ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
-        resultCentroid_xz = self.FindBallXZ(imageHuMm)
-        dictionaryPoint = self.ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
+        resultCentroid_xy = self.__FindBallXY(imageHuMm)
+        dictionaryPoint = self.__ClassifyPointXY(resultCentroid_xy)
+        resultCentroid_yz = self.__FindBallYZ(imageHuMm)
+        dictionaryPoint = self.__ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
+        resultCentroid_xz = self.__FindBallXZ(imageHuMm)
+        dictionaryPoint = self.__ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
         
-        averagePoint = self.AveragePoint(dictionaryPoint)
+        averagePoint = self.__AveragePoint(dictionaryPoint)
         
         resultPoint = []
         # self.dcmFn = DICOM()
@@ -1689,10 +1689,10 @@ class REGISTRATION(DICOM):
             try:
                 pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
                 # tmpPoint1 = self.dcmFn.TransformPoint(imageTag, pTmp1)
-                tmpPoint1 = self.TransformPoint(imageTag, pTmp1)
+                tmpPoint1 = self.TransformPointImage(imageTag, pTmp1)
                 pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
                 # tmpPoint2 = self.dcmFn.TransformPoint(imageTag, pTmp2)
-                tmpPoint2 = self.TransformPoint(imageTag, pTmp2)
+                tmpPoint2 = self.TransformPointImage(imageTag, pTmp2)
                 # Pz = tmpPoint[2]*(p[2]/int(p[2]))
                 X1 = int(p[2])
                 X2 = int(p[2])+1
@@ -1701,11 +1701,13 @@ class REGISTRATION(DICOM):
                 X = p[2]
                 Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+            # except Exception as e:
+                # print(e)
             except:
                 pass
         # print("resultPoint: \n", resultPoint)
         try:
-            ball = self.IdentifyPoint(numpy.array(resultPoint))
+            ball = self.__IdentifyPoint(numpy.array(resultPoint))
         except:
             ball = []
         # return numpy.array(resultPoint)
@@ -1716,6 +1718,32 @@ class REGISTRATION(DICOM):
             return False
         else:
             return ball
+    
+    def TransformPointVTK(self, imageTag, point):
+        """Transform pixel point to mm point in patient coordinates
+
+        Args:
+            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
+            point (_numpy.array, dtype=int_): pixel point (in CT image coordinates)
+
+        Returns:
+            point (_numpy.array_): Transformed Point (in patient coordinates)
+        """
+        ImageOrientationPatient = imageTag[int(point[2])-1].ImageOrientationPatient
+        ImagePositionPatient = imageTag[int(point[2])-1].ImagePositionPatient
+        PixelSpacing = imageTag[int(point[2])-1].PixelSpacing
+
+        # x = point[0] * PixelSpacing[0]
+        # y = point[1] * PixelSpacing[1]
+        x = point[0]
+        y = point[1]
+        RowVector = ImageOrientationPatient[0:3]
+        ColumnVector = ImageOrientationPatient[3:6]
+        X = ImagePositionPatient[0] + x * RowVector[0] + y * ColumnVector[0]
+        Y = ImagePositionPatient[1] + x * RowVector[1] + y * ColumnVector[1]
+        Z = ImagePositionPatient[2] + x * RowVector[2] + y * ColumnVector[2]
+        
+        return numpy.array([X,Y,Z])
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
@@ -2078,9 +2106,9 @@ class SAT():
         resultCentroid_xz = self.FindBallXZ(src_tmp)
         dictionaryPoint_xz = self.ClassifyPoint(numpy.array(resultCentroid_xz), axis = [True, False, True])
         
-        point_xy = self.regFn.AveragePoint(dictionaryPoint_xy,axis = [True, True, False])
-        point_yz = self.regFn.AveragePoint(dictionaryPoint_yz,axis = [False, True, True])
-        point_xz = self.regFn.AveragePoint(dictionaryPoint_xz,axis = [True, False, True])
+        point_xy = self.regFn.__AveragePoint(dictionaryPoint_xy,axis = [True, True, False])
+        point_yz = self.regFn.__AveragePoint(dictionaryPoint_yz,axis = [False, True, True])
+        point_xz = self.regFn.__AveragePoint(dictionaryPoint_xz,axis = [True, False, True])
         
         point = []
         
@@ -2439,7 +2467,7 @@ class DISPLAY():
         self.renderer3D.AddActor(self.actorTube)
 
      
-    def CreatePath(self, planningPointCenter, sectionGroup):
+    def CreatePath(self, planningPointCenter):
         # pointCenter = []
         # for n in range(sectionGroup.shape[0]):
         #     if sectionGroup[n] == "Coronal":

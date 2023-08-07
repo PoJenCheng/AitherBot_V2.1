@@ -9,35 +9,18 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(858, 711)
-        self.scrollArea = QtWidgets.QScrollArea(Form)
-        self.scrollArea.setGeometry(QtCore.QRect(10, 10, 831, 631))
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setObjectName("scrollArea")
-        self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 829, 629))
-        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
-        self.gridLayout.setObjectName("gridLayout")
-        self.label_img = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_img.setObjectName("label_img")
-        self.gridLayout.addWidget(self.label_img, 0, 0, 1, 1)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout.addItem(spacerItem, 1, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem1, 0, 1, 1, 1)
-        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.Button_OK_and_close = QtWidgets.QPushButton(Form)
         self.Button_OK_and_close.setGeometry(QtCore.QRect(100, 660, 93, 28))
         self.Button_OK_and_close.setObjectName("Button_OK_and_close")
-        self.label_origin = QtWidgets.QLabel(Form)
-        self.label_origin.setGeometry(QtCore.QRect(270, 660, 171, 17))
-        self.label_origin.setObjectName("label_origin")
+        self.qvtkWidget = QVTKRenderWindowInteractor(Form)
+        self.qvtkWidget.setGeometry(QtCore.QRect(20, 20, 821, 621))
+        self.qvtkWidget.setObjectName("qvtkWidget")
 
         self.retranslateUi(Form)
         self.Button_OK_and_close.clicked.connect(Form.okAndClose)
@@ -46,6 +29,4 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label_img.setText(_translate("Form", "HI"))
         self.Button_OK_and_close.setText(_translate("Form", "OK and close"))
-        self.label_origin.setText(_translate("Form", "(0, 0, 0)"))

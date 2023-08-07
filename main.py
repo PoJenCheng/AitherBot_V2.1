@@ -20,3 +20,6 @@ sys.exit(app.exec_())
 # self.MplWidget = MplWidget(self.tabWidget_Dynamic)
 # replace as
 # self.MplWidget = QtWidgets.QWidget(self.tabWidget_Dynamic)
+
+# except Exception as e:
+# print(e)

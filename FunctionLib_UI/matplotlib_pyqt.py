@@ -24,6 +24,7 @@ import FunctionLib_UI.ui_processing
 from FunctionLib_UI.ui_matplotlib_pyqt import *
 from FunctionLib_Vision._class import *
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+from vtkmodules.vtkRenderingCore import vtkCellPicker
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
@@ -80,7 +81,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"flageSelectedPoint": False})
             self.dcmTagLow.update({"flageShowPointButton": False})
             "show point"
-            self.dcmTagLow.update({"sectionTag":[]})
+            # self.dcmTagLow.update({"sectionTag":[]})
 
             "initialize dcm High"
             self.dcmTagHigh = {}
@@ -98,7 +99,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh.update({"flageSelectedPoint": False})
             self.dcmTagHigh.update({"flageShowPointButton": False})
             "show point"
-            self.dcmTagHigh.update({"sectionTag":[]})
+            # self.dcmTagHigh.update({"sectionTag":[]})
 
             "initialize dcm system accuracy test (SAT)"
             self.dcmTagSAT = {}
@@ -510,8 +511,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"flageSelectedPoint": False})
         self.dcmTagLow.update({"flageShowPointButton": False})
         "show point"
-        self.dcmTagLow.update({"sectionTag":[]})
+        # self.dcmTagLow.update({"sectionTag":[]})
         "ui disable"
+        self.label_Error_L.setText('Registration difference: mm')
         self.Button_Planning.setEnabled(False)
         self.Button_Registration_L.setEnabled(False)
         self.Button_ShowRegistration_L.setEnabled(False)
@@ -539,15 +541,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmTagLow.get("imageTag")[0])})
         self.dcmTagLow.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm")))})
         patientPosition = self.dcmTagLow.get("imageTag")[0].PatientPosition
-        if patientPosition == 'HFS':
-            self.label_dcmL_L_side.setText("Left")
-            self.label_dcmL_R_side.setText("Right")
-        elif patientPosition == 'HFP':
-            self.label_dcmL_L_side.setText("Right")
-            self.label_dcmL_R_side.setText("Left")
-        else:
-            self.label_dcmL_L_side.setText("error")
-            self.label_dcmL_R_side.setText("error")
+        # if patientPosition == 'HFS':
+        #     self.label_dcmL_L_side.setText("Left")
+        #     self.label_dcmL_R_side.setText("Right")
+        # elif patientPosition == 'HFP':
+        #     self.label_dcmL_L_side.setText("Right")
+        #     self.label_dcmL_R_side.setText("Left")
+        # else:
+        #     self.label_dcmL_L_side.setText("error")
+        #     self.label_dcmL_R_side.setText("error")
 
 
         "VTK stage"
@@ -683,11 +685,11 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         if numpy.array(self.dcmTagLow.get("selectedPoint")).shape[0] == 2:
             pointEntry = self.dcmTagLow.get("selectedPoint")[0]
             pointTarget = self.dcmTagLow.get("selectedPoint")[1]
-            if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-(-pointEntry[2])) < self.dicomLow.radius:
+            if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-pointEntry[2]) < self.dicomLow.radius:
                 self.dicomLow.rendererAxial.AddActor(self.dicomLow.actorPointEntry)
             else:
                 self.dicomLow.rendererAxial.RemoveActor(self.dicomLow.actorPointEntry)
-            if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-(-pointTarget[2])) < self.dicomLow.radius:
+            if abs(self.SliceSelect_Axial_L.value()*self.dcmTagLow.get("pixel2Mm")[2]-pointTarget[2]) < self.dicomLow.radius:
                 self.dicomLow.rendererAxial.AddActor(self.dicomLow.actorPointTarget)
             else:
                 self.dicomLow.rendererAxial.RemoveActor(self.dicomLow.actorPointTarget)
@@ -810,8 +812,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"flageSelectedPoint": False})
         self.dcmTagHigh.update({"flageShowPointButton": False})
         "show point"
-        self.dcmTagHigh.update({"sectionTag":[]})
+        # self.dcmTagHigh.update({"sectionTag":[]})
         "ui disable"
+        self.label_Error_H.setText('Registration difference: mm')
         self.Button_Planning.setEnabled(False)
         self.Button_Registration_H.setEnabled(False)
         self.Button_ShowRegistration_H.setEnabled(False)
@@ -839,19 +842,20 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmTagHigh.get("imageTag")[0])})
         self.dcmTagHigh.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm")))})
         patientPosition = self.dcmTagHigh.get("imageTag")[0].PatientPosition
-        if patientPosition == 'HFS':
-            self.label_dcmH_L_side.setText("Left")
-            self.label_dcmH_R_side.setText("Right")
-        elif patientPosition == 'HFP':
-            self.label_dcmH_L_side.setText("Right")
-            self.label_dcmH_R_side.setText("Left")
-        else:
-            self.label_dcmH_L_side.setText("error")
-            self.label_dcmH_R_side.setText("error")
+        # if patientPosition == 'HFS':
+        #     self.label_dcmH_L_side.setText("Left")
+        #     self.label_dcmH_R_side.setText("Right")
+        # elif patientPosition == 'HFP':
+        #     self.label_dcmH_L_side.setText("Right")
+        #     self.label_dcmH_R_side.setText("Left")
+        # else:
+        #     self.label_dcmH_L_side.setText("error")
+        #     self.label_dcmH_R_side.setText("error")
 
         "VTK stage"
         self.dcmTagHigh.update({"folderDir":folderDir})
-        self.dicomHigh.LoadImage(folderDir)
+        imageVTKHu = self.dicomHigh.LoadImage(folderDir)
+        self.dcmTagHigh.update({"imageVTKHu":imageVTKHu})
         self.dicomHigh.CreateActorAndRender(128)
         self.irenSagittal_H = self.qvtkWidget_Sagittal_H.GetRenderWindow().GetInteractor()
         self.irenCoronal_H = self.qvtkWidget_Coronal_H.GetRenderWindow().GetInteractor()
@@ -981,11 +985,11 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         if numpy.array(self.dcmTagHigh.get("selectedPoint")).shape[0] == 2:
             pointEntry = self.dcmTagHigh.get("selectedPoint")[0]
             pointTarget = self.dcmTagHigh.get("selectedPoint")[1]
-            if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-(-pointEntry[2])) < self.dicomHigh.radius:
+            if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-pointEntry[2]) < self.dicomHigh.radius:
                 self.dicomHigh.rendererAxial.AddActor(self.dicomHigh.actorPointEntry)
             else:
                 self.dicomHigh.rendererAxial.RemoveActor(self.dicomHigh.actorPointEntry)
-            if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-(-pointTarget[2])) < self.dicomHigh.radius:
+            if abs(self.SliceSelect_Axial_H.value()*self.dcmTagHigh.get("pixel2Mm")[2]-pointTarget[2]) < self.dicomHigh.radius:
                 self.dicomHigh.rendererAxial.AddActor(self.dicomHigh.actorPointTarget)
             else:
                 self.dicomHigh.rendererAxial.RemoveActor(self.dicomHigh.actorPointTarget)
@@ -1052,7 +1056,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagLow.update({"candidateBall": []})
                 self.dcmTagLow.update({"selectedBallKey": []})
                 self.dcmTagLow.update({"regMatrix": []})
-                self.dcmTagLow.update({"sectionTag": []})
+                # self.dcmTagLow.update({"sectionTag": []})
                 self.dcmTagLow.update({"selectedPoint": []})
                 self.dcmTagLow.update({"flageSelectedPoint": False})
                 "VTK"
@@ -1091,7 +1095,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             return
         # if candidateBall != False:
         if candidateBallVTK != False:
-            self.logUI.info('get candidate ball in VTK:')
+            self.logUI.info('get candidate ball of inhale/Low DICOM in VTK:')
             # for tmp in candidateBall:
             #     self.logUI.info(tmp)
             # i = 0
@@ -1206,19 +1210,19 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             selectedBallAll = numpy.array(candidateBallVTK.get(tuple(selectedBallKey)))
             selectedBall = selectedBallAll[:,0:3]
             self.dcmTagLow.update({"regBall": selectedBall})
-            self.logUI.info('get registration balls:')
+            self.logUI.info('get registration balls of inhale/Low DICOM:')
             # logStr = 'selectedBallKey: ' + str(selectedBallKey) + ', '
             # self.logUI.info(logStr)
             for tmp in self.dcmTagLow.get("regBall"):
                 self.logUI.info(tmp)
             "calculate error/difference of relative distance"
             error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
-            logStr = 'registration error (min, max, mean): ' + str(error)
+            logStr = 'registration error of inhale/Low DICOM (min, max, mean): ' + str(error)
             self.logUI.info(logStr)
             self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
             "calculate transformation matrix"
             regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
-            self.logUI.info('get registration matrix: ')
+            self.logUI.info('get registration matrix of inhale/Low DICOM: ')
             for tmp in regMatrix:
                 self.logUI.info(tmp)
             self.dcmTagLow.update({"regMatrix": regMatrix})
@@ -1231,13 +1235,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         if self.dcmTagLow.get("flageSelectedPoint") == False:
             if self.comboBox_L.currentText() == "Axial":
-                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value() * self.dcmTagLow.get("pixel2Mm")[2])
+                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())# * self.dcmTagLow.get("pixel2Mm")[2])
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Coronal":
-                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value() * self.dcmTagLow.get("pixel2Mm")[1])
+                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Coronal_L.value())# * self.dcmTagLow.get("pixel2Mm")[1])
                 self.ui_SPS.show()
             elif self.comboBox_L.currentText() == "Sagittal":
-                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value() * self.dcmTagLow.get("pixel2Mm")[0])
+                self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Sagittal_L.value())# * self.dcmTagLow.get("pixel2Mm")[0])
                 self.ui_SPS.show()
             else:
                 print("comboBox_L error / SetPoint_L() error")
@@ -1252,7 +1256,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagLow.update({"flageSelectedPoint": False})
                 self.Button_Planning.setEnabled(False)
                 self.dcmTagLow.update({"flageShowPointButton": False})
-                self.dcmTagLow.update({"sectionTag":[]})
+                # self.dcmTagLow.update({"sectionTag":[]})
                 strInfo = "reset selected point (LoW)"
                 self.logUI.info(strInfo)
                 print(strInfo)
@@ -1301,12 +1305,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             #         # pointCenter.append(([0, self.dicomBoundsRange[1], 0] - (planningPointCenter[n])) * [-1, 1, 1])
             # self.dcmTagLow.update({"selectedPoint":tmpResult})
             
-            strInfo = "inhale/Low DICOM entry / target point position (in image coodinate)"
+            print("-------------------------------------------------------------------")
+            strInfo = "inhale/Low DICOM entry and target point position (in VTK image coodinate)"
             print(strInfo)
             self.logUI.info(strInfo)
-            "in this case"
-            print(self.dcmTagLow.get("sectionTag"))
-            self.logUI.info(self.dcmTagLow.get("sectionTag"))
+            # "in this case"
+            # print(self.dcmTagLow.get("sectionTag"))
+            # self.logUI.info(self.dcmTagLow.get("sectionTag"))
             for tmp in self.dcmTagLow.get("selectedPoint"):
                 print(tmp)
                 self.logUI.info(tmp)
@@ -1319,12 +1324,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             "VTK"
             # A = self.dicomLow.imageDimensions
             # B = self.dicomLow.dicomBoundsRange
-            pointEntry = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[0]) * [-1,1,-1]
-            pointTarget = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[1]) * [-1,1,-1]
+            # pointEntry = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[0]) * [-1,1,-1]
+            # pointTarget = ([0, self.dicomLow.dicomBoundsRange[1], 0] - self.dcmTagLow.get("selectedPoint")[1]) * [-1,1,-1]
+            pointEntry = self.dcmTagLow.get("selectedPoint")[0]
+            pointTarget = self.dcmTagLow.get("selectedPoint")[1]
             
             # self.dicomLow.CreatePath(self.dcmTagLow.get("selectedPoint"), self.dcmTagLow.get("sectionTag"))
-            
-            self.dicomLow.CreatePath(numpy.array([pointEntry, pointTarget]), self.dcmTagLow.get("sectionTag"))
+            self.dicomLow.CreatePath(numpy.array([pointEntry, pointTarget]))
             
             if self.dcmTagLow.get("selectedPoint") == []:
                 pass
@@ -1392,7 +1398,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagHigh.update({"candidateBall": []})
                 self.dcmTagHigh.update({"selectedBallKey": []})
                 self.dcmTagHigh.update({"regMatrix": []})
-                self.dcmTagHigh.update({"sectionTag": []})
+                # self.dcmTagHigh.update({"sectionTag": []})
                 self.dcmTagHigh.update({"selectedPoint": []})
                 self.dcmTagHigh.update({"flageSelectedPoint": False})
                 "VTK"
@@ -1418,23 +1424,24 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
         "automatic find registration ball center"
         try:
-            candidateBall = self.regFn.GetBall(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
+            # candidateBall = self.regFn.GetBall(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
+            candidateBallVTK = self.regFn.GetBall(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
         except:
             self.ui_SP.close()
             self.logUI.warning('get candidate ball error / SetRegistration_H() error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_H() error')
             return
-        if candidateBall != False:
-            self.logUI.info('get candidate ball:')
+        if candidateBallVTK != False:
+            self.logUI.info('get candidate ball of exhale/High DICOM in VTK:')
             # for tmp in candidateBall:
             #     self.logUI.info(tmp)
             i = 0
-            for key, value in candidateBall.items():
+            for key, value in candidateBallVTK.items():
                 tmp = str(i) + ": " + str(key) + str(value)
                 self.logUI.info(tmp)
                 i += 1
-            self.dcmTagHigh.update({"candidateBall": candidateBall})
+            self.dcmTagHigh.update({"candidateBallVTK": candidateBallVTK})
             
             "open another ui window to check registration result"
             self.ui_CS = CoordinateSystem(self.dcmTagHigh, self.dicomHigh)
@@ -1470,7 +1477,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
            calculate error/difference of relative distance
         """
         "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
-        candidateBall = self.dcmTagHigh.get("candidateBall")
+        candidateBallVTK = self.dcmTagHigh.get("candidateBallVTK")
         # selectedBall = self.dcmTagHigh.get("selectedBall")
         # if selectedBall != []:
         #     flagePair = False
@@ -1534,20 +1541,20 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.logUI.warning('pair error / ShowRegistrationDifference_H() error')
             return
         else:
-            selectedBallAll = numpy.array(candidateBall.get(tuple(selectedBallKey)))
+            selectedBallAll = numpy.array(candidateBallVTK.get(tuple(selectedBallKey)))
             selectedBall = selectedBallAll[:,0:3]
             self.dcmTagHigh.update({"regBall": selectedBall})
-            self.logUI.info('get registration balls:')
+            self.logUI.info('get registration balls of exhale/High DICOM:')
             for tmp in self.dcmTagHigh.get("regBall"):
                 self.logUI.info(tmp)
             "calculate error/difference of relative distance"
             error = self.regFn.GetError(self.dcmTagHigh.get("regBall"))
-            logStr = 'registration error (min, max, mean): ' + str(error)
+            logStr = 'registration error of exhale/High DICOM (min, max, mean): ' + str(error)
             self.logUI.info(logStr)
             self.label_Error_H.setText('Registration difference: {:.2f} mm'.format(error[2]))
             "calculate transformation matrix"
             regMatrix = self.regFn.TransformationMatrix(self.dcmTagHigh.get("regBall"))
-            self.logUI.info('get registration matrix: ')
+            self.logUI.info('get registration matrix of exhale/High DICOM: ')
             for tmp in regMatrix:
                 self.logUI.info(tmp)
             self.dcmTagHigh.update({"regMatrix": regMatrix})
@@ -1560,13 +1567,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         if self.dcmTagHigh.get("flageSelectedPoint") == False:
             if self.comboBox_H.currentText() == "Axial":
-                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Axial_H.value() * self.dcmTagHigh.get("pixel2Mm")[2])
+                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Axial_H.value())# * self.dcmTagHigh.get("pixel2Mm")[2])
                 self.ui_SPS.show()
             elif self.comboBox_H.currentText() == "Coronal":
-                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Coronal_H.value() * self.dcmTagHigh.get("pixel2Mm")[1])
+                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Coronal_H.value())# * self.dcmTagHigh.get("pixel2Mm")[1])
                 self.ui_SPS.show()
             elif self.comboBox_H.currentText() == "Sagittal":
-                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Sagittal_H.value() * self.dcmTagHigh.get("pixel2Mm")[0])
+                self.ui_SPS = SetPointSystem(self.dcmTagHigh, self.comboBox_H.currentText(), self.SliceSelect_Sagittal_H.value())# * self.dcmTagHigh.get("pixel2Mm")[0])
                 self.ui_SPS.show()
             else:
                 print("comboBox_H error / SetPoint_H() error")
@@ -1581,10 +1588,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagHigh.update({"flageSelectedPoint": False})
                 self.Button_Planning.setEnabled(False)
                 self.dcmTagHigh.update({"flageShowPointButton": False})
-                self.dcmTagHigh.update({"sectionTag":[]})
+                # self.dcmTagHigh.update({"sectionTag":[]})
                 strInfo = "reset selected point (High)"
                 self.logUI.info(strInfo)
-                print()
+                print(strInfo)
                 self.Button_ShowPoint_H.setEnabled(False)
                 
                 "VTK"
@@ -1611,12 +1618,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """show selected entry and target points 
         """
         try:
-            strInfo = "exhale/High DICOM entry / target point position (in image coodinate)"
+            print("-------------------------------------------------------------------")
+            strInfo = "exhale/High DICOM entry and target point position (in VTK image coodinate)"
             print(strInfo)
             self.logUI.info(strInfo)
-            "in this case"
-            print(self.dcmTagHigh.get("sectionTag"))
-            self.logUI.info(self.dcmTagHigh.get("sectionTag"))
+            # "in this case"
+            # print(self.dcmTagHigh.get("sectionTag"))
+            # self.logUI.info(self.dcmTagHigh.get("sectionTag"))
             for tmp in self.dcmTagHigh.get("selectedPoint"):
                 print(tmp)
                 self.logUI.info(tmp)
@@ -1627,11 +1635,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.Button_Planning.setEnabled(True)
             
             "VTK"
-            pointEntry = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[0]) * [-1,1,-1]
-            pointTarget = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[1]) * [-1,1,-1]
+            # pointEntry = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[0]) * [-1,1,-1]
+            # pointTarget = ([0, self.dicomHigh.dicomBoundsRange[1], 0] - self.dcmTagHigh.get("selectedPoint")[1]) * [-1,1,-1]
+            pointEntry = self.dcmTagHigh.get("selectedPoint")[0]
+            pointTarget = self.dcmTagHigh.get("selectedPoint")[1]
             
             
-            self.dicomHigh.CreatePath(numpy.array([pointEntry, pointTarget]), self.dcmTagHigh.get("sectionTag"))
+            # self.dicomHigh.CreatePath(numpy.array([pointEntry, pointTarget]), self.dcmTagHigh.get("sectionTag"))
+            self.dicomHigh.CreatePath(numpy.array([pointEntry, pointTarget]))
             
             if self.dcmTagHigh.get("selectedPoint") == []:
                 pass
@@ -1685,8 +1696,12 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """show planning path in regBall coordinate system
            (high entry and target points + low entry and target points )
         """
-        tmpPointLow = self.dcmTagLow.get("selectedPoint")
-        tmpPointHigh = self.dcmTagHigh.get("selectedPoint")
+        tmpPointLow = numpy.array([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]])
+        tmpPointHigh = numpy.array([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]])
+        tmpPointLow[0] = self.regFn.TransformPointVTK(self.dcmTagLow.get("imageTag"), self.dcmTagLow.get("selectedPoint")[0])
+        tmpPointLow[1] = self.regFn.TransformPointVTK(self.dcmTagLow.get("imageTag"), self.dcmTagLow.get("selectedPoint")[1])
+        tmpPointHigh[0] = self.regFn.TransformPointVTK(self.dcmTagHigh.get("imageTag"), self.dcmTagHigh.get("selectedPoint")[0])
+        tmpPointHigh[1] = self.regFn.TransformPointVTK(self.dcmTagHigh.get("imageTag"), self.dcmTagHigh.get("selectedPoint")[1])
         self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpPointLow, self.dcmTagLow.get("regMatrix"))})
         self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpPointHigh, self.dcmTagHigh.get("regMatrix"))})
         try:
@@ -1747,6 +1762,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print("-------------------------------------------------------------------")
             self.Button_RobotHome.setEnabled(True)
             self.Button_RobotAutoRun.setEnabled(True)
+            "Qmessage"
+            QMessageBox.information(self, "Information", "Ready to robot navigation")
             
             "VTK"
             self.irenSagittal_L.Initialize()
@@ -1889,19 +1906,19 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         imageHu2DAxial = self.dcmTagSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
         imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
+        qimgAxial = self.dcmFn.ReadyQimg(imageHu2DAxial_)
         self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show Low Dicom Axial')
 
         imageHu2DSagittal = self.dcmTagSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
         imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
+        qimgSagittal = self.dcmFn.ReadyQimg(imageHu2DSagittal_)
         self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show Low Dicom Sagittal')
 
         imageHu2DCoronal = self.dcmTagSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
         imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
+        qimgCoronal = self.dcmFn.ReadyQimg(imageHu2DCoronal_)
         self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
 
@@ -1912,7 +1929,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         imageHu2DAxial = self.dcmTagSAT.get("imageHuMm")[self.SliceSelect_Axial_SAT.value(), :, :]
         imageHu2DAxial_ = self.dcmFn.GetGrayImg(imageHu2DAxial, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgAxial = self.dcmFn.Ready2Qimg(imageHu2DAxial_)
+        qimgAxial = self.dcmFn.ReadyQimg(imageHu2DAxial_)
         self.label_Axial_SAT.setPixmap(QPixmap.fromImage(qimgAxial))
         self.logUI.debug('Show Low Dicom Axial')
 
@@ -1921,7 +1938,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         imageHu2DSagittal = self.dcmTagSAT.get("imageHuMm")[:, :, self.SliceSelect_Sagittal_SAT.value()]
         imageHu2DSagittal_ = self.dcmFn.GetGrayImg(imageHu2DSagittal, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgSagittal = self.dcmFn.Ready2Qimg(imageHu2DSagittal_)
+        qimgSagittal = self.dcmFn.ReadyQimg(imageHu2DSagittal_)
         self.label_Sagittal_SAT.setPixmap(QPixmap.fromImage(qimgSagittal))
         self.logUI.debug('Show Low Dicom Sagittal')
 
@@ -1930,7 +1947,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """
         imageHu2DCoronal = self.dcmTagSAT.get("imageHuMm")[:, self.SliceSelect_Coronal_SAT.value(), :]
         imageHu2DCoronal_ = self.dcmFn.GetGrayImg(imageHu2DCoronal, self.dcmTagSAT.get("ww"), self.dcmTagSAT.get("wl"))
-        qimgCoronal = self.dcmFn.Ready2Qimg(imageHu2DCoronal_)
+        qimgCoronal = self.dcmFn.ReadyQimg(imageHu2DCoronal_)
         self.label_Coronal_SAT.setPixmap(QPixmap.fromImage(qimgCoronal))
         self.logUI.debug('Show Low Dicom Coronal')
 
@@ -1983,7 +2000,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_SAT() error')
             return
-        self.logUI.info('get candidate ball:')
+        self.logUI.info('get candidate ball of SAT DICOM:')
         for tmp in candidateBall:
             self.logUI.info(tmp)
         self.logUI.info('get test ball:')
@@ -2043,17 +2060,17 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             if flagePair == True:
                 "The ball positions are paired"
                 self.dcmTagSAT.update({"regBall": (numpy.array(ball)*[1, 1, -1])})
-                self.logUI.info('get registration balls:')
+                self.logUI.info('get registration balls of SAT DICOM:')
                 for tmp in self.dcmTagSAT.get("regBall"):
                     self.logUI.info(tmp)
                 "calculate error/difference of relative distance"
                 error = self.regFn.GetError(self.dcmTagSAT.get("regBall"))
-                logStr = 'registration error (min, max, mean): ' + str(error)
+                logStr = 'registration error of SAT DICOM (min, max, mean): ' + str(error)
                 self.logUI.info(logStr)
                 self.label_RegistrtionError_SAT.setText('Registration difference: {:.2f} mm'.format(error[2]))
                 "calculate transformation matrix"
                 regMatrix = self.regFn.TransformationMatrix(self.dcmTagSAT.get("regBall"))
-                self.logUI.info('get registration matrix: ')
+                self.logUI.info('get registration matrix of SAT DICOM: ')
                 for tmp in regMatrix:
                     self.logUI.info(tmp)
                 self.dcmTagSAT.update({"regMatrix": regMatrix})
@@ -2123,9 +2140,9 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         self.renderer3D = vtkRenderer()
         
-        self.actorBallR = vtkActor()
-        self.actorBallG = vtkActor()
-        self.actorBallB = vtkActor()
+        self.actorBallRed = vtkActor()
+        self.actorBallGreen = vtkActor()
+        self.actorBallBlue = vtkActor()
         
         
         
@@ -2181,20 +2198,20 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         # centerBallR = ([0, self.dicomBoundsRange[1], 0] - (currentValue[0,3:6])) * [-1, 1, -1]
         # centerBallG = ([0, self.dicomBoundsRange[1], 0] - (currentValue[1,3:6])) * [-1, 1, -1]
         # centerBallB = ([0, self.dicomBoundsRange[1], 0] - (currentValue[2,3:6])) * [-1, 1, -1]
-        centerBallR = currentValue[0,3:6]
-        centerBallG = currentValue[1,3:6]
-        centerBallB = currentValue[2,3:6]
+        centerBallRed = currentValue[0,3:6]
+        centerBallGreen = currentValue[1,3:6]
+        centerBallBlue = currentValue[2,3:6]
         radius = 10
-        self.CreateBallR(centerBallR, radius)
-        self.CreateBallG(centerBallG, radius)
-        self.CreateBallB(centerBallB, radius)
+        self.CreateBallRed(centerBallRed, radius)
+        self.CreateBallGreen(centerBallGreen, radius)
+        self.CreateBallBlue(centerBallBlue, radius)
         
         self.iren3D_L.Initialize()
         self.iren3D_L.Start()
         
         return
     
-    def CreateBallR(self, center, radius):
+    def CreateBallRed(self, center, radius):
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -2203,13 +2220,13 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallR.SetMapper(mapper)
-        self.actorBallR.GetProperty().SetColor(1, 0, 0)
+        self.actorBallRed.SetMapper(mapper)
+        self.actorBallRed.GetProperty().SetColor(1, 0, 0)
         
-        self.renderer3D.AddActor(self.actorBallR)
+        self.renderer3D.AddActor(self.actorBallRed)
         return
     
-    def CreateBallG(self, center, radius):
+    def CreateBallGreen(self, center, radius):
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -2218,13 +2235,13 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallG.SetMapper(mapper)
-        self.actorBallG.GetProperty().SetColor(0, 1, 0)
+        self.actorBallGreen.SetMapper(mapper)
+        self.actorBallGreen.GetProperty().SetColor(0, 1, 0)
         
-        self.renderer3D.AddActor(self.actorBallG)
+        self.renderer3D.AddActor(self.actorBallGreen)
         return
     
-    def CreateBallB(self, center, radius):
+    def CreateBallBlue(self, center, radius):
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -2233,10 +2250,10 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallB.SetMapper(mapper)
-        self.actorBallB.GetProperty().SetColor(0, 0, 1)
+        self.actorBallBlue.SetMapper(mapper)
+        self.actorBallBlue.GetProperty().SetColor(0, 0, 1)
         
-        self.renderer3D.AddActor(self.actorBallB)
+        self.renderer3D.AddActor(self.actorBallBlue)
         return
     
     def DisplayImage(self, value):
@@ -2440,7 +2457,9 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         selectKey = self.keys[int(selectLabel)-1,:]
         # selectValue = self.candidateBall.get(tuple(selectKey))
         selectValue = self.candidateBallVTK.get(tuple(selectKey))
+        print("-------------------------------------------------------------------")
         print("selectLabel = ", selectLabel, ", \nkey = ", selectKey, ", \nvalue = ", selectValue)
+        print("-------------------------------------------------------------------")
         self.dcmTag.update({"selectedBallKey":selectKey})
         
         self.close()
@@ -2456,13 +2475,13 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
     def Cancel(self):
         self.close()
 
-class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form, DICOM):
-    def __init__(self, dcm, comboBox, scrollBar):
+class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DICOM):
+    def __init__(self, dcmTag, comboBox, scrollBar):
         super(SetPointSystem, self).__init__()
         self.setupUi(self)
 
-        "hint: self.dcmLow = dcmLow"
-        self.dcm = dcm
+        "hint: self.dcmTagLow = dcmTagLow"
+        self.dcmTag = dcmTag
         # self.dcmFn = DICOM()
         self.comboBox = comboBox
         if scrollBar < 1:
@@ -2473,131 +2492,306 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form, DICOM)
         self.flage = 0
 
     def DisplayImage(self):
-        self.pixel2Mm = self.dcm.get("pixel2Mm")
+        self.pixel2Mm = self.dcmTag.get("pixel2Mm")
         showSection = self.comboBox
-        imageRange = self.dcm.get("imageHuMm").shape
-        ww = self.dcm.get("ww")
-        wl = self.dcm.get("wl")
+        # imageRange = self.dcm.get("imageHuMm").shape
+        ww = self.dcmTag.get("ww")
+        wl = self.dcmTag.get("wl")
 
-        # if showSection == "Axial":
-        #     imageHu2D = self.dcm.get("imageHuMm")[int(self.scrollBar), :, :]
-        # elif showSection == "Coronal":
-        #     imageHu2D = self.dcm.get("imageHuMm")[:, imageRange[1] - int(self.scrollBar), :]
-        # elif showSection == "Sagittal":
-        #     imageHu2D = self.dcm.get("imageHuMm")[:, :, int(self.scrollBar)]
-        # else:
-        #     print("DisplayImage error / Set Point System error")
-        #     return
+        self.dicom_dir = self.dcmTag.get("folderDir")
+        self.reader = vtkDICOMImageReader()
+        self.reader.SetDirectoryName(self.dicom_dir)
+        self.reader.Update()
+        
+        self.vtkImage = self.reader.GetOutput()
+        self.vtkImage.SetOrigin(0, 0, 0)
+        self.imageDimensions = self.vtkImage.GetDimensions()
+        
+        windowLevelLookup = vtkWindowLevelLookupTable()
+        windowLevelLookup.Build()
+        windowLevelLookup.SetWindow(ww)
+        windowLevelLookup.SetLevel(wl)
+
+        self.mapColors = vtkImageMapToColors()
+        self.mapColors.SetInputConnection(self.reader.GetOutputPort())
+        self.mapColors.SetLookupTable(windowLevelLookup)
+        self.mapColors.Update()
+        
+        self.actor = vtkImageActor()
+        self.actor.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        
+        self.renderer = vtkRenderer()
+        self.renderer.SetBackground(.2, .3, .4)
+        
         if showSection == "Axial":
-            imageHu2D = self.dcm.get("imageVTKHu")[int(self.scrollBar), :, :]
+            self.cameraAxial = vtkCamera()
+            self.cameraAxial.SetViewUp(0, 1, 0)
+            self.cameraAxial.SetPosition(0, 0, 1)
+            self.cameraAxial.SetFocalPoint(0, 0, 0)
+            self.cameraAxial.ComputeViewPlaneNormal()
+            self.cameraAxial.ParallelProjectionOn()
+            
+            self.actor.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], int(self.scrollBar), int(self.scrollBar))
+            
+            self.renderer.AddActor(self.actor)
+            self.renderer.SetActiveCamera(self.cameraAxial)
         elif showSection == "Coronal":
-            imageHu2D = self.dcm.get("imageVTKHu")[:, int(self.scrollBar), :]
+            self.cameraCoronal = vtkCamera()
+            self.cameraCoronal.SetViewUp(0, 0, -1)
+            self.cameraCoronal.SetPosition(0, 1, 0)
+            self.cameraCoronal.SetFocalPoint(0, 0, 0)
+            self.cameraCoronal.ComputeViewPlaneNormal()
+            self.cameraCoronal.ParallelProjectionOn()
+            
+            self.actor.SetDisplayExtent(0, self.imageDimensions[0], int(self.scrollBar), int(self.scrollBar), 0, self.imageDimensions[2])
+            
+            self.renderer.AddActor(self.actor)
+            self.renderer.SetActiveCamera(self.cameraCoronal)
         elif showSection == "Sagittal":
-            imageHu2D = self.dcm.get("imageVTKHu")[:, :, int(self.scrollBar)]
+            self.cameraSagittal = vtkCamera()
+            self.cameraSagittal.SetViewUp(0, 0, -1)
+            self.cameraSagittal.SetPosition(1, 0, 0)
+            self.cameraSagittal.SetFocalPoint(0, 0, 0)
+            self.cameraSagittal.ComputeViewPlaneNormal()
+            self.cameraSagittal.ParallelProjectionOn()
+            
+            self.actor.SetDisplayExtent(int(self.scrollBar), int(self.scrollBar), 0, self.imageDimensions[1], 0, self.imageDimensions[2])
+            
+            self.renderer.AddActor(self.actor)
+            self.renderer.SetActiveCamera(self.cameraSagittal)
         else:
             print("DisplayImage error / Set Point System error")
             return
-        
-        cv2.imshow('imageHu2D',imageHu2D)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        
-        
-        
-        if imageHu2D.shape[0] != 0:
-            # imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, ww, wl)
-            imageHu2D_ = self.GetGrayImg(imageHu2D, ww, wl)
-            self.imgHeight, self.imgWidth = imageHu2D_.shape
-            gray = numpy.uint8(imageHu2D_)
-            self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            "update and display ui"
-            self.UpdateImage()
-        else:
-            print("DisplayImage error / Set Point System show img error")
+            
+        self.renderer.ResetCamera()
+        self.qvtkWidget.GetRenderWindow().AddRenderer(self.renderer)
+        self.iren = self.qvtkWidget.GetRenderWindow().GetInteractor()
+        self.istyle = SetPointInteractorStyle(self)
+        self.pick_point = self.iren.SetInteractorStyle(self.istyle)
 
-    def UpdateImage(self):
-        "update and display ui"
-        bytesPerline = 3 * self.imgWidth
-        self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
-        self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-        "GetClickedPosition don't + ()), it could create error below: "
-        "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
-        self.label_img.mousePressEvent = self.GetClickedPosition
+        self.iren.Initialize()
+        self.iren.Start()
+        
+        "save point"
+        
         return
+        
+    #     # if showSection == "Axial":
+    #     #     imageHu2D = self.dcm.get("imageHuMm")[int(self.scrollBar), :, :]
+    #     # elif showSection == "Coronal":
+    #     #     imageHu2D = self.dcm.get("imageHuMm")[:, imageRange[1] - int(self.scrollBar), :]
+    #     # elif showSection == "Sagittal":
+    #     #     imageHu2D = self.dcm.get("imageHuMm")[:, :, int(self.scrollBar)]
+    #     # else:
+    #     #     print("DisplayImage error / Set Point System error")
+    #     #     return
+    #     if showSection == "Axial":
+    #         imageHu2D = self.dcm.get("imageVTKHu")[int(self.scrollBar), :, :]
+    #     elif showSection == "Coronal":
+    #         imageHu2D = self.dcm.get("imageVTKHu")[:, int(self.scrollBar), :]
+    #     elif showSection == "Sagittal":
+    #         imageHu2D = self.dcm.get("imageVTKHu")[:, :, int(self.scrollBar)]
+    #     else:
+    #         print("DisplayImage error / Set Point System error")
+    #         return
+        
+    #     cv2.imshow('imageHu2D',imageHu2D)
+    #     cv2.waitKey(0)
+    #     cv2.destroyAllWindows()
+        
+        
+        
+    #     if imageHu2D.shape[0] != 0:
+    #         # imageHu2D_ = self.dcmFn.GetGrayImg(imageHu2D, ww, wl)
+    #         imageHu2D_ = self.GetGrayImg(imageHu2D, ww, wl)
+    #         self.imgHeight, self.imgWidth = imageHu2D_.shape
+    #         gray = numpy.uint8(imageHu2D_)
+    #         self.gray3Channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    #         "update and display ui"
+    #         self.UpdateImage()
+    #     else:
+    #         print("DisplayImage error / Set Point System show img error")
 
-    def GetClickedPosition(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
-        showSection = self.comboBox
+    # def UpdateImage(self):
+    #     "update and display ui"
+    #     bytesPerline = 3 * self.imgWidth
+    #     self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
+    #     self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
+    #     "GetClickedPosition don't + ()), it could create error below: "
+    #     "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
+    #     self.label_img.mousePressEvent = self.GetClickedPosition
+    #     return
 
-        self.flage = self.SavePoints(x, y, showSection, self.scrollBar)
-        if self.flage == 1:
-            "green"
-            color = (0, 255, 0)
-            self.drawPoint(x, y, color)
-            self.UpdateImage()
-        elif self.flage == 2:
-            "red"
-            color = (0, 0, 255)
-            self.drawPoint(x, y, color)
-            self.UpdateImage()
+    # def GetClickedPosition(self, event):
+    #     x = event.pos().x()
+    #     y = event.pos().y()
+    #     showSection = self.comboBox
 
-    def drawPoint(self, x, y, color):
-        point = (int(x), int(y))
-        point_size = 1
-        thickness = 4
-        cv2.circle(self.gray3Channel, point, point_size, color, thickness)
-        return
+        # self.flage = self.SavePoints(x, y, showSection, self.scrollBar)
+        # if self.flage == 1:
+        #     "green"
+        #     color = (0, 255, 0)
+        #     # self.drawPoint(x, y, color)
+        #     # self.UpdateImage()
+        # elif self.flage == 2:
+        #     "red"
+        #     color = (0, 0, 255)
+    #         self.drawPoint(x, y, color)
+    #         self.UpdateImage()
 
-    def SavePoints(self, x, y, showSection, showSlice):
-        if numpy.array(self.dcm.get("selectedPoint")).shape[0] >= 2:
-            QMessageBox.critical(self, "error", "there are already selected 2 points")
-            return 3
-        elif numpy.array(self.dcm.get("selectedPoint")).shape[0] == 0:
-            if showSection == "Axial":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, y, showSlice])])}) #*[1, 1, -1]])})
-                self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
-                self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-            elif showSection == "Coronal":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([x, showSlice, y])])}) #*[1, 1, -1]])})
-                self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
-                self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-            elif showSection == "Sagittal":
-                self.dcm.update({"selectedPoint": numpy.array([numpy.array([showSlice, x, y])])}) #*[1, 1, -1]])})
-                self.dcm.update({"sectionTag":numpy.array([self.comboBox])})
-                self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-            else:
-                print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 0")
-            return 1
-        elif numpy.array(self.dcm.get("selectedPoint")).shape[0] == 1:
-            if showSection == "Axial":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, y, showSlice]), 0) #*[1, 1, -1], 0)
-                self.dcm.update({"selectedPoint": tmp})
-                tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
-                self.dcm.update({"sectionTag":tmpTag})
-                self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-            elif showSection == "Coronal":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([x, showSlice, y]), 0) #*[1, 1, -1], 0)
-                self.dcm.update({"selectedPoint": tmp})
-                tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
-                self.dcm.update({"sectionTag":tmpTag})
-                self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-            elif showSection == "Sagittal":
-                tmp = numpy.insert(self.dcm.get("selectedPoint"), 1, numpy.array([showSlice, x, y]), 0) #*[1, 1, -1], 0)
-                self.dcm.update({"selectedPoint": tmp})
-                tmpTag = numpy.insert(self.dcm.get("sectionTag"),1,self.comboBox)
-                self.dcm.update({"sectionTag":tmpTag})
-                self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-            else:
-                print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 1")
-            self.dcm.update({"flageSelectedPoint": True})
-            return 2
-        else:
-            print("GetClickedPosition error / Set Point System error / else")
-            return 0
+    # def drawPoint(self, x, y, color):
+    #     point = (int(x), int(y))
+    #     point_size = 1
+    #     thickness = 4
+    #     cv2.circle(self.gray3Channel, point, point_size, color, thickness)
+    #     return
+
+    # def SavePoints(self, x, y, showSection, showSlice):
+    #     if numpy.array(self.dcmTag.get("selectedPoint")).shape[0] >= 2:
+    #         QMessageBox.critical(self, "error", "there are already selected 2 points")
+    #         return 3
+    #     elif numpy.array(self.dcmTag.get("selectedPoint")).shape[0] == 0:
+    #         if showSection == "Axial":
+    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([x, y, showSlice])])}) #*[1, 1, -1]])})
+    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
+    #         elif showSection == "Coronal":
+    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([x, showSlice, y])])}) #*[1, 1, -1]])})
+    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
+    #         elif showSection == "Sagittal":
+    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([showSlice, x, y])])}) #*[1, 1, -1]])})
+    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
+    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
+    #         else:
+    #             print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 0")
+    #         return 1
+    #     elif numpy.array(self.dcmTag.get("selectedPoint")).shape[0] == 1:
+    #         if showSection == "Axial":
+    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([x, y, showSlice]), 0) #*[1, 1, -1], 0)
+    #             self.dcmTag.update({"selectedPoint": tmp})
+    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
+    #             self.dcmTag.update({"sectionTag":tmpTag})
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
+    #         elif showSection == "Coronal":
+    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([x, showSlice, y]), 0) #*[1, 1, -1], 0)
+    #             self.dcmTag.update({"selectedPoint": tmp})
+    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
+    #             self.dcmTag.update({"sectionTag":tmpTag})
+    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
+    #         elif showSection == "Sagittal":
+    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([showSlice, x, y]), 0) #*[1, 1, -1], 0)
+    #             self.dcmTag.update({"selectedPoint": tmp})
+    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
+    #             self.dcmTag.update({"sectionTag":tmpTag})
+    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
+    #         else:
+    #             print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 1")
+    #         self.dcmTag.update({"flageSelectedPoint": True})
+    #         return 2
+    #     else:
+    #         print("GetClickedPosition error / Set Point System error / else")
+    #         return 0
 
     def okAndClose(self):
         self.close()
+
+class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
+    def __init__(self, setPointWindow):
+        self.setPointWindow = setPointWindow
+        self.pick_point = None
+        
+        self.actorBallRed = vtkActor()
+        self.actorBallGreen = vtkActor()
+        
+        self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
+        self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
+        
+    def right_button_press_event(self, obj, event):
+        pass
+        return
+    
+    def left_button_press_event(self, obj, event):
+        # print('left_button_press')
+        
+        "Get the location of the click (in window coordinates)"
+        points = self.GetInteractor().GetEventPosition()
+        # print(points)
+        
+        picker = vtkCellPicker()
+        picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
+        pick_point = picker.GetPickPosition()
+        
+        if picker.GetCellId() != -1:
+            # print("Picked point position:", pick_point)
+            
+            if numpy.array(self.setPointWindow.dcmTag.get("selectedPoint")).shape[0] >= 2:
+                QMessageBox.critical(self.setPointWindow, "error", "there are already selected 2 points")
+                return
+            elif numpy.array(self.setPointWindow.dcmTag.get("selectedPoint")).shape[0] == 0:
+                self.setPointWindow.dcmTag.update({"selectedPoint":numpy.array([numpy.array(pick_point)])})
+                flage = 1
+            elif numpy.array(self.setPointWindow.dcmTag.get("selectedPoint")).shape[0] == 1:
+                tmpPoint = numpy.insert(self.setPointWindow.dcmTag.get("selectedPoint"), 1, pick_point, 0)
+                self.setPointWindow.dcmTag.update({"selectedPoint": tmpPoint})
+                self.setPointWindow.dcmTag.update({"flageSelectedPoint": True})
+                flage = 2
+            else:
+                print("GetClickedPosition error / Set Point System error / else")
+                return
+            self.DrawPoint(pick_point, flage)
+            
+        else:
+            print("picker.GetCellId() = -1")
+        "return pick_point in mm"
+        return pick_point
+            
+    def DrawPoint(self, pick_point, flage):
+        radius = 3.5
+        if flage == 1:
+            "green"
+            # color = (0, 255, 0)
+            self.CreateBallGreen(pick_point, radius)
+        elif flage == 2:
+            "red"
+            # color = (0, 0, 255)
+            self.CreateBallRed(pick_point, radius)
+    
+    def CreateBallGreen(self, pick_point, radius):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(pick_point)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorBallGreen.SetMapper(mapper)
+        self.actorBallGreen.GetProperty().SetColor(0, 1, 0)
+        
+        self.setPointWindow.renderer.AddActor(self.actorBallGreen)
+        self.setPointWindow.iren.Initialize()
+        self.setPointWindow.iren.Start()
+        return
+    
+    def CreateBallRed(self, pick_point, radius):
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(pick_point)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.actorBallRed.SetMapper(mapper)
+        self.actorBallRed.GetProperty().SetColor(1, 0, 0)
+        
+        self.setPointWindow.renderer.AddActor(self.actorBallRed)
+        self.setPointWindow.iren.Initialize()
+        self.setPointWindow.iren.Start()
+        return
+    
+    # def CreateBallGreen(self, pick_point):
 
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):
@@ -2628,7 +2822,10 @@ class MyInteractorStyle3D(vtkInteractorStyleTrackballCamera):
         
     def right_button_press_event(self, obj, event):
         return
-    
+
+
+
+
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
