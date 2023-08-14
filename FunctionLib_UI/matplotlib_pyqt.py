@@ -54,7 +54,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             # self.tabWidget.setCurrentWidget(self.tabWidget_Low)
             self.tabWidget.setCurrentWidget(self.tabWidget_Dynamic)
 
-            self.PlanningPath = []        
+            self.PlanningPath = []
 
             "initialize dcm Low"
             self.dcmTagLow = {}
@@ -65,7 +65,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"selectedBall": []})
             self.dcmTagLow.update({"regBall": []})
             self.dcmTagLow.update({"flageSelectedBall": False})
-            self.dcmTagLow.update({"candidateBall": []})
+            # self.dcmTagLow.update({"candidateBall": []})
             self.dcmTagLow.update({"selectedBallKey": []})
             "set point"
             self.dcmTagLow.update({"selectedPoint": []})
@@ -83,7 +83,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh.update({"selectedBall": []})
             self.dcmTagHigh.update({"regBall": []})
             self.dcmTagHigh.update({"flageSelectedBall": False})
-            self.dcmTagHigh.update({"candidateBall": []})
+            # self.dcmTagHigh.update({"candidateBall": []})
             self.dcmTagHigh.update({"selectedBallKey": []})
             "set point"
             self.dcmTagHigh.update({"selectedPoint": []})
@@ -140,48 +140,88 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print("Initial System Error - UI")
             print(repr(e))
         """"""
-        try:
-            "robot control initial"
-            MOTORSUBFUNCTION.__init__(self)
-            global g_homeStatus
-            g_homeStatus = False
-            self.homeStatus = g_homeStatus
-            print('initial main robot control')
-        except:
-            print("Initial System Error - robot control")
-        try:
-            "Line Laser initial"
-            LineLaser.__init__(self)
-            LineLaser.TriggerSetting(self)
-            # self.recordBreathingBase = False        
+        # try:
+        #     "robot control initial"
+        #     MOTORSUBFUNCTION.__init__(self)
+        #     global g_homeStatus
+        #     g_homeStatus = False
+        #     self.homeStatus = g_homeStatus
+        #     print('initial main robot control')
+        # except:
+        #     print("Initial System Error - robot control")
+        # try:
+        #     "Line Laser initial"
+        #     LineLaser.__init__(self)
+        #     LineLaser.TriggerSetting(self)
+        #     # self.recordBreathingBase = False        
             
-            "Laser Button Color Initialization"
-            # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+        #     "Laser Button Color Initialization"
+        #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             
-            "Laser Button Disable Setting"
-            self.Button_StartLaserDisplay.setEnabled(True)
-            self.Button_StopLaserDisplay.setEnabled(False)
-            self.Button_RecordCycle.setEnabled(False)
-            self.Button_StopRecording.setEnabled(False)
-            self.Button_StartTracking.setEnabled(False)
-            self.Button_StopLaserTracking.setEnabled(False)
-            self.Button_Accuracy.setEnabled(False)
+        #     "Laser Button Disable Setting"
+        #     self.Button_StartLaserDisplay.setEnabled(True)
+        #     self.Button_StopLaserDisplay.setEnabled(False)
+        #     self.Button_RecordCycle.setEnabled(False)
+        #     self.Button_StopRecording.setEnabled(False)
+        #     self.Button_StartTracking.setEnabled(False)
+        #     self.Button_StopLaserTracking.setEnabled(False)
+        #     self.Button_Accuracy.setEnabled(False)
             
-            self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
-            self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
+        #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
-            "LCD setting"
-            self.breathingRatio.setDecMode()
-            print('initial main Line Laser')
-        except:
-            print("Initial System Error - Line Laser")
+        #     "LCD setting"
+        #     self.breathingRatio.setDecMode()
+        #     print('initial main Line Laser')
+        # except:
+        #     print("Initial System Error - Line Laser")
         """"""
 
+    def closeEvent(self, event):
+        print("close~~~~~~~~")
+        try:
+            # 移除VTK道具
+            # self.irenSagittal_L.RemoveAllViewProps() 
+            self.dicomLow.rendererSagittal.RemoveAllViewProps()
+            self.dicomLow.rendererCoronal.RemoveAllViewProps()
+            self.dicomLow.rendererAxial.RemoveAllViewProps()
+            self.dicomLow.renderer3D.RemoveAllViewProps()
+            # 關閉VTK交互器
+            # self.irenSagittal_L.close()
+            self.qvtkWidget_Sagittal_L.close()
+            self.qvtkWidget_Coronal_L.close()
+            self.qvtkWidget_Axial_L.close()
+            self.qvtkWidget_3D_L.close()
+            print("remove dicomLow VTk success")
+        except Exception as e:
+            print(e)
+            print("remove dicomLow VTk error")
+        try:
+            # 移除VTK道具
+            self.dicomHigh.rendererSagittal.RemoveAllViewProps()
+            self.dicomHigh.rendererCoronal.RemoveAllViewProps()
+            self.dicomHigh.rendererAxial.RemoveAllViewProps()
+            self.dicomHigh.renderer3D.RemoveAllViewProps()
+            # 關閉VTK交互器
+            self.qvtkWidget_Sagittal_H.close()
+            self.qvtkWidget_Coronal_H.close()
+            self.qvtkWidget_Axial_H.close()
+            self.qvtkWidget_3D_H.close()
+            print("remove dicomHigh VTk success")
+        except Exception as e:
+            print(e)
+            print("remove dicomHigh VTk error")
+        try:
+            # 接受關閉事件
+            event.accept()
+        except Exception as e:
+            print(e)
+    
     def HomeProcessing(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
         print("Home processing is done!")
@@ -495,7 +535,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"selectedBall": []})
         self.dcmTagLow.update({"regBall": []})
         self.dcmTagLow.update({"flageSelectedBall": False})
-        self.dcmTagLow.update({"candidateBall": []})
+        # self.dcmTagLow.update({"candidateBall": []})
         self.dcmTagLow.update({"selectedBallKey": []})
         "set point"
         self.dcmTagLow.update({"selectedPoint": []})
@@ -795,7 +835,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"selectedBall": []})
         self.dcmTagHigh.update({"regBall": []})
         self.dcmTagHigh.update({"flageSelectedBall": False})
-        self.dcmTagHigh.update({"candidateBall": []})
+        # self.dcmTagHigh.update({"candidateBall": []})
         self.dcmTagHigh.update({"selectedBallKey": []})
         "set point"
         self.dcmTagHigh.update({"selectedPoint": []})
@@ -1043,12 +1083,20 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagLow.update({"regBall": []})
                 self.dcmTagLow.update({"flageSelectedBall": False})
                 
-                self.dcmTagLow.update({"candidateBall": []})
+                # self.dcmTagLow.update({"candidateBall": []})
                 self.dcmTagLow.update({"selectedBallKey": []})
                 self.dcmTagLow.update({"regMatrix": []})
                 # self.dcmTagLow.update({"sectionTag": []})
                 self.dcmTagLow.update({"selectedPoint": []})
                 self.dcmTagLow.update({"flageSelectedPoint": False})
+                
+                "UI"
+                self.label_Error_L.setText('Registration difference: mm')
+                self.Button_ShowRegistration_L.setEnabled(False)
+                self.comboBox_L.setEnabled(False)
+                self.Button_SetPoint_L.setEnabled(False)
+                self.Button_ShowPoint_L.setEnabled(False)
+                
                 "VTK"
                 try:
                     self.dicomLow.RemovePoint()
@@ -1269,7 +1317,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.ui_SP.show()
         QApplication.processEvents()
-        if self.dcmTagHigh.get("regBall") != []: # or self.dcmTagHigh.get("candidateBall") != []:
+        if self.dcmTagHigh.get("regBall") != []:
             self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
@@ -1277,12 +1325,20 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dcmTagHigh.update({"regBall": []})
                 self.dcmTagHigh.update({"flageSelectedBall": False})
                 
-                self.dcmTagHigh.update({"candidateBall": []})
+                # self.dcmTagHigh.update({"candidateBall": []})
                 self.dcmTagHigh.update({"selectedBallKey": []})
                 self.dcmTagHigh.update({"regMatrix": []})
                 # self.dcmTagHigh.update({"sectionTag": []})
                 self.dcmTagHigh.update({"selectedPoint": []})
                 self.dcmTagHigh.update({"flageSelectedPoint": False})
+                
+                "UI"
+                self.label_Error_H.setText('Registration difference: mm')
+                self.Button_ShowRegistration_H.setEnabled(False)
+                self.comboBox_H.setEnabled(False)
+                self.Button_SetPoint_H.setEnabled(False)
+                self.Button_ShowPoint_H.setEnabled(False)
+                
                 "VTK"
                 try:
                     self.dicomHigh.RemovePoint()
@@ -2360,7 +2416,7 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
             
     def DrawPoint(self, pick_point, flage):
         """draw point"""
-        radius = 3.5
+        radius = 2
         if flage == 1:
             "entry point"
             "green"

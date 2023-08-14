@@ -365,8 +365,10 @@ class REGISTRATION(DICOM):
             [numpy.min(error),numpy.max(error),numpy.mean(error)] (_list_): [min error, max error, mean error]
         """
         error = []
-        shortSide = 140
-        longSide = 150
+        # shortSide = 140
+        # longSide = 150
+        shortSide = 30
+        longSide = 65
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error.append(abs(self.__GetNorm(ball[1]-ball[2])-hypotenuse))
         error.append(abs(self.__GetNorm(ball[0]-ball[1])-shortSide))
@@ -913,10 +915,10 @@ class REGISTRATION(DICOM):
         """
         result = []
         tmpDic = {}
-        # shortSide = 30
-        shortSide = 140
-        # longSide = 65
-        longSide = 150
+        # shortSide = 140
+        # longSide = 150
+        shortSide = 30
+        longSide = 65
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error = 1
         count = 0
@@ -1017,7 +1019,8 @@ class REGISTRATION(DICOM):
                 Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
             except Exception as e:
-                print(e)
+                # print(e)
+                pass
         try:
             ball = self.__IdentifyPoint(numpy.array(resultPoint))
         except:
