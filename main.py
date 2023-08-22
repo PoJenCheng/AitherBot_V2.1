@@ -9,6 +9,7 @@ sys.exit(app.exec_())
 
 # pyuic5 -o FunctionLib_UI/ui_matplotlib_pyqt.py FunctionLib_UI/ui_matplotlib_pyqt.ui
 # pyuic5 -o FunctionLib_UI/ui_coordinate_system.py FunctionLib_UI/ui_coordinate_system.ui
+# pyuic5 -o FunctionLib_UI/ui_coordinate_system_manual.py FunctionLib_UI/ui_coordinate_system_manual.ui
 # pyuic5 -o FunctionLib_UI/ui_set_point_system.py FunctionLib_UI/ui_set_point_system.ui
 # pyuic5 -o FunctionLib_UI/ui_processing.py FunctionLib_UI/ui_processing.ui
 # pyrcc5 -o images_rc.py images/images.qrc

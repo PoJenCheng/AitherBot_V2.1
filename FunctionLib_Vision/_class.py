@@ -15,6 +15,10 @@ from ._subFunction import *
 # noinspection PyUnresolvedReferences
 # import vtkmodules.vtkRenderingOpenGL2
 
+from vtkmodules.vtkImagingCore import vtkImageReslice
+import vtk.numpy_interface.dataset_adapter as dsa
+
+
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
 from vtkmodules.vtkImagingCore import vtkImageMapToColors
 from vtkmodules.vtkFiltersSources import vtkSphereSource
@@ -269,32 +273,33 @@ class DICOM():
         qimg = QImage(gray3Channel, imgWidth, imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
         return qimg
     
-    def TransformPointImage(self, imageTag, point):
-        """Transform pixel point to mm point in patient coordinates
+    # def TransformPointImage(self, imageTag, point):
+    #     """Transform pixel point to mm point in patient coordinates
 
-        Args:
-            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
-            point (_numpy.array, dtype=int_): pixel point (in CT image coordinates)
+    #     Args:
+    #         imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
+    #         point (_numpy.array, dtype=int_): pixel point (in CT image coordinates)
 
-        Returns:
-            point (_numpy.array_): Transformed Point (in patient coordinates)
-        """
-        ImageOrientationPatient = imageTag[point[2]-1].ImageOrientationPatient
-        ImagePositionPatient = imageTag[point[2]-1].ImagePositionPatient
-        PixelSpacing = imageTag[point[2]-1].PixelSpacing
+    #     Returns:
+    #         point (_numpy.array_): Transformed Point (in patient coordinates)
+    #     """
+    #     ImageOrientationPatient = imageTag[point[2]-1].ImageOrientationPatient
+    #     ImagePositionPatient = imageTag[point[2]-1].ImagePositionPatient
+    #     PixelSpacing = imageTag[point[2]-1].PixelSpacing
 
-        x = point[0]
-        y = point[1]
-        RowVector = ImageOrientationPatient[0:3]
-        ColumnVector = ImageOrientationPatient[3:6]
-        X = ImagePositionPatient[0] + x * PixelSpacing[0] * RowVector[0] + y * PixelSpacing[1] * ColumnVector[0]
-        Y = ImagePositionPatient[1] + x * PixelSpacing[0] * RowVector[1] + y * PixelSpacing[1] * ColumnVector[1]
-        Z = ImagePositionPatient[2] + x * PixelSpacing[0] * RowVector[2] + y * PixelSpacing[1] * ColumnVector[2]
+    #     x = point[0]
+    #     y = point[1]
+    #     RowVector = ImageOrientationPatient[0:3]
+    #     ColumnVector = ImageOrientationPatient[3:6]
+    #     X = ImagePositionPatient[0] + x * PixelSpacing[0] * RowVector[0] + y * PixelSpacing[1] * ColumnVector[0]
+    #     Y = ImagePositionPatient[1] + x * PixelSpacing[0] * RowVector[1] + y * PixelSpacing[1] * ColumnVector[1]
+    #     Z = ImagePositionPatient[2] + x * PixelSpacing[0] * RowVector[2] + y * PixelSpacing[1] * ColumnVector[2]
         
-        return numpy.array([X,Y,Z])
+    #     return numpy.array([X,Y,Z])
     
 "registration function"
-class REGISTRATION(DICOM):
+# class REGISTRATION(DICOM):
+class REGISTRATION():
     def __init__(self):
         self.PlanningPath = []
         return
@@ -904,7 +909,7 @@ class REGISTRATION(DICOM):
         
         return numpy.array(resultPoint)
 
-    def __IdentifyPoint(self, point):
+    def IdentifyPoint(self, point):
         """_summary_
 
         Args:
@@ -971,7 +976,7 @@ class REGISTRATION(DICOM):
                         tmpDic.update({tuple(p3):result})
         return tmpDic
             
-    def GetBall(self, imageHu, pixel2Mm, imageTag):
+    def GetBallAuto(self, imageHu, pixel2Mm, imageTag):
         """get ball center
 
         Args:
@@ -1007,10 +1012,24 @@ class REGISTRATION(DICOM):
         resultPoint = []
         for p in averagePoint:
             try:
-                pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
-                tmpPoint1 = self.TransformPointImage(imageTag, pTmp1)
-                pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
-                tmpPoint2 = self.TransformPointImage(imageTag, pTmp2)
+                # pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
+                # tmpPoint1 = self.__TransformPointImage(imageTag, pTmp1)
+                
+                pTmp1 = [(p[0]),(p[1]),int(p[2])]
+                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
+                
+                
+                
+                # pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
+                # tmpPoint2 = self.__TransformPointImage(imageTag, pTmp2)
+                
+                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
+                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
+                
+                
+                
+                
+                
                 X1 = int(p[2])
                 X2 = int(p[2])+1
                 Y1 = tmpPoint1[2]
@@ -1022,17 +1041,44 @@ class REGISTRATION(DICOM):
                 # print(e)
                 pass
         try:
-            ball = self.__IdentifyPoint(numpy.array(resultPoint))
+            ball = self.IdentifyPoint(numpy.array(resultPoint))
         except:
             ball = []
-        "如果ball有多組呢?"
+        print("-------------------------------------------------------------------")
+        print("ball: \n", ball)
+        print("-------------------------------------------------------------------")
+        
         if ball == {}:
             return False
         elif ball == []:
             return False
         else:
             return ball
-    
+
+    def __TransformPointImage(self, imageTag, point):
+        """Transform pixel point to mm point in patient coordinates
+
+        Args:
+            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
+            point (_numpy.array, dtype=int_): pixel point (in CT image coordinates)
+
+        Returns:
+            point (_numpy.array_): Transformed Point (in patient coordinates)
+        """
+        ImageOrientationPatient = imageTag[point[2]-1].ImageOrientationPatient
+        ImagePositionPatient = imageTag[point[2]-1].ImagePositionPatient
+        PixelSpacing = imageTag[point[2]-1].PixelSpacing
+
+        x = point[0]
+        y = point[1]
+        RowVector = ImageOrientationPatient[0:3]
+        ColumnVector = ImageOrientationPatient[3:6]
+        X = ImagePositionPatient[0] + x * PixelSpacing[0] * RowVector[0] + y * PixelSpacing[1] * ColumnVector[0]
+        Y = ImagePositionPatient[1] + x * PixelSpacing[0] * RowVector[1] + y * PixelSpacing[1] * ColumnVector[1]
+        Z = ImagePositionPatient[2] + x * PixelSpacing[0] * RowVector[2] + y * PixelSpacing[1] * ColumnVector[2]
+        
+        return numpy.array([X,Y,Z])
+
     def TransformPointVTK(self, imageTag, point):
         """Transform pixel point to mm point in patient coordinates
 
@@ -1056,6 +1102,97 @@ class REGISTRATION(DICOM):
         Z = ImagePositionPatient[2] + x * RowVector[2] + y * ColumnVector[2]
         
         return numpy.array([X,Y,Z])
+    
+    def GetBallManual(self, candidateBall, imageHu, pixel2Mm, reader):
+        """"""
+        
+        # imageHuMm = []
+        # if pixel2Mm[0] < 1:
+        #     for z in range(imageHu.shape[0]):
+        #         src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
+        #         imageHuMm.append(src_tmp)
+        # elif pixel2Mm[0] > 1:
+        #     for z in range(imageHu.shape[0]):
+        #         src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
+        #         imageHuMm.append(src_tmp)
+        # else:
+        #     pass
+        
+        # imageHuMm = numpy.array(imageHuMm)
+        
+        # rangeR = 20
+        # for point in candidateBall:
+        #     # imageROI = imageHuMm[int(point[2])-rangeR:int(point[2])+rangeR,int(point[1])-rangeR:int(point[1])+rangeR,int(point[0])-rangeR:int(point[0])+rangeR]
+        #     imageROI = imageHuMm[int(point[2])-rangeR:int(point[2])+rangeR,:,:]
+        #     imageROIThr = self.ThresholdFilter(imageROI)
+        #     src_tmp = numpy.uint8(imageROIThr)
+            
+        #     for z in range(src_tmp.shape[0]):
+        #         cv2.imshow("imageROI[z,:,:]", numpy.uint8(imageROI[z,:,:]))
+        #         cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
+        #         cv2.waitKey(0)
+                
+        #     cv2.destroyAllWindows()
+        
+        # 設定感興趣的範圍中心和大小
+        # center = [201, 491, 567]
+        # center = [194.38247251113143, 480.45856110201714, 379.8900094628334]
+        # center = [201, 491, 181]
+        # center = [reader.GetOutput().GetDimensions()[0]-201, reader.GetOutput().GetDimensions()[1]-491, reader.GetOutput().GetDimensions()[2]-567]
+        # center = candidateBall[0]
+        for center in candidateBall:
+            # size = 40
+            # dims = [size+1, size+1, 1]
+            dims = [reader.GetOutput().GetDimensions()[0], reader.GetOutput().GetDimensions()[1], 1]
+            # output_extent = [
+            #     int(center[0]) - size/2,
+            #     int(center[0]) + size/2,
+            #     int(center[1]) - size/2,
+            #     int(center[1]) + size/2,
+            #     int(center[2]),
+            #     int(center[2])
+            #     # 0,
+            #     # reader.GetOutput().GetDimensions()[2] - 1
+            # ]
+            # 創建vtkImageReslice並設置ROI範圍
+            reslice = vtkImageReslice()
+            reslice.SetInputConnection(reader.GetOutputPort())
+            # reslice.SetOutputExtent(int(output_extent))
+            reslice.SetOutputExtent(
+                # int(center[0] - size/2),
+                # int(center[0] + size/2),
+                0,
+                int(reader.GetOutput().GetDimensions()[0] - 1),
+                # int(center[1] - size/2),
+                # int(center[1] + size/2),
+                0,
+                int(reader.GetOutput().GetDimensions()[1] - 1),
+                # int(center[2]/pixel2Mm[2]),
+                # int(center[2]/pixel2Mm[2])
+                10,
+                10
+                # 0,
+                # int(reader.GetOutput().GetDimensions()[2] - 1)
+            )
+            z = center[2]/pixel2Mm[2]
+            print("z = ", z)
+            reslice.Update()
+            # 將VTK影像轉換成NumPy陣列
+            # vtk_array = dsa.WrapDataObject(reslice.GetOutput())
+            # numpy_array = vtk_array.PointData['Scalars_']
+            output_data = reslice.GetOutput()
+            numpy_array = vtk_to_numpy(output_data.GetPointData().GetScalars()).reshape(dims[2], dims[1], dims[0])
+            # 將NumPy陣列轉換成OpenCV影像
+            # src_tmp = numpy.uint8(numpy_array)
+            # src_tmp = cv2.cvtColor(numpy_array, cv2.COLOR_GRAY2BGR)
+            src_tmp = numpy_array.astype(numpy.uint8)
+            
+            for z in range(src_tmp.shape[0]):
+                # cv2.imshow("imageROI[z,:,:]", numpy.uint8(imageROI[z,:,:]))
+                cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
+                cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        return
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
