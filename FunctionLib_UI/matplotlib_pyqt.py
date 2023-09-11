@@ -140,6 +140,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         except Exception as e:
             print("Initial System Error - UI")
             print(repr(e))
+            QMessageBox.critical(self, "error", "Initial System Error - UI")
         """"""
         try:
             "robot control initial"
@@ -150,6 +151,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print('initial main robot control')
         except:
             print("Initial System Error - robot control")
+            QMessageBox.critical(self, "error", "Initial System Error - robot control")
         try:
             "Line Laser initial"
             LineLaser.__init__(self)
@@ -181,6 +183,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print('initial main Line Laser')
         except:
             print("Initial System Error - Line Laser")
+            QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
         """"""
 
     def closeEvent(self, event):
@@ -1258,6 +1261,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             for tmp in self.dcmTagLow.get("selectedPoint"):
                 print(tmp)
                 self.logUI.info(tmp)
+                sys.stdout.flush()
             print("-------------------------------------------------------------------")
             
             self.dcmTagLow.update({"flageShowPointButton": True})
