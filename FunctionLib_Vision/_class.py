@@ -9,6 +9,7 @@ import math
 import itertools
 from PyQt5.QtGui import *
 from ._subFunction import *
+import copy
 
 # noinspection PyUnresolvedReferences
 # import vtkmodules.vtkInteractionStyle
@@ -487,6 +488,19 @@ class REGISTRATION():
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
             if circles is not None and centroid is not None:
+                # origin_image_plus = copy.deepcopy(src_tmp[z,:,:])
+                # for c in circles[0]:
+                #     x,y,r = c
+                #     center = (int(x), int(y))
+                #     cv2.circle(black_image, center, int(r), (256/2, 0, 0),1)
+                #     cv2.circle(black_image, center, 2, (256/2, 0, 0),2)
+                #     cv2.circle(origin_image_plus, center, int(r), (256/2, 0, 0),1)
+                #     cv2.circle(origin_image_plus, center, 2, (256/2, 0, 0),2)
+                # cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
+                # cv2.imshow("drawContours black_image_2", black_image_2)
+                # cv2.imshow("HoughCircles black_image", black_image)
+                # cv2.imshow("origin_image_plus", origin_image_plus)
+                # cv2.waitKey(0)
                 "Intersection"
                 "centroid = group of Centroid"
                 "circles = group of hough circle"
@@ -499,6 +513,7 @@ class REGISTRATION():
                             Pz = z
                             Pr = j[2]
                             resultCentroid_xy.append([Px,Py,Pz,Pr])
+            
             cv2.destroyAllWindows()
         return resultCentroid_xy
   
@@ -627,9 +642,9 @@ class REGISTRATION():
                                                 cv2.CHAIN_APPROX_SIMPLE)
             "create an all black picture to draw contour"
             shape = (src_tmp.shape[0], src_tmp.shape[1], 1)
-            black_image_1 = numpy.zeros(shape, numpy.uint8)
+            black_image = numpy.zeros(shape, numpy.uint8)
             black_image_2 = numpy.zeros(shape, numpy.uint8)
-            cv2.drawContours(black_image_1,contours,-1,(256/2, 0, 0),1)
+            # cv2.drawContours(black_image_1,contours,-1,(256/2, 0, 0),1)
             "use contour to find centroid"
             centroid = []
             tmpContours = []
@@ -643,32 +658,28 @@ class REGISTRATION():
                         tmpContours.append(c)
             cv2.drawContours(black_image_2,tmpContours,-1,(256/2, 0, 0),1)
             "use Hough Circles to find radius and center of circle"
-            circles_1 = cv2.HoughCircles(black_image_1, cv2.HOUGH_GRADIENT, 1, 10,
+            circles = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
-            if circles_1 is not None and centroid is not None:
+            if circles is not None and centroid is not None:
+                # origin_image_plus = copy.deepcopy(src_tmp[:,:,x])
+                # cv2.imshow("src_tmp[:,:,x]", origin_image_plus)
+                # for c in circles[0]:
+                #     x,y,r = c
+                #     center = (int(x), int(y))
+                #     cv2.circle(black_image, center, int(r), (256/2, 0, 0),1)
+                #     cv2.circle(black_image, center, 2, (256/2, 0, 0),2)
+                #     cv2.circle(origin_image_plus, center, int(r), (256/2, 0, 0),1)
+                #     cv2.circle(origin_image_plus, center, 2, (256/2, 0, 0),2)
+                # cv2.imshow("drawContours black_image_2", black_image_2)
+                # cv2.imshow("HoughCircles black_image", black_image)
+                # cv2.imshow("origin_image_plus", origin_image_plus)
+                # cv2.waitKey(0)
                 "Intersection"
                 "centroid = group of Centroid"
                 "circles = group of hough circle"
                 for i in centroid:
-                    for j in circles_1[0, :]:
-                        distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
-                        if distance < 2:
-                            Px = x
-                            Py = i[0]
-                            Pz = i[1]
-                            Pr = j[2]
-                            resultCentroid_yz.append([Px,Py,Pz,Pr])
-                
-            circles_2 = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
-                                        param1=low_threshold*ratio, param2=low_threshold,
-                                        minRadius=minRadius, maxRadius=maxRadius)
-            if circles_2 is not None and centroid is not None:
-                "Intersection"
-                "centroid = group of Centroid"
-                "circles = group of hough circle"
-                for i in centroid:
-                    for j in circles_2[0, :]:
+                    for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
                         if distance < 2:
                             Px = x
@@ -747,6 +758,7 @@ class REGISTRATION():
                                                 cv2.CHAIN_APPROX_SIMPLE)
             "create an all black picture to draw contour"
             shape = (src_tmp.shape[0], src_tmp.shape[2], 1)
+            black_image = numpy.zeros(shape, numpy.uint8)
             black_image_2 = numpy.zeros(shape, numpy.uint8)
             "use contour to find centroid"
             centroid = []
@@ -925,7 +937,7 @@ class REGISTRATION():
         shortSide = 30
         longSide = 65
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
-        error = 1
+        error = 1.5
         count = 0
         "計算三個點之間的距離"
         for p1, p2, p3 in itertools.combinations(point, 3):
@@ -934,6 +946,11 @@ class REGISTRATION():
             d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
             d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
             d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
+            
+            # print("d12 = ", d12)
+            # print("d23 = ", d23)
+            # print("d31 = ", d31)
+            
             "檢查邊長是否符合條件"
             if d12 > shortSide-error and d12 < shortSide+error:
                 if d23 > longSide-error and d23 < longSide+error:
@@ -986,19 +1003,45 @@ class REGISTRATION():
         Returns:
             point (_numpy.array_): point, numpy.array([[Px,Py,Pz,Pr]...])
         """
-        imageHuMm = []
-        if pixel2Mm[0] < 1:
+        print("pixel2Mm = ", pixel2Mm)
+        imageHuMm_tmp_xyz = []
+        if pixel2Mm[0] < 1 and pixel2Mm[1] < 1:
             for z in range(imageHu.shape[0]):
                 src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
-                imageHuMm.append(src_tmp)
-        elif pixel2Mm[0] > 1:
+                imageHuMm_tmp_xyz.append(src_tmp)
+        elif pixel2Mm[0] > 1 and pixel2Mm[1] > 1:
             for z in range(imageHu.shape[0]):
                 src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
-                imageHuMm.append(src_tmp)
+                imageHuMm_tmp_xyz.append(src_tmp)
         else:
             pass
+        imageHuMm_tmp_xyz = numpy.array(imageHuMm_tmp_xyz)
+        imageHuMm_tmp = []
+        if pixel2Mm[2] < 1:
+            for y in range(imageHuMm_tmp_xyz.shape[1]):
+                src_tmp = cv2.resize(imageHuMm_tmp_xyz[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation=cv2.INTER_AREA)
+                imageHuMm_tmp.append(src_tmp)
+            imageHuMm_tmp = numpy.array(imageHuMm_tmp)
+            imageHuMm = []
+            for z in range(imageHuMm_tmp.shape[1]):
+                imageHuMm.append(imageHuMm_tmp[:,z,:])
+            imageHuMm = numpy.array(imageHuMm)
+        elif pixel2Mm[2] > 1:
+            for y in range(imageHuMm_tmp_xyz.shape[2]):
+                src_tmp = cv2.resize(imageHuMm_tmp_xyz[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation=cv2.INTER_CUBIC)
+                imageHuMm_tmp.append(src_tmp)
+            imageHuMm_tmp = numpy.array(imageHuMm_tmp)
+            imageHuMm = []
+            for z in range(imageHuMm_tmp.shape[1]):
+                imageHuMm.append(imageHuMm_tmp[:,z,:])
+            imageHuMm = numpy.array(imageHuMm)
+        else:
+            # pass
+            imageHuMm = imageHuMm_tmp_xyz
+            imageHuMm = numpy.array(imageHuMm)
         
-        imageHuMm = numpy.array(imageHuMm)
+        
+        
         
         resultCentroid_xy = self.__FindBallXY(imageHuMm)
         dictionaryPoint = self.__ClassifyPointXY(resultCentroid_xy)
@@ -1006,6 +1049,13 @@ class REGISTRATION():
         dictionaryPoint = self.__ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
         resultCentroid_xz = self.__FindBallXZ(imageHuMm)
         dictionaryPoint = self.__ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
+        
+        pointMatrixSorted_xy = numpy.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
+        pointMatrixSorted_yz = numpy.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
+        pointMatrixSorted_xz = numpy.array(sorted(resultCentroid_xz, key=lambda tmp: (int(tmp[0]), int(tmp[2]), int(tmp[1]))))
+        # numpy.savetxt("pointMatrixSorted_xy 20230830.txt", pointMatrixSorted_xy, fmt = "%.8f")
+        # numpy.savetxt("pointMatrixSorted_yz 20230830.txt", pointMatrixSorted_yz, fmt = "%.8f")
+        # numpy.savetxt("pointMatrixSorted_xz 20230830.txt", pointMatrixSorted_xz, fmt = "%.8f")
         
         averagePoint = self.__AveragePoint(dictionaryPoint)
         
@@ -1026,17 +1076,18 @@ class REGISTRATION():
                 pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
                 tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-                
-                
-                
-                
-                X1 = int(p[2])
-                X2 = int(p[2])+1
+                X1 = int(p[2]) # pTmp1[2]
+                X2 = int(p[2])+1 # pTmp2[2]
                 Y1 = tmpPoint1[2]
                 Y2 = tmpPoint2[2]
                 X = p[2]
-                Pz = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
+                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+                
+                
+                
+                
+                
             except Exception as e:
                 # print(e)
                 pass
@@ -1048,12 +1099,13 @@ class REGISTRATION():
         print("ball: \n", ball)
         print("-------------------------------------------------------------------")
         
+        pointMatrixSorted = numpy.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         if ball == {}:
-            return False
+            return False, pointMatrixSorted
         elif ball == []:
-            return False
+            return False, pointMatrixSorted
         else:
-            return ball
+            return True, ball
 
     def __TransformPointImage(self, imageTag, point):
         """Transform pixel point to mm point in patient coordinates
@@ -1103,96 +1155,79 @@ class REGISTRATION():
         
         return numpy.array([X,Y,Z])
     
-    def GetBallManual(self, candidateBall, imageHu, pixel2Mm, reader):
-        """"""
+    def GetBallManual(self, candidateBall, pixel2Mm, answer, imageTag):
+        """
+        candidateBall numpy.array
+        imageHu "imageVTKHu" in pixel
         
-        # imageHuMm = []
-        # if pixel2Mm[0] < 1:
-        #     for z in range(imageHu.shape[0]):
-        #         src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
-        #         imageHuMm.append(src_tmp)
-        # elif pixel2Mm[0] > 1:
-        #     for z in range(imageHu.shape[0]):
-        #         src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
-        #         imageHuMm.append(src_tmp)
-        # else:
-        #     pass
+        """
+        # range_dimension = 20
+        # xmin = int(numpy.min(candidateBall[:,0])-range_dimension)
+        # xmax = int(numpy.max(candidateBall[:,0])+range_dimension)
+        # ymin = int(numpy.min(candidateBall[:,1])-range_dimension)
+        # ymax = int(numpy.max(candidateBall[:,1])+range_dimension)
+        # zmin = int(numpy.min(candidateBall[:,2])-range_dimension)
+        # zmax = int(numpy.max(candidateBall[:,2])+range_dimension)
         
-        # imageHuMm = numpy.array(imageHuMm)
+        # imageHuThr = self.ThresholdFilter(imageHu)
+        # src_tmp = numpy.uint8(imageHuThr)
+        # # cv2.imshow("imageHu[:,:,((zmax-zmin)/2)]", imageHu[:,:,int((zmax-zmin)/2)])
+        # # cv2.imshow("src_tmp[int(zmin+(zmax-zmin)/2),:,:]", src_tmp[int(zmin+(zmax-zmin)/2),:,:])
+        # # cv2.imshow("src_tmp[:,int(ymin+(ymax-ymin)/2),:]", src_tmp[:,int(ymin+(ymax-ymin)/2),:])
+        # # cv2.imshow("src_tmp[:,:,int(xmin+(xmax-xmin)/2)]", src_tmp[:,:,int(xmin+(xmax-xmin)/2)])
+        # for z in range(zmin,zmax):
+        #     cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
+        #     cv2.waitKey(1000)
+        # cv2.destroyAllWindows()
         
-        # rangeR = 20
-        # for point in candidateBall:
-        #     # imageROI = imageHuMm[int(point[2])-rangeR:int(point[2])+rangeR,int(point[1])-rangeR:int(point[1])+rangeR,int(point[0])-rangeR:int(point[0])+rangeR]
-        #     imageROI = imageHuMm[int(point[2])-rangeR:int(point[2])+rangeR,:,:]
-        #     imageROIThr = self.ThresholdFilter(imageROI)
-        #     src_tmp = numpy.uint8(imageROIThr)
-            
-        #     for z in range(src_tmp.shape[0]):
-        #         cv2.imshow("imageROI[z,:,:]", numpy.uint8(imageROI[z,:,:]))
-        #         cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
-        #         cv2.waitKey(0)
+        
+        # dim = candidateBall.shape[0]
+        dictionaryPoint = {}
+        for point in candidateBall:
+            dictionaryPoint.update({tuple(point):numpy.array([[]])})
+        for key, value in dictionaryPoint.items():
+            valueMatrix = []
+            for point in answer:
+                P1 = key
+                P2 = point
+                distanceXYZ = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1])+numpy.square(P1[2]-P2[2]))
+                if distanceXYZ < 15:
+                    valueMatrix.append(point)
+            dictionaryPoint.update({tuple(key):numpy.array(valueMatrix)})
+        
+        averagePoint = self.__AveragePoint(dictionaryPoint)
+        
+        resultPoint = []
+        for p in averagePoint:
+            try:
+                pTmp1 = [(p[0]),(p[1]),int(p[2])]
+                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
                 
-        #     cv2.destroyAllWindows()
+                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
+                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
+                
+                X1 = int(p[2]) # pTmp1[2]
+                X2 = int(p[2])+1 # pTmp2[2]
+                Y1 = tmpPoint1[2]
+                Y2 = tmpPoint2[2]
+                X = p[2]
+                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
+                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+                
+            except Exception as e:
+                # print(e)
+                pass
+        try:
+            ball = self.IdentifyPoint(numpy.array(resultPoint))
+        except:
+            ball = []
+        print("-------------------------------------------------------------------")
+        print("ball: \n", ball)
+        print("-------------------------------------------------------------------")
         
-        # 設定感興趣的範圍中心和大小
-        # center = [201, 491, 567]
-        # center = [194.38247251113143, 480.45856110201714, 379.8900094628334]
-        # center = [201, 491, 181]
-        # center = [reader.GetOutput().GetDimensions()[0]-201, reader.GetOutput().GetDimensions()[1]-491, reader.GetOutput().GetDimensions()[2]-567]
-        # center = candidateBall[0]
-        for center in candidateBall:
-            # size = 40
-            # dims = [size+1, size+1, 1]
-            dims = [reader.GetOutput().GetDimensions()[0], reader.GetOutput().GetDimensions()[1], 1]
-            # output_extent = [
-            #     int(center[0]) - size/2,
-            #     int(center[0]) + size/2,
-            #     int(center[1]) - size/2,
-            #     int(center[1]) + size/2,
-            #     int(center[2]),
-            #     int(center[2])
-            #     # 0,
-            #     # reader.GetOutput().GetDimensions()[2] - 1
-            # ]
-            # 創建vtkImageReslice並設置ROI範圍
-            reslice = vtkImageReslice()
-            reslice.SetInputConnection(reader.GetOutputPort())
-            # reslice.SetOutputExtent(int(output_extent))
-            reslice.SetOutputExtent(
-                # int(center[0] - size/2),
-                # int(center[0] + size/2),
-                0,
-                int(reader.GetOutput().GetDimensions()[0] - 1),
-                # int(center[1] - size/2),
-                # int(center[1] + size/2),
-                0,
-                int(reader.GetOutput().GetDimensions()[1] - 1),
-                # int(center[2]/pixel2Mm[2]),
-                # int(center[2]/pixel2Mm[2])
-                10,
-                10
-                # 0,
-                # int(reader.GetOutput().GetDimensions()[2] - 1)
-            )
-            z = center[2]/pixel2Mm[2]
-            print("z = ", z)
-            reslice.Update()
-            # 將VTK影像轉換成NumPy陣列
-            # vtk_array = dsa.WrapDataObject(reslice.GetOutput())
-            # numpy_array = vtk_array.PointData['Scalars_']
-            output_data = reslice.GetOutput()
-            numpy_array = vtk_to_numpy(output_data.GetPointData().GetScalars()).reshape(dims[2], dims[1], dims[0])
-            # 將NumPy陣列轉換成OpenCV影像
-            # src_tmp = numpy.uint8(numpy_array)
-            # src_tmp = cv2.cvtColor(numpy_array, cv2.COLOR_GRAY2BGR)
-            src_tmp = numpy_array.astype(numpy.uint8)
-            
-            for z in range(src_tmp.shape[0]):
-                # cv2.imshow("imageROI[z,:,:]", numpy.uint8(imageROI[z,:,:]))
-                cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
-                cv2.waitKey(0)
-            cv2.destroyAllWindows()
-        return
+        
+        
+        return True, ball
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []
