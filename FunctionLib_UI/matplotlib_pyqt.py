@@ -158,25 +158,25 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             LineLaser.TriggerSetting(self)
             # self.recordBreathingBase = False        
             
-            "Laser Button Color Initialization"
-            # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
-            # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+        #     "Laser Button Color Initialization"
+        #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             
-            "Laser Button Disable Setting"
-            self.Button_StartLaserDisplay.setEnabled(True)
-            self.Button_StopLaserDisplay.setEnabled(False)
-            self.Button_RecordCycle.setEnabled(False)
-            self.Button_StopRecording.setEnabled(False)
-            self.Button_StartTracking.setEnabled(False)
-            self.Button_StopLaserTracking.setEnabled(False)
-            self.Button_Accuracy.setEnabled(False)
+        #     "Laser Button Disable Setting"
+        #     self.Button_StartLaserDisplay.setEnabled(True)
+        #     self.Button_StopLaserDisplay.setEnabled(False)
+        #     self.Button_RecordCycle.setEnabled(False)
+        #     self.Button_StopRecording.setEnabled(False)
+        #     self.Button_StartTracking.setEnabled(False)
+        #     self.Button_StopLaserTracking.setEnabled(False)
+        #     self.Button_Accuracy.setEnabled(False)
             
-            self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
-            self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
+        #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
             "LCD setting"
             self.breathingRatio.setDecMode()
@@ -1125,21 +1125,24 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
         "automatic find registration ball center"
         try:
-            candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagLow.get("imageVTKHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
-        except:
+            # candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagLow.get("imageVTKHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
+            flage, answer = self.regFn.GetBallAuto(self.dcmTagLow.get("imageVTKHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
+        except Exception as e:
             self.ui_SP.close()
             self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
             print('get candidate ball error / SetRegistration_L() error')
+            print(e)
             return
-        if candidateBallVTK != False:
+        
+        if flage == True:
             self.logUI.info('get candidate ball of inhale/Low DICOM in VTK:')
             i = 0
-            for key, value in candidateBallVTK.items():
+            for key, value in answer.items():
                 tmp = str(i) + ": " + str(key) + str(value)
                 self.logUI.info(tmp)
                 i += 1
-            self.dcmTagLow.update({"candidateBallVTK": candidateBallVTK})
+            self.dcmTagLow.update({"candidateBallVTK": answer})
             
             "open another ui window to check registration result"
             self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
@@ -1154,11 +1157,11 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print('get candidate ball error / SetRegistration_L() error')
             
             "Set up the coordinate system manually"
-            self.ui_CS = CoordinateSystemManual(self.dcmTagLow, self.dicomLow)
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            self.ui_CS = CoordinateSystemManual(self.dcmTagLow, self.dicomLow, answer)
+            self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.ui_CS.show()
             
-            
+            self.Button_ShowRegistration_L.setEnabled(True)
             return
         
         return
@@ -1354,15 +1357,15 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 "VTK"
                 try:
                     self.dicomHigh.RemovePoint()
-                    self.irenSagittal_L.Initialize()
-                    self.irenCoronal_L.Initialize()
-                    self.irenAxial_L.Initialize()
-                    self.iren3D_L.Initialize()
+                    self.irenSagittal_H.Initialize()
+                    self.irenCoronal_H.Initialize()
+                    self.irenAxial_H.Initialize()
+                    self.iren3D_H.Initialize()
                     
-                    self.irenSagittal_L.Start()
-                    self.irenCoronal_L.Start()
-                    self.irenAxial_L.Start()
-                    self.iren3D_L.Start()
+                    self.irenSagittal_H.Start()
+                    self.irenCoronal_H.Start()
+                    self.irenAxial_H.Start()
+                    self.iren3D_H.Start()
                 except:
                     pass
                 
@@ -1374,21 +1377,22 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
         "automatic find registration ball center"
         try:
-            candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
+            # candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
+            flage, answer = self.regFn.GetBallAuto(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
         except:
             self.ui_SP.close()
             self.logUI.warning('get candidate ball error / SetRegistration_H() error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_H() error')
             return
-        if candidateBallVTK != False:
+        if flage == True:
             self.logUI.info('get candidate ball of exhale/High DICOM in VTK:')
             i = 0
-            for key, value in candidateBallVTK.items():
+            for key, value in answer.items():
                 tmp = str(i) + ": " + str(key) + str(value)
                 self.logUI.info(tmp)
                 i += 1
-            self.dcmTagHigh.update({"candidateBallVTK": candidateBallVTK})
+            self.dcmTagHigh.update({"candidateBallVTK": answer})
             
             "open another ui window to check registration result"
             self.ui_CS = CoordinateSystem(self.dcmTagHigh, self.dicomHigh)
@@ -1401,6 +1405,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_H() error')
+            
+            "Set up the coordinate system manually"
+            self.ui_CS = CoordinateSystemManual(self.dcmTagHigh, self.dicomHigh, answer)
+            self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            self.ui_CS.show()
+            
+            self.Button_ShowRegistration_H.setEnabled(True)
             return
 
         return
@@ -2198,7 +2209,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.close()
 
 class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
-    def __init__(self, dcmTag, dicomVTK):
+    def __init__(self, dcmTag, dicom, answer):
         super(CoordinateSystemManual, self).__init__()
         self.setupUi(self)
         self.SetWindow2Center()
@@ -2214,13 +2225,17 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         
         self.renderer = vtkRenderer()
         
-        
+        self.actorBallRed = vtkActor()
+        self.actorBallGreen = vtkActor()
+        self.actorBallBlue = vtkActor()
         
         
 
-        "hint: self.dcmLow = dcmLow = dcm"
+        "hint: self.dicomLow = dicomLow = dicom"
+        "hint: self.dcmTagLow = dcmTagLow = dcmTag"
         self.dcmTag = dcmTag
-        self.dicomVTK = dicomVTK
+        self.dicom = dicom
+        self.answer = answer
         
         self.Display()
         
@@ -2303,6 +2318,29 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
         
+        # if numpy.array(self.dcmTagLow.get("candidateBall")).shape[0]
+        try:
+            # print(self.dicom.radius)
+            ballRed = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallRed)
+            else:
+                self.renderer.RemoveActor(self.actorBallRed)
+            ballGreen = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballGreen[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallGreen)
+            else:
+                self.renderer.RemoveActor(self.actorBallGreen)
+            ballBlue = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballBlue[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallBlue)
+            else:
+                self.renderer.RemoveActor(self.actorBallBlue)
+        # except Exception as e:
+        #     print(e)
+        except:
+            pass
+        
         self.iren.Initialize()
         self.iren.Start()
 
@@ -2312,10 +2350,18 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
             # print("666666666666")
             # print(self.dcmTag.get("candidateBall"))
             
-            self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("imageVTKHu"), self.dcmTag.get("pixel2Mm"), self.reader)
-            
-            
-            self.close()
+            flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
+            if flage == True:
+                self.dcmTag.update({"candidateBallVTK": answer})
+                self.close()
+                
+                "open another ui window to check registration result"
+                self.ui_CS = CoordinateSystem(self.dcmTag, self.dicom)
+                # self.ui_SP.close()
+                self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+                self.ui_CS.show()
+                # self.Button_ShowRegistration_L.setEnabled(True)
+                
             return
         else:
             QMessageBox.information(self, "information", "need to set 3 balls")
@@ -2328,9 +2374,9 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
     def __init__(self, setPointWindow):
         self.setPointWindow = setPointWindow
         
-        self.actorBallRed = vtkActor()
-        self.actorBallGreen = vtkActor()
-        self.actorBallBlue = vtkActor()
+        # self.setPointWindow.actorBallRed = vtkActor()
+        # self.setPointWindow.actorBallGreen = vtkActor()
+        # self.setPointWindow.actorBallBlue = vtkActor()
         
         self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
         self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
@@ -2401,10 +2447,10 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallGreen.SetMapper(mapper)
-        self.actorBallGreen.GetProperty().SetColor(0, 1, 0)
+        self.setPointWindow.actorBallGreen.SetMapper(mapper)
+        self.setPointWindow.actorBallGreen.GetProperty().SetColor(0, 1, 0)
         
-        self.setPointWindow.renderer.AddActor(self.actorBallGreen)
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallGreen)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
         return
@@ -2418,10 +2464,10 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallRed.SetMapper(mapper)
-        self.actorBallRed.GetProperty().SetColor(1, 0, 0)
+        self.setPointWindow.actorBallRed.SetMapper(mapper)
+        self.setPointWindow.actorBallRed.GetProperty().SetColor(1, 0, 0)
         
-        self.setPointWindow.renderer.AddActor(self.actorBallRed)
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallRed)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
         return
@@ -2435,10 +2481,10 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         
         mapper = vtkPolyDataMapper()
         mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.actorBallBlue.SetMapper(mapper)
-        self.actorBallBlue.GetProperty().SetColor(0, 0, 1)
+        self.setPointWindow.actorBallBlue.SetMapper(mapper)
+        self.setPointWindow.actorBallBlue.GetProperty().SetColor(0, 0, 1)
         
-        self.setPointWindow.renderer.AddActor(self.actorBallBlue)
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallBlue)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
         return
