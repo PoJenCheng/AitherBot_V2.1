@@ -43,9 +43,9 @@ global data
 data = ''
 
 "distance between point ball and robot base"
-baseShift_X = 205
-baseShift_Y = 70 - 2.5
-baseShift_Z = 15.5
+baseShift_X = -174  #205
+baseShift_Y = 32.5 #70 - 2.5
+baseShift_Z = -26.7 #15.5
 
 
 "Laser setting parameter"
