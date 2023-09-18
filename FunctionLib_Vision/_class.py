@@ -11,11 +11,6 @@ from PyQt5.QtGui import *
 from ._subFunction import *
 import copy
 
-# noinspection PyUnresolvedReferences
-# import vtkmodules.vtkInteractionStyle
-# noinspection PyUnresolvedReferences
-# import vtkmodules.vtkRenderingOpenGL2
-
 from vtkmodules.vtkImagingCore import vtkImageReslice
 import vtk.numpy_interface.dataset_adapter as dsa
 
@@ -30,19 +25,11 @@ from vtk.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkRenderingCore import (
     vtkCamera,
     vtkImageActor,
-    # vtkRenderWindow,
     vtkActor,
     vtkPolyDataMapper,
-    # vtkRenderWindowInteractor,
     vtkRenderer,
     vtkWindowLevelLookupTable
-    # vtkCellPicker,
 )
-# from vtkmodules.vtkFiltersSources import (
-#     vtkLineSource
-# )
-
-
 
 "DICOM function"
 class DICOM():
@@ -60,6 +47,7 @@ class DICOM():
             metadata (_list_):
             metadataSeriesNum (_list_):
         """
+        ##讀取資料夾，分類DICOM的UID##########################################################################################
         filePathList = []
         dir = []
         metadata = []
@@ -87,6 +75,7 @@ class DICOM():
             metadataSeriesNum = 0
                 
         return metadata, metadataSeriesNum, metadataFileList
+        ############################################################################################
         
     def SeriesSort(self, metadata, metadataSeriesNum, metadataFileList):
         """classify SeriesNumber and metadata in metadata({SeriesNumber : metadata + pixel_array})
@@ -105,6 +94,7 @@ class DICOM():
             dicDICOM (_dictionary_): {SeriesNumber : metadata + pixel_array}
             dirDICOM (_dictionary_): {SeriesNumber : dir + File name}
         """
+        ##分類DICOM series, 取得DICOM影像路徑##########################################################################################
         seriesNumberLabel = numpy.unique(metadataSeriesNum)
         matrix=[]
         matrixFile = []
@@ -120,6 +110,7 @@ class DICOM():
             matrix=[]
             matrixFile = []
         return seriesNumberLabel, dicDICOM, dirDICOM
+        ############################################################################################
     
     def ReadDicom(self, seriesNumberLabel, dicDICOM, dirDICOM):
         """read DICOM
@@ -196,7 +187,7 @@ class DICOM():
         return imageHu
 
     def ImgTransfer2Mm(self, image, pixel2Mm):
-        """_summary_
+        """transfer voxel to HU value in mm unit
 
         Args:
             image (_numpy.array_): DICOM image (voxel array in 3 by 3)
@@ -488,19 +479,6 @@ class REGISTRATION():
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
             if circles is not None and centroid is not None:
-                # origin_image_plus = copy.deepcopy(src_tmp[z,:,:])
-                # for c in circles[0]:
-                #     x,y,r = c
-                #     center = (int(x), int(y))
-                #     cv2.circle(black_image, center, int(r), (256/2, 0, 0),1)
-                #     cv2.circle(black_image, center, 2, (256/2, 0, 0),2)
-                #     cv2.circle(origin_image_plus, center, int(r), (256/2, 0, 0),1)
-                #     cv2.circle(origin_image_plus, center, 2, (256/2, 0, 0),2)
-                # cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
-                # cv2.imshow("drawContours black_image_2", black_image_2)
-                # cv2.imshow("HoughCircles black_image", black_image)
-                # cv2.imshow("origin_image_plus", origin_image_plus)
-                # cv2.waitKey(0)
                 "Intersection"
                 "centroid = group of Centroid"
                 "circles = group of hough circle"
@@ -634,8 +612,6 @@ class REGISTRATION():
         
         "find circle, radius and center of circle in each DICOM image"
         for x in range(src_tmp.shape[2]):
-            # "filter"
-            # src_tmp[:,:,x] = cv2.bilateralFilter(src_tmp[:,:,x],5,100,100)
             "draw contours"
             contours, hierarchy = cv2.findContours(src_tmp[:,:,x],
                                                 cv2.RETR_EXTERNAL,
@@ -644,7 +620,6 @@ class REGISTRATION():
             shape = (src_tmp.shape[0], src_tmp.shape[1], 1)
             black_image = numpy.zeros(shape, numpy.uint8)
             black_image_2 = numpy.zeros(shape, numpy.uint8)
-            # cv2.drawContours(black_image_1,contours,-1,(256/2, 0, 0),1)
             "use contour to find centroid"
             centroid = []
             tmpContours = []
@@ -662,19 +637,6 @@ class REGISTRATION():
                                         param1=low_threshold*ratio, param2=low_threshold,
                                         minRadius=minRadius, maxRadius=maxRadius)
             if circles is not None and centroid is not None:
-                # origin_image_plus = copy.deepcopy(src_tmp[:,:,x])
-                # cv2.imshow("src_tmp[:,:,x]", origin_image_plus)
-                # for c in circles[0]:
-                #     x,y,r = c
-                #     center = (int(x), int(y))
-                #     cv2.circle(black_image, center, int(r), (256/2, 0, 0),1)
-                #     cv2.circle(black_image, center, 2, (256/2, 0, 0),2)
-                #     cv2.circle(origin_image_plus, center, int(r), (256/2, 0, 0),1)
-                #     cv2.circle(origin_image_plus, center, 2, (256/2, 0, 0),2)
-                # cv2.imshow("drawContours black_image_2", black_image_2)
-                # cv2.imshow("HoughCircles black_image", black_image)
-                # cv2.imshow("origin_image_plus", origin_image_plus)
-                # cv2.waitKey(0)
                 "Intersection"
                 "centroid = group of Centroid"
                 "circles = group of hough circle"
@@ -750,8 +712,6 @@ class REGISTRATION():
         
         "find circle, radius and center of circle in each DICOM image"
         for y in range(src_tmp.shape[1]):
-            # "filter"
-            # src_tmp[:,y,:] = cv2.bilateralFilter(src_tmp[:,y,:],5,100,100)
             "draw contours"
             contours, hierarchy = cv2.findContours(src_tmp[:,y,:],
                                                 cv2.RETR_EXTERNAL,
@@ -912,6 +872,14 @@ class REGISTRATION():
         return tmpPoint
 
     def __AveragePoint(self, dictionaryPoint):
+        """average points for find ball center
+
+        Args:
+            dictionaryPoint (_dictionary_): matrix points of ball center
+
+        Returns:
+            _numpy.array_: result of average
+        """
         resultPoint = []
         for key, value in dictionaryPoint.items():
             point = [0, 0, 0]
@@ -922,35 +890,26 @@ class REGISTRATION():
         return numpy.array(resultPoint)
 
     def IdentifyPoint(self, point):
-        """_summary_
+        """identify first ball, second ball, and third ball
 
         Args:
-            point (_type_): _description_
+            point (_numpy.array_): matrix of ball center
             
         Returns:
-            ball (_numpy.array_): 
+            ball (_dictionary_): result
         """
         result = []
         tmpDic = {}
-        # shortSide = 140
-        # longSide = 150
         shortSide = 30
         longSide = 65
         hypotenuse = math.sqrt(numpy.square(shortSide) + numpy.square(longSide))
         error = 1.5
-        count = 0
         "計算三個點之間的距離"
         for p1, p2, p3 in itertools.combinations(point, 3):
-            count += 1
             result = []
             d12 = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2) ** 0.5
             d23 = ((p2[0] - p3[0]) ** 2 + (p2[1] - p3[1]) ** 2 + (p2[2] - p3[2]) ** 2) ** 0.5
             d31 = ((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2 + (p3[2] - p1[2]) ** 2) ** 0.5
-            
-            # print("d12 = ", d12)
-            # print("d23 = ", d23)
-            # print("d31 = ", d31)
-            
             "檢查邊長是否符合條件"
             if d12 > shortSide-error and d12 < shortSide+error:
                 if d23 > longSide-error and d23 < longSide+error:
@@ -994,13 +953,15 @@ class REGISTRATION():
         return tmpDic
             
     def GetBallAuto(self, imageHu, pixel2Mm, imageTag):
-        """get ball center
+        """auto get ball center
 
         Args:
             imageHu (_numpy.array_): image in Hounsfield Unit (Hu)
             pixel2Mm (_list_): Pixel to mm array
+            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
 
         Returns:
+            (_bool_): true -> get ball success, false -> get ball fail
             point (_numpy.array_): point, numpy.array([[Px,Py,Pz,Pr]...])
         """
         print("pixel2Mm = ", pixel2Mm)
@@ -1036,12 +997,8 @@ class REGISTRATION():
                 imageHuMm.append(imageHuMm_tmp[:,z,:])
             imageHuMm = numpy.array(imageHuMm)
         else:
-            # pass
             imageHuMm = imageHuMm_tmp_xyz
             imageHuMm = numpy.array(imageHuMm)
-        
-        
-        
         
         resultCentroid_xy = self.__FindBallXY(imageHuMm)
         dictionaryPoint = self.__ClassifyPointXY(resultCentroid_xy)
@@ -1053,43 +1010,26 @@ class REGISTRATION():
         pointMatrixSorted_xy = numpy.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
         pointMatrixSorted_yz = numpy.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
         pointMatrixSorted_xz = numpy.array(sorted(resultCentroid_xz, key=lambda tmp: (int(tmp[0]), int(tmp[2]), int(tmp[1]))))
-        # numpy.savetxt("pointMatrixSorted_xy 20230830.txt", pointMatrixSorted_xy, fmt = "%.8f")
-        # numpy.savetxt("pointMatrixSorted_yz 20230830.txt", pointMatrixSorted_yz, fmt = "%.8f")
-        # numpy.savetxt("pointMatrixSorted_xz 20230830.txt", pointMatrixSorted_xz, fmt = "%.8f")
         
         averagePoint = self.__AveragePoint(dictionaryPoint)
         
         resultPoint = []
         for p in averagePoint:
             try:
-                # pTmp1 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])]
-                # tmpPoint1 = self.__TransformPointImage(imageTag, pTmp1)
-                
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
                 tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
-                
-                
-                
-                # pTmp2 = [(p[0]/pixel2Mm[0]),(p[1]/pixel2Mm[1]),int(p[2])+1]
-                # tmpPoint2 = self.__TransformPointImage(imageTag, pTmp2)
                 
                 pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
                 tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-                X1 = int(p[2]) # pTmp1[2]
-                X2 = int(p[2])+1 # pTmp2[2]
+                X1 = int(p[2])
+                X2 = int(p[2])+1
                 Y1 = tmpPoint1[2]
                 Y2 = tmpPoint2[2]
                 X = p[2]
                 Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
-                
-                
-                
-                
-                
-            except Exception as e:
-                # print(e)
+            except:
                 pass
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
@@ -1108,7 +1048,7 @@ class REGISTRATION():
             return True, ball
 
     def __TransformPointImage(self, imageTag, point):
-        """Transform pixel point to mm point in patient coordinates
+        """Transform pixel point (in image unit) to mm point in patient coordinates
 
         Args:
             imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
@@ -1132,7 +1072,7 @@ class REGISTRATION():
         return numpy.array([X,Y,Z])
 
     def TransformPointVTK(self, imageTag, point):
-        """Transform pixel point to mm point in patient coordinates
+        """Transform pixel point (in VTK image unit) to mm point in patient coordinates
 
         Args:
             imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
@@ -1156,32 +1096,17 @@ class REGISTRATION():
         return numpy.array([X,Y,Z])
     
     def GetBallManual(self, candidateBall, pixel2Mm, answer, imageTag):
+        """manually get ball center
+
+        Args:
+            candidateBall (_numpy.array_): array of user selected ball center
+            pixel2Mm (_list_): Pixel to mm array
+            answer (_type_):  array of auto get ball center in VTK image
+            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
+
+        Returns:
+            _type_: _description_
         """
-        candidateBall numpy.array
-        imageHu "imageVTKHu" in pixel
-        
-        """
-        # range_dimension = 20
-        # xmin = int(numpy.min(candidateBall[:,0])-range_dimension)
-        # xmax = int(numpy.max(candidateBall[:,0])+range_dimension)
-        # ymin = int(numpy.min(candidateBall[:,1])-range_dimension)
-        # ymax = int(numpy.max(candidateBall[:,1])+range_dimension)
-        # zmin = int(numpy.min(candidateBall[:,2])-range_dimension)
-        # zmax = int(numpy.max(candidateBall[:,2])+range_dimension)
-        
-        # imageHuThr = self.ThresholdFilter(imageHu)
-        # src_tmp = numpy.uint8(imageHuThr)
-        # # cv2.imshow("imageHu[:,:,((zmax-zmin)/2)]", imageHu[:,:,int((zmax-zmin)/2)])
-        # # cv2.imshow("src_tmp[int(zmin+(zmax-zmin)/2),:,:]", src_tmp[int(zmin+(zmax-zmin)/2),:,:])
-        # # cv2.imshow("src_tmp[:,int(ymin+(ymax-ymin)/2),:]", src_tmp[:,int(ymin+(ymax-ymin)/2),:])
-        # # cv2.imshow("src_tmp[:,:,int(xmin+(xmax-xmin)/2)]", src_tmp[:,:,int(xmin+(xmax-xmin)/2)])
-        # for z in range(zmin,zmax):
-        #     cv2.imshow("src_tmp[z,:,:]", src_tmp[z,:,:])
-        #     cv2.waitKey(1000)
-        # cv2.destroyAllWindows()
-        
-        
-        # dim = candidateBall.shape[0]
         dictionaryPoint = {}
         for point in candidateBall:
             dictionaryPoint.update({tuple(point):numpy.array([[]])})
@@ -1206,16 +1131,15 @@ class REGISTRATION():
                 pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
                 tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-                X1 = int(p[2]) # pTmp1[2]
-                X2 = int(p[2])+1 # pTmp2[2]
+                X1 = int(p[2])
+                X2 = int(p[2])+1
                 Y1 = tmpPoint1[2]
                 Y2 = tmpPoint2[2]
                 X = p[2]
                 Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 
-            except Exception as e:
-                # print(e)
+            except:
                 pass
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
@@ -1226,8 +1150,10 @@ class REGISTRATION():
         print("-------------------------------------------------------------------")
         
         
-        
-        return True, ball
+        if ball == []:
+            return False, ball
+        else:
+            return True, ball
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         planningPath = []

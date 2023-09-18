@@ -2357,6 +2357,9 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
                 self.ui_CS.show()
                 # self.Button_ShowRegistration_L.setEnabled(True)
+            else:
+                QMessageBox.critical(self, "error", "get candidate ball error")
+                print('get candidate ball error / SetRegistration_L() error')
                 
             return
         else:
