@@ -90,7 +90,7 @@ class DICOM():
             metadataFileList (__): dir + File name for each slice
             
         Returns:
-            seriesNumberLabel (_numpy array_): 有幾組的SeriesNumber的Label
+            seriesNumberLabel (_numpy.array_): 有幾組的SeriesNumber的Label
             dicDICOM (_dictionary_): {SeriesNumber : metadata + pixel_array}
             dirDICOM (_dictionary_): {SeriesNumber : dir + File name}
         """
@@ -962,7 +962,7 @@ class REGISTRATION():
 
         Returns:
             (_bool_): true -> get ball success, false -> get ball fail
-            point (_numpy.array_): point, numpy.array([[Px,Py,Pz,Pr]...])
+            ball (_dictionary_): ball center, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
         """
         print("pixel2Mm = ", pixel2Mm)
         imageHuMm_tmp_xyz = []
@@ -1047,30 +1047,6 @@ class REGISTRATION():
         else:
             return True, ball
 
-    def __TransformPointImage(self, imageTag, point):
-        """Transform pixel point (in image unit) to mm point in patient coordinates
-
-        Args:
-            imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
-            point (_numpy.array, dtype=int_): pixel point (in CT image coordinates)
-
-        Returns:
-            point (_numpy.array_): Transformed Point (in patient coordinates)
-        """
-        ImageOrientationPatient = imageTag[point[2]-1].ImageOrientationPatient
-        ImagePositionPatient = imageTag[point[2]-1].ImagePositionPatient
-        PixelSpacing = imageTag[point[2]-1].PixelSpacing
-
-        x = point[0]
-        y = point[1]
-        RowVector = ImageOrientationPatient[0:3]
-        ColumnVector = ImageOrientationPatient[3:6]
-        X = ImagePositionPatient[0] + x * PixelSpacing[0] * RowVector[0] + y * PixelSpacing[1] * ColumnVector[0]
-        Y = ImagePositionPatient[1] + x * PixelSpacing[0] * RowVector[1] + y * PixelSpacing[1] * ColumnVector[1]
-        Z = ImagePositionPatient[2] + x * PixelSpacing[0] * RowVector[2] + y * PixelSpacing[1] * ColumnVector[2]
-        
-        return numpy.array([X,Y,Z])
-
     def TransformPointVTK(self, imageTag, point):
         """Transform pixel point (in VTK image unit) to mm point in patient coordinates
 
@@ -1101,11 +1077,12 @@ class REGISTRATION():
         Args:
             candidateBall (_numpy.array_): array of user selected ball center
             pixel2Mm (_list_): Pixel to mm array
-            answer (_type_):  array of auto get ball center in VTK image
+            answer (_numpy.array_):  array of ball center, which is from auto get ball center in VTK image unit
             imageTag (_list_): DICOM list sort by InstanceNumber (include metadata and pixel_array)
 
         Returns:
-            _type_: _description_
+            (_bool_): true -> get ball success, false -> get ball fail
+            ball (_dictionary_): get ball center result, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
         """
         dictionaryPoint = {}
         for point in candidateBall:
@@ -1156,16 +1133,28 @@ class REGISTRATION():
             return True, ball
     
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
+        """get planning path
+
+        Args:
+            originPoint (_numpy.array_): origin point of coordinate system
+            selectedPoint (_numpy.array_): selected points of planning path
+            regMatrix (_numpy.array_): registration matrix
+
+        Returns:
+            planningPath (_list_): planning path result
+        """
         planningPath = []
         
         for p in selectedPoint:
             planningPath.append(numpy.dot(regMatrix,(p-originPoint)))
         
         return planningPath
-    
+
+##***寫死的, 因為有動到REGISTRATION(), 所以這個功能不能用了***##########################################################################################    
 class SAT():
     def __init__(self):
         "***寫死的, 因為有動到REGISTRATION(), 所以這個功能不能用了***"
+        
         self.regFn = REGISTRATION()
         return
     
@@ -1559,7 +1548,7 @@ class SAT():
         point = numpy.array(candidateBall)
         "Those with similar Y axis (difference < 5) are grouped together"
         " *** for 2022/12/21 CT system accuracy test *** "
-        " *** Cannot be used in the official version of the system accuracy test *** "
+        " *** Cannot be used in the official version of the system accuracy test !!! *** "
         axis = 1
         tmpDictionary = {}
         for P in point:
@@ -1642,7 +1631,7 @@ class SAT():
             testBall.append(numpy.dot(regMatrix,(p-originPoint)))
         self.TestBall = testBall
         return testBall
-    
+############################################################################################
 class DISPLAY():
     def __init__(self):
         pass
@@ -1704,6 +1693,8 @@ class DISPLAY():
         return imageVTK
         
     def SetMapColor(self):
+        """init window level and window width
+        """
         
         self.windowLevelLookup.Build()
         thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
@@ -1719,6 +1710,8 @@ class DISPLAY():
         return
         
     def SetCamera(self):
+        """set VTK camera
+        """
         "differen section, differen camera"
         
         self.cameraSagittal.SetViewUp(0, 0, -1)
@@ -1747,6 +1740,11 @@ class DISPLAY():
         return
         
     def CreateActorAndRender(self, value):
+        """create actor and render for VTK
+
+        Args:
+            value (_int_): location of slice
+        """
         "actor"
         "Sagittal"
         self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
@@ -1785,28 +1783,58 @@ class DISPLAY():
         return
         
     def ChangeSagittalView(self, value):
+        """change sagittal view
+
+        Args:
+            value (_int_): location of slice
+        """
         self.actorSagittal.SetDisplayExtent(value, value, 0, self.imageDimensions[1], 0, self.imageDimensions[2])
         return
     
     def ChangeCoronalView(self, value):
+        """change coronal view
+
+        Args:
+            value (_int_): location of slice
+        """
         self.actorCoronal.SetDisplayExtent(0, self.imageDimensions[0]-1, value, value, 0, self.imageDimensions[2]-1)
         return
 
     def ChangeAxialView(self, value):
+        """change axial view
+
+        Args:
+            value (_int_): location of slice
+        """
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, value, value)
         return
     
     def ChangeWindowWidthView(self, value):
+        """change window width
+
+        Args:
+            value (_int_): number of window width
+        """
         self.windowLevelLookup.SetWindow(value)
         self.mapColors.Update()
         return
         
     def ChangeWindowLevelView(self, value):
+        """change window level
+
+        Args:
+            value (_int_): number of window level
+        """
         self.windowLevelLookup.SetLevel(value)
         self.mapColors.Update()
         return
     
     def CreateEntry(self, center):
+        """create entry point
+
+        Args:
+            center (_numpy.array_): point center
+        """
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
@@ -1826,6 +1854,11 @@ class DISPLAY():
         return
     
     def CreateTarget(self, center):
+        """create target point
+
+        Args:
+            center (_numpy.array_): point center
+        """
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
@@ -1845,6 +1878,12 @@ class DISPLAY():
         return
        
     def CreateLine(self, startPoint, endPoint):
+        """create line between enter point and target point
+
+        Args:
+            startPoint (_numpy.array_): enter point
+            endPoint (_numpy.array_): target point
+        """
         colors = vtkNamedColors()
 
         "Create a line"
@@ -1887,6 +1926,11 @@ class DISPLAY():
 
      
     def CreatePath(self, planningPointCenter):
+        """create planning path between enter point and target point
+
+        Args:
+            planningPointCenter (_type_): point center of enter point and target point
+        """
         self.CreateEntry(planningPointCenter[0])
         self.CreateTarget(planningPointCenter[1])
         self.CreateLine(planningPointCenter[0], planningPointCenter[1])
@@ -1894,6 +1938,8 @@ class DISPLAY():
         return
         
     def RemovePoint(self):
+        """remove actor of point
+        """
         self.rendererSagittal.RemoveActor(self.actorPointEntry)
         self.rendererAxial.RemoveActor(self.actorPointEntry)
         self.rendererCoronal.RemoveActor(self.actorPointEntry)
@@ -1916,25 +1962,3 @@ class DISPLAY():
         
         return
 
-"example"
-if __name__ == "__main__":
-    path_dicom_only = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\S2010\\"
-    path_dicom = "C:\\Users\\tinac\\OneDrive\\Tina on OneDrive\\brain navi\\LCGS\\CT\\20220615\\S43320\\"
-    g_dicom = DICOM()
-    g_metadata, g_metadataSeriesNum = g_dicom.LoadPath(path_dicom_only)
-    g_seriesNumberLabel, g_dicDICOM = g_dicom.SeriesSort(g_metadata, g_metadataSeriesNum)
-    g_imageTag = g_dicom.ReadDicom(g_seriesNumberLabel, g_dicDICOM)
-    g_rescaleSlope = g_imageTag[0].RescaleSlope
-    g_rescaleIntercept = g_imageTag[0].RescaleIntercept
-    g_image = g_dicom.GetImage(g_imageTag)
-    g_imageHu = g_dicom.Transfer2Hu(g_image, g_rescaleSlope, g_rescaleIntercept)
-    g_pixel2Mm = g_dicom.GetPixel2Mm(g_imageTag[0])
-    sliceNum = 100-1
-    wl = g_imageTag[0].WindowCenter[0]
-    ww = g_imageTag[0].WindowWidth[0]
-    g_image = numpy.array(g_image)
-    g_imageHu2D_ = g_dicom.GetGrayImg(g_image[sliceNum-1,:,:], ww, wl)
-    plt.figure()
-    plt.imshow(g_imageHu2D_, cmap='gray')
-    plt.title("slice number: " + str(sliceNum))
-    plt.show()

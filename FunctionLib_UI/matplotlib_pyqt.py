@@ -63,7 +63,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"wl": 1})
             self.dcmTagLow.update({"imageTag": []})
             "registration ball"
-            self.dcmTagLow.update({"selectedBall": []})
+            # self.dcmTagLow.update({"selectedBall": []})
             self.dcmTagLow.update({"regBall": []})
             self.dcmTagLow.update({"flageSelectedBall": False})
             self.dcmTagLow.update({"candidateBall": []})
@@ -81,7 +81,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh.update({"wl": 1})
             self.dcmTagHigh.update({"imageTag": []})
             "registration ball"
-            self.dcmTagHigh.update({"selectedBall": []})
+            # self.dcmTagHigh.update({"selectedBall": []})
             self.dcmTagHigh.update({"regBall": []})
             self.dcmTagHigh.update({"flageSelectedBall": False})
             self.dcmTagHigh.update({"candidateBall": []})
@@ -142,48 +142,48 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             print(repr(e))
             QMessageBox.critical(self, "error", "Initial System Error - UI")
         """"""
-        try:
-            "robot control initial"
-            MOTORSUBFUNCTION.__init__(self)
-            global g_homeStatus
-            g_homeStatus = False
-            self.homeStatus = g_homeStatus
-            print('initial main robot control')
-        except:
-            print("Initial System Error - robot control")
-            QMessageBox.critical(self, "error", "Initial System Error - robot control")
-        try:
-            "Line Laser initial"
-            LineLaser.__init__(self)
-            LineLaser.TriggerSetting(self)
-            # self.recordBreathingBase = False        
+        # try:
+        #     "robot control initial"
+        #     MOTORSUBFUNCTION.__init__(self)
+        #     global g_homeStatus
+        #     g_homeStatus = False
+        #     self.homeStatus = g_homeStatus
+        #     print('initial main robot control')
+        # except:
+        #     print("Initial System Error - robot control")
+        #     QMessageBox.critical(self, "error", "Initial System Error - robot control")
+        # try:
+        #     "Line Laser initial"
+        #     LineLaser.__init__(self)
+        #     LineLaser.TriggerSetting(self)
+        #     # self.recordBreathingBase = False        
             
-        #     "Laser Button Color Initialization"
-        #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-        #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-        #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
-        #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
-        #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
-        #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+        # #     "Laser Button Color Initialization"
+        # #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        # #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        # #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+        # #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+        # #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+        # #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             
-        #     "Laser Button Disable Setting"
-        #     self.Button_StartLaserDisplay.setEnabled(True)
-        #     self.Button_StopLaserDisplay.setEnabled(False)
-        #     self.Button_RecordCycle.setEnabled(False)
-        #     self.Button_StopRecording.setEnabled(False)
-        #     self.Button_StartTracking.setEnabled(False)
-        #     self.Button_StopLaserTracking.setEnabled(False)
-        #     self.Button_Accuracy.setEnabled(False)
+        # #     "Laser Button Disable Setting"
+        # #     self.Button_StartLaserDisplay.setEnabled(True)
+        # #     self.Button_StopLaserDisplay.setEnabled(False)
+        # #     self.Button_RecordCycle.setEnabled(False)
+        # #     self.Button_StopRecording.setEnabled(False)
+        # #     self.Button_StartTracking.setEnabled(False)
+        # #     self.Button_StopLaserTracking.setEnabled(False)
+        # #     self.Button_Accuracy.setEnabled(False)
             
-        #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
-        #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        # #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
+        # #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
-            "LCD setting"
-            self.breathingRatio.setDecMode()
-            print('initial main Line Laser')
-        except:
-            print("Initial System Error - Line Laser")
-            QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
+        #     "LCD setting"
+        #     self.breathingRatio.setDecMode()
+        #     print('initial main Line Laser')
+        # except:
+        #     print("Initial System Error - Line Laser")
+        #     QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
         """"""
 
     def closeEvent(self, event):
@@ -536,7 +536,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"wl": 1})
         self.dcmTagLow.update({"imageTag": []})
         "registration ball"
-        self.dcmTagLow.update({"selectedBall": []})
+        # self.dcmTagLow.update({"selectedBall": []})
         self.dcmTagLow.update({"regBall": []})
         self.dcmTagLow.update({"flageSelectedBall": False})
         self.dcmTagLow.update({"candidateBall": []})
@@ -836,7 +836,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"wl": 1})
         self.dcmTagHigh.update({"imageTag": []})
         "registration ball"
-        self.dcmTagHigh.update({"selectedBall": []})
+        # self.dcmTagHigh.update({"selectedBall": []})
         self.dcmTagHigh.update({"regBall": []})
         self.dcmTagHigh.update({"flageSelectedBall": False})
         self.dcmTagHigh.update({"candidateBall": []})
@@ -1083,7 +1083,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                self.dcmTagLow.update({"selectedBall": []})
+                # self.dcmTagLow.update({"selectedBall": []})
                 self.dcmTagLow.update({"regBall": []})
                 self.dcmTagLow.update({"flageSelectedBall": False})
                 
@@ -1336,7 +1336,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                self.dcmTagHigh.update({"selectedBall": []})
+                # self.dcmTagHigh.update({"selectedBall": []})
                 self.dcmTagHigh.update({"regBall": []})
                 self.dcmTagHigh.update({"flageSelectedBall": False})
                 
@@ -1586,13 +1586,11 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagLow.get("regBall")[0], tmpPointLow, self.dcmTagLow.get("regMatrix"))})
         self.dcmTagHigh.update({"PlanningPath":self.regFn.GetPlanningPath(self.dcmTagHigh.get("regBall")[0], tmpPointHigh, self.dcmTagHigh.get("regMatrix"))})
         try:
-            "把兩組PlanningPath合在一起"
+            # 把兩組PlanningPath合在一起
             self.PlanningPath = []
             for tmpPoint in self.dcmTagHigh.get("PlanningPath"):
-                # self.PlanningPath.append(tmpPoint)
                 self.PlanningPath.append(tmpPoint*[1, 1, -1])
             for tmpPoint in self.dcmTagLow.get("PlanningPath"):
-                # self.PlanningPath.append(tmpPoint)
                 self.PlanningPath.append(tmpPoint*[1, 1, -1])
             
             strInfo = "PlanningPath: (in mm unit, High: entry-target, Low: entry-target)"
