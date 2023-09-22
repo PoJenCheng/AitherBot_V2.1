@@ -189,40 +189,45 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def closeEvent(self, event):
         print("close~~~~~~~~")
         try:
-            # 移除VTK道具
+            ## 移除VTK道具 ############################################################################################
             # self.irenSagittal_L.RemoveAllViewProps() 
             self.dicomLow.rendererSagittal.RemoveAllViewProps()
             self.dicomLow.rendererCoronal.RemoveAllViewProps()
             self.dicomLow.rendererAxial.RemoveAllViewProps()
             self.dicomLow.renderer3D.RemoveAllViewProps()
-            # 關閉VTK交互器
+            ############################################################################################
+            ## 關閉VTK Widget ############################################################################################
             # self.irenSagittal_L.close()
             self.qvtkWidget_Sagittal_L.close()
             self.qvtkWidget_Coronal_L.close()
             self.qvtkWidget_Axial_L.close()
             self.qvtkWidget_3D_L.close()
+            ############################################################################################
             print("remove dicomLow VTk success")
         except Exception as e:
             print(e)
             print("remove dicomLow VTk error")
         try:
-            # 移除VTK道具
+            ## 移除VTK道具 ############################################################################################
             self.dicomHigh.rendererSagittal.RemoveAllViewProps()
             self.dicomHigh.rendererCoronal.RemoveAllViewProps()
             self.dicomHigh.rendererAxial.RemoveAllViewProps()
             self.dicomHigh.renderer3D.RemoveAllViewProps()
-            # 關閉VTK交互器
+            ############################################################################################
+            ## 關閉VTK Widget ############################################################################################
             self.qvtkWidget_Sagittal_H.close()
             self.qvtkWidget_Coronal_H.close()
             self.qvtkWidget_Axial_H.close()
             self.qvtkWidget_3D_H.close()
+            ############################################################################################
             print("remove dicomHigh VTk success")
         except Exception as e:
             print(e)
             print("remove dicomHigh VTk error")
         try:
-            # 接受關閉事件
+            ## 接受關閉事件 ############################################################################################
             event.accept()
+            ############################################################################################
         except Exception as e:
             print(e)
     
@@ -412,6 +417,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
 
 
     def _init_log(self):
+        ## log設定 ############################################################################################
         self.logUI: logging.Logger = logging.getLogger(name='UI')
         self.logUI.setLevel(logging.INFO)
         "set log level"
@@ -425,8 +431,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         handler.setFormatter(formatter)
 
         self.logUI.addHandler(handler)
+        ############################################################################################
 
     def _init_ui(self):
+        ## initial ui ############################################################################################
         "DICOM planning ui disable"
         self.Button_Planning.setEnabled(False)
 
@@ -471,10 +479,12 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.SliceSelect_Axial_SAT.setEnabled(False)
         self.SliceSelect_Sagittal_SAT.setEnabled(False)
         self.SliceSelect_Coronal_SAT.setEnabled(False)
+        ############################################################################################
 
     def ImportDicom_L(self):
         """load inhale (Low breath) DICOM to get image array and metadata
         """
+        ## 開啟視窗選取資料夾 ############################################################################################
         self.logUI.info('Import Dicom inhale/_Low')
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.Directory)
@@ -484,12 +494,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             filePath = dlg.selectedFiles()[0] + '/'
         else:
             return
+        ############################################################################################
         
         self.ui_SP = SystemProcessing()
         self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.ui_SP.show()
         QApplication.processEvents()
         
+        ## load dicom files ############################################################################################
         "pydicom stage"
         metadata, metadataSeriesNum, filePathList = self.dcmFn.LoadPath(filePath)
         if metadata == 0 or metadataSeriesNum == 0:
@@ -503,7 +515,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         print("-------------------------------------------------------------------")
         logStr = 'Load inhale/Low Dicom: ' + filePath
         self.logUI.info(logStr)
-        
+        ############################################################################################
+        ## 清除殘留的VTK ############################################################################################
         "reset VTK"
         if self.dcmTagLow.get("imageTag") != []:
             "render"
@@ -529,7 +542,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.irenCoronal_L.Start()
             self.irenAxial_L.Start()
             self.iren3D_L.Start()
-
+        ############################################################################################
+        ## reset dicom 資料 ############################################################################################
         "reset dcm"
         self.dcmTagLow = {}
         self.dcmTagLow.update({"ww": 1})
@@ -557,11 +571,20 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.Button_ShowPoint_L.setEnabled(False)
         # self.Button_RobotHome.setEnabled(False)
         # self.Button_RobotAutoRun.setEnabled(False)
-
+        ############################################################################################
+        ## 依照 series 排序 dicom ############################################################################################
         seriesNumberLabel, dicDICOM, dirDICOM = self.dcmFn.SeriesSort(metadata, metadataSeriesNum, filePathList)
+        ############################################################################################
+        ## 讀取要的 dicom files ############################################################################################
         imageTag, folderDir = self.dcmFn.ReadDicom(seriesNumberLabel, dicDICOM, dirDICOM)
+        ############################################################################################
+        ## 儲存 dicom 的 tag ############################################################################################
         self.dcmTagLow.update({"imageTag": imageTag})
+        ############################################################################################
+        ## 儲存影像 ############################################################################################
         image = self.dcmFn.GetImage(self.dcmTagLow.get("imageTag"))
+        ############################################################################################
+        ## 如果 load 大於一組影像，跳提示 ############################################################################################
         if image != 0:
             self.dcmTagLow.update({"image": numpy.array(image)})
         else:
@@ -569,7 +592,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             QMessageBox.critical(self, "error", "please load one DICOM")
             self.logUI.warning('fail to get image')
             return
-
+        ############################################################################################
+        ## 儲存 dicom 影像基本資料 ############################################################################################
         rescaleSlope = self.dcmTagLow.get("imageTag")[0].RescaleSlope
         rescaleIntercept = self.dcmTagLow.get("imageTag")[0].RescaleIntercept
         self.dcmTagLow.update({"imageHu": numpy.array(self.dcmFn.Transfer2Hu(self.dcmTagLow.get("image"), rescaleSlope, rescaleIntercept))})
@@ -585,7 +609,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         # else:
         #     self.label_dcmL_L_side.setText("error")
         #     self.label_dcmL_R_side.setText("error")
-
+        ############################################################################################
+        ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
         "VTK stage"
         self.dcmTagLow.update({"folderDir":folderDir})
         imageVTKHu = self.dicomLow.LoadImage(folderDir)
@@ -595,7 +620,8 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.irenCoronal_L = self.qvtkWidget_Coronal_L.GetRenderWindow().GetInteractor()
         self.irenAxial_L = self.qvtkWidget_Axial_L.GetRenderWindow().GetInteractor()
         self.iren3D_L = self.qvtkWidget_3D_L.GetRenderWindow().GetInteractor()
-        
+        ############################################################################################
+        ## 設定 UI 初始值 ############################################################################################
         self.SliceSelect_Sagittal_L.setMinimum(1)
         self.SliceSelect_Sagittal_L.setMaximum(self.dicomLow.imageDimensions[0]-1)
         self.SliceSelect_Sagittal_L.setValue(int((self.dicomLow.imageDimensions[0])/2))
@@ -605,7 +631,9 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.SliceSelect_Axial_L.setMinimum(1)
         self.SliceSelect_Axial_L.setMaximum(self.dicomLow.imageDimensions[2]-1)
         self.SliceSelect_Axial_L.setValue(int((self.dicomLow.imageDimensions[2])/2))
-
+        ############################################################################################
+        ## 設定 window width 和 window level 初始值 ############################################################################################
+        ### 公式1
         thresholdValue = int(((self.dicomLow.dicomGrayscaleRange[1] - self.dicomLow.dicomGrayscaleRange[0]) / 6) + self.dicomLow.dicomGrayscaleRange[0])
         "WindowWidth"
         self.Slider_WW_L.setMinimum(0)
@@ -617,10 +645,12 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.Slider_WL_L.setMaximum(int(self.dicomLow.dicomGrayscaleRange[1]))
         self.dcmTagLow.update({"wl": thresholdValue})
         self.Slider_WL_L.setValue(self.dcmTagLow.get("wl"))
-
+        ############################################################################################
         self.logUI.debug('Loaded inhale/Low Dicom')
+        ## 顯示 dicom 到 ui 上 ############################################################################################
         self.ShowDicom_L()
-        
+        ############################################################################################
+        ## 啟用 ui ############################################################################################
         "Enable ui"
         self.Slider_WW_L.setEnabled(True)
         self.Slider_WL_L.setEnabled(True)
@@ -629,13 +659,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.SliceSelect_Coronal_L.setEnabled(True)
         self.Button_Registration_L.setEnabled(True)
         self.tabWidget.setCurrentWidget(self.tabWidget_Low)
-        
+        ############################################################################################
         self.ui_SP.close()
         return
 
     def ShowDicom_L(self):
         """show low dicom to ui
         """
+        ## 用 vtk 顯示 diocm ############################################################################################
         self.qvtkWidget_Sagittal_L.GetRenderWindow().AddRenderer(self.dicomLow.rendererSagittal)
         
         self.irenSagittal_L.SetInteractorStyle(MyInteractorStyle(self.dicomLow.rendererSagittal))
@@ -658,14 +689,14 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.irenCoronal_L.Start()
         self.irenAxial_L.Start()
         self.iren3D_L.Start()
-
+        ############################################################################################
         return
     
     def ScrollBarChangeSagittal_L(self):
         """while ScrollBar Change (Sagittal), update ui plot
         """
         self.dicomLow.ChangeSagittalView(self.SliceSelect_Sagittal_L.value())
-        
+        ## 調整 planning path 的 point 顯示 ############################################################################################
         if numpy.array(self.dcmTagLow.get("selectedPoint")).shape[0] == 2:
             pointEntry = self.dcmTagLow.get("selectedPoint")[0]
             pointTarget = self.dcmTagLow.get("selectedPoint")[1]
@@ -677,7 +708,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dicomLow.rendererSagittal.AddActor(self.dicomLow.actorPointTarget)
             else:
                 self.dicomLow.rendererSagittal.RemoveActor(self.dicomLow.actorPointTarget)
-        
+        ############################################################################################
         self.irenSagittal_L.Initialize()
         self.iren3D_L.Initialize()
         
@@ -685,12 +716,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.iren3D_L.Start()
         
         self.logUI.debug('Show Low Dicom Sagittal')
+        return
         
     def ScrollBarChangeCoronal_L(self):
         """while ScrollBar Change (Coronal), update ui plot
         """
         self.dicomLow.ChangeCoronalView(self.SliceSelect_Coronal_L.value())
-        
+        ## 調整 planning path 的 point 顯示 ############################################################################################
         if numpy.array(self.dcmTagLow.get("selectedPoint")).shape[0] == 2:
             pointEntry = self.dcmTagLow.get("selectedPoint")[0]
             pointTarget = self.dcmTagLow.get("selectedPoint")[1]
@@ -702,7 +734,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dicomLow.rendererCoronal.AddActor(self.dicomLow.actorPointTarget)
             else:
                 self.dicomLow.rendererCoronal.RemoveActor(self.dicomLow.actorPointTarget)
-        
+        ############################################################################################
         self.irenCoronal_L.Initialize()
         self.iren3D_L.Initialize()
         
@@ -715,7 +747,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """while ScrollBar Change (Axial), update ui plot
         """
         self.dicomLow.ChangeAxialView(self.SliceSelect_Axial_L.value())
-        
+        ## 調整 planning path 的 point 顯示 ############################################################################################
         if numpy.array(self.dcmTagLow.get("selectedPoint")).shape[0] == 2:
             pointEntry = self.dcmTagLow.get("selectedPoint")[0]
             pointTarget = self.dcmTagLow.get("selectedPoint")[1]
@@ -727,7 +759,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.dicomLow.rendererAxial.AddActor(self.dicomLow.actorPointTarget)
             else:
                 self.dicomLow.rendererAxial.RemoveActor(self.dicomLow.actorPointTarget)
-        
+        ############################################################################################
         self.irenAxial_L.Initialize()
         self.iren3D_L.Initialize()
         
@@ -739,6 +771,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
     def SetWidth_L(self):
         """set window width and show changed DICOM to ui
         """
+        ## 設定 window width ############################################################################################
         self.dcmTagLow.update({"ww": int(self.Slider_WW_L.value())})
         
         self.dicomLow.ChangeWindowWidthView(self.Slider_WW_L.value())
@@ -751,12 +784,13 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.irenCoronal_L.Start()
         self.irenAxial_L.Start()
         self.iren3D_L.Start()
-        
+        ############################################################################################
         self.logUI.debug('Set Low Dicom Window Width')
 
     def SetLevel_L(self):
         """set window center/level and show changed DICOM to ui
         """
+        ## 設定 window level ############################################################################################
         self.dcmTagLow.update({"wl": int(self.Slider_WL_L.value())})
         
         self.dicomLow.ChangeWindowLevelView(self.Slider_WL_L.value())
@@ -769,7 +803,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.irenCoronal_L.Start()
         self.irenAxial_L.Start()
         self.iren3D_L.Start()
-        
+        ############################################################################################
         self.logUI.debug('Set Low Dicom Window Level')
 
     def ImportDicom_H(self):
@@ -1082,6 +1116,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         if self.dcmTagLow.get("regBall") != [] or self.dcmTagLow.get("candidateBall") != []:
             self.ui_SP.close()
             reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            ## 重新設定儲存的資料 ############################################################################################
             if reply == QMessageBox.Yes:
                 # self.dcmTagLow.update({"selectedBall": []})
                 self.dcmTagLow.update({"regBall": []})
@@ -1123,10 +1158,12 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             else:
                 self.ui_SP.close()
                 return
+            ############################################################################################
         "automatic find registration ball center"
         try:
-            # candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagLow.get("imageVTKHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
+            ## 自動找球心 + 辨識定位球位置 ############################################################################################
             flage, answer = self.regFn.GetBallAuto(self.dcmTagLow.get("imageVTKHu"), self.dcmTagLow.get("pixel2Mm"), self.dcmTagLow.get("imageTag"))
+            ############################################################################################
         except Exception as e:
             self.ui_SP.close()
             self.logUI.warning('get candidate ball error / SetRegistration_L() error')
@@ -1143,24 +1180,25 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 self.logUI.info(tmp)
                 i += 1
             self.dcmTagLow.update({"candidateBallVTK": answer})
-            
+            ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
             self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
             self.ui_SP.close()
             self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.ui_CS.show()
+            ############################################################################################
             self.Button_ShowRegistration_L.setEnabled(True)
         else:
             self.ui_SP.close()
             self.logUI.warning('get candidate ball error')
             QMessageBox.critical(self, "error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L() error')
-            
+            ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
             self.ui_CS = CoordinateSystemManual(self.dcmTagLow, self.dicomLow, answer)
             self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.ui_CS.show()
-            
+            ############################################################################################
             self.Button_ShowRegistration_L.setEnabled(True)
             return
         
@@ -1181,21 +1219,27 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         else:
             selectedBallAll = numpy.array(candidateBallVTK.get(tuple(selectedBallKey)))
             selectedBall = selectedBallAll[:,0:3]
+            ## 儲存定位球中心 ############################################################################################
             self.dcmTagLow.update({"regBall": selectedBall})
             self.logUI.info('get registration balls of inhale/Low DICOM:')
             for tmp in self.dcmTagLow.get("regBall"):
                 self.logUI.info(tmp)
+            ############################################################################################
+            ## 計算定位誤差 ############################################################################################
             "calculate error/difference of relative distance"
             error = self.regFn.GetError(self.dcmTagLow.get("regBall"))
             logStr = 'registration error of inhale/Low DICOM (min, max, mean): ' + str(error)
             self.logUI.info(logStr)
             self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
+            ############################################################################################
+            ## 計算轉換矩陣 ############################################################################################
             "calculate transformation matrix"
             regMatrix = self.regFn.TransformationMatrix(self.dcmTagLow.get("regBall"))
             self.logUI.info('get registration matrix of inhale/Low DICOM: ')
             for tmp in regMatrix:
                 self.logUI.info(tmp)
             self.dcmTagLow.update({"regMatrix": regMatrix})
+            ############################################################################################
             self.Button_SetPoint_L.setEnabled(True)
             self.comboBox_L.setEnabled(True)
         return
@@ -1204,6 +1248,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """set/select entry and target points
         """
         if self.dcmTagLow.get("flageSelectedPoint") == False:
+            ## 設定 entry 和 target 點 ############################################################################################
             if self.comboBox_L.currentText() == "Axial":
                 self.ui_SPS = SetPointSystem(self.dcmTagLow, self.comboBox_L.currentText(), self.SliceSelect_Axial_L.value())# * self.dcmTagLow.get("pixel2Mm")[2])
                 self.ui_SPS.show()
@@ -1219,8 +1264,10 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
 
             self.Button_ShowPoint_L.setEnabled(True)
             return
+            ############################################################################################
         elif self.dcmTagLow.get("flageSelectedPoint") == True:
             reply = QMessageBox.information(self, "information", "already selected points, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            ## 重設 entry 和 target 點 ############################################################################################
             if reply == QMessageBox.Yes:
                 self.dcmTagLow.update({"selectedPoint": []})
                 self.dcmTagLow.update({"flageSelectedPoint": False})
@@ -1250,6 +1297,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
             else:
                 return
+            ############################################################################################
         return
 
     def ShowPoint_L(self):
@@ -1270,7 +1318,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagLow.update({"flageShowPointButton": True})
             if self.dcmTagLow.get("flageShowPointButton") is True and self.dcmTagHigh.get("flageShowPointButton") is True:
                 self.Button_Planning.setEnabled(True)
-            
+            ## 顯示 planning path, 依照情況調整顯示 planning path 的 point ############################################################################################
             "VTK"
             pointEntry = self.dcmTagLow.get("selectedPoint")[0]
             pointTarget = self.dcmTagLow.get("selectedPoint")[1]
@@ -1316,7 +1364,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.irenCoronal_L.Start()
             self.irenAxial_L.Start()
             self.iren3D_L.Start()
-            
+            ############################################################################################
             return
         except:
             self.logUI.warning('show points error / SetPoint_L() error')
@@ -1377,7 +1425,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
                 return
         "automatic find registration ball center"
         try:
-            # candidateBallVTK = self.regFn.GetBallAuto(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
             flage, answer = self.regFn.GetBallAuto(self.dcmTagHigh.get("imageVTKHu"), self.dcmTagHigh.get("pixel2Mm"), self.dcmTagHigh.get("imageTag"))
         except:
             self.ui_SP.close()
@@ -1524,7 +1571,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             pointTarget = self.dcmTagHigh.get("selectedPoint")[1]
             
             self.dicomHigh.CreatePath(numpy.array([pointEntry, pointTarget]))
-            
             if self.dcmTagHigh.get("selectedPoint") == []:
                 pass
             else:
@@ -1564,7 +1610,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.irenCoronal_H.Start()
             self.irenAxial_H.Start()
             self.iren3D_H.Start()
-            
             return
         except:
             self.logUI.warning('show points error / SetPoint_H() error')
@@ -1577,6 +1622,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         """show planning path in regBall coordinate system
            (high entry and target points + low entry and target points )
         """
+        ## 把 planning path 合在一起傳給 robot ############################################################################################
         tmpPointLow = numpy.array([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]])
         tmpPointHigh = numpy.array([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]])
         tmpPointLow[0] = self.regFn.TransformPointVTK(self.dcmTagLow.get("imageTag"), self.dcmTagLow.get("selectedPoint")[0])
@@ -1604,7 +1650,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.Button_RobotAutoRun.setEnabled(True)
             "Qmessage"
             QMessageBox.information(self, "Information", "Ready to robot navigation")
-            
+            ############################################################################################
             "VTK"
             self.irenSagittal_L.Initialize()
             self.irenCoronal_L.Initialize()
