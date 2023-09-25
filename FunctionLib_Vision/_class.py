@@ -14,7 +14,6 @@ import copy
 from vtkmodules.vtkImagingCore import vtkImageReslice
 import vtk.numpy_interface.dataset_adapter as dsa
 
-
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
 from vtkmodules.vtkImagingCore import vtkImageMapToColors
 from vtkmodules.vtkFiltersSources import vtkSphereSource
@@ -1207,7 +1206,7 @@ class DISPLAY():
         """
         "init"
         self.radius = 3.5
-        
+        ## 建立好load dicom 所需的 VTK 物件 ############################################################################################
         self.reader = vtkDICOMImageReader()
         self.windowLevelLookup = vtkWindowLevelLookupTable()
         self.mapColors = vtkImageMapToColors()
@@ -1246,13 +1245,13 @@ class DISPLAY():
         
         vtkArray = self.vtkImage.GetPointData().GetScalars()
         imageVTK = vtk_to_numpy(vtkArray).reshape(self.imageDimensions[2], self.imageDimensions[1], self.imageDimensions[0])
-        
+        ############################################################################################
         return imageVTK
         
     def SetMapColor(self):
         """init window level and window width
         """
-        
+        ## 設定 WW/WL ############################################################################################
         self.windowLevelLookup.Build()
         thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
         self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
@@ -1261,7 +1260,7 @@ class DISPLAY():
         self.mapColors.SetInputConnection(self.reader.GetOutputPort())
         self.mapColors.SetLookupTable(self.windowLevelLookup)
         self.mapColors.Update()
-        
+        ############################################################################################
         self.SetCamera()
         
         return
@@ -1270,7 +1269,7 @@ class DISPLAY():
         """set VTK camera
         """
         "differen section, differen camera"
-        
+        ## 設定 VTK 視窗的攝影機 ############################################################################################
         self.cameraSagittal.SetViewUp(0, 0, -1)
         self.cameraSagittal.SetPosition(1, 0, 0)
         self.cameraSagittal.SetFocalPoint(0, 0, 0)
@@ -1293,7 +1292,7 @@ class DISPLAY():
         self.camera3D.SetPosition(0.8, 0.3, 1)
         self.camera3D.SetFocalPoint(0, 0, 0)
         self.camera3D.ComputeViewPlaneNormal()
-        
+        ############################################################################################
         return
         
     def CreateActorAndRender(self, value):
@@ -1302,6 +1301,7 @@ class DISPLAY():
         Args:
             value (_int_): location of slice
         """
+        ## 設定 VTK 顯示物件 ############################################################################################
         "actor"
         "Sagittal"
         self.actorSagittal.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
@@ -1336,7 +1336,7 @@ class DISPLAY():
         self.renderer3D.AddActor(self.actorCoronal)
         self.renderer3D.SetActiveCamera(self.camera3D)
         self.renderer3D.ResetCamera(self.dicomBoundsRange)
-        
+        ############################################################################################
         return
         
     def ChangeSagittalView(self, value):
@@ -1345,7 +1345,9 @@ class DISPLAY():
         Args:
             value (_int_): location of slice
         """
+        ## 改變 slice ############################################################################################
         self.actorSagittal.SetDisplayExtent(value, value, 0, self.imageDimensions[1], 0, self.imageDimensions[2])
+        ############################################################################################
         return
     
     def ChangeCoronalView(self, value):
@@ -1354,7 +1356,9 @@ class DISPLAY():
         Args:
             value (_int_): location of slice
         """
+        ## 改變 slice ############################################################################################
         self.actorCoronal.SetDisplayExtent(0, self.imageDimensions[0]-1, value, value, 0, self.imageDimensions[2]-1)
+        ############################################################################################
         return
 
     def ChangeAxialView(self, value):
@@ -1363,7 +1367,9 @@ class DISPLAY():
         Args:
             value (_int_): location of slice
         """
+        ## 改變 slice ############################################################################################
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, value, value)
+        ############################################################################################
         return
     
     def ChangeWindowWidthView(self, value):
@@ -1372,8 +1378,10 @@ class DISPLAY():
         Args:
             value (_int_): number of window width
         """
+        ## 改變 window width ############################################################################################
         self.windowLevelLookup.SetWindow(value)
         self.mapColors.Update()
+        ############################################################################################
         return
         
     def ChangeWindowLevelView(self, value):
@@ -1382,8 +1390,10 @@ class DISPLAY():
         Args:
             value (_int_): number of window level
         """
+        ## 改變 window level ############################################################################################
         self.windowLevelLookup.SetLevel(value)
         self.mapColors.Update()
+        ############################################################################################
         return
     
     def CreateEntry(self, center):
@@ -1392,6 +1402,7 @@ class DISPLAY():
         Args:
             center (_numpy.array_): point center
         """
+        ## 建立 entry point 物件 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
@@ -1407,7 +1418,7 @@ class DISPLAY():
         self.rendererAxial.AddActor(self.actorPointEntry)
         self.rendererCoronal.AddActor(self.actorPointEntry)
         self.renderer3D.AddActor(self.actorPointEntry)
-        
+        ############################################################################################
         return
     
     def CreateTarget(self, center):
@@ -1416,6 +1427,7 @@ class DISPLAY():
         Args:
             center (_numpy.array_): point center
         """
+        ## 建立 target point 物件 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(self.radius)
@@ -1431,7 +1443,7 @@ class DISPLAY():
         self.rendererAxial.AddActor(self.actorPointTarget)
         self.rendererCoronal.AddActor(self.actorPointTarget)
         self.renderer3D.AddActor(self.actorPointTarget)
-        
+        ############################################################################################
         return
        
     def CreateLine(self, startPoint, endPoint):
@@ -1441,6 +1453,7 @@ class DISPLAY():
             startPoint (_numpy.array_): enter point
             endPoint (_numpy.array_): target point
         """
+        ## 建立線 ############################################################################################
         colors = vtkNamedColors()
 
         "Create a line"
@@ -1478,7 +1491,7 @@ class DISPLAY():
         self.rendererAxial.AddActor(self.actorTube)
         self.rendererCoronal.AddActor(self.actorTube)
         self.renderer3D.AddActor(self.actorTube)
-        
+        ############################################################################################
         return
 
      
@@ -1488,15 +1501,17 @@ class DISPLAY():
         Args:
             planningPointCenter (_type_): point center of enter point and target point
         """
+        ## 建立手術路徑 ############################################################################################
         self.CreateEntry(planningPointCenter[0])
         self.CreateTarget(planningPointCenter[1])
         self.CreateLine(planningPointCenter[0], planningPointCenter[1])
-        
+        ############################################################################################
         return
         
     def RemovePoint(self):
         """remove actor of point
         """
+        ## 移除點物件 ############################################################################################
         self.rendererSagittal.RemoveActor(self.actorPointEntry)
         self.rendererAxial.RemoveActor(self.actorPointEntry)
         self.rendererCoronal.RemoveActor(self.actorPointEntry)
@@ -1516,6 +1531,6 @@ class DISPLAY():
         self.rendererAxial.RemoveActor(self.actorTube)
         self.rendererCoronal.RemoveActor(self.actorTube)
         self.renderer3D.RemoveActor(self.actorTube)
-        
+        ############################################################################################
         return
 
