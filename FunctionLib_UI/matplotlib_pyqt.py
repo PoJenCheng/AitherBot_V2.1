@@ -385,20 +385,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         point4 = self.StringSplit(point4)
         MOTORSUBFUNCTION.CycleRun(
             self, point1, point2, point3, point4, int(cycleTimes))
-
-    def RobotStepRun(self):
-        testBallPosition = self.satFn.TestBall
-        testBallSelect = int(self.lineEdit_EnterNumber_SAT.text())-1
-        if testBallSelect >= 0 and testBallSelect <= 5:
-            selectBallPosition = testBallPosition[testBallSelect]
-            calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
-            entryTestBall = selectBallPosition - calibration
-            targetTestBall = selectBallPosition - \
-                calibration - np.array([0, 0, -20])
-            MOTORSUBFUNCTION.P2P_Manual(
-                self, entryTestBall, targetTestBall)
-        else:
-            print("select target ball is wrong")
             
     def CloseRobotSystem(self):
         MOTORSUBFUNCTION.HomeProcessing(self)
