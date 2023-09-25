@@ -451,7 +451,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>5</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -624,7 +624,7 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_L" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_L"/>
        </item>
        <item row="1" column="3">
         <widget class="QScrollBar" name="SliceSelect_Coronal_L">
@@ -634,13 +634,13 @@
         </widget>
        </item>
        <item row="1" column="2">
-        <widget class="QVTKWidget" name="qvtkWidget_Coronal_L" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Coronal_L"/>
        </item>
        <item row="0" column="2">
-        <widget class="QVTKWidget" name="qvtkWidget_Axial_L" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Axial_L"/>
        </item>
        <item row="0" column="0">
-        <widget class="QVTKWidget" name="qvtkWidget_3D_L" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_3D_L"/>
        </item>
       </layout>
      </widget>
@@ -976,16 +976,16 @@
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QVTKWidget" name="qvtkWidget_3D_H" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_3D_H"/>
        </item>
        <item row="1" column="0">
-        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_H" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Sagittal_H"/>
        </item>
        <item row="0" column="2">
-        <widget class="QVTKWidget" name="qvtkWidget_Axial_H" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Axial_H"/>
        </item>
        <item row="1" column="2">
-        <widget class="QVTKWidget" name="qvtkWidget_Coronal_H" native="true"/>
+        <widget class="QVTKWidget" name="qvtkWidget_Coronal_H"/>
        </item>
       </layout>
      </widget>
@@ -1359,303 +1359,6 @@
       </layout>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabWidget_SystemAccuracy">
-     <attribute name="title">
-      <string>System accuracy test</string>
-     </attribute>
-     <widget class="QWidget" name="layoutWidget_3">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>30</y>
-        <width>1381</width>
-        <height>891</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_Axial_SAT">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QScrollBar" name="SliceSelect_Sagittal_SAT">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QScrollBar" name="SliceSelect_Axial_SAT">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="3">
-        <widget class="QScrollBar" name="SliceSelect_Coronal_SAT">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QWidget" name="widget_3D_SAT" native="true"/>
-       </item>
-       <item row="1" column="2">
-        <widget class="QLabel" name="label_Coronal_SAT">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_Sagittal_SAT">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_11">
-      <property name="geometry">
-       <rect>
-        <x>1400</x>
-        <y>380</y>
-        <width>501</width>
-        <height>151</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_11">
-       <item>
-        <widget class="QLabel" name="valueWW_SAT">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-           <weight>75</weight>
-           <italic>true</italic>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Width&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_WW_SAT">
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSlider" name="Slider_WW_SAT">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="valueWL_SAT">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-           <weight>75</weight>
-           <italic>true</italic>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_WL_SAT">
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSlider" name="Slider_WL_SAT">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_12">
-      <property name="geometry">
-       <rect>
-        <x>1400</x>
-        <y>550</y>
-        <width>160</width>
-        <height>127</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_14">
-       <item>
-        <widget class="QLabel" name="label_17">
-         <property name="text">
-          <string>Axial</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_18">
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_19">
-         <property name="text">
-          <string>Sagittal</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_20">
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_21">
-         <property name="text">
-          <string>Coronal</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_22">
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_13">
-      <property name="geometry">
-       <rect>
-        <x>1570</x>
-        <y>10</y>
-        <width>331</width>
-        <height>310</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_15">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QPushButton" name="Button_Registration_SAT">
-           <property name="text">
-            <string>Registration</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="Button_ShowRegistration_SAT">
-           <property name="text">
-            <string>Show difference</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_RegistrtionError_SAT">
-         <property name="text">
-          <string>Registration difference: 0 mm</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="Button_ShowTestPoint_SAT">
-         <property name="text">
-          <string>Show test point</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_TestBallNum_SAT">
-         <property name="text">
-          <string>NO. 0 test ball</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_26">
-           <property name="text">
-            <string>Enter number</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="lineEdit_EnterNumber_SAT"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="Button_Robot2TestPoint">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string>Robot go to test point</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QLabel" name="label_dcmSAT_L_side">
-      <property name="geometry">
-       <rect>
-        <x>700</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_dcmSAT_R_side">
-      <property name="geometry">
-       <rect>
-        <x>1320</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
-     </widget>
-    </widget>
     <widget class="QWidget" name="tabWidget_RobotAccuracy">
      <attribute name="title">
       <string>Robot cycle accuracy</string>
@@ -1785,7 +1488,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -1794,7 +1497,6 @@
     </property>
     <addaction name="Action_ImportDicom_L"/>
     <addaction name="Action_ImportDicom_H"/>
-    <addaction name="Action_ImportDicom_SAT"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -1831,114 +1533,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>Slider_WL_L</sender>
+   <sender>SliceSelect_Sagittal_L</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>label_WL_L</receiver>
+   <receiver>label_7</receiver>
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1492</x>
-     <y>478</y>
+     <x>698</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1492</x>
-     <y>478</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Slider_WW_L</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_WW_L</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1456</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1422</x>
-     <y>478</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Slider_WW_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_WW_H</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1462</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1435</x>
-     <y>478</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Slider_WL_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_WL_H</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1506</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1506</x>
-     <y>478</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_ShowRegistration_L</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ShowRegistrationDifference_L()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1681</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1976</x>
-     <y>83</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_Registration_L</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>SetRegistration_L()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1677</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1992</x>
-     <y>60</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_SetPoint_L</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>SetPoint_L()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1995</x>
-     <y>180</y>
+     <x>1475</x>
+     <y>690</y>
     </hint>
    </hints>
   </connection>
@@ -1949,12 +1555,156 @@
    <slot>ShowPoint_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
+     <x>1679</x>
+     <y>268</y>
     </hint>
     <hint type="destinationlabel">
      <x>1953</x>
      <y>217</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Coronal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_16</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1391</x>
+     <y>626</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1459</x>
+     <y>734</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Planning</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPlanningPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1679</x>
+     <y>303</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1979</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_ShowRegistration_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowRegistrationDifference_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1852</x>
+     <y>124</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2018</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_12</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1391</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1420</x>
+     <y>646</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetPoint_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPoint_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1679</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2018</x>
+     <y>248</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Axial_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_9</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1391</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1421</x>
+     <y>646</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_RobotAutoRun</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>647</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>646</x>
+     <y>-9</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SliceSelect_Sagittal_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_14</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>698</x>
+     <y>626</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1497</x>
+     <y>690</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Registration_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetRegistration_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1681</x>
+     <y>106</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1992</x>
+     <y>60</y>
     </hint>
    </hints>
   </connection>
@@ -1965,12 +1715,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>620</x>
-     <y>380</y>
+     <x>624</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>630</x>
-     <y>351</y>
+     <x>634</x>
+     <y>341</y>
     </hint>
    </hints>
   </connection>
@@ -1991,22 +1741,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_RobotAutoRun</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>RobotRun()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>644</x>
-     <y>222</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>646</x>
-     <y>-9</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>Button_Registration_H</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -2023,50 +1757,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_ShowRegistration_H</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ShowRegistrationDifference_H()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1681</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>2018</x>
-     <y>95</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_SetPoint_H</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>SetPoint_H()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>2018</x>
-     <y>248</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>Button_ShowPoint_H</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>ShowPoint_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
+     <x>1679</x>
+     <y>338</y>
     </hint>
     <hint type="destinationlabel">
      <x>2012</x>
      <y>286</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetPoint_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPoint_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1679</x>
+     <y>205</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1995</x>
+     <y>180</y>
     </hint>
    </hints>
   </connection>
@@ -2077,252 +1795,124 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1391</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1437</x>
-     <y>648</y>
+     <x>1440</x>
+     <y>734</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Axial_L</sender>
+   <sender>Slider_WL_L</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>label_9</receiver>
+   <receiver>label_WL_L</receiver>
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1495</x>
+     <y>588</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1418</x>
-     <y>648</y>
+     <x>1495</x>
+     <y>559</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Sagittal_L</sender>
+   <sender>Slider_WL_H</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>label_7</receiver>
+   <receiver>label_WL_H</receiver>
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1509</x>
+     <y>588</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1472</x>
-     <y>648</y>
+     <x>1509</x>
+     <y>559</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Axial_H</sender>
+   <sender>Slider_WW_L</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>label_12</receiver>
+   <receiver>label_WW_L</receiver>
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1459</x>
+     <y>510</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1417</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Coronal_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_16</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1456</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Sagittal_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_14</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1494</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_Planning</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ShowPlanningPath()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1979</x>
-     <y>278</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Axial_SAT</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_18</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1413</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Coronal_SAT</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_22</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1429</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Sagittal_SAT</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_20</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1506</x>
-     <y>648</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Slider_WW_SAT</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>label_WW_SAT</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1477</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1475</x>
+     <x>1422</x>
      <y>478</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>Slider_WL_SAT</sender>
+   <sender>Button_ShowRegistration_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowRegistrationDifference_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1852</x>
+     <y>106</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1976</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WW_H</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>label_WL_SAT</receiver>
+   <receiver>label_WW_H</receiver>
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1506</x>
+     <x>1465</x>
+     <y>510</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1435</x>
      <y>478</y>
     </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StartTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>LaserTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1557</x>
+     <y>347</y>
+    </hint>
     <hint type="destinationlabel">
-     <x>1506</x>
-     <y>478</y>
+     <x>1588</x>
+     <y>-20</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>Button_Registration_SAT</sender>
+   <sender>Button_StopRecording</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>SetRegistration_SAT()</slot>
+   <slot>StopRecordBreathingBase()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1677</x>
-     <y>108</y>
+     <x>1557</x>
+     <y>306</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1681</x>
-     <y>-95</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_ShowRegistration_SAT</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ShowRegistrationDifference_SAT()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1681</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1788</x>
-     <y>-61</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_ShowTestPoint_SAT</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ShowTestPoint_SAT()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>2090</x>
-     <y>230</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_Robot2TestPoint</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>RobotStepRun()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1676</x>
-     <y>108</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1782</x>
-     <y>-13</y>
+     <x>1563</x>
+     <y>-6</y>
     </hint>
    </hints>
   </connection>
@@ -2333,8 +1923,8 @@
    <slot>ScrollBarChangeSagittal_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>698</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
      <x>685</x>
@@ -2349,60 +1939,12 @@
    <slot>ScrollBarChangeCoronal_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1391</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
      <x>1368</x>
      <y>1030</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Axial_L</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeAxial_L()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1366</x>
-     <y>-61</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Sagittal_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeSagittal_H()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>683</x>
-     <y>1025</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>SliceSelect_Coronal_H</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeCoronal_H()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1378</x>
-     <y>1007</y>
     </hint>
    </hints>
   </connection>
@@ -2413,8 +1955,8 @@
    <slot>ScrollBarChangeAxial_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1391</x>
+     <y>178</y>
     </hint>
     <hint type="destinationlabel">
      <x>1377</x>
@@ -2423,50 +1965,50 @@
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Sagittal_SAT</sender>
+   <sender>SliceSelect_Sagittal_H</sender>
    <signal>valueChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeSagittal_SAT()</slot>
+   <slot>ScrollBarChangeSagittal_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>698</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
-     <x>692</x>
-     <y>1008</y>
+     <x>683</x>
+     <y>1025</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Coronal_SAT</sender>
+   <sender>SliceSelect_Axial_L</sender>
    <signal>valueChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeCoronal_SAT()</slot>
+   <slot>ScrollBarChangeAxial_L()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1391</x>
+     <y>178</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1379</x>
-     <y>1049</y>
+     <x>1366</x>
+     <y>-61</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>SliceSelect_Axial_SAT</sender>
+   <sender>SliceSelect_Coronal_H</sender>
    <signal>valueChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>ScrollBarChangeAxial_SAT()</slot>
+   <slot>ScrollBarChangeCoronal_H()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>128</y>
+     <x>1391</x>
+     <y>626</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1376</x>
-     <y>-35</y>
+     <x>1378</x>
+     <y>1007</y>
     </hint>
    </hints>
   </connection>
@@ -2487,66 +2029,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_StartTracking</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>LaserTracking()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1554</x>
-     <y>357</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1588</x>
-     <y>-20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_StopRecording</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>StopRecordBreathingBase()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1554</x>
-     <y>316</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1563</x>
-     <y>-6</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Button_RecordCycle</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>StartRecordBreathingBase()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1514</x>
-     <y>275</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1493</x>
-     <y>-3</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>Button_StopLaserTracking</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>StopLaserTracking()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1489</x>
-     <y>398</y>
+     <x>1492</x>
+     <y>388</y>
     </hint>
     <hint type="destinationlabel">
      <x>1297</x>
      <y>-5</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SystemClose</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>CloseRobotSystem()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>744</x>
+     <y>239</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>785</x>
+     <y>-4</y>
     </hint>
    </hints>
   </connection>
@@ -2557,8 +2067,8 @@
    <slot>StopLaserProfile()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1554</x>
-     <y>234</y>
+     <x>1557</x>
+     <y>224</y>
     </hint>
     <hint type="destinationlabel">
      <x>1756</x>
@@ -2583,18 +2093,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>Button_SystemClose</sender>
+   <sender>Button_RecordCycle</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>CloseRobotSystem()</slot>
+   <slot>StartRecordBreathingBase()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>744</x>
-     <y>239</y>
+     <x>1517</x>
+     <y>265</y>
     </hint>
     <hint type="destinationlabel">
-     <x>785</x>
-     <y>-4</y>
+     <x>1493</x>
+     <y>-3</y>
     </hint>
    </hints>
   </connection>
