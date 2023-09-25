@@ -451,7 +451,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>5</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabWidget_Dynamic">
      <attribute name="title">
@@ -859,32 +859,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QLabel" name="label_dcmL_L_side">
-      <property name="geometry">
-       <rect>
-        <x>700</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_dcmL_R_side">
-      <property name="geometry">
-       <rect>
-        <x>1320</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
-     </widget>
      <widget class="QWidget" name="verticalLayoutWidget_6">
       <property name="geometry">
        <rect>
@@ -1058,32 +1032,6 @@
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QLabel" name="label_dcmH_L_side">
-      <property name="geometry">
-       <rect>
-        <x>700</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_dcmH_R_side">
-      <property name="geometry">
-       <rect>
-        <x>1320</x>
-        <y>10</y>
-        <width>58</width>
-        <height>15</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>L / R</string>
-      </property>
      </widget>
      <widget class="QWidget" name="verticalLayoutWidget_5">
       <property name="geometry">

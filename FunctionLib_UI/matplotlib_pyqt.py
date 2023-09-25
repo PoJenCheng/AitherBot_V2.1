@@ -3,12 +3,10 @@ from turtle import update
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-# from PyQt5.QtGui import QMovie
 from FunctionLib_Robot._class import *
 from FunctionLib_Robot._subFunction import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot._globalVar import *
-# from FunctionLib_Vision._class import SAT
 from time import sleep
 from datetime import datetime
 import sys
@@ -30,14 +28,13 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as Navigati
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 
-class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
+class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser):
     def __init__(self, parent = None):
         try:
             """initial main ui
             """       
             super(MainWidget, self).__init__()
             QMainWindow.__init__(self)
-            SAT.__init__(self)
 
             self.setupUi(self)
             self._init_log()
@@ -48,7 +45,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
 
             self.dcmFn = DICOM()
             self.regFn = REGISTRATION()
-            self.satFn = SAT()
             self.dicomLow = DISPLAY()
             self.dicomHigh = DISPLAY()
             
@@ -92,18 +88,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
             self.dcmTagHigh.update({"flageShowPointButton": False})
             "show point"
             # self.dcmTagHigh.update({"sectionTag":[]})
-
-            "initialize dcm system accuracy test (SAT)"
-            self.dcmTagSAT = {}
-            self.dcmTagSAT.update({"ww": 1})
-            self.dcmTagSAT.update({"wl": 1})
-            "registration ball"
-            self.dcmTagSAT.update({"selectedBall": []})
-            self.dcmTagSAT.update({"regBall": []})
-            self.dcmTagSAT.update({"flageSelectedBall": False})
-            "set test point"
-            self.dcmTagSAT.update({"selectedTestPoint": []})
-            self.dcmTagSAT.update({"flageselectedTestPoint": False})
 
             self.Slider_WW_L.setMinimum(1)
             self.Slider_WW_L.setMaximum(3071)
@@ -566,15 +550,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagLow.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmTagLow.get("imageTag")[0])})
         self.dcmTagLow.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmTagLow.get("imageHu"), self.dcmTagLow.get("pixel2Mm")))})
         patientPosition = self.dcmTagLow.get("imageTag")[0].PatientPosition
-        # if patientPosition == 'HFS':
-        #     self.label_dcmL_L_side.setText("Left")
-        #     self.label_dcmL_R_side.setText("Right")
-        # elif patientPosition == 'HFP':
-        #     self.label_dcmL_L_side.setText("Right")
-        #     self.label_dcmL_R_side.setText("Left")
-        # else:
-        #     self.label_dcmL_L_side.setText("error")
-        #     self.label_dcmL_R_side.setText("error")
         ############################################################################################
         ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
         "VTK stage"
@@ -876,15 +851,6 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser, SAT):
         self.dcmTagHigh.update({"pixel2Mm": self.dcmFn.GetPixel2Mm(self.dcmTagHigh.get("imageTag")[0])})
         self.dcmTagHigh.update({"imageHuMm": numpy.array(self.dcmFn.ImgTransfer2Mm(self.dcmTagHigh.get("imageHu"), self.dcmTagHigh.get("pixel2Mm")))})
         patientPosition = self.dcmTagHigh.get("imageTag")[0].PatientPosition
-        # if patientPosition == 'HFS':
-        #     self.label_dcmH_L_side.setText("Left")
-        #     self.label_dcmH_R_side.setText("Right")
-        # elif patientPosition == 'HFP':
-        #     self.label_dcmH_L_side.setText("Right")
-        #     self.label_dcmH_R_side.setText("Left")
-        # else:
-        #     self.label_dcmH_L_side.setText("error")
-        #     self.label_dcmH_R_side.setText("error")
 
         "VTK stage"
         self.dcmTagHigh.update({"folderDir":folderDir})
