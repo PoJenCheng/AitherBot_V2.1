@@ -1618,6 +1618,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.SetWindow2Center()
         
         "create VTK"
+        ## 建立 VTK 物件 ############################################################################################
         self.reader = vtkDICOMImageReader()
         
         self.windowLevelLookup = vtkWindowLevelLookupTable()
@@ -1630,11 +1631,11 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorBallGreen = vtkActor()
         self.actorBallBlue = vtkActor()
 
-        "hint: self.dcmLow = dcmLow = dcm"
         self.dcmTag = dcmTag
         self.dicomVTK = dicomVTK
-        
+        ############################################################################################
         "addComboBox"
+        ## 新增 combo box 選項 ############################################################################################
         tmpKey = []
         
         self.candidateBallVTK = self.dcmTag.get("candidateBallVTK")
@@ -1648,19 +1649,23 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.comboBox_label.setCurrentIndex(0)
         self.comboBox_label.currentIndexChanged.connect(self.SelectionChange)
         self.SelectionChange(0)
-        
+        ############################################################################################
         return
     
     def SetWindow2Center(self):
-        screen = QDesktopWidget().screenGeometry()  # 螢幕大小
-        size = self.geometry()  # 視窗大小
+        ## 視窗置中 ############################################################################################
+        "screen size"
+        screen = QDesktopWidget().screenGeometry()
+        "window size"
+        size = self.geometry()
         x = (screen.width() - size.width()) // 2
         y = (screen.height() - size.height()) // 2
         self.move(x, y)
-        
+        ############################################################################################
         return
     
     def SelectionChange(self,i):
+        ## combo box slot, 更改顯示的定位球 ############################################################################################
         currentKey = self.keys[i,:]
         
         currentValue = numpy.array(self.candidateBallVTK.get(tuple(currentKey)))
@@ -1677,10 +1682,11 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         self.iren3D_L.Initialize()
         self.iren3D_L.Start()
-        
+        ############################################################################################
         return
     
     def CreateBallRed(self, center, radius):
+        ## 建立原點定位球 VTK 物件 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -1693,9 +1699,11 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorBallRed.GetProperty().SetColor(1, 0, 0)
         
         self.renderer3D.AddActor(self.actorBallRed)
+        ############################################################################################
         return
     
     def CreateBallGreen(self, center, radius):
+        ## 建立 x 方向定位球 VTK 物件 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -1708,9 +1716,11 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorBallGreen.GetProperty().SetColor(0, 1, 0)
         
         self.renderer3D.AddActor(self.actorBallGreen)
+        ############################################################################################
         return
     
     def CreateBallBlue(self, center, radius):
+        ## 建立 y 方向定位球 VTK 物件 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(center)
         sphereSource.SetRadius(radius)
@@ -1723,9 +1733,11 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorBallBlue.GetProperty().SetColor(0, 0, 1)
         
         self.renderer3D.AddActor(self.actorBallBlue)
+        ############################################################################################
         return
     
     def DisplayImage(self, value):
+        ## 顯示註冊 VTK 視窗 ############################################################################################
         try:
             self.renderer3D.RemoveActor(self.actorSagittal)
             self.renderer3D.RemoveActor(self.actorAxial)
@@ -1787,71 +1799,26 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         
         self.iren3D_L.Initialize()
         self.iren3D_L.Start()
-        
+        ############################################################################################
         return
-        
-    # def UpdateImage(self):
-    #     "update and display ui"
-    #     bytesPerline = 3 * self.imgWidth
-    #     self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
-    #     self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-    #     "GetClickedPosition don't +()), it could create error below: "
-    #     "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
-    #     self.label_img.mousePressEvent = self.GetClickedPosition
-    #     return
-
-    # def GetClickedPosition(self, event):
-    #     showAxis = self.dcm.get("showAxis")
-    #     showSlice = self.dcm.get("showSlice")
-    #     x = event.pos().x()
-    #     y = event.pos().y()
-    #     self.flage = self.flage + 1
-    #     if self.flage > 3:
-    #         QMessageBox.critical(self, "error", "there are already selected 3 balls")
-    #         return
-    #     else:
-    #         if showAxis == 0:
-    #             "x axis"
-    #             self.point.append([showSlice, x, y])
-    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-    #         elif showAxis == 1:
-    #             "y axis"
-    #             self.point.append([x, showSlice, y])
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-    #         elif showAxis == 2:
-    #             "z axis"
-    #             self.point.append([x, y, showSlice])
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-    #         else:
-    #             print("Coordinate System error")
-    #     self.drawPoint(x, y)
-    #     self.UpdateImage()
-    #     return
-
-    # def drawPoint(self, x, y):
-    #     "red"
-    #     color = (0, 0, 255)
-    #     point = (int(x), int(y))
-    #     point_size = 1
-    #     thickness = 4
-    #     cv2.circle(self.gray3Channel, point, point_size, color, thickness)
-    #     return
 
     def okAndClose(self):
+        ## 確認+選定定位球後, 儲存資料 ############################################################################################
         selectLabel = self.comboBox_label.currentText()
         selectKey = self.keys[int(selectLabel)-1,:]
-        # selectValue = self.candidateBall.get(tuple(selectKey))
         selectValue = self.candidateBallVTK.get(tuple(selectKey))
         print("-------------------------------------------------------------------")
         print("selectLabel = ", selectLabel, ", \nkey = ", selectKey, ", \nvalue = ", selectValue)
         print("-------------------------------------------------------------------")
         self.dcmTag.update({"selectedBallKey":selectKey})
-        
+        ############################################################################################
         self.close()
         return
 
     def Cancel(self):
+        ## 取消 ############################################################################################
         self.close()
+        ############################################################################################
 
 class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
     def __init__(self, dcmTag, dicom, answer):
@@ -1874,8 +1841,6 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         self.actorBallGreen = vtkActor()
         self.actorBallBlue = vtkActor()
         
-        
-
         "hint: self.dicomLow = dicomLow = dicom"
         "hint: self.dcmTagLow = dcmTagLow = dcmTag"
         self.dcmTag = dcmTag
@@ -1924,9 +1889,6 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         self.cameraAxial.ComputeViewPlaneNormal()
         self.cameraAxial.ParallelProjectionOn()
         
-        
-        
-        
         self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], self.ScrollBar.value(), self.ScrollBar.value())
         
@@ -1938,12 +1900,8 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         
         "show"
         self.qvtkWidget_registrtion.GetRenderWindow().AddRenderer(self.renderer)
-        # self.iren.SetInteractorStyle(CoordinateSystemManualInteractorStyle(self))
-        # self.istyle = CoordinateSystemManualInteractorStyle(self)
-        # self.iren.SetInteractorStyle(self.istyle)
         self.istyle = CoordinateSystemManualInteractorStyle(self)
         self.pick_point = self.iren.SetInteractorStyle(self.istyle)
-        
         
         self.iren.Initialize()
         self.iren.Start()
@@ -1951,8 +1909,10 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         return
         
     def SetWindow2Center(self):
-        screen = QDesktopWidget().screenGeometry()  # 螢幕大小
-        size = self.geometry()  # 視窗大小
+        "screen size"
+        screen = QDesktopWidget().screenGeometry()
+        "window size"
+        size = self.geometry()
         x = (screen.width() - size.width()) // 2
         y = (screen.height() - size.height()) // 2
         self.move(x, y)
@@ -1963,9 +1923,7 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
         
-        # if numpy.array(self.dcmTagLow.get("candidateBall")).shape[0]
         try:
-            # print(self.dicom.radius)
             ballRed = self.dcmTag.get("candidateBall")[0]
             if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
                 self.renderer.AddActor(self.actorBallRed)
@@ -1981,8 +1939,6 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 self.renderer.AddActor(self.actorBallBlue)
             else:
                 self.renderer.RemoveActor(self.actorBallBlue)
-        # except Exception as e:
-        #     print(e)
         except:
             pass
         
@@ -1992,9 +1948,6 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
     def okAndClose(self):
         
         if numpy.array(self.dcmTag.get("candidateBall")).shape[0] >= 3:
-            # print("666666666666")
-            # print(self.dcmTag.get("candidateBall"))
-            
             flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
             if flage == True:
                 self.dcmTag.update({"candidateBallVTK": answer})
@@ -2002,10 +1955,8 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 
                 "open another ui window to check registration result"
                 self.ui_CS = CoordinateSystem(self.dcmTag, self.dicom)
-                # self.ui_SP.close()
                 self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
                 self.ui_CS.show()
-                # self.Button_ShowRegistration_L.setEnabled(True)
             else:
                 QMessageBox.critical(self, "error", "get candidate ball error")
                 print('get candidate ball error / SetRegistration_L() error')
@@ -2021,10 +1972,6 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
 class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
     def __init__(self, setPointWindow):
         self.setPointWindow = setPointWindow
-        
-        # self.setPointWindow.actorBallRed = vtkActor()
-        # self.setPointWindow.actorBallGreen = vtkActor()
-        # self.setPointWindow.actorBallBlue = vtkActor()
         
         self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
         self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
@@ -2181,7 +2128,6 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DI
         self.actor.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
         
         self.renderer = vtkRenderer()
-        # self.renderer.SetBackground(.2, .3, .4)
         
         if showSection == "Axial":
             self.cameraAxial = vtkCamera()
@@ -2235,87 +2181,6 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DI
         "save point"
         
         return
-
-    # def UpdateImage(self):
-    #     "update and display ui"
-    #     bytesPerline = 3 * self.imgWidth
-    #     self.qimg = QImage(self.gray3Channel, self.imgWidth, self.imgHeight, bytesPerline, QImage.Format_RGB888).rgbSwapped()
-    #     self.label_img.setPixmap(QPixmap.fromImage(self.qimg))
-    #     "GetClickedPosition don't + ()), it could create error below: "
-    #     "TypeError: GetClickedPosition() missing 1 required positional argument: 'event'"
-    #     self.label_img.mousePressEvent = self.GetClickedPosition
-    #     return
-
-    # def GetClickedPosition(self, event):
-    #     x = event.pos().x()
-    #     y = event.pos().y()
-    #     showSection = self.comboBox
-
-        # self.flage = self.SavePoints(x, y, showSection, self.scrollBar)
-        # if self.flage == 1:
-        #     "green"
-        #     color = (0, 255, 0)
-        #     # self.drawPoint(x, y, color)
-        #     # self.UpdateImage()
-        # elif self.flage == 2:
-        #     "red"
-        #     color = (0, 0, 255)
-    #         self.drawPoint(x, y, color)
-    #         self.UpdateImage()
-
-    # def drawPoint(self, x, y, color):
-    #     point = (int(x), int(y))
-    #     point_size = 1
-    #     thickness = 4
-    #     cv2.circle(self.gray3Channel, point, point_size, color, thickness)
-    #     return
-
-    # def SavePoints(self, x, y, showSection, showSlice):
-    #     if numpy.array(self.dcmTag.get("selectedPoint")).shape[0] >= 2:
-    #         QMessageBox.critical(self, "error", "there are already selected 2 points")
-    #         return 3
-    #     elif numpy.array(self.dcmTag.get("selectedPoint")).shape[0] == 0:
-    #         if showSection == "Axial":
-    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([x, y, showSlice])])}) #*[1, 1, -1]])})
-    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-    #         elif showSection == "Coronal":
-    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([x, showSlice, y])])}) #*[1, 1, -1]])})
-    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-    #         elif showSection == "Sagittal":
-    #             self.dcmTag.update({"selectedPoint": numpy.array([numpy.array([showSlice, x, y])])}) #*[1, 1, -1]])})
-    #             self.dcmTag.update({"sectionTag":numpy.array([self.comboBox])})
-    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-    #         else:
-    #             print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 0")
-    #         return 1
-    #     elif numpy.array(self.dcmTag.get("selectedPoint")).shape[0] == 1:
-    #         if showSection == "Axial":
-    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([x, y, showSlice]), 0) #*[1, 1, -1], 0)
-    #             self.dcmTag.update({"selectedPoint": tmp})
-    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
-    #             self.dcmTag.update({"sectionTag":tmpTag})
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {y}, {showSlice})")
-    #         elif showSection == "Coronal":
-    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([x, showSlice, y]), 0) #*[1, 1, -1], 0)
-    #             self.dcmTag.update({"selectedPoint": tmp})
-    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
-    #             self.dcmTag.update({"sectionTag":tmpTag})
-    #             self.label_origin.setText(f"(x, y, z) = ({x}, {showSlice}, {y})")
-    #         elif showSection == "Sagittal":
-    #             tmp = numpy.insert(self.dcmTag.get("selectedPoint"), 1, numpy.array([showSlice, x, y]), 0) #*[1, 1, -1], 0)
-    #             self.dcmTag.update({"selectedPoint": tmp})
-    #             tmpTag = numpy.insert(self.dcmTag.get("sectionTag"),1,self.comboBox)
-    #             self.dcmTag.update({"sectionTag":tmpTag})
-    #             self.label_origin.setText(f"(x, y, z) = ({showSlice}, {x}, {y})")
-    #         else:
-    #             print("GetClickedPosition error / Set Point System error / self.dcm.get(\"selectedPoint\").shape[0] == 1")
-    #         self.dcmTag.update({"flageSelectedPoint": True})
-    #         return 2
-    #     else:
-    #         print("GetClickedPosition error / Set Point System error / else")
-    #         return 0
 
     def okAndClose(self):
         self.close()
@@ -2419,8 +2284,10 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):
         """show loading window"""
+        ## 顯示 loading 畫面 
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
+        ############################################################################################
         return
 
 class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
