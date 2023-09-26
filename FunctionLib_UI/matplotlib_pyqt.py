@@ -1630,10 +1630,10 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         self.actorBallRed = vtkActor()
         self.actorBallGreen = vtkActor()
         self.actorBallBlue = vtkActor()
-
+        ############################################################################################
         self.dcmTag = dcmTag
         self.dicomVTK = dicomVTK
-        ############################################################################################
+        
         "addComboBox"
         ## 新增 combo box 選項 ############################################################################################
         tmpKey = []
@@ -1737,7 +1737,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         return
     
     def DisplayImage(self, value):
-        ## 顯示註冊 VTK 視窗 ############################################################################################
+        ## 顯示 ############################################################################################
         try:
             self.renderer3D.RemoveActor(self.actorSagittal)
             self.renderer3D.RemoveActor(self.actorAxial)
@@ -1816,7 +1816,7 @@ class CoordinateSystem(QWidget, FunctionLib_UI.ui_coordinate_system.Ui_Form):
         return
 
     def Cancel(self):
-        ## 取消 ############################################################################################
+        ## 關閉視窗 ############################################################################################
         self.close()
         ############################################################################################
 
@@ -1827,6 +1827,7 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         self.SetWindow2Center()
         
         "create VTK"
+        ## 建立 VTK 物件 ############################################################################################
         self.reader = vtkDICOMImageReader()
         
         self.actorAxial = vtkImageActor()
@@ -1840,7 +1841,7 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         self.actorBallRed = vtkActor()
         self.actorBallGreen = vtkActor()
         self.actorBallBlue = vtkActor()
-        
+        ############################################################################################
         "hint: self.dicomLow = dicomLow = dicom"
         "hint: self.dcmTagLow = dcmTagLow = dcmTag"
         self.dcmTag = dcmTag
@@ -1852,6 +1853,7 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         return
         
     def Display(self):
+        ## 顯示 ############################################################################################
         "folderPath"
         folderDir = self.dcmTag.get("folderDir")
         "vtk"
@@ -1905,10 +1907,11 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         
         self.iren.Initialize()
         self.iren.Start()
-        
+        ############################################################################################
         return
         
     def SetWindow2Center(self):
+        ## 視窗置中 ############################################################################################
         "screen size"
         screen = QDesktopWidget().screenGeometry()
         "window size"
@@ -1916,13 +1919,13 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         x = (screen.width() - size.width()) // 2
         y = (screen.height() - size.height()) // 2
         self.move(x, y)
-        
+        ############################################################################################
         return
     
     def ScrollBarChange(self):
-        
+        ## 調整顯示切面 ############################################################################################
         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
-        
+            ## 調整是否顯示點 ############################################################################################
         try:
             ballRed = self.dcmTag.get("candidateBall")[0]
             if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
@@ -1941,12 +1944,14 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 self.renderer.RemoveActor(self.actorBallBlue)
         except:
             pass
-        
+            ############################################################################################
         self.iren.Initialize()
         self.iren.Start()
+        ############################################################################################
+        return
 
     def okAndClose(self):
-        
+        ## 確認後儲存定位球資料 ############################################################################################
         if numpy.array(self.dcmTag.get("candidateBall")).shape[0] >= 3:
             flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
             if flage == True:
@@ -1965,9 +1970,11 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
         else:
             QMessageBox.information(self, "information", "need to set 3 balls")
             return
-    
+        ############################################################################################
     def Cancel(self):
+        ## 關閉視窗 ############################################################################################
         self.close()
+        ############################################################################################
 
 class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
     def __init__(self, setPointWindow):
@@ -1980,17 +1987,20 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
     
     def right_button_press_event(self, obj, event):
         """turn off right button"""
+        ## 關閉右鍵功能 ############################################################################################
         pass
+        ############################################################################################
         return
     
     def left_button_press_event(self, obj, event):
         """Get the location of the click (in window coordinates)"""
+        ## 左鍵點選點 ############################################################################################
         points = self.GetInteractor().GetEventPosition()
-        
         picker = vtkCellPicker()
         picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
         pick_point = picker.GetPickPosition()
-        
+        ############################################################################################
+        ## 儲存點 ############################################################################################
         if picker.GetCellId() != -1:
             if numpy.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
                 QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
@@ -2016,10 +2026,12 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
             self.DrawPoint(pick_point, flage)
         else:
             print("picker.GetCellId() = -1")
+        ############################################################################################
         return
     
     def DrawPoint(self, pick_point, flage):
         """draw point"""
+        ## 畫點 ############################################################################################
         radius = 3.5
         if flage == 1:
             "red"
@@ -2030,10 +2042,11 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         elif flage == 3:
             "blue"
             self.CreateBallBlue(pick_point, radius)
-            
+        ############################################################################################
         return
     
     def CreateBallGreen(self, pick_point, radius):
+        ## 建立綠球 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(pick_point)
         sphereSource.SetRadius(radius)
@@ -2048,9 +2061,11 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallGreen)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
+        ############################################################################################
         return
     
     def CreateBallRed(self, pick_point, radius):
+        ## 建立紅球 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(pick_point)
         sphereSource.SetRadius(radius)
@@ -2065,9 +2080,11 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallRed)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
+        ############################################################################################
         return
     
     def CreateBallBlue(self, pick_point, radius):
+        ## 建立藍球 ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(pick_point)
         sphereSource.SetRadius(radius)
@@ -2082,14 +2099,14 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallBlue)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
+        ############################################################################################
         return
 
-class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DICOM):
+class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):
     def __init__(self, dcmTag, comboBox, scrollBar):
         super(SetPointSystem, self).__init__()
         self.setupUi(self)
 
-        "hint: self.dcmTagLow = dcmTagLow"
         self.dcmTag = dcmTag
         self.comboBox = comboBox
         if scrollBar < 1:
@@ -2100,6 +2117,7 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DI
         self.flage = 0
 
     def DisplayImage(self):
+        ## 顯示 ############################################################################################
         self.pixel2Mm = self.dcmTag.get("pixel2Mm")
         showSection = self.comboBox
         ww = self.dcmTag.get("ww")
@@ -2177,14 +2195,14 @@ class SetPointSystem(QWidget, FunctionLib_UI.ui_set_point_system.Ui_Form):# , DI
 
         self.iren.Initialize()
         self.iren.Start()
-        
-        "save point"
-        
+        ############################################################################################
         return
 
     def okAndClose(self):
+        ## 關閉視窗 ############################################################################################
         self.close()
-
+        ############################################################################################
+        
 class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
     def __init__(self, setPointWindow):
         self.setPointWindow = setPointWindow
@@ -2205,12 +2223,13 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
     
     def left_button_press_event(self, obj, event):
         """Get the location of the click (in window coordinates)"""
+        ## 左鍵點選點 ############################################################################################
         points = self.GetInteractor().GetEventPosition()
-        
         picker = vtkCellPicker()
         picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
         pick_point = picker.GetPickPosition()
-        
+        ############################################################################################
+        ## 儲存點 ############################################################################################
         if picker.GetCellId() != -1:
             if numpy.array(self.setPointWindow.dcmTag.get("selectedPoint")).shape[0] >= 2:
                 QMessageBox.critical(self.setPointWindow, "error", "there are already selected 2 points")
@@ -2227,14 +2246,15 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
                 print("GetClickedPosition error / Set Point System error / else")
                 return
             self.DrawPoint(pick_point, flage)
-            
         else:
             print("picker.GetCellId() = -1")
         "return pick_point in mm"
+        ############################################################################################
         return pick_point
             
     def DrawPoint(self, pick_point, flage):
         """draw point"""
+        ## 畫點 ############################################################################################
         radius = 2
         if flage == 1:
             "entry point"
@@ -2244,10 +2264,11 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
             "target point"
             "red"
             self.CreateBallRed(pick_point, radius)
-            
+        ############################################################################################
         return
     
     def CreateBallGreen(self, pick_point, radius):
+        ## 建立 entry point ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(pick_point)
         sphereSource.SetRadius(radius)
@@ -2262,9 +2283,11 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.renderer.AddActor(self.actorBallGreen)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
+        ############################################################################################
         return
     
     def CreateBallRed(self, pick_point, radius):
+        ## 建立 target point ############################################################################################
         sphereSource = vtkSphereSource()
         sphereSource.SetCenter(pick_point)
         sphereSource.SetRadius(radius)
@@ -2279,12 +2302,13 @@ class SetPointInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.renderer.AddActor(self.actorBallRed)
         self.setPointWindow.iren.Initialize()
         self.setPointWindow.iren.Start()
+        ############################################################################################
         return
     
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):
         """show loading window"""
-        ## 顯示 loading 畫面 
+        ## 顯示 loading 畫面 ############################################################################################
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         ############################################################################################
@@ -2299,12 +2323,16 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
 
     def left_button_press_event(self, obj, event):
         """turn off left button"""
+        ## 關閉左鍵功能 ############################################################################################
         pass
+        ############################################################################################
         return
     
     def right_button_press_event(self, obj, event):
         """turn off right button"""
+        ## 關閉右鍵功能 ############################################################################################
         pass
+        ############################################################################################
         return
 
 class MyInteractorStyle3D(vtkInteractorStyleTrackballCamera):
@@ -2313,6 +2341,9 @@ class MyInteractorStyle3D(vtkInteractorStyleTrackballCamera):
         
     def right_button_press_event(self, obj, event):
         """turn off right button"""
+        ## 關閉右鍵功能 ############################################################################################
+        pass
+        ############################################################################################
         return
 
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
