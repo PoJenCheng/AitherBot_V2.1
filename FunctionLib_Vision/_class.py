@@ -805,71 +805,6 @@ class REGISTRATION():
         ############################################################################################
         return interestPoint
     
-    def IsRadiusChange(self, matrix):
-        """check the radius is changed (Pr) or not from classify group
-
-        Args:
-            matrix (_numpy.array_): the radius of hough circle (Pr)
-
-        Returns:
-            _bool_: if Radius is Change = True
-        """
-        max = numpy.max(matrix)
-        min = numpy.min(matrix)
-        "remove difference less than 2 mm (< 2 mm)"
-        ## 振福 < 2 的判定為不是圓 ############################################################################################
-        if max-min < 2:
-            return False
-        "remove difference, -2 < tmp <= 0"
-        tmp1 = matrix[0] - matrix[int(len(matrix)/2)]
-        if tmp1 <= 0 and tmp1 > -2:
-            return False
-        tmp2 = matrix[-1] - matrix[int(len(matrix)/2)]
-        if tmp2 <= 0 and tmp2 > -2:
-            return False
-        ############################################################################################
-        "remove the same elements"
-        ## 有重複過多元素的判定為不是圓 ############################################################################################
-        unique, counts = numpy.unique(matrix, return_counts=True)
-        if numpy.max(counts) >= 9:
-            return False
-        ############################################################################################
-        "leave guoup is greater than (>=) 15 mm and less than (<=) 25 mm"
-        ## 候選人數量需要 <= 25 ############################################################################################
-        if len(matrix) <= 25:
-            ### 公式9
-            same = 0
-            small2big = 0
-            for i in range(len(matrix)-1):
-                if matrix[i] < matrix[i+1] or matrix[i] < matrix[int(len(matrix)/2)]:
-                    "shape change small -> big"
-                    small2big+=1
-                if matrix[i] > matrix[i+1] and matrix[i] == max:
-                    "shape change big -> small"
-                    num = i
-                    break
-                if matrix[i] == matrix[i+1]:
-                    same+=1
-                    if same == len(matrix)-1:
-                        "shape change same, no change"
-                        return False
-                if i+1 == len(matrix)-1:
-                    "when for loop reaches the end, it means that radius (Pr) continues to grow (small to big until the end)"
-                    return False
-            if num!= len(matrix)-1 and small2big != 0:
-                change = num
-                for i in range(num,len(matrix)):
-                    if matrix[i] >= min:
-                        change+=1
-                        if change == len(matrix):
-                            "shape change: small -> big -> small, means it is ball"
-                            return True
-            if same > (len(matrix)/2):
-                "it's oval/egg"
-                return False
-        ############################################################################################
-        return False
-
     def __AverageValue(self, interestPoint):
         """remove .5 and integer, get candidate (with centroid)
            average value of point array
@@ -914,7 +849,7 @@ class REGISTRATION():
             resultPoint.append(point)
         ############################################################################################
         return numpy.array(resultPoint)
-    ### 公式10
+    ### 公式9
     def IdentifyPoint(self, point):
         """identify first ball, second ball, and third ball
 
@@ -1079,7 +1014,7 @@ class REGISTRATION():
         else:
             return True, ball
         ############################################################################################
-    ### 公式11
+    ### 公式10
     def TransformPointVTK(self, imageTag, point):
         """Transform pixel point (in VTK image unit) to mm point in patient coordinates
 
@@ -1093,7 +1028,6 @@ class REGISTRATION():
         ## 把 VTK image 轉換成病人坐標系 ############################################################################################
         ImageOrientationPatient = imageTag[int(point[2])-1].ImageOrientationPatient
         ImagePositionPatient = imageTag[int(point[2])-1].ImagePositionPatient
-        # PixelSpacing = imageTag[int(point[2])-1].PixelSpacing
 
         x = point[0]
         y = point[1]
@@ -1169,7 +1103,7 @@ class REGISTRATION():
             return False, ball
         else:
             return True, ball
-    ### 公式12
+    ### 公式11
     def GetPlanningPath(self, originPoint, selectedPoint, regMatrix):
         """get planning path
 

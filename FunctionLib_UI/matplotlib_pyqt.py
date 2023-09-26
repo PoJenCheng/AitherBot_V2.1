@@ -158,6 +158,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser):
         except:
             print("Initial System Error - Line Laser")
             QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
+        return
 
     def closeEvent(self, event):
         print("close~~~~~~~~")
