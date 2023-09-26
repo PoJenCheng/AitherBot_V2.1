@@ -116,50 +116,48 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser):
             print("Initial System Error - UI")
             print(repr(e))
             QMessageBox.critical(self, "error", "Initial System Error - UI")
-        """"""
-        # try:
-        #     "robot control initial"
-        #     MOTORSUBFUNCTION.__init__(self)
-        #     global g_homeStatus
-        #     g_homeStatus = False
-        #     self.homeStatus = g_homeStatus
-        #     print('initial main robot control')
-        # except:
-        #     print("Initial System Error - robot control")
-        #     QMessageBox.critical(self, "error", "Initial System Error - robot control")
-        # try:
-        #     "Line Laser initial"
-        #     LineLaser.__init__(self)
-        #     LineLaser.TriggerSetting(self)
-        #     # self.recordBreathingBase = False        
+        try:
+            "robot control initial"
+            MOTORSUBFUNCTION.__init__(self)
+            global g_homeStatus
+            g_homeStatus = False
+            self.homeStatus = g_homeStatus
+            print('initial main robot control')
+        except:
+            print("Initial System Error - robot control")
+            QMessageBox.critical(self, "error", "Initial System Error - robot control")
+        try:
+            "Line Laser initial"
+            LineLaser.__init__(self)
+            LineLaser.TriggerSetting(self)
+            # self.recordBreathingBase = False        
             
-        # #     "Laser Button Color Initialization"
-        # #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-        # #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
-        # #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
-        # #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
-        # #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
-        # #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
+        #     "Laser Button Color Initialization"
+        #     # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StartTracking.setStyleSheet("background-color:#DCDCDC")
+        #     # self.Button_StopLaserTracking.setStyleSheet("background-color:#DCDCDC")
             
-        # #     "Laser Button Disable Setting"
-        # #     self.Button_StartLaserDisplay.setEnabled(True)
-        # #     self.Button_StopLaserDisplay.setEnabled(False)
-        # #     self.Button_RecordCycle.setEnabled(False)
-        # #     self.Button_StopRecording.setEnabled(False)
-        # #     self.Button_StartTracking.setEnabled(False)
-        # #     self.Button_StopLaserTracking.setEnabled(False)
-        # #     self.Button_Accuracy.setEnabled(False)
+        #     "Laser Button Disable Setting"
+        #     self.Button_StartLaserDisplay.setEnabled(True)
+        #     self.Button_StopLaserDisplay.setEnabled(False)
+        #     self.Button_RecordCycle.setEnabled(False)
+        #     self.Button_StopRecording.setEnabled(False)
+        #     self.Button_StartTracking.setEnabled(False)
+        #     self.Button_StopLaserTracking.setEnabled(False)
+        #     self.Button_Accuracy.setEnabled(False)
             
-        # #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
-        # #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        #     self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
+        #     self.greenLightCriteria = greenLightCriteria_LowAccuracy
             
-        #     "LCD setting"
-        #     self.breathingRatio.setDecMode()
-        #     print('initial main Line Laser')
-        # except:
-        #     print("Initial System Error - Line Laser")
-        #     QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
-        """"""
+            "LCD setting"
+            self.breathingRatio.setDecMode()
+            print('initial main Line Laser')
+        except:
+            print("Initial System Error - Line Laser")
+            QMessageBox.critical(self, "error", "Initial System Error - Line Laser")
 
     def closeEvent(self, event):
         print("close~~~~~~~~")
