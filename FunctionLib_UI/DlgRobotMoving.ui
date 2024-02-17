@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DlgRobotMoving</class>
+ <widget class="QDialog" name="DlgRobotMoving">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>524</width>
+    <height>389</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QPushButton" name="btnStop">
+     <property name="minimumSize">
+      <size>
+       <width>256</width>
+       <height>256</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>256</width>
+       <height>256</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{
+image:url(C:/Leon/image/stop-sign.png);
+background-color: rgb(93, 161, 209);
+border-left:1px solid #ccc;
+border-top:1px solid #ccc;
+border-right:2px solid #555;
+border-bottom:2px solid #555;
+}
+
+QPushButton:pressed{
+/*margin-top:2px;
+margin-left:1px;*/
+border-left:2px solid #555;
+border-top:2px solid #555;
+border-right:1px solid #ccc;
+border-bottom:1px solid #ccc;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="lblRobotMoving">
+     <property name="styleSheet">
+      <string notr="true">font: 24pt &quot;Arial&quot;;
+color:rgba(255, 0, 0, 255);</string>
+     </property>
+     <property name="text">
+      <string>Robot Moving...</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

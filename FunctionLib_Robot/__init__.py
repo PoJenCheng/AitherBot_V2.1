@@ -30,10 +30,10 @@ maxManualRotateSpeed = 200
 jogResolution = 1
 differential_time = 2
 normalSpeed = 1000
-shiftingFLDC_up = -1297.8848 + 9.2285
-shiftingBLDC_Up = 1269.3497 + 133.9453 + 189.8438
-shiftingFLDC_Down = -1796.0449 + 8.7012
-shiftingBLDC_Down = 914.502 + 90.6152 + 176.6602
+shiftingFLDC_up = -335.5664 - 8486.0156
+shiftingBLDC_Up = -37846.5820 + 1.6699
+shiftingFLDC_Down = -769.5703 - 14868.9844
+shiftingBLDC_Down = -37612.4414 + 2.5488
 robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 129

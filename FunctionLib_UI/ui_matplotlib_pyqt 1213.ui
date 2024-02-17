@@ -1,0 +1,2611 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1920</width>
+    <height>1000</height>
+   </rect>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Light">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Midlight">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Dark">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Mid">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>170</red>
+        <green>170</green>
+        <blue>170</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="BrightText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Shadow">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="AlternateBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>220</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Light">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Midlight">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Dark">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Mid">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>170</red>
+        <green>170</green>
+        <blue>170</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="BrightText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Shadow">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="AlternateBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>220</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Light">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Midlight">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Dark">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Mid">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>170</red>
+        <green>170</green>
+        <blue>170</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="BrightText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>127</red>
+        <green>127</green>
+        <blue>127</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Shadow">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="AlternateBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipBase">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>220</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ToolTipText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
+  <property name="acceptDrops">
+   <bool>false</bool>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_7">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tabWidget_Dynamic">
+       <attribute name="title">
+        <string>Dynamic tracking</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget_9">
+        <property name="geometry">
+         <rect>
+          <x>1440</x>
+          <y>90</y>
+          <width>177</width>
+          <height>251</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_9">
+         <item>
+          <widget class="QPushButton" name="Button_StartLaserDisplay">
+           <property name="text">
+            <string>Start Laser Profile Display</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_StopLaserDisplay">
+           <property name="text">
+            <string>Stop Laser Profile Display</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_RecordCycle">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Start Record Breathing Cycle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_StopRecording">
+           <property name="text">
+            <string>Stop Record Breathing Cycle</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_StartTracking">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Start Laser Tracking</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_StopLaserTracking">
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="text">
+            <string>Robot Compensation</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="MplWidget" name="MplWidget" native="true">
+        <property name="geometry">
+         <rect>
+          <x>820</x>
+          <y>90</y>
+          <width>601</width>
+          <height>511</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="Button_Accuracy">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>1630</x>
+          <y>260</y>
+          <width>175</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>HIGH Tracking Accuracy</string>
+        </property>
+       </widget>
+       <widget class="QLCDNumber" name="breathingRatio">
+        <property name="geometry">
+         <rect>
+          <x>1440</x>
+          <y>465</y>
+          <width>191</width>
+          <height>81</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_27">
+        <property name="geometry">
+         <rect>
+          <x>1450</x>
+          <y>425</y>
+          <width>171</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>16</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Breathing Ratio</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabWidget_Low">
+       <attribute name="title">
+        <string>Exhale(low)</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_8" columnstretch="4,1">
+        <item row="3" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="valueWW_L">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Width&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_WW_L">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="Slider_WW_L">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="valueWL_L">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_WL_L">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="Slider_WL_L">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="4" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout_12">
+          <item>
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Axial</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblAxial">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Sagittal</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSagittal">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Coronal</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblCoronal">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblHuValueTitle">
+            <property name="text">
+             <string>HU Value</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblHuValue">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0" rowspan="4">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="1" column="2">
+           <widget class="QComboBox" name="cbxViewSelection2">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QVTKWidget" name="qvtkWidget_Coronal_L" native="true"/>
+          </item>
+          <item row="2" column="3">
+           <widget class="QScrollBar" name="SliceSelect_Axial_L">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QScrollBar" name="SliceSelect_Coronal_L">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QVTKWidget" name="qvtkWidget_Sagittal_L" native="true"/>
+          </item>
+          <item row="4" column="1">
+           <widget class="QScrollBar" name="SliceSelect_Sagittal_L">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QVTKWidget" name="qvtkWidget_Axial_L" native="true"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QVTKWidget" name="qvtkWidget_3D_L" native="true"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QComboBox" name="cbxViewSelection1">
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QComboBox" name="cbxViewSelection3">
+            <property name="currentIndex">
+             <number>2</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QComboBox" name="cbxViewSelection4">
+            <property name="currentIndex">
+             <number>3</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QScrollBar" name="SliceSelect_3D_L">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="pushButton_10">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>&lt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Planning Path NO.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_11">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>&gt;</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="4" column="0" colspan="2">
+           <widget class="QComboBox" name="comboBox_L">
+            <item>
+             <property name="text">
+              <string>Axial</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="Button_SetEntry_L">
+            <property name="text">
+             <string>Set Entry</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="Button_ShowRegistration_L">
+            <property name="text">
+             <string>Show difference</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <widget class="QPushButton" name="Button_SavePath">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Save path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="Button_SetTarget_L">
+            <property name="text">
+             <string>Set Target</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
+           <widget class="QPushButton" name="Button_Planning">
+            <property name="text">
+             <string>Planning</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QPushButton" name="Button_ShowPoint_L">
+            <property name="text">
+             <string>Show point</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QPushButton" name="Button_Registration_L">
+              <property name="text">
+               <string>Registration</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="label_Error_L">
+            <property name="text">
+             <string>Difference: 0 mm</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="Button_ToEntry">
+            <property name="text">
+             <string>To Entry</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="Button_ToTarget">
+            <property name="text">
+             <string>To Target</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="0" colspan="2">
+         <widget class="QWidget" name="wdgImageFunction" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_10">
+           <item row="0" column="1">
+            <widget class="QPushButton" name="btnCutOut">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Cut Out</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QPushButton" name="btnResetImage">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Reset</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="btnCutIn">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Cut In</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="6">
+            <widget class="QPushButton" name="btnFocusMode">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Focus Mode</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="9">
+            <widget class="QPushButton" name="btnClipperXZ">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>XZ Plane</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="11">
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="0" column="4">
+            <widget class="QPushButton" name="btnStepNext">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>&gt;</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="7">
+            <widget class="QPushButton" name="btnEnableClipper">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Clip Plane</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="btnInverse">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Inverse</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QPushButton" name="btnStepBack">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>&lt;</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="8">
+            <widget class="QPushButton" name="btnClipperXY">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>XY Plane</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="10">
+            <widget class="QPushButton" name="btnClipperYZ">
+             <property name="styleSheet">
+              <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+             </property>
+             <property name="text">
+              <string>YZ Plane</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabWidget_High">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <attribute name="title">
+        <string>Inhale(high)</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_6" columnstretch="4,1">
+        <item row="0" column="0" rowspan="3">
+         <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,0,0,0">
+          <item row="1" column="2">
+           <widget class="QVTKWidget" name="qvtkWidget_Axial_H" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QComboBox" name="cbxViewSelection1_H">
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QVTKWidget" name="qvtkWidget_Sagittal_H" native="true"/>
+          </item>
+          <item row="0" column="2">
+           <widget class="QComboBox" name="cbxViewSelection2_H">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QVTKWidget" name="qvtkWidget_3D_H" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QComboBox" name="cbxViewSelection3_H">
+            <property name="currentIndex">
+             <number>2</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QScrollBar" name="SliceSelect_Sagittal_H">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QScrollBar" name="SliceSelect_Coronal_H">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QComboBox" name="cbxViewSelection4_H">
+            <property name="currentIndex">
+             <number>3</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>3D View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Axial View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal View</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QScrollBar" name="SliceSelect_Axial_H">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QScrollBar" name="SliceSelect_3D_H">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QVTKWidget" name="qvtkWidget_Coronal_H" native="true"/>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="6" column="0" colspan="2">
+           <widget class="QPushButton" name="Button_ShowPoint_H">
+            <property name="text">
+             <string>Show point</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="label_Error_H">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Difference: 0 mm</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QPushButton" name="Button_Registration_H">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Registration</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="Button_ShowRegistration_H">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Show difference</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QComboBox" name="comboBox_H">
+            <item>
+             <property name="text">
+              <string>Axial</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sagittal</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Coronal</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="Button_Set_Entry_H">
+            <property name="text">
+             <string>Set Entry</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="Button_Set_Target_H">
+            <property name="text">
+             <string>Set Target</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="Button_ToEntryH">
+            <property name="text">
+             <string>To Entry</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="Button_ToTargetH">
+            <property name="text">
+             <string>To Target</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QLabel" name="valueWW_H">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Width&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_WW_H">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="Slider_WW_H">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="valueWL_H">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:normal;&quot;&gt;Window Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_WL_H">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="Slider_WL_H">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout_13">
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Axial</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblAxial_H">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Sagittal</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSagittal_H">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Coronal</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblCoronal_H">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>HU Value</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblHuValue_H">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabWidget_Robot">
+       <attribute name="title">
+        <string>Navigation (robot)</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget_8">
+        <property name="geometry">
+         <rect>
+          <x>540</x>
+          <y>90</y>
+          <width>231</width>
+          <height>224</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <item>
+          <widget class="QPushButton" name="Button_RobotHome">
+           <property name="text">
+            <string>Home</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_RobotAutoRun">
+           <property name="text">
+            <string>Confirm path and run</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_SystemClose">
+           <property name="text">
+            <string>Close Robot System</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_RobotStop">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Emergency Stop</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Speed</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_RobotSpeed">
+             <property name="text">
+              <string>0</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="Slider_RobotSpeed">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabWidget_Joystick">
+       <attribute name="title">
+        <string>Joystick control</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget_7">
+        <property name="geometry">
+         <rect>
+          <x>440</x>
+          <y>110</y>
+          <width>371</width>
+          <height>140</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <widget class="QPushButton" name="Button_JoystickStart">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Start</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_JoystickFinish">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Finish</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Speed</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_JoystickSpeed">
+             <property name="text">
+              <string>0</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="Slider_JoystickSpeed">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabWidget_RobotAccuracy">
+       <attribute name="title">
+        <string>Robot cycle accuracy</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget_14">
+        <property name="geometry">
+         <rect>
+          <x>480</x>
+          <y>70</y>
+          <width>301</width>
+          <height>151</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_16">
+         <item>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_24">
+             <property name="text">
+              <string>Target point</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>Entry point</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineEdit_EntryPoint_RCA"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_TargetPoint_RCA"/>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_RobotAutoRun_RCA">
+           <property name="text">
+            <string>Robot auto run</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_15">
+        <property name="geometry">
+         <rect>
+          <x>480</x>
+          <y>270</y>
+          <width>301</width>
+          <height>187</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_17">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineEdit_Point_1_RCA"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_Point_1">
+             <property name="text">
+              <string>Point No. 1</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_Point_2">
+             <property name="text">
+              <string>Point No. 2</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_Point_3">
+             <property name="text">
+              <string>Point No. 3</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="lineEdit_Point_4_RCA"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_Point_2_RCA"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_Point_4">
+             <property name="text">
+              <string>Point No. 4</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="lineEdit_Point_3_RCA"/>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="lineEdit_CycleTimes_RCA"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_25">
+             <property name="text">
+              <string>Cycle Times</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Button_RobotCycleRun_RCA">
+           <property name="text">
+            <string>Robot cycle run</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1920</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="Action_ImportDicom_L"/>
+    <addaction name="Action_ImportDicom_H"/>
+   </widget>
+   <addaction name="menu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="Action_ImportDicom_L">
+   <property name="text">
+    <string>Import DICOM (low)</string>
+   </property>
+  </action>
+  <action name="Action_ImportDicom_H">
+   <property name="text">
+    <string>Import DICOM (high)</string>
+   </property>
+  </action>
+  <action name="Action_ImportDicom_SAT">
+   <property name="text">
+    <string>Import DICOM (System Accuracy)</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKWidget</class>
+   <extends>QWidget</extends>
+   <header>QVTKWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MplWidget</class>
+   <extends>QWidget</extends>
+   <header>mplwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>Button_ShowPoint_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPoint_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1953</x>
+     <y>217</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Planning</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPlanningPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>352</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1979</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_ShowRegistration_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowRegistrationDifference_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1891</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2018</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_RobotAutoRun</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>RobotRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>652</x>
+     <y>193</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>646</x>
+     <y>-9</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Registration_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetRegistration_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1702</x>
+     <y>161</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1992</x>
+     <y>60</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_RobotSpeed</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_RobotSpeed</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>631</x>
+     <y>362</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>641</x>
+     <y>334</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_RobotHome</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>HomeProcessing()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>646</x>
+     <y>164</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>697</x>
+     <y>-33</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Registration_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetRegistration_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1623</x>
+     <y>84</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2040</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_ShowPoint_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowPoint_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>256</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2012</x>
+     <y>286</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetEntry_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetPoint_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1703</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1995</x>
+     <y>180</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WL_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WL_L</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>582</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1892</x>
+     <y>553</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WL_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WL_H</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>414</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1892</x>
+     <y>385</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WW_L</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WW_L</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>504</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1892</x>
+     <y>475</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_ShowRegistration_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowRegistrationDifference_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>161</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1976</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Slider_WW_H</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>label_WW_H</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>336</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1892</x>
+     <y>307</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StartTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>LaserTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1562</x>
+     <y>335</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1588</x>
+     <y>-20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StopRecording</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>StopRecordBreathingBase()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1562</x>
+     <y>295</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1563</x>
+     <y>-6</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StartLaserDisplay</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ShowLaserProfile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1534</x>
+     <y>172</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1528</x>
+     <y>-12</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StopLaserTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>StopLaserTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1497</x>
+     <y>375</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1297</x>
+     <y>-5</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SystemClose</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>CloseRobotSystem()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>749</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>785</x>
+     <y>-4</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_StopLaserDisplay</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>StopLaserProfile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1562</x>
+     <y>215</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1756</x>
+     <y>-6</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Accuracy</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>AdjustTrackingAccuracy()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1723</x>
+     <y>338</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1728</x>
+     <y>-2</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_RecordCycle</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>StartRecordBreathingBase()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1522</x>
+     <y>255</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1493</x>
+     <y>-3</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ChangeTabIndex()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>38</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>237</x>
+     <y>30</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Set_Entry_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetEntry_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1703</x>
+     <y>158</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1262</x>
+     <y>26</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_Set_Target_H</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetTarget_H()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>158</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1709</x>
+     <y>22</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetEntry_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetEntry_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1703</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1553</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Button_SetTarget_L</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>SetTarget_L()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1892</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1792</x>
+     <y>26</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection1</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>259</x>
+     <y>153</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection2</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1484</x>
+     <y>153</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>879</x>
+     <y>28</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection3</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>131</x>
+     <y>565</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>104</x>
+     <y>22</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection4</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1484</x>
+     <y>565</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>822</x>
+     <y>26</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection1_H</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect_H(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>92</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>-17</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection2_H</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect_H(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>821</x>
+     <y>72</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>832</x>
+     <y>-13</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection3_H</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect_H(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>211</x>
+     <y>517</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>365</x>
+     <y>-12</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbxViewSelection4_H</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnChangeIndex_ViewSelect_H(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>868</x>
+     <y>522</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>704</x>
+     <y>-7</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>SetRegistration_L()</slot>
+  <slot>ShowRegistrationDifference_L()</slot>
+  <slot>SetPoint_L()</slot>
+  <slot>ShowPoint_L()</slot>
+  <slot>HomeProcessing()</slot>
+  <slot>RobotRun()</slot>
+  <slot>SetRegistration_H()</slot>
+  <slot>ShowRegistrationDifference_H()</slot>
+  <slot>SetPoint_H()</slot>
+  <slot>ShowPoint_H()</slot>
+  <slot>ShowPlanningPath()</slot>
+  <slot>SetRegistration_SAT()</slot>
+  <slot>ShowRegistrationDifference_SAT()</slot>
+  <slot>SetTestPoint_SAT()</slot>
+  <slot>ShowTestPoint_SAT()</slot>
+  <slot>RobotStepRun()</slot>
+  <slot>ScrollBarChangeAxial_L()</slot>
+  <slot>ScrollBarChangeSagittal_L()</slot>
+  <slot>ScrollBarChangeCoronal_L()</slot>
+  <slot>ScrollBarChangeAxial_H()</slot>
+  <slot>ScrollBarChangeSagittal_H()</slot>
+  <slot>ScrollBarChangeCoronal_H()</slot>
+  <slot>ScrollBarChangeAxial_SAT()</slot>
+  <slot>ScrollBarChangeSagittal_SAT()</slot>
+  <slot>ScrollBarChangeCoronal_SAT()</slot>
+  <slot>ShowLaserProfile()</slot>
+  <slot>LaserTracking()</slot>
+  <slot>CompensateAutoRun()</slot>
+  <slot>StopRecordBreathingBase()</slot>
+  <slot>StartRecordBreathingBase()</slot>
+  <slot>StopLaserTracking()</slot>
+  <slot>StopLaserProfile()</slot>
+  <slot>AdjustTrackingAccuracy()</slot>
+  <slot>CloseRobotSystem()</slot>
+  <slot>ChangeTabIndex()</slot>
+  <slot>SetEntry_H()</slot>
+  <slot>SetTarget_H()</slot>
+  <slot>SetEntry_L()</slot>
+  <slot>SetTarget_L()</slot>
+  <slot>OnChangeIndex_ViewSelect(QString)</slot>
+  <slot>OnChangeIndex_ViewSelect_H(QString)</slot>
+ </slots>
+</ui>

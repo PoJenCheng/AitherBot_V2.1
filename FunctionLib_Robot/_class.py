@@ -1,11 +1,13 @@
+# import pyads
 import pyads
 import math
 import ctypes as ct
 import sys
 import numpy as np
 import keyboard
-import serial
-import random
+# import serial
+# import random
+# import atexit
 from pylltLib import pyllt as llt
 from time import sleep
 from FunctionLib_Robot.__init__ import *
@@ -14,11 +16,11 @@ from FunctionLib_Robot._subFunction import lowPass
 from ._globalVar import *
 from FunctionLib_UI.ui_matplotlib_pyqt import *
 
-
 import matplotlib
 matplotlib.use('QT5Agg')
 
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import pyqtSignal, QObject
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # from matplotlib.backends.backend_gt5agg import FigureCanvasGTKAgg as FigureCanvas
@@ -32,8 +34,12 @@ lower_G_length = 0
 lower_G_angle = 0
 
 
-class MOTORCONTROL():
+class MOTORCONTROL(QObject):
+    signalProgress = pyqtSignal(float)
+    signalInitErrMsg = pyqtSignal(str)
+    
     def __init__(self, motorAxis):
+        super().__init__()
         self.motorAxis = motorAxis
         self.bServoEnableLabel = 'GVL.bServoEnable_' + str(self.motorAxis)
         self.bMotorStopLabel = 'GVL.bMotorStop_' + str(self.motorAxis)
@@ -91,19 +97,22 @@ class MOTORCONTROL():
         self.bActualVelocity = 'GVL.bActualVelocity'
         self.fbActualVelocity = 'GVL.Axis' + str(self.motorAxis) + '_Velocity'
         self.fbStatusVelocity = 'GVL.StatusVelocity_' + str(self.motorAxis)
-        self.bLimitSwitch5 = 'GVL.LimitSwitch5'
-        self.bLimitSwitch6 = 'GVL.LimitSwitch6'
+        # self.bLimitSwitch5 = 'GVL.LimitSwitch5'
+        # self.bLimitSwitch6 = 'GVL.LimitSwitch6'
         self.bDualAbsolute = 'GVL.bDualAbsolute'
-        self.bDisplayLight_GY = 'GVL.DisplayLight_GY'
-        self.bDisplayLight_RE = 'GVL.DisplayLight_RE'
-        self.bTrackLight_GY = 'GVL.LaserTrack_GY'
-        self.bTrackLight_RE = 'GVL.LaserTrack_RE'
+        # self.bDisplayLight_GY = 'GVL.DisplayLight_GY'
+        # self.bDisplayLight_RE = 'GVL.DisplayLight_RE'
+        # self.bTrackLight_GY = 'GVL.LaserTrack_GY'
+        # self.bTrackLight_RE = 'GVL.LaserTrack_RE'
 
         try:
-            self.plc = pyads.Connection('5.109.167.73.1.1', 851)
-            # ser = serial.Serial(port='COM6', baudrate=9600, timeout=2)
+            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
+            # self.plc = pyads.Connection('5.97.65.198.1.1', pyads.PORT_TC3PLC1)
+        # ser = serial.Serial(port='COM6', baudrate=9600, timeout=2)
             self.plc.open()
+            print(f'plc open status : {self.plc.is_open}')
         except:
+
             input("Motor or auduino connect fail. Please check it and press 'Enter'")
 
     def MotorInitial(self):
@@ -146,10 +155,14 @@ class MOTORCONTROL():
         sleep(0.5)
         if self.plc.read_by_name(self.PowerStatus) == True:
             print(f"The servo motor {self.motorAxis} is enabled.")
+            return f"The servo motor {self.motorAxis} is enabled."
         else:
             print(f"Fail to enable the servo motor {self.motorAxis}.")
+            self.signalInitErrMsg.emit(f"Fail to enable the servo motor {self.motorAxis}.")
             sleep(1)
             self.MotorDriverEnable()
+            
+        return ''
 
     def MC_Stop(self):
         self.plc.write_by_name(self.bMotorStop, True)
@@ -165,10 +178,15 @@ class MOTORCONTROL():
             self.plc.write_by_name(self.bServoEnableLabel, False)
             sleep(0.1)
 
-    def SetPosition(self):
+    def SetPosition(self, progressMaximum:float = None, curProgressValue:float = None):
         while self.plc.read_by_name(self.SetPositionStatus) == False:
             self.plc.write_by_name(self.bSetPosition, True)
+            if progressMaximum is not None:
+                curProgressValue = min(curProgressValue + 0.0001, progressMaximum)
+                self.signalProgress.emit(curProgressValue)
             sleep(0.1)
+        if progressMaximum is not None:
+            self.signalProgress.emit(progressMaximum)
         self.plc.write_by_name(self.bSetPosition, False)
 
     def MoveVelocitySetting(self, speed, decceration, dir):
@@ -268,8 +286,8 @@ class MOTORCONTROL():
         return velocity
 
     def homeValue(self):
-        value = int(self.plc.read_by_name(self.bLimitSwitch))
-        return value
+        value = self.plc.read_by_name(self.bLimitSwitch)
+        return int(value)
 
     def bMoveRelativeCommandDisable(self):
         moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
@@ -277,76 +295,187 @@ class MOTORCONTROL():
             self.plc.write_by_name(self.bMoveRelative, False)
             moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
             
-    def DisplayRun(self):
-        self.plc.write_by_name(self.bDisplayLight_GY,True)
-        self.plc.write_by_name(self.bDisplayLight_RE,False)
+    # def DisplayRun(self):
+    #     self.plc.write_by_name(self.bDisplayLight_GY,True)
+    #     self.plc.write_by_name(self.bDisplayLight_RE,False)
             
-    def DisplaySafe(self):
-        self.plc.write_by_name(self.bDisplayLight_GY,False)
-        self.plc.write_by_name(self.bDisplayLight_RE,False)
+    # def DisplaySafe(self):
+    #     self.plc.write_by_name(self.bDisplayLight_GY,False)
+    #     self.plc.write_by_name(self.bDisplayLight_RE,False)
         
-    def DisplayError(self):
-        self.plc.write_by_name(self.bDisplayLight_GY,True)
-        self.plc.write_by_name(self.bDisplayLight_RE,True)
+    # def DisplayError(self):
+    #     self.plc.write_by_name(self.bDisplayLight_GY,True)
+    #     self.plc.write_by_name(self.bDisplayLight_RE,True)
         
-    def TrackGreen(self):
-        self.plc.write_by_name(self.bTrackLight_GY,True)
-        self.plc.write_by_name(self.bTrackLight_RE,False)
+    # def TrackGreen(self):
+    #     self.plc.write_by_name(self.bTrackLight_GY,True)
+    #     self.plc.write_by_name(self.bTrackLight_RE,False)
     
-    def TrackYellow(self):
-        self.plc.write_by_name(self.bTrackLight_GY,True)
-        self.plc.write_by_name(self.bTrackLight_RE,True)
+    # def TrackYellow(self):
+    #     self.plc.write_by_name(self.bTrackLight_GY,True)
+    #     self.plc.write_by_name(self.bTrackLight_RE,True)
         
-    def TrackRed(self):
-        self.plc.write_by_name(self.bTrackLight_GY,False)
-        self.plc.write_by_name(self.bTrackLight_RE,True)
+    # def TrackRed(self):
+    #     self.plc.write_by_name(self.bTrackLight_GY,False)
+    #     self.plc.write_by_name(self.bTrackLight_RE,True)
         
-    def TrackNull(self):
-        self.plc.write_by_name(self.bTrackLight_GY,False)
-        self.plc.write_by_name(self.bTrackLight_RE,False)
+    # def TrackNull(self):
+    #     self.plc.write_by_name(self.bTrackLight_GY,False)
+    #     self.plc.write_by_name(self.bTrackLight_RE,False)
 
 
-class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
+class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
+    bConnected = False
+    signalProgress = pyqtSignal(str, int)
+    signalHomingProgress = pyqtSignal(float)
+    fHomeProgress = 0.0
+    initProgress = 0
+    bStop = False
+    
     def __init__(self):
+        QObject.__init__(self)
+        
+    def sti_init(self):
+        # for test
+        # while count < 5:
+        # self.signalProgress.emit('connecting motor [FLDC_Up]...', 0)
+        sleep(0.2)
+        self.setInitProgress('connecting motor [FLDC_Up]...')
+        # self.signalProgress.emit('connecting motor [BLDC_Up]...', 10)
+        sleep(0.2)
+        self.setInitProgress('connecting motor [BLDC_Up]...', False)
+        # self.signalProgress.emit('connecting motor [FLDC_Down]...', 20)
+        # sleep(0.5)
+        # self.signalProgress.emit('connecting motor [BLDC_Down]...', 30)
+        # sleep(0.5)
+        # self.signalProgress.emit('connecting motor [Robot System]...', 40)
+        # sleep(0.5)
+        # self.signalProgress.emit('Initializing motor [FLDC_Up]...', 50)
+        # sleep(0.5)
+        # self.signalProgress.emit('Initializing motor [BLDC_Up]...', 60)
+        # sleep(0.5)
+        # self.signalProgress.emit('Initializing motor [FLDC_Down]...', 70)
+        # sleep(0.5)
+        # self.signalProgress.emit('Initializing motor [BLDC_Down]...', 80)
+        # sleep(0.5)
+        # self.signalProgress.emit('Enabling motor...', 90)
+        # sleep(0.5)
+        # self.signalProgress.emit('Homing process Completed', 100)
+        # sleep(0.5)
+        
+    def setInitProgress(self, msg:str, bSucceed:bool = True):
+        # countOfSteps 根據總共的setInitProgress指令次數調整, Fail不計算在內
+        countOfSteps = 14
+        if self.bStop:
+            return False
+        
+        nStep = int(100 / countOfSteps) + 1
+        if bSucceed:
+            msg = '[SUCCEED]' + msg
+            self.initProgress = min(self.initProgress + nStep, 100)
+        else:
+            msg = '[ERROR]' + msg
+            
+        self.signalProgress.emit(msg, self.initProgress)
+        
+        return True
+        
+    def onSignal_errMsg(self, msg:str):
+        self.setInitProgress(msg, False)
+            
+    def Initialize(self):
         robotCheckStatus = False
+        nRetry = 0
         while robotCheckStatus is False:
             try:
                 "Setting Motor ID"
+                # self.signalProgress.emit('connecting motor [FLDC_Up]...', 0)
                 self.FLDC_Up = MOTORCONTROL(1)
+                if self.setInitProgress('connecting motor [FLDC_Up]...') == False:
+                    return
+                # self.signalProgress.emit('connecting motor [BLDC_Up]...', 10)
                 self.BLDC_Up = MOTORCONTROL(2)
+                if self.setInitProgress('connecting motor [BLDC_Up]...') == False:
+                    return
+                # self.signalProgress.emit('connecting motor [FLDC_Down]...', 20)
                 self.FLDC_Down = MOTORCONTROL(3)
+                if self.setInitProgress('connecting motor [FLDC_Down]...') == False:
+                    return
+                # self.signalProgress.emit('connecting motor [BLDC_Down]...', 30)
                 self.BLDC_Down = MOTORCONTROL(4)
+                if self.setInitProgress('connecting motor [BLDC_Down]...') == False:
+                    return
+                # self.signalProgress.emit('connecting motor [Robot System]...', 40)
                 self.RobotSystem = MOTORCONTROL(5)
+                if self.setInitProgress('connecting motor [Robot System]...') == False:
+                    return
+                
+                self.FLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
+                self.BLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
+                self.FLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
+                self.BLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
 
                 "Motor Initial"
+                # self.signalProgress.emit('Initializing motor [FLDC_Up]...', 50)
                 self.FLDC_Up.MotorInitial()
+                if self.setInitProgress('Initializing motor [FLDC_Up]...') == False:
+                    return
+                # self.signalProgress.emit('Initializing motor [BLDC_Up]...', 60)
                 self.BLDC_Up.MotorInitial()
+                if self.setInitProgress('Initializing motor [BLDC_Up]...') == False:
+                    return
+                # self.signalProgress.emit('Initializing motor [FLDC_Down]...', 70)
                 self.FLDC_Down.MotorInitial()
+                if self.setInitProgress('Initializing motor [FLDC_Down]...') == False:
+                    return
+                # self.signalProgress.emit('Initializing motor [BLDC_Down]...', 80)
                 self.BLDC_Down.MotorInitial()
+                if self.setInitProgress('Initializing motor [BLDC_Down]...') == False:
+                    return
 
                 robotCheckStatus = True
+                self.bConnected = True
                 print("Surgical robot connect success.")
             except:
                 print("Fail to link to robot, system will re-try after 3 seconds.")
+                nRetry += 1
                 sleep(3)
+                
+                if nRetry >= 3:
+                    self.setInitProgress('Fail to link to robot', False)
+                    self.bConnected = False
+                    return
+        
 
         "Motor Enable"
         motorEnableStatus = False
         while motorEnableStatus is False:
             try:
                 "Motor Enable"
-                self.BLDC_Up.MotorDriverEnable()
-                self.BLDC_Down.MotorDriverEnable()
-                self.FLDC_Up.MotorDriverEnable()
-                self.FLDC_Down.MotorDriverEnable()
+                # self.signalProgress.emit('Enabling motor...', 90)
+                msg = self.BLDC_Up.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.BLDC_Down.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.FLDC_Up.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.FLDC_Down.MotorDriverEnable()
+                self.setInitProgress(msg)
                 motorEnableStatus = True
                 self.SetZero()
                 print("Motor are enabled.")
+                # self.signalProgress.emit('Homing process Completed', 100)
+                self.setInitProgress('Homing process Completed')
             except:
+                self.setInitProgress('Robot control system connect fail.', False)
                 print("Robot control system connect fail.")
         
-        self.LightSafe()
-
+        # self.LightSafe()
+        
+    def OnSignal_progress(self, progress:float):
+        self.fHomeProgress = progress
+        self.signalHomingProgress.emit(self.fHomeProgress)
+        print(f'subProgress = {progress}')
     
     def LightSafe(self):
         self.RobotSystem.DisplaySafe()
@@ -359,11 +488,26 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         self.BLDC_Up.MoveRelativeButtonDisable()
         self.BLDC_Down.MoveRelativeButtonDisable()
 
-    def SetZero(self):
-        self.BLDC_Up.SetPosition()
-        self.BLDC_Down.SetPosition()
-        self.FLDC_Up.SetPosition()
-        self.FLDC_Down.SetPosition()
+    def SetZero(self, progressMaximum:float = None):
+        if progressMaximum is not None and progressMaximum > self.fHomeProgress:
+            fStep = (progressMaximum - self.fHomeProgress) / 4.0
+            
+            listStep = [self.fHomeProgress + i * fStep for i in range(0,5)]
+            print(f'step = {listStep}')
+            self.BLDC_Up.SetPosition()
+            self.signalHomingProgress.emit(listStep[1])
+            self.BLDC_Down.SetPosition()
+            self.signalHomingProgress.emit(listStep[2])
+            self.FLDC_Up.SetPosition()
+            self.signalHomingProgress.emit(listStep[3])
+            self.FLDC_Down.SetPosition()
+            self.signalHomingProgress.emit(listStep[4])
+            self.fHomeProgress = listStep[4]
+        else:
+            self.BLDC_Up.SetPosition()
+            self.BLDC_Down.SetPosition()
+            self.FLDC_Up.SetPosition()
+            self.FLDC_Down.SetPosition()
         print("Motor position set to zero!")
 
     def BLDC_Stop(self):
@@ -375,25 +519,30 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         self.BLDC_Up.bMoveRelativeCommandDisable()
         self.BLDC_Down.bMoveRelativeCommandDisable()
 
-    def Home(self, BLDC_Up_Speed, BLDC_Down_Speed):
+    def Home(self, BLDC_Up_Speed, BLDC_Down_Speed, Dir, progressMaximum:float):
         homeSwitch = self.BLDC_Up.homeValue() * self.BLDC_Down.homeValue()
         homeStatus_Enable = False
         while homeSwitch == 0:
             homeSwitch = self.BLDC_Up.homeValue() * self.BLDC_Down.homeValue()
             if homeStatus_Enable == False:
                 if self.BLDC_Up.homeValue() == 0:
-                    self.BLDC_Up.MoveVelocitySetting(BLDC_Up_Speed, 3000, 3)
+                    self.BLDC_Up.MoveVelocitySetting(BLDC_Up_Speed, 300, Dir)
                     self.BLDC_Up.bMoveVelocityEnable()
                 if self.BLDC_Down.homeValue() == 0:
                     self.BLDC_Down.MoveVelocitySetting(
-                        BLDC_Down_Speed, 3000, 3)
+                        BLDC_Down_Speed, 300, Dir)
                     self.BLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
+                self.fHomeProgress = min(self.fHomeProgress + 0.0005, progressMaximum)
+                self.signalHomingProgress.emit(self.fHomeProgress)
                 if self.BLDC_Up.homeValue() == 1:
                     self.BLDC_Up.MC_Stop()
                 if self.BLDC_Down.homeValue() == 1:
                     self.BLDC_Down.MC_Stop()
+                    
+        self.fHomeProgress = progressMaximum
+        self.signalHomingProgress.emit(self.fHomeProgress)
         self.BLDC_Stop()
 
     def DualLinearPositionMotion(self, Target, Speed):
@@ -412,15 +561,21 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             Target = 0
         self.BLDC_Stop()
 
-    def HomeLinearMotion(self, shifting_Up, Shifting_Down, speed):
+    def HomeLinearMotion(self, shifting_Up, Shifting_Down, speed, progressMaximum:float):
         self.BLDC_Stop()
         "move a relative distance in a straight line"
         self.BLDC_Up.MoveRelativeSetting(shifting_Up, speed)
         self.BLDC_Down.MoveRelativeSetting(Shifting_Down, speed)
+        sleep(0.5)
         self.BLDC_Up.bMoveRelativeEnable()
         self.BLDC_Down.bMoveRelativeEnable()
         while self.BLDC_Up.fbMoveRelative() == False or self.BLDC_Down.fbMoveRelative() == False:
+            self.fHomeProgress = min(self.fHomeProgress + 0.001, progressMaximum)
+            self.signalHomingProgress.emit(self.fHomeProgress)
             sleep(0.01)
+            
+        self.fHomeProgress = progressMaximum
+        self.signalHomingProgress.emit(self.fHomeProgress)
         self.BLDC_Stop()
 
     def FLDC_Stop(self):
@@ -434,6 +589,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         while Target != 0:
             self.FLDC_Up.MoveRelativeSetting(Target, Speed)
             self.FLDC_Down.MoveRelativeSetting(Target, Speed)
+            sleep(0.5)
             self.FLDC_Up.bDualRotateRelativeEnable()
             while self.FLDC_Up.fbMoveRelative() == False or self.FLDC_Down.fbMoveRelative() == False:
                 sleep(0.01)
@@ -445,29 +601,40 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             self.FLDC_Down.MC_Stop_Disable()
             Target = 0
 
-    def HomeRotation(self):
+    def HomeRotation(self, progressMaximum = None):
         "first positioning"
         homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
         homeStatus_Enable = False
+        
+        if progressMaximum is not None:
+            halfMaximum = self.fHomeProgress + (progressMaximum - self.fHomeProgress) * 0.5
+            
         while homeSwitch == 0:
             homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
             if homeStatus_Enable == False:
                 if self.FLDC_Up.homeValue() == 0:
-                    self.FLDC_Up.MoveVelocitySetting(300, 1200, 1)
+                    self.FLDC_Up.MoveVelocitySetting(900, 1200, 1)
                     self.FLDC_Up.bMoveVelocityEnable()
                 if self.FLDC_Down.homeValue() == 0:
-                    self.FLDC_Down.MoveVelocitySetting(400, 2000, 1)
+                    self.FLDC_Down.MoveVelocitySetting(1500, 1200, 1)
                     self.FLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
+                if progressMaximum is not None:
+                    self.fHomeProgress = min(self.fHomeProgress + 0.0001, halfMaximum)
+                    self.signalHomingProgress.emit(self.fHomeProgress)
                 if self.FLDC_Up.homeValue == 1:
                     self.FLDC_Up.MC_Stop()
                 if self.FLDC_Down.homeValue == 1:
                     self.FLDC_Down.MC_Stop()
+                    
+        if progressMaximum is not None:
+            self.fHomeProgress = halfMaximum
+            self.signalHomingProgress.emit(halfMaximum)
         self.FLDC_Stop()
 
         "Rotate to a specific angle"
-        self.DualRotatePositionMotion(-350, 400)
+        self.DualRotatePositionMotion(-2000, 400)
 
         "second positioning"
         homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
@@ -486,15 +653,22 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
                     self.FLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
+                if progressMaximum is not None:
+                    self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMaximum)
+                    self.signalHomingProgress.emit(self.fHomeProgress)
                 if self.FLDC_Up.homeValue() == 1:
                     self.FLDC_Up.MC_Stop()
                 if self.FLDC_Down.homeValue() == 1:
                     self.FLDC_Down.MC_Stop()
         self.FLDC_Stop()
 
+        if progressMaximum is not None:
+            self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMaximum)
+            self.signalHomingProgress.emit(self.fHomeProgress)
+            
         "Rotate to a specific angle"
-        self.FLDC_Up.MoveRelativeSetting(shiftingFLDC_up, 200)
-        self.FLDC_Down.MoveRelativeSetting(shiftingFLDC_Down, 200)
+        self.FLDC_Up.MoveRelativeSetting(shiftingFLDC_up, 1500)
+        self.FLDC_Down.MoveRelativeSetting(shiftingFLDC_Down, 1500)
         self.FLDC_Up.bMoveRelativeEnable()
         self.FLDC_Down.bMoveRelativeEnable()
         while self.FLDC_Up.fbMoveRelative() == False or self.FLDC_Down.fbMoveRelative() == False:
@@ -512,20 +686,28 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
         self.FLDC_Down.MotorDriverEnable()
 
     def HomeProcessing(self):
-        self.RobotSystem.DisplayRun()
-        print("Home Processing Started.")
-        self.Home(1000, 1000)
-        sleep(0.1)
-        self.Home(1000, 500)
-        sleep(0.1)
-        self.Home(100, 100)
-        sleep(0.1)
-        self.HomeLinearMotion(shiftingBLDC_Up, shiftingBLDC_Down, 100)
-        sleep(0.1)
-        self.HomeRotation()
-        self.ReSetMotor()
-        self.SetZero()
-        self.RobotSystem.DisplaySafe()
+        if self.bConnected == False:
+            QMessageBox.critical(None, 'error', 'Robot Connection Failure')
+            return False
+        else:
+        # self.RobotSystem.DisplayRun()
+            self.fHomeProgress = 0.0
+            print("Home Processing Started.")
+            self.Home(1000, 1000,1, 0.125)  #dir = 1 前進 ; dir = 3 後退
+            sleep(0.5)
+            self.HomeLinearMotion(-3500,-3500,1000, 0.25)
+            sleep(0.5)
+            self.Home(100, 100,1, 0.375)
+            sleep(0.5)
+            self.SetZero(0.5)
+            self.HomeLinearMotion(shiftingBLDC_Up, shiftingBLDC_Up, 2500, 0.666)
+            # sleep(0.1)
+            self.HomeRotation(0.832)
+            self.ReSetMotor()
+            self.SetZero(1.0)
+            self.signalHomingProgress.emit(1.0)
+            # self.RobotSystem.DisplaySafe()
+        return True
  
 
     def Upper_RobotMovingPoint(self, PointX, PointY):
@@ -736,8 +918,29 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION):
             self.RobotSystem.DisplayError()
             print("Wrong type. Please try it again.")
                
-class LineLaser(MOTORCONTROL):
+class LineLaser(MOTORCONTROL, QObject):
+    signalProgress = pyqtSignal(str, int)
+    signalModelPassed = pyqtSignal(bool)
+    signalBreathingRatio = pyqtSignal(float)
+    initProgress = 0
+    bStop = False
+    
     def __init__(self):
+        QObject.__init__(self)
+        
+    def setProgress(self, msg:str, bSucceed:bool = True):
+        # self.initProgress = inc_progress
+        if self.bStop:
+            raise ValueError('thread stop')
+        
+        countOfSteps = 6
+        nStep = int(100 / countOfSteps) + 1
+        
+        if bSucceed:
+            self.initProgress = min(self.initProgress + nStep, 100)
+        self.signalProgress.emit(msg, self.initProgress)
+        
+    def Initialize(self):
         # Parametrize transmission
         self.scanner_type = ct.c_int(0)
         # Init profile buffer and timestamp info
@@ -758,7 +961,7 @@ class LineLaser(MOTORCONTROL):
 
         # Create instance 
         self.hLLT = llt.create_llt_device(llt.TInterfaceType.INTF_TYPE_ETHERNET)
-
+        print(self.hLLT)
         # Get available interfaces
         ret = llt.get_device_interfaces_fast(self.hLLT, self.available_interfaces, len(self.available_interfaces))
         if ret < 1:
@@ -769,27 +972,36 @@ class LineLaser(MOTORCONTROL):
         if ret < 1:
             raise ValueError("Error setting device interface: " + str(ret))
 
+        self.setProgress('Laser Device interface setting......succeed')
         # Connect
         tryTimes = 0
         while tryTimes < 5:
             ret = llt.connect(self.hLLT)
             if ret < 1:
                 tryTimes += 1
-                raise ConnectionError("Error connect: " + str(ret))
+                print(f'connection retry {tryTimes} times')
+                if tryTimes >= 5:
+                    self.setProgress('[ERROR]Laser device connection ......failed', False)
+                    raise ConnectionError("Error connect: " + str(ret))
             else:
-                tryTimes = 5
-
+                break
+        
+        self.setProgress('Laser device connection ......succeed')
         # Get available resolutions
         ret = llt.get_resolutions(self.hLLT, self.available_resolutions, len(self.available_resolutions))
         if ret < 1:
+            self.setProgress('[ERROR]Laser device get resolution ......failed', False)
             raise ValueError("Error getting resolutions : " + str(ret))
 
         # Set max. resolution
         self.resolution = self.available_resolutions[0]
         ret = llt.set_resolution(self.hLLT, self.resolution)
         if ret < 1:
+            self.setProgress('[ERROR]Laser device set resolution ......failed', False)
             raise ValueError("Error getting resolutions : " + str(ret))
 
+        self.setProgress('Laser device resolution setting ......succeed')
+        
         # Declare measuring data arrays
         self.profile_buffer = (ct.c_ubyte*(self.resolution*64))()
         self.x = (ct.c_double * self.resolution)()
@@ -799,18 +1011,25 @@ class LineLaser(MOTORCONTROL):
         # Scanner type
         ret = llt.get_llt_type(self.hLLT, ct.byref(self.scanner_type))
         if ret < 1:
+            self.setProgress('[ERROR]Laser device get scanner type ......failed', False)
             raise ValueError("Error scanner type: " + str(ret))
 
+        self.setProgress('Laser device get scanner type ......succeed')
         # Set profile config
         ret = llt.set_profile_config(self.hLLT, llt.TProfileConfig.PROFILE)
         if ret < 1:
+            self.setProgress('[ERROR]Laser device set profile config ......failed', False)
             raise ValueError("Error setting profile config: " + str(ret))
 
+        self.setProgress('Laser device set profile config ......succeed')
         # Set trigger free run
-        ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_TRIGGER, llt.TRIG_INTERNAL)
-        if ret < 1:
-            raise ValueError("Error setting trigger: " + str(ret))
+        # ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_TRIGGER, llt.TRIG_INTERNAL)
+        # if ret < 1:
+        #     self.setProgress('[ERROR]Laser device set feature ......failed', False)
+        #     raise ValueError("Error setting trigger: " + str(ret))
 
+        # self.setProgress('Laser device set feature ......succeed')
+        
         # "arduino connection setting"
         # arduinoConnectStatus = False
         # while arduinoConnectStatus == False:
@@ -822,13 +1041,15 @@ class LineLaser(MOTORCONTROL):
         #         input('Auduino connect fail. Please check it and press "Enter".')
                 
         # Plot Initial
-        self.fig = plt.figure()
-        self.plot = self.fig.add_subplot()
-        self.lay = QtWidgets.QVBoxLayout()
+        # self.fig = plt.figure()
+        # self.plot = self.fig.add_subplot()
+        # self.lay = QtWidgets.QVBoxLayout()
         
-        self.RobotSystem = MOTORCONTROL(6)
-        self.RobotSystem.TrackNull()
-    
+        # self.RobotSystem = MOTORCONTROL(6)
+        # self.RobotSystem.TrackNull()
+        
+        self.TriggerSetting()
+        
     # 計算高度均值
     def CalHeightAvg(self, arr):
         try:
@@ -883,8 +1104,9 @@ class LineLaser(MOTORCONTROL):
 
             ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_TRIGGER, TriggerMode)
             if ret < 1:
+                self.setProgress('[ERROR]Laser device set feature trigger......failed', False)
                 raise ValueError("Error setting trigger: " + str(ret))
-
+            
             #Digital input mode
             #llt.MULTI_DIGIN_ENC_INDEX = encoder+reset
             #llt.MULTI_DIGIN_ENC_TRIG = encoder+Trigger
@@ -900,17 +1122,20 @@ class LineLaser(MOTORCONTROL):
 
             ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_DIGITAL_IO, MultiPort)
             if ret < 1:
+                self.setProgress('[ERROR]Laser device set feature digital IO......failed', False)
                 raise ValueError("Error setting trigger: " + str(ret))
             #--------------------------------------------------------------------------------------------------------------
 
             # Set exposure time
             ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_EXPOSURE_TIME, self.exposure_time)
             if ret < 1:
+                self.setProgress('[ERROR]Laser device set feature exposure time......failed', False)
                 raise ValueError("Error setting exposure time: " + str(ret))
 
             # Set idle time
             ret = llt.set_feature(self.hLLT, llt.FEATURE_FUNCTION_IDLE_TIME, self.idle_time)
             if ret < 1:
+                self.setProgress('[ERROR]Laser device set feature idle time......failed', False)
                 raise ValueError("Error idle time: " + str(ret))
 
             #Wait until all parameters are set before starting the transmission (this can take up to 120ms)
@@ -918,8 +1143,11 @@ class LineLaser(MOTORCONTROL):
 
             # Start transfer
             ret = llt.transfer_profiles(self.hLLT, llt.TTransferProfileType.NORMAL_TRANSFER, 1)
+
             if ret < 1:
                 raise ValueError("Error starting transfer profiles: " + str(ret))
+            
+            self.setProgress('Laser device set feature ......succeed')
         except:
             self.RobotSystem.DisplayError()
             print("Laser connect fail.")
@@ -970,13 +1198,20 @@ class LineLaser(MOTORCONTROL):
                     if currentTemp > 10:
                         error = 10/0
             print("Model Base Checking done!")
+            self.signalModelPassed.emit(True)
+            # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
         except:
-            self.RobotSystem.DisplayError()
+            # self.RobotSystem.DisplayError()
             print("Model Building Fail")
             print("Please try to build chest model again.")
+            self.signalModelPassed.emit(False)
+            # QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
             # self.ModelBuilding()
+            
+    
 
-    def RealTimeHeightAvg(self,yellowLightCriteria,greenLightCriteria):
+    # def RealTimeHeightAvg(self,yellowLightCriteria,greenLightCriteria):
+    def RealTimeHeightAvg(self):
         # self.triggerSetting()
         self.receiveData = []
         meanPercentage = 0
@@ -1024,25 +1259,27 @@ class LineLaser(MOTORCONTROL):
             self.avgValueList = sorted(self.avgValueList, reverse=True)
             
             meanPercentage = self.PercentagePrediction(realTimeAvgValue)
-            try:
-                if meanPercentage >= yellowLightCriteria and  meanPercentage < greenLightCriteria:
-                    self.RobotSystem.TrackYellow()
-                    print("黃燈")
-                    print(meanPercentage)
-                elif meanPercentage > greenLightCriteria:
-                    self.RobotSystem.TrackGreen()
-                    print("綠燈")
-                    print(meanPercentage)
-                else:
-                    self.RobotSystem.TrackRed()
-                    # self.ser.write(b'red\n')
+            # try:
+            #     if meanPercentage >= yellowLightCriteria and  meanPercentage < greenLightCriteria:
+            #         # self.RobotSystem.TrackYellow()
+            #         print("黃燈")
+            #         print(meanPercentage)
+            #     elif meanPercentage > greenLightCriteria:
+            #         # self.RobotSystem.TrackGreen()
+            #         print("綠燈")
+            #         print(meanPercentage)
+            #     else:
+            #         # self.RobotSystem.TrackRed()
+            #         # self.ser.write(b'red\n')
+            #         pass
             
-                sleep(0.01)
-                return meanPercentage
+            sleep(0.01)
+            self.signalBreathingRatio.emit(meanPercentage)
+            return meanPercentage
             
-            except:
-                self.RobotSystem.DisplayError()
-                print("Realtime track error")
+            # except:
+            #     # self.RobotSystem.DisplayError()
+            #     print("Realtime track error")
             
                     
     def PercentagePrediction(self,realTimeAvgValue):
@@ -1094,24 +1331,26 @@ class LineLaser(MOTORCONTROL):
             pass
         
     def CloseLaser(self):
-        if self.ret & llt.CONVERT_X is 0 or self.ret & llt.CONVERT_Z is 0 or self.ret & llt.CONVERT_MAXIMUM is 0:
-            raise ValueError("Error converting data: " + str(self.ret))
+        if hasattr(self, 'ret'):
+            if self.ret & llt.CONVERT_X == 0 or self.ret & llt.CONVERT_Z == 0 or self.ret & llt.CONVERT_MAXIMUM == 0:
+                raise ValueError("Error converting data: " + str(self.ret))
 
-        # Output of profile count
-        for i in range(16):
-            self.timestamp[i] = self.profile_buffer[self.resolution * 64 - 16 + i]
+        if hasattr(self, 'profile_buffer'):
+            # Output of profile count
+            for i in range(16):
+                self.timestamp[i] = self.profile_buffer[self.resolution * 64 - 16 + i]
 
-        llt.timestamp_2_time_and_count(self.timestamp, ct.byref(self.shutter_opened), ct.byref(self.shutter_closed), ct.byref(self.profile_count))
+            llt.timestamp_2_time_and_count(self.timestamp, ct.byref(self.shutter_opened), ct.byref(self.shutter_closed), ct.byref(self.profile_count))
 
-        # Stop transmission
-        self.ret = llt.transfer_profiles(self.hLLT, llt.TTransferProfileType.NORMAL_TRANSFER, 0)
-        if self.ret < 1:
-            raise ValueError("Error stopping transfer profiles: " + str(self.ret))
+            # Stop transmission
+            self.ret = llt.transfer_profiles(self.hLLT, llt.TTransferProfileType.NORMAL_TRANSFER, 0)
+            if self.ret < 1:
+                raise ValueError("Error stopping transfer profiles: " + str(self.ret))
 
-        # Disconnect
-        self.ret = llt.disconnect(self.hLLT)
-        if self.ret < 1:
-            raise ConnectionAbortedError("Error while disconnect: " + str(self.ret))
+            # Disconnect
+            self.ret = llt.disconnect(self.hLLT)
+            if self.ret < 1:
+                raise ConnectionAbortedError("Error while disconnect: " + str(self.ret))
 
         # Delete
         self.ret = llt.del_device(self.hLLT)
@@ -1196,5 +1435,14 @@ class LineLaser(MOTORCONTROL):
         for i in range(len(self.z)):
             dataTemp.append(self.z[i]*-1)
         receiveData.append(dataTemp)
+        
+        output = []
+        avg = np.average(dataTemp)
+        if avg < -120 or avg > -80:
+            output.append(dataTemp)
+            output.append([])
+        else:
+            output.append([])
+            output.append(dataTemp)
            
-        return receiveData     
+        return output     

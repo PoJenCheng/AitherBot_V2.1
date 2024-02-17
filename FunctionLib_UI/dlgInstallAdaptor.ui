@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>dlgInstallAdaptor</class>
+ <widget class="QDialog" name="dlgInstallAdaptor">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1229</width>
+    <height>711</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(77, 132, 173);</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QWidget" name="wdgMedia" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>600</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>600</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="label">
+     <property name="minimumSize">
+      <size>
+       <width>400</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 24pt &quot;Arial&quot;;
+color: rgb(255, 255, 208);</string>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;Remove locator and install holder&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; at the end-effector of AitherBot.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="btnConfirm">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}</string>
+       </property>
+       <property name="text">
+        <string>OK</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
