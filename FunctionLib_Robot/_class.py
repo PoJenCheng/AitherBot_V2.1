@@ -39,7 +39,6 @@ class MOTORCONTROL(QObject):
     signalInitErrMsg = pyqtSignal(str)
     
     def __init__(self, motorAxis):
-        # for testing
         super().__init__()
         self.motorAxis = motorAxis
         self.bServoEnableLabel = 'GVL.bServoEnable_' + str(self.motorAxis)
