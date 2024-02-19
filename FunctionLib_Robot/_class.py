@@ -40,9 +40,6 @@ class MOTORCONTROL(QObject):
     
     def __init__(self, motorAxis):
         super().__init__()
-        pass
-        sleep(0.3)
-        #commit
         self.motorAxis = motorAxis
         self.bServoEnableLabel = 'GVL.bServoEnable_' + str(self.motorAxis)
         self.bMotorStopLabel = 'GVL.bMotorStop_' + str(self.motorAxis)
