@@ -57,5 +57,3 @@ yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
-
-"test"
