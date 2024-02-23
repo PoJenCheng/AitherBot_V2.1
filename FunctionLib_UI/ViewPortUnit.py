@@ -1,10 +1,12 @@
 # from fileinput import filename
 # from turtle import update
 # import typing
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QModelIndex, QObject
+from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QStyleOptionViewItem
 import numpy
 import cv2
 import logging
@@ -386,6 +388,21 @@ class ViewPortUnit(QObject):
         
         self.iren.Initialize()
         self.iren.Start()
+        
+class TreeViewDelegate(QStyledItemDelegate):
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        if option.state & QStyle.State_Selected:
+            selData = index.data(Qt.UserRole + 4)
+            
+            color = QColor()
+            if selData == 1:
+                color = QColor(100, 0, 0)
+            elif selData == 2:
+                color = QColor(0, 100, 0)
+                
+            painter.fillRect(option.rect, color)
+            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
+        super().paint(painter, option, index)
         
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     def __init__(self):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\Leon\Aitherbot-Project-V1.9.5.2\FunctionLib_UI\_Aitherbot.ui'
+# Form implementation generated from reading ui file 'c:\Leon\AitherBot_V2.1\FunctionLib_UI\_Aitherbot.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -1142,6 +1142,163 @@ class Ui_MainWindow(object):
         self.pgDicomList.setObjectName("pgDicomList")
         self.gridLayout_12 = QtWidgets.QGridLayout(self.pgDicomList)
         self.gridLayout_12.setObjectName("gridLayout_12")
+        self.treeDicomFilter = QtWidgets.QTreeView(self.pgDicomList)
+        self.treeDicomFilter.setMaximumSize(QtCore.QSize(16777215, 200))
+        self.treeDicomFilter.setStyleSheet("font: 12pt \"Arial\";")
+        self.treeDicomFilter.setObjectName("treeDicomFilter")
+        self.gridLayout_12.addWidget(self.treeDicomFilter, 1, 0, 1, 1)
+        self.wdgButtonGroup = QtWidgets.QWidget(self.pgDicomList)
+        self.wdgButtonGroup.setStyleSheet("#wdgArrowRight{\n"
+"    image:url(image/cil-arrow-thick-from-left.png);\n"
+"}\n"
+"\n"
+"QPushButton{\n"
+"    background-color:rgb(109, 190, 247);\n"
+"    border-top:1px solid #ddd;\n"
+"    border-left:1px solid #ddd;\n"
+"    border-bottom:2px solid #444;\n"
+"    border-right:2px solid #444;\n"
+"}\n"
+"\n"
+"QPushButton:checked{\n"
+"    background-color:rgb(149, 230, 255);\n"
+"    border-top:2px solid #444;\n"
+"    border-left:2px solid #444;\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"}")
+        self.wdgButtonGroup.setObjectName("wdgButtonGroup")
+        self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.wdgButtonGroup)
+        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_7.setSpacing(0)
+        self.verticalLayout_7.setObjectName("verticalLayout_7")
+        self.btnInhale = QtWidgets.QPushButton(self.wdgButtonGroup)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnInhale.sizePolicy().hasHeightForWidth())
+        self.btnInhale.setSizePolicy(sizePolicy)
+        self.btnInhale.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.btnInhale.setCheckable(True)
+        self.btnInhale.setChecked(True)
+        self.btnInhale.setObjectName("btnInhale")
+        self.btgDicom = QtWidgets.QButtonGroup(MainWindow)
+        self.btgDicom.setObjectName("btgDicom")
+        self.btgDicom.addButton(self.btnInhale)
+        self.verticalLayout_7.addWidget(self.btnInhale)
+        self.wdgArrowRight = QtWidgets.QWidget(self.wdgButtonGroup)
+        self.wdgArrowRight.setMinimumSize(QtCore.QSize(64, 64))
+        self.wdgArrowRight.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.wdgArrowRight.setObjectName("wdgArrowRight")
+        self.verticalLayout_7.addWidget(self.wdgArrowRight)
+        self.btnExhale = QtWidgets.QPushButton(self.wdgButtonGroup)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnExhale.sizePolicy().hasHeightForWidth())
+        self.btnExhale.setSizePolicy(sizePolicy)
+        self.btnExhale.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.btnExhale.setCheckable(True)
+        self.btnExhale.setObjectName("btnExhale")
+        self.btgDicom.addButton(self.btnExhale)
+        self.verticalLayout_7.addWidget(self.btnExhale)
+        self.gridLayout_12.addWidget(self.wdgButtonGroup, 1, 1, 2, 1)
+        self.wdgPreview = QtWidgets.QWidget(self.pgDicomList)
+        self.wdgPreview.setMaximumSize(QtCore.QSize(300, 16777215))
+        self.wdgPreview.setStyleSheet("#lblInhale, #lblExhale{\n"
+"    font: 12pt \"Arial\";\n"
+"    background-color:rgb(24, 255, 217);\n"
+"}\n"
+"\n"
+"#lblInfoInhale{\n"
+"    font: 9pt \"Courier New\";\n"
+"    background-color:rgb(100, 0, 0);\n"
+"    color:#ff0;\n"
+"}\n"
+"\n"
+" #lblInfoExhale{\n"
+"    font: 9pt \"Courier New\";\n"
+"    background-color:rgb(0,100, 0);\n"
+"    color:#ff0;\n"
+"}\n"
+"\n"
+"QPushButton{\n"
+"    image:url(image\\\\swap-vertical.png);\n"
+"    background-color:rgb(109, 190, 247);\n"
+"    border-top:1px solid #ddd;\n"
+"    border-left:1px solid #ddd;\n"
+"    border-bottom:2px solid #444;\n"
+"    border-right:2px solid #444;\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    border-top:2px solid #444;\n"
+"    border-left:2px solid #444;\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"}\n"
+"\n"
+"#wdgInhale{\n"
+"    background-color:rgb(100, 0, 0);\n"
+"}\n"
+"\n"
+"#wdgExhale{\n"
+"    background-color:rgb(0,100, 0);\n"
+"}\n"
+"")
+        self.wdgPreview.setObjectName("wdgPreview")
+        self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.wdgPreview)
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_6.setSpacing(0)
+        self.verticalLayout_6.setObjectName("verticalLayout_6")
+        self.lblInhale = QtWidgets.QLabel(self.wdgPreview)
+        self.lblInhale.setMinimumSize(QtCore.QSize(0, 30))
+        self.lblInhale.setMaximumSize(QtCore.QSize(16777215, 30))
+        self.lblInhale.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblInhale.setObjectName("lblInhale")
+        self.verticalLayout_6.addWidget(self.lblInhale)
+        self.lblInfoInhale = QtWidgets.QLabel(self.wdgPreview)
+        self.lblInfoInhale.setObjectName("lblInfoInhale")
+        self.verticalLayout_6.addWidget(self.lblInfoInhale)
+        self.wdgInhale = QtWidgets.QWidget(self.wdgPreview)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgInhale.sizePolicy().hasHeightForWidth())
+        self.wdgInhale.setSizePolicy(sizePolicy)
+        self.wdgInhale.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgInhale.setObjectName("wdgInhale")
+        self.verticalLayout_6.addWidget(self.wdgInhale)
+        self.btnSwap = QtWidgets.QPushButton(self.wdgPreview)
+        self.btnSwap.setMinimumSize(QtCore.QSize(0, 64))
+        self.btnSwap.setText("")
+        self.btnSwap.setObjectName("btnSwap")
+        self.verticalLayout_6.addWidget(self.btnSwap)
+        self.lblExhale = QtWidgets.QLabel(self.wdgPreview)
+        self.lblExhale.setMinimumSize(QtCore.QSize(0, 30))
+        self.lblExhale.setMaximumSize(QtCore.QSize(16777215, 30))
+        self.lblExhale.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblExhale.setObjectName("lblExhale")
+        self.verticalLayout_6.addWidget(self.lblExhale)
+        self.lblInfoExhale = QtWidgets.QLabel(self.wdgPreview)
+        self.lblInfoExhale.setObjectName("lblInfoExhale")
+        self.verticalLayout_6.addWidget(self.lblInfoExhale)
+        self.wdgExhale = QtWidgets.QWidget(self.wdgPreview)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgExhale.sizePolicy().hasHeightForWidth())
+        self.wdgExhale.setSizePolicy(sizePolicy)
+        self.wdgExhale.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgExhale.setObjectName("wdgExhale")
+        self.verticalLayout_6.addWidget(self.wdgExhale)
+        self.gridLayout_12.addWidget(self.wdgPreview, 1, 2, 2, 1)
+        self.treeDicom = QtWidgets.QTreeView(self.pgDicomList)
+        self.treeDicom.setMouseTracking(True)
+        self.treeDicom.setStyleSheet("font: 12pt \"Arial\";")
+        self.treeDicom.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.treeDicom.setObjectName("treeDicom")
+        self.gridLayout_12.addWidget(self.treeDicom, 2, 0, 1, 1)
         self.label_title_6 = QtWidgets.QLabel(self.pgDicomList)
         self.label_title_6.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_6.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -1151,16 +1308,7 @@ class Ui_MainWindow(object):
 "    margin:0px;")
         self.label_title_6.setAlignment(QtCore.Qt.AlignCenter)
         self.label_title_6.setObjectName("label_title_6")
-        self.gridLayout_12.addWidget(self.label_title_6, 0, 0, 1, 1)
-        self.treeDicomFilter = QtWidgets.QTreeView(self.pgDicomList)
-        self.treeDicomFilter.setMaximumSize(QtCore.QSize(16777215, 200))
-        self.treeDicomFilter.setStyleSheet("font: 12pt \"Arial\";")
-        self.treeDicomFilter.setObjectName("treeDicomFilter")
-        self.gridLayout_12.addWidget(self.treeDicomFilter, 1, 0, 1, 1)
-        self.treeDicom = QtWidgets.QTreeView(self.pgDicomList)
-        self.treeDicom.setStyleSheet("font: 12pt \"Arial\";")
-        self.treeDicom.setObjectName("treeDicom")
-        self.gridLayout_12.addWidget(self.treeDicom, 2, 0, 1, 1)
+        self.gridLayout_12.addWidget(self.label_title_6, 0, 0, 1, 3)
         self.horizontalLayout_12 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_12.setObjectName("horizontalLayout_12")
         spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -1197,6 +1345,7 @@ class Ui_MainWindow(object):
         self.btnCancel.setObjectName("btnCancel")
         self.horizontalLayout_12.addWidget(self.btnCancel)
         self.btnImport = QtWidgets.QPushButton(self.pgDicomList)
+        self.btnImport.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1223,12 +1372,16 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnImport.setObjectName("btnImport")
         self.horizontalLayout_12.addWidget(self.btnImport)
         spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_12.addItem(spacerItem34)
-        self.gridLayout_12.addLayout(self.horizontalLayout_12, 3, 0, 1, 1)
+        self.gridLayout_12.addLayout(self.horizontalLayout_12, 3, 0, 1, 3)
         self.stkScene.addWidget(self.pgDicomList)
         self.pgRegistration = QtWidgets.QWidget()
         self.pgRegistration.setObjectName("pgRegistration")
@@ -1526,7 +1679,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 166, 247))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 166, 255))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -1568,7 +1721,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addItem(spacerItem35)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 318))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 189))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -2066,12 +2219,12 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(7)
+        self.stkScene.setCurrentIndex(10)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
         self.tabWidget.setCurrentIndex(0)
-        self.toolBox.setCurrentIndex(1)
+        self.toolBox.setCurrentIndex(0)
         self.stkSignalLight.setCurrentIndex(1)
         self.stkJoint1.setCurrentIndex(1)
         self.stkJoint2.setCurrentIndex(1)
@@ -2143,6 +2296,14 @@ class Ui_MainWindow(object):
         self.label_title_12.setText(_translate("MainWindow", "Select Dicom Source"))
         self.btnFromUSB.setText(_translate("MainWindow", "USB"))
         self.btnFromCD.setText(_translate("MainWindow", "CD ROM"))
+        self.btnInhale.setText(_translate("MainWindow", "Inhale"))
+        self.btnExhale.setText(_translate("MainWindow", "Exhale"))
+        self.lblInhale.setText(_translate("MainWindow", "Inhale Dicom"))
+        self.lblInfoInhale.setText(_translate("MainWindow", "Dim\n"
+"Voxel"))
+        self.lblExhale.setText(_translate("MainWindow", "Exhale Dicom"))
+        self.lblInfoExhale.setText(_translate("MainWindow", "Dim\n"
+"Voxel"))
         self.label_title_6.setText(_translate("MainWindow", "Import CT"))
         self.btnCancel.setText(_translate("MainWindow", "Cancel"))
         self.btnImport.setText(_translate("MainWindow", "Confirm"))

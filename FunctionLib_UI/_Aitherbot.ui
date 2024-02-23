@@ -1016,7 +1016,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>7</number>
+           <number>10</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -2477,7 +2477,319 @@ margin-right:0px;
           </widget>
           <widget class="QWidget" name="pgDicomList">
            <layout class="QGridLayout" name="gridLayout_12">
-            <item row="0" column="0">
+            <item row="1" column="0">
+             <widget class="QTreeView" name="treeDicomFilter">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>200</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" rowspan="2">
+             <widget class="QWidget" name="wdgButtonGroup" native="true">
+              <property name="styleSheet">
+               <string notr="true">#wdgArrowRight{
+	image:url(image/cil-arrow-thick-from-left.png);
+}
+
+QPushButton{
+	background-color:rgb(109, 190, 247);
+	border-top:1px solid #ddd;
+	border-left:1px solid #ddd;
+	border-bottom:2px solid #444;
+	border-right:2px solid #444;
+}
+
+QPushButton:checked{
+	background-color:rgb(149, 230, 255);
+	border-top:2px solid #444;
+	border-left:2px solid #444;
+	border-bottom:1px solid #ddd;
+	border-right:1px solid #ddd;
+}</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_7">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="btnInhale">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>64</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Inhale</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">btgDicom</string>
+                 </attribute>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="wdgArrowRight" native="true">
+                 <property name="minimumSize">
+                  <size>
+                   <width>64</width>
+                   <height>64</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>64</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnExhale">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>64</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Exhale</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">btgDicom</string>
+                 </attribute>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="1" column="2" rowspan="2">
+             <widget class="QWidget" name="wdgPreview" native="true">
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#lblInhale, #lblExhale{
+	font: 12pt &quot;Arial&quot;;
+	background-color:rgb(24, 255, 217);
+}
+
+#lblInfoInhale{
+	font: 9pt &quot;Courier New&quot;;
+	background-color:rgb(100, 0, 0);
+	color:#ff0;
+}
+
+ #lblInfoExhale{
+	font: 9pt &quot;Courier New&quot;;
+	background-color:rgb(0,100, 0);
+	color:#ff0;
+}
+
+QPushButton{
+	image:url(image\\swap-vertical.png);
+	background-color:rgb(109, 190, 247);
+	border-top:1px solid #ddd;
+	border-left:1px solid #ddd;
+	border-bottom:2px solid #444;
+	border-right:2px solid #444;
+}
+
+QPushButton:pressed{
+	border-top:2px solid #444;
+	border-left:2px solid #444;
+	border-bottom:1px solid #ddd;
+	border-right:1px solid #ddd;
+}
+
+#wdgInhale{
+	background-color:rgb(100, 0, 0);
+}
+
+#wdgExhale{
+	background-color:rgb(0,100, 0);
+}
+</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_6">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="lblInhale">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Inhale Dicom</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblInfoInhale">
+                 <property name="text">
+                  <string>Dim
+Voxel</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="wdgInhale" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>200</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnSwap">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>64</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblExhale">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Exhale Dicom</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblInfoExhale">
+                 <property name="text">
+                  <string>Dim
+Voxel</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="wdgExhale" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>200</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QTreeView" name="treeDicom">
+              <property name="mouseTracking">
+               <bool>true</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 12pt &quot;Arial&quot;;</string>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="3">
              <widget class="QLabel" name="label_title_6">
               <property name="minimumSize">
                <size>
@@ -2505,27 +2817,7 @@ margin-right:0px;
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QTreeView" name="treeDicomFilter">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>200</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">font: 12pt &quot;Arial&quot;;</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QTreeView" name="treeDicom">
-              <property name="styleSheet">
-               <string notr="true">font: 12pt &quot;Arial&quot;;</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
+            <item row="3" column="0" colspan="3">
              <layout class="QHBoxLayout" name="horizontalLayout_12">
               <item>
                <spacer name="horizontalSpacer_29">
@@ -2590,6 +2882,9 @@ margin-right:0px;
               </item>
               <item>
                <widget class="QPushButton" name="btnImport">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2623,6 +2918,10 @@ margin-top:5px;
 margin-bottom:0px;
 margin-left:3px;
 margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
 }</string>
                 </property>
                 <property name="text">
@@ -3115,7 +3414,7 @@ QToolBox QPushButton:disabled{
 </string>
                   </property>
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="pgImage">
                    <property name="geometry">
@@ -3123,7 +3422,7 @@ QToolBox QPushButton:disabled{
                      <x>0</x>
                      <y>0</y>
                      <width>166</width>
-                     <height>247</height>
+                     <height>255</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -3232,8 +3531,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>318</height>
+                     <width>243</width>
+                     <height>189</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -4539,5 +4838,6 @@ margin-right:0px;
  </slots>
  <buttongroups>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="btgDicom"/>
  </buttongroups>
 </ui>

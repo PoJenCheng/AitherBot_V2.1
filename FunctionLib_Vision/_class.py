@@ -113,7 +113,7 @@ class DICOM(QObject):
     windowLevel = None
     rescaleSlope = None
     rescaleIntercept = None
-    currentSeries = None
+    currentSeries = []
     
     def __init__(self):
         super().__init__()
@@ -399,7 +399,7 @@ class DICOM(QObject):
         return dicPatient
        
         ############################################################################################
-    def SelectDataFromID(self, idPatient:str, idStuy:str, idSeries:str):
+    def SelectDataFromID(self, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
         patient = self.dicPatient.get(idPatient)
         if not patient:
             QMessageBox.critical(None, 'DICOM ERROR', f'not found patient ID = [{idPatient}]')
@@ -415,10 +415,14 @@ class DICOM(QObject):
             QMessageBox.critical(None, 'DICOM ERROR', f'not found series ID = [{idSeries}]')
             return None
         
-        self.currentSeries = series
+        index = max(0, min(index, 1))
+        if index >= len(self.currentSeries):
+            self.currentSeries.append(series)
+        else:
+            self.currentSeries[index] = series
         
-    def GetDataFromID(self, idPatient:str, idStuy:str, idSeries:str):
-        self.SelectDataFromID(idPatient, idStuy, idSeries)
+    def GetDataFromID(self, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
+        self.SelectDataFromID(idPatient, idStuy, idSeries, index)
         return self.GetData(self.currentSeries)
         
         
@@ -429,14 +433,69 @@ class DICOM(QObject):
         
         # self.currentSeries = series
         return self.GetData(series)
+    
+    def GetSlice(self, idPatient:str, idStuy:str, idSeries:str, index:int, nSlice:int):
+        patient = self.dicPatient.get(idPatient)
+        if not patient:
+            QMessageBox.critical(None, 'DICOM ERROR', f'not found patient ID = [{idPatient}]')
+            return None
         
-    def GetData(self, series = None):
+        study = patient.get(idStuy)
+        if not study:
+            QMessageBox.critical(None, 'DICOM ERROR', f'not found study ID = [{idStuy}]')
+            return None
+        
+        series = study.get(idSeries)
+        if not series:
+            QMessageBox.critical(None, 'DICOM ERROR', f'not found series ID = [{idSeries}]')
+            return None
+        
+        listSeries = series['data']
+        
+        slice = []
+        if nSlice >= len(listSeries):
+            dataSet = listSeries[0]
+            if nSlice > len(dataSet.pixel_array):
+                print('Invalid nSlice of Dicom')
+                return None
+            
+            if self.rescaleIntercept and self.rescaleSlope:
+                slice.append(dataSet.pixel_array[nSlice] * self.rescaleSlope + self.rescaleIntercept)
+            else:
+                slice.append(dataSet.pixel_array[nSlice])
+            slice = slice[0]
+        else:
+            dataSet = listSeries[nSlice]
+            
+            rescaleIntercept = None
+            rescaleSlope     = None
+            elem = self.FindTag(dataSet, (0x28, 0x1052))
+            if elem is not None:
+                rescaleIntercept = elem
+                
+            elem = self.FindTag(dataSet, (0x28, 0x1053))
+            if elem is not None:
+                rescaleSlope = elem
+            
+            
+            if hasattr(dataSet, 'pixel_array'):
+                if rescaleIntercept and rescaleSlope:
+                    slice = (dataSet.pixel_array * rescaleSlope + rescaleIntercept)
+                else:
+                    slice = (dataSet.pixel_array)
+                
+            slice = np.array(slice).astype(np.int16)
+        return slice
+        
+    def GetData(self, series = None, index:int = 0):
         if self.currentSeries is None and series is None:
             return None
         elif series is None:
-            series = self.currentSeries
+            if index >= len(self.currentSeries):
+                return None
+            series = self.currentSeries[index]
             
-        listSeries = series['data']
+        listSeries:list = series['data']
         
         images = []
         spacing = []
@@ -461,7 +520,7 @@ class DICOM(QObject):
         if not spacingXY or not spacingZ:
             QMessageBox.critical(None, 'DICOM TAG MISSING', 'missing tag [Spacing]')
             return None
-        spacing = spacingXY[:]
+        spacing:list = spacingXY[:]
         spacing.append(spacingZ)
         # print(f'spacingXY = {spacingXY}, spacingZ = {spacingZ}')
             
@@ -497,8 +556,9 @@ class DICOM(QObject):
             # 不是muti frame dicom，就必須反轉Z、Y方向
             # images = images[::-1, ::-1, :]
             images = images[:, ::-1, :]
-        print(f'slices shape = {images.shape}')
-        print(f'image spacing = {spacing}')
+        # print(f'slices shape = {images.shape}')
+        # print(f'image spacing = {spacing}')
+        self.arrImage = images.copy()
         
         importer = vtk.vtkImageImport()
         importer.SetDataScalarTypeToShort()
@@ -513,12 +573,11 @@ class DICOM(QObject):
         importer.CopyImportVoidPointer(images.data, images.nbytes)
         # importer.CopyImportVoidPointer(reverse.data, reverse.nbytes)
         importer.Update()
-        
         self.importer = importer
         
         imageData:vtk.vtkImageData = importer.GetOutput()
         
-        return imageData
+        return imageData, spacing, listSeries
         # return self.importer.GetOutput()
     
         # print(f'slices shape = {np.array(imageSlices).shape}')
@@ -736,8 +795,11 @@ class DICOM(QObject):
         return pixel2Mm
     
 "registration function"
-class REGISTRATION():
+class REGISTRATION(QObject):
+    signalProgress = pyqtSignal(float)
+    
     def __init__(self):
+        super().__init__()
         self.PlanningPath = []
         return
     
@@ -1409,6 +1471,8 @@ class REGISTRATION():
         else:
             pass
         
+        self.signalProgress.emit(0.05)
+        
         imageHuMm_tmp_xyz = numpy.array(imageHuMm_tmp_xyz)
         imageHuMm_tmp = []
         
@@ -1433,14 +1497,22 @@ class REGISTRATION():
         else:
             imageHuMm = imageHuMm_tmp_xyz
             imageHuMm = numpy.array(imageHuMm)
+            
+        self.signalProgress.emit(0.1)
         ############################################################################################
         ## 取得候選人球心 ############################################################################################
         resultCentroid_xy = self.__FindBallXY(imageHuMm)
+        self.signalProgress.emit(0.17)
         dictionaryPoint = self.__ClassifyPointXY(resultCentroid_xy)
+        self.signalProgress.emit(0.34)
         resultCentroid_yz = self.__FindBallYZ(imageHuMm)
+        self.signalProgress.emit(0.51)
         dictionaryPoint = self.__ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
+        self.signalProgress.emit(0.68)
         resultCentroid_xz = self.__FindBallXZ(imageHuMm)
+        self.signalProgress.emit(0.85)
         dictionaryPoint = self.__ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
+        self.signalProgress.emit(0.99)
         
         pointMatrixSorted_xy = numpy.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
         pointMatrixSorted_yz = numpy.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
@@ -1450,6 +1522,13 @@ class REGISTRATION():
         ############################################################################################
         ## 計算得出病人坐標系下的球心 ############################################################################################
         resultPoint = []
+        
+        count = len(averagePoint)
+        if count == 0:
+            count = 1
+        nStep = 1 / count
+        nProgress = 0
+        self.signalProgress.emit(0)
         for p in averagePoint:
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
@@ -1465,16 +1544,21 @@ class REGISTRATION():
                 X = p[2]
                 Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+                
+                nProgress = min(nProgress + nStep, 0.9)
+                self.signalProgress.emit(nProgress)
             except:
                 pass
+        self.signalProgress.emit(0.9)
         ## 辨識定位球方向 ############################################################################################
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
+            self.signalProgress.emit(1)
         except:
             ball = []
-        print("-------------------------------------------------------------------")
-        print("ball: \n", ball)
-        print("-------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------")
+        # print("ball: \n", ball)
+        # print("-------------------------------------------------------------------")
         ############################################################################################
         ## 如果 IdentifyPoint 失敗, return 候選人, 為了手動註冊 ############################################################################################
         pointMatrixSorted = numpy.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
@@ -1567,9 +1651,9 @@ class REGISTRATION():
             ball = self.IdentifyPoint(np.array(resultPoint))
         except:
             ball = []
-        print("-------------------------------------------------------------------")
-        print("ball: \n", ball)
-        print("-------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------")
+        # print("ball: \n", ball)
+        # print("-------------------------------------------------------------------")
         ############################################################################################
         
         if ball == []:
@@ -3241,12 +3325,12 @@ class RendererObj(vtkRenderer):
     bSelected = False
     bFocusMode = True
     bTargetVisible = True
+    textActor = None
     
     def __init__(self):
         super(RendererObj, self).__init__()
             
         self.targetObj = TargetObj(self)
-            
         
         self.actorTarget = [vtkActor2D() for _ in range(2)]
         self.target = [0, 0, 0]
@@ -3257,8 +3341,7 @@ class RendererObj(vtkRenderer):
         self.mapColor = vtkImageMapToColors()
         self.camera = vtkCamera()
         self.orientation = None
-        
-        
+        self.textActor = vtk.vtkTextActor()
                
         #reslice image
         self.dicomGrayscaleRange = None
@@ -3418,15 +3501,18 @@ class RendererObj(vtkRenderer):
                     self.target[:] = value
                     self.imagePosition[:] = np.round(value / self.pixel2Mm)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
+                    self.textActor.SetInput(f'{self.imagePosition[2]}/{self.imageDimensions[2] - 1}')
                 elif self.orientation == VIEW_CORONAL: 
                     self.target[:] = value
                     self.imagePosition[:] = np.round(value / self.pixel2Mm)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
+                    self.textActor.SetInput(f'{self.imagePosition[1]}/{self.imageDimensions[1] - 1}')
                 elif self.orientation == VIEW_SAGITTAL: 
                     self.target[:] = value
                     self.imagePosition[:] = np.round(value / self.pixel2Mm)
                     self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
-        
+                    self.textActor.SetInput(f'{self.imagePosition[0]}/{self.imageDimensions[0] - 1}')
+                
             else:
                 print(f'value dtype = {value.dtype}')
                 
@@ -3435,15 +3521,18 @@ class RendererObj(vtkRenderer):
                 # self.target[2] = value * self.pixel2Mm[2]
                 # self.imagePosition[2] = value
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
+                self.textActor.SetInput(f'{value}/{self.imageDimensions[2] - 1}')
             elif self.orientation == VIEW_CORONAL: 
                 # self.target[1] = value * self.pixel2Mm[1]
                 # self.imagePosition[1] = value
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
+                self.textActor.SetInput(f'{value}/{self.imageDimensions[1] - 1}')
             elif self.orientation == VIEW_SAGITTAL: 
                 # self.target[0] = value * self.pixel2Mm[0]
                 # self.imagePosition[0] = value
                 self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
-        
+                self.textActor.SetInput(f'{value}/{self.imageDimensions[0] - 1}')
+                
     def GetTarget(self):
         return self.target
     
@@ -3773,14 +3862,14 @@ class RendererObj(vtkRenderer):
             self.camera.SetPosition(1, 0, 0)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(center[0], center[0], 0, self.imageDimensions[1], 0, self.imageDimensions[2])
-            
+            self.textActor.SetInput(f'{center[0]}/{self.imageDimensions[0] - 1}')
         elif orientation == VIEW_CORONAL:
             
             self.camera.SetViewUp(0, 0, -1)
             self.camera.SetPosition(0, 1, 0)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(0, self.imageDimensions[0], center[1], center[1], 0, self.imageDimensions[2])
-            
+            self.textActor.SetInput(f'{center[1]}/{self.imageDimensions[1] - 1}')
         elif orientation == VIEW_AXIAL:
         
             self.camera.SetViewUp(0, 1, 0)
@@ -3788,7 +3877,7 @@ class RendererObj(vtkRenderer):
             
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], center[2], center[2])
-            
+            self.textActor.SetInput(f'{center[2]}/{self.imageDimensions[2] - 1}')
         elif orientation == VIEW_CROSS_SECTION:
             self.camera.SetViewUp(0, 1, 0)
             self.camera.SetPosition(0, 0, 1)
@@ -3798,6 +3887,16 @@ class RendererObj(vtkRenderer):
         self.camera.ComputeViewPlaneNormal()
         self.camera.ParallelProjectionOn()
         self.orientation = orientation
+
+        # self.textActor.SetAlignmentPoint(2)
+        self.textActor.SetTextScaleModeToNone()  # 避免文字縮放
+        self.textActor.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
+        self.textActor.SetPosition(0.98, 0.95)  # 設定文字位置 (右上角)
+        self.textActor.GetTextProperty().SetJustificationToRight()
+        self.textActor.GetTextProperty().SetFontSize(16)
+        self.textActor.GetTextProperty().SetColor(1.0, 1.0, 0.0)  # 設定文字顏色
+        
+        self.AddActor(self.textActor)
         
         "render"
         "Sagittal"
@@ -4749,10 +4848,10 @@ class DISPLAY(QObject):
         self.imageDimensions = self.vtkImage.GetDimensions()
         self.pixel2Mm = self.vtkImage.GetSpacing()
         
-        print(f'grayScale = {self.dicomGrayscaleRange}')
-        print(f'bounds = {self.dicomBoundsRange}')
-        print(f'dimensions = {self.imageDimensions}')
-        print(f'pixel = {self.pixel2Mm}')
+        # print(f'grayScale = {self.dicomGrayscaleRange}')
+        # print(f'bounds = {self.dicomBoundsRange}')
+        # print(f'dimensions = {self.imageDimensions}')
+        # print(f'pixel = {self.pixel2Mm}')
         
         # self.imageReslice = vtkImageReslice()
         # self.imageReslice.SetInputConnection(self.reader.GetOutputPort())

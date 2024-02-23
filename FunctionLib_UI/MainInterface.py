@@ -23,9 +23,11 @@ import os
 # from FunctionLib_UI.ui_demo_1 import *
 from FunctionLib_UI.Ui__Aitherbot import *
 from FunctionLib_UI.ViewPortUnit import *
+from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
+
 
 from cycler import cycler
 import matplotlib as mpl
@@ -57,7 +59,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     vtkImageLow = None
     vtkImageHigh = None
-    selectedSeries = None
+    selectedSeries = []
     listSubDialog = []
     indexDoneStage = 0
     indexCurrentStage = 0
@@ -77,6 +79,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     currentTag   = None
     currentStyle = None
     bFull = True
+    bToggleInhale = True
+    bRegistration = False
     
     #robot parameter
     bTrackingBreathing = False
@@ -144,7 +148,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         todayStr = datetime.strftime(datetime.now() - timedelta(days = 2), '%Y/%m/%d %H:%M')
         self.dicomData.append(['里昂', 'F123987940', 'M', 'CT', '512 x 512 x 365', todayStr])
         
-        
+        self.regFn = REGISTRATION()
         self.dicView['LT'] = self.wdgLeftTop
         self.dicView['RT'] = self.wdgRightTop
         self.dicView['LB'] = self.wdgLeftBottom
@@ -193,6 +197,31 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkSignalLight.setCurrentWidget(self.pgRedLight)
         self.cbxLanguage.setCurrentIndex(self.language)
         
+        # Figure in Inhale
+        self.fig = Figure(figsize=(5,5))
+        self.axInhale = self.fig.add_subplot(111)
+        self.axInhale.axis('off')
+        self.fig.set_facecolor('#640000')
+        self.fig.subplots_adjust(0, 0.05, 1, 0.95)
+        
+        layout = QVBoxLayout(self.wdgInhale)
+        self.canvasInhale = FigureCanvasQTAgg(self.fig)
+        layout.addWidget(self.canvasInhale)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Figure in Exhale
+        self.fig = Figure(figsize=(5,5))
+        self.axExhale = self.fig.add_subplot(111)
+        self.axExhale.axis('off')
+        self.fig.set_facecolor('#006400')
+        self.fig.subplots_adjust(0, 0.05, 1, 0.95)
+        
+        layout = QVBoxLayout(self.wdgExhale)
+        self.canvasExhale = FigureCanvasQTAgg(self.fig)
+        layout.addWidget(self.canvasExhale)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
@@ -218,8 +247,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
     def importDicom(self, path):
-        
-        
         self.ui_SP = SystemProcessing()
         self.ui_SP.show()
         QApplication.processEvents()
@@ -268,7 +295,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # 如果slice張數小於SKIP_SLICES(5張)，則略過
                     if dim[0] <= SKIP_SLICES:
                         continue
-                    itemDimension = QStandardItem(f'{dim[2]} x {dim[1]} x {dim[0]}')
+                    strDim = f'{dim[2]:<6}x {dim[1]:<6}x {dim[0]:<6}'
+                    itemDimension = QStandardItem(strDim)
                     
                     itemPatientName = QStandardItem(str(slice.PatientName))
                     itemPatientID = QStandardItem(str(slice.PatientID))
@@ -289,7 +317,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             spacing.append(spacingZ)
                         else:
                             spacing.append('NONE')
-                        strSpacing = f'{spacing[0]:.3f} x {spacing[1]:.3f} x {spacing[2]:.3f}'.rstrip('.0')
+                        strSpacingX = f'{spacing[0]:<.3f}'.ljust(6)
+                        strSpacingY = f'{spacing[1]:<.3f}'.ljust(6)
+                        strSpacingZ = f'{spacing[2]:<.3f}'.ljust(6)
+                        strSpacing = f'{strSpacingX}x {strSpacingY}x {strSpacingZ}'
+                        
                     itemSpacing = QStandardItem(strSpacing)
                     itemPath = QStandardItem(dicSeries.get('path'))
                     
@@ -377,13 +409,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         modelFilter.itemChanged.connect(self.onTreeItemChanged)
         self.treeDicomFilter.setModel(modelFilter)
         self.treeDicomFilter.expandAll()
-        self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
+        # self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
+        self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
         # header = self.treeDicomFilter.header()
         # header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.selectedSeries = None
+        self.selectedSeries = [[], []]
         
         
-        
+    def eventFilter(self, obj, event):
+        if obj == self.treeDicom and event.type() == QEvent.Leave:
+            pass
+            # print("Mouse left QTreeView")
+        return super().eventFilter(obj, event)
         
         
     def onTreeItemChanged(self, item:QStandardItem):
@@ -427,6 +464,42 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if checkCount > 0:
             return Qt.Checked
         return Qt.Unchecked
+    
+    def getSeriesFromModelIndex(self, index:QModelIndex):
+        model = self.treeDicom.model()
+        index = index.sibling(index.row(), 0)
+        item:QStandardItem = model.itemFromIndex(index)
+        if item:
+            idPatient = item.data(Qt.UserRole + 1)
+            idStudy   = item.data(Qt.UserRole + 2)
+            idSeries  = item.data(Qt.UserRole + 3)
+            # print(f'patient ID = {idPatient}')
+            # print(f'Study ID   = {idStudy}')
+            # print(f'Series ID  = {idSeries}')
+            # print(f'No.{i} : {item.data(Qt.UserRole + 4)}')
+            selectedSeries = [idPatient, idStudy, idSeries, index.row()]
+            # self.selectedSeries.append(selectedSeries)
+            # if len(self.selectedSeries) > 2:
+            #     self.selectedSeries.pop(0)
+            # self.reader.SelectDataFromID(idPatient, idStudy, idSeries, i)
+            return selectedSeries
+        else:
+            return None
+        
+    def getInfoFromModelIndex(self, index:QModelIndex):
+        model = self.treeDicom.model()
+        row = index.row()
+        item:QStandardItem = model.item(row, 4)
+        dim = item.text()
+        
+        item:QStandardItem = model.item(row, 5)
+        voxel = item.text()
+        strDim = 'Dim'
+        strVoxel = 'Voxel'
+        strText = f'{strDim:10}{dim}\n{strVoxel:10}{voxel}'
+        dimZ = int(dim.split('x')[-1])
+        
+        return strText, dimZ
     
     def resumeStored(self):
         """從已儲存的資料中，恢復至UI介面上"""
@@ -547,6 +620,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.currentDicom = self.buttonGroup.checkedButton().objectName()
         
         self.buttonGroup.buttonToggled.connect(self.OnToggled_buttonGroup)
+        self.btgDicom.buttonToggled.connect(self.OnToggled_btgDIcom)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         
@@ -588,6 +662,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         model.sort(6, Qt.DescendingOrder)
         model.setHeaderData(0, Qt.Horizontal, QColor(0, 0, 255, 100), role = Qt.BackgroundRole)
         self.treeDicom.setModel(model)
+        self.treeDicom.setSelectionMode(QAbstractItemView.MultiSelection)
         
         header = self.treeDicom.header()
         # header.setMinimumSectionSize(120)
@@ -601,7 +676,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         header = self.treeDicomFilter.header()
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
         
-        self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
+        # self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
+        self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
+        self.treeDicom.entered.connect(self.OnEntered_treeDicom)
+        self.treeDicom.installEventFilter(self)
+        self.treeDicom.setItemDelegate(TreeViewDelegate())
         
         # self.importDicom(self.dicomData)
         self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
@@ -670,7 +749,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ############################################################################################
         ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
         "VTK stage"
-        self.vtkImageLow = self.reader.GetData()
+        self.vtkImageLow, spacing, listSeries = self.reader.GetData(index = 0)
+        self.imageL = self.reader.arrImage
+        
         if self.vtkImageLow is None:
             QMessageBox.critical(None, 'ERROR', 'image error')
             return False
@@ -682,6 +763,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not dicomTag:
             QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
+        
+        self.currentTag['spacing'] = spacing
+        self.currentTag['series'] = listSeries
         # elif self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
         #     self.dicomHigh.LoadImage(self.vtkImageHigh)
         #     self.SetDicomData(self.dicomHigh, 'HIGH')
@@ -704,8 +788,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #         print('dicom tag name error')
         #         return False
             
+        if not self.SetRegistration_L():
+            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            return False
         
-        
+            
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
         self.ShowDicom_L()
@@ -725,7 +812,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def ImportDicom_H(self):
         "VTK stage"
-        self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
+        # self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
+        self.vtkImageHigh, spacing, listSeries = self.reader.GetData(index = 1)
+        self.imageH = self.reader.arrImage
+        
         if self.vtkImageHigh is None:
             QMessageBox.critical(None, 'ERROR', 'image error')
             return False
@@ -738,7 +828,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
+        self.currentTag['spacing'] = spacing
+        self.currentTag['series'] = listSeries
         
+        if not self.SetRegistration_H():
+            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            return False
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
         self.ShowDicom_H()
@@ -746,6 +841,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ## 啟用 ui ############################################################################################
         "Enable ui"
         return True
+    
+    
         
     def SetDicomData(self, dicom:DISPLAY, type:str):
         thresholdValue = int(((dicom.dicomGrayscaleRange[1] - dicom.dicomGrayscaleRange[0]) / 6) + dicom.dicomGrayscaleRange[0])
@@ -1275,19 +1372,114 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.currentTag[strKey] = self.viewport_L[key].currentIndex
             self.currentTag[strKey] = self.viewport_L[key].uiCbxOrientation.currentIndex()
             
-    def OnCurrentRowChanged_treeDicom(self, current:QModelIndex, previous:QModelIndex):
-        index = current.sibling(current.row(), 0)
+    def OnEntered_treeDicom(self, index:QModelIndex):
         model:QStandardItemModel = self.treeDicom.model()
-        item:QStandardItem = model.itemFromIndex(index)
-        if item:
-            idPatient = item.data(Qt.UserRole + 1)
-            idStudy   = item.data(Qt.UserRole + 2)
-            idSeries  = item.data(Qt.UserRole + 3)
-            print(f'patient ID = {idPatient}')
-            print(f'Study ID   = {idStudy}')
-            print(f'Series ID  = {idSeries}')
-            self.selectedSeries = [idPatient, idStudy, idSeries]
-            self.reader.SelectDataFromID(idPatient, idStudy, idSeries)
+        # column_count = model.columnCount()
+        
+        index = index.sibling(index.row(), 0)
+        selectedSeries = self.getSeriesFromModelIndex(index)
+        
+        if selectedSeries is not None:
+            strText, dimZ = self.getInfoFromModelIndex(index)
+            
+            index = int(not self.bToggleInhale) # bToggleInhale == True, index = 0, else index = 1
+            image = self.reader.GetSlice(selectedSeries[0], selectedSeries[1], selectedSeries[2], index, int(dimZ / 2))
+            if index == 0:
+                if len(self.selectedSeries[0]) < 4:
+                    self.lblInfoInhale.setText(strText)
+                    if image is not None:
+                        self.axInhale.imshow(image, cmap = plt.cm.gray)
+                        self.canvasInhale.draw()
+            else:
+                if len(self.selectedSeries[1]) < 4:
+                    self.lblInfoExhale.setText(strText)
+                    if image is not None:
+                        self.axExhale.imshow(image, cmap = plt.cm.gray)
+                        self.canvasExhale.draw()
+    
+    def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
+        
+        selectionModel = self.treeDicom.selectionModel()
+        indexes:list = selectionModel.selectedRows()
+        
+        model:QStandardItemModel = self.treeDicom.model()
+        column_count = model.columnCount()
+        
+        index = int(not self.bToggleInhale)
+        if selected.count() > 0:
+            currentIndex = selected.indexes()[0]
+            selectedRow = self.getSeriesFromModelIndex(currentIndex)
+                
+            self.reader.SelectDataFromID(selectedRow[0], selectedRow[1], selectedRow[2], index)
+            # when click once, auto switch to Exhale selection
+            
+            for col in range(column_count):
+                item = model.item(currentIndex.row(), col)
+                item.setData(index + 1, Qt.UserRole + 4)
+                
+            if len(self.selectedSeries[index]) == 4:
+                oldRow = self.selectedSeries[index][3]
+                deselection = QItemSelection()
+                deselection.select(model.index(oldRow, 0), model.index(oldRow, column_count - 1))
+                
+                selectionModel.blockSignals(True)
+                selectionModel.select(deselection, QItemSelectionModel.Deselect)
+                selectionModel.blockSignals(False)
+                
+            patientID = selectedRow[0]
+            studyID   = selectedRow[1]
+            seriesID  = selectedRow[2]
+            strText, dimZ = self.getInfoFromModelIndex(currentIndex)
+            image = self.reader.GetSlice(patientID, studyID, seriesID, index, int(dimZ / 2))
+            self.selectedSeries[index] = selectedRow
+            
+            if index == 0:
+                self.lblInfoInhale.setText(strText)
+                if image is not None:
+                    self.axInhale.imshow(image, cmap = plt.cm.gray)
+                    self.canvasInhale.draw()
+            elif index == 1:
+                self.lblInfoExhale.setText(strText)
+                if image is not None:
+                    self.axExhale.imshow(image, cmap = plt.cm.gray)
+                    self.canvasExhale.draw()
+                    
+            if len(indexes) == 0:
+                if self.bToggleInhale:
+                    self.btnExhale.setChecked(True)
+                else:
+                    self.btnInhale.setChecked(True)
+            
+                
+        elif deselected.count() > 0:
+            if self.bToggleInhale:
+                self.selectedSeries[0] = []
+            else:
+                self.selectedSeries[1] = []
+            
+        if len(indexes) < 2:
+            
+            self.btnImport.setEnabled(False)
+            # todo: 設定btnImport的disabled狀態的styleSheet
+        else:
+            self.btnImport.setEnabled(True)
+            
+        self.treeDicom.viewport().update()
+    
+    def OnCurrentRowChanged_treeDicom(self, current:QModelIndex, previous:QModelIndex):
+        pass
+        # index = current.sibling(current.row(), 0)
+        # model:QStandardItemModel = self.treeDicom.model()
+        # item:QStandardItem = model.itemFromIndex(index)
+        # if item:
+        #     idPatient = item.data(Qt.UserRole + 1)
+        #     idStudy   = item.data(Qt.UserRole + 2)
+        #     idSeries  = item.data(Qt.UserRole + 3)
+        #     print(f'patient ID = {idPatient}')
+        #     print(f'Study ID   = {idStudy}')
+        #     print(f'Series ID  = {idSeries}')
+        #     self.selectedSeries = [idPatient, idStudy, idSeries]
+        #     self.reader.SelectDataFromID(idPatient, idStudy, idSeries)
         # selectionModel:QItemSelectionModel = self.treeDicom.selectionModel()
         # model = self.treeDicom.model()
         # indexes = selectionModel.selectedIndexes()
@@ -1298,6 +1490,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnToggled_buttonGroup(self, button:QAbstractButton, bChecked:bool):
         if bChecked:
             self.ChangeCurrentDicom(button.objectName())
+            
+    def OnToggled_btgDIcom(self, button:QAbstractButton, bChecked:bool):
+        if bChecked:
+            if button == self.btnInhale:
+                self.bToggleInhale = True
+            else:
+                self.bToggleInhale = False
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
@@ -1352,9 +1551,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     QMessageBox.critical(None, 'ERROR', 'please select at least one series')
                     return
                 
-                self.ImportDicom_H()
                 if not self.ImportDicom_L():
                     return
+                self.ImportDicom_H()
                 print('dicom changed')
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
@@ -1480,7 +1679,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             
             self.tRobot = threading.Thread(target = self.robot.Initialize)
-            # self.tRobot = threading.Thread(target = self.robot.sti_init)
             self.tRobot.start()
             
     def SetStageButtonStyle(self, index:int):
@@ -1512,7 +1710,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser.TriggerSetting(self)
             self.Laser_ShowLaserProfile()
         elif currentWidget == self.pgDicomList:
-            pass
+            self.dlgHint = DlgHint()
+            # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
+            self.dlgHint.setWindowFlags(self.dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
+            # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
+            self.dlgHint.show()
+            self.listSubDialog.append(self.dlgHint)
             # if self.bDicomChanged:
             #     self.importDicom('C:\\Leon\\CT')
                 # self.importDicom('C:\\Leon\\dicom_test')
@@ -1755,7 +1959,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def closeEvent(self, event):
         self.Laser_Close()
         try:
-            
+            for dlg in self.listSubDialog:
+                dlg.close()
             ## 移除VTK道具 ############################################################################################
             # self.irenSagittal_L.RemoveAllViewProps() 
             # if hasattr(self.dicomLow, 'rendererSagittal'):
@@ -1782,6 +1987,155 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         except Exception as e:
             print(e)
             print("remove dicomLow VTk error")
+            
+    def registration(self, image, spacing, series):
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
+        """
+        # self.ui_SP = SystemProcessing()
+        # self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # self.ui_SP.show()
+        # QApplication.processEvents()
+        self.ui_SP = SystemProcessing()
+        self.ui_SP.setWindowTitle('Registration')
+        self.ui_SP.label_Processing.setText('Registing...')
+        self.ui_SP.show()
+        QApplication.processEvents()
+        self.regFn.signalProgress.connect(self.ui_SP.UpdateProgress)
+        
+        
+        if self.currentTag.get("regBall") != None or self.currentTag.get("candidateBall") != None:
+            # self.ui_SP.close()
+            reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            ## 重新設定儲存的資料 ############################################################################################
+            if reply == QMessageBox.Yes:
+                # self.dcmTagLow.update({"selectedBall": []})
+                self.currentTag.update({"regBall": []})
+                self.currentTag.update({"flagSelectedBall": False})
+                
+                self.currentTag.update({"candidateBall": []})
+                self.currentTag.update({"selectedBallKey": []})
+                self.currentTag.update({"regMatrix": []})
+                # self.dcmTagLow.update({"sectionTag": []})
+                self.currentTag.update({"selectedPoint": []})
+                self.currentTag.update({"flagSelectedPoint": False})
+                
+                "UI"
+                # self.label_Error_L.setText('Registration difference: mm')
+                # self.Button_ShowRegistration_L.setEnabled(False)
+                # self.comboBox_L.setEnabled(False)
+                # self.Button_SetPoint_L.setEnabled(False)
+                # self.Button_ShowPoint_L.setEnabled(False)
+                
+                "VTK"
+                # try:
+                #     self.dicomLow.RemovePoint()
+                # except:
+                #     pass
+                
+                # self.logUI.info('reset selected ball (Low)')
+                print("reset selected ball (Low)")
+                
+                
+            # else:
+            #     self.ui_SP.close()
+            #     return
+            ############################################################################################
+        "automatic find registration ball center"
+        try:
+            ## 自動找球心 + 辨識定位球位置 ############################################################################################
+            flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            ############################################################################################
+        except Exception as e:
+            # self.ui_SP.close()
+            # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
+            QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            print('get candidate ball error / SetRegistration_L() error')
+            print(e)
+            return False
+        
+        if flag == True:
+            # self.logUI.info('get candidate ball of inhale/Low DICOM in VTK:')
+            i = 0
+            for key, value in answer.items():
+                tmp = str(i) + ": " + str(key) + str(value)
+                # self.logUI.info(tmp)
+                i += 1
+            self.currentTag.update({"candidateBallVTK": answer})
+            ## 顯示定位球註冊結果 ############################################################################################
+            "open another ui window to check registration result"
+            # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
+            # self.ui_SP.close()
+            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            # self.ui_CS.show()
+            ############################################################################################
+            # self.Button_ShowRegistration_L.setEnabled(True)
+        else:
+            # self.ui_SP.close()
+            # self.logUI.warning('get candidate ball error')
+            QMessageBox.critical(self, "error", "get candidate ball error")
+            print('get candidate ball error / SetRegistration_L() error')
+            ## 顯示手動註冊定位球視窗 ############################################################################################
+            "Set up the coordinate system manually"
+            self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
+            self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            self.ui_CS.show()
+            ############################################################################################
+            # self.Button_ShowRegistration_L.setEnabled(True)
+            return False
+        
+        return True
+            
+    def SetRegistration_L(self):
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
+        """
+        return self.registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
+    
+    def SetRegistration_H(self):
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
+        """
+        return self.registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
+    
+    def ShowRegistrationDifference_L(self):
+        """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
+           calculate error/difference of relative distance
+        """
+        "map/pair/match ball center between auto(candidateBall) and manual(selectedBall)"
+        candidateBallVTK = self.currentTag.get("candidateBallVTK")
+        selectedBallKey = list(candidateBallVTK.keys())[-1]
+        # selectedBallKey = self.currentTag.get("selectedBallKey")
+        if selectedBallKey is None or selectedBallKey == []:
+            QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            print("pair error / ShowRegistrationDifference_L() error")
+            # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
+            return False
+        else:
+            selectedBallAll = np.array(candidateBallVTK.get(tuple(selectedBallKey)))
+            selectedBall = selectedBallAll[:,0:3]
+            ## 儲存定位球中心 ############################################################################################
+            self.currentTag.update({"regBall": selectedBall})
+            # self.logUI.info('get registration balls of inhale/Low DICOM:')
+            # for tmp in self.dcmTagLow.get("regBall"):
+            #     self.logUI.info(tmp)
+            ############################################################################################
+            ## 計算定位誤差 ############################################################################################
+            "calculate error/difference of relative distance"
+            error = self.regFn.GetError(self.currentTag.get("regBall"))
+            logStr = 'registration error of inhale/Low DICOM (min, max, mean): ' + str(error)
+            # self.logUI.info(logStr)
+            # self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
+            # QMessageBox.information(None, 'Result', f'RMS：{error[2]:.3f} mm')
+            ############################################################################################
+            ## 計算轉換矩陣 ############################################################################################
+            "calculate transformation matrix"
+            regMatrix = self.regFn.TransformationMatrix(self.currentTag.get("regBall"))
+            # self.logUI.info('get registration matrix of inhale/Low DICOM: ')
+            # for tmp in regMatrix:
+            #     self.logUI.info(tmp)
+            self.currentTag.update({"regMatrix": regMatrix})
+            ############################################################################################
+            # self.Button_SetPoint_L.setEnabled(True)
+            # self.comboBox_L.setEnabled(True)
+        return True
             
     def ResetView(self):
         if self.viewport_L:
@@ -2124,7 +2478,7 @@ class Canvas(FigureCanvasQTAgg):
         # plt.rcParams['axes.unicode_minus'] = False
         
         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
-        
+        fig.set_facecolor('#4D84AD')
         self.axes = fig.add_subplot(111)#
         
         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
@@ -2312,7 +2666,40 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
         if status == QMediaPlayer.EndOfMedia:
             sleep(0.5)
             self.player.play()
+            
+class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
+    
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self.setupUi(self)
         
+        self.player = QMediaPlayer()
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/hintDicom.mp4')))
+        
+        videoWidget = QVideoWidget()
+        videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
+        self.player.setVideoOutput(videoWidget)
+        
+        layout = QVBoxLayout(self.wdgHintVideo)
+        layout.addWidget(videoWidget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.player.play()
+        self.player.mediaStatusChanged.connect(self.statusChanged)
+        # self.player.playbackStateChanged(self.statusChanged)
+        self.btnOK.clicked.connect(self.OnClicked_btnConfirm)
+        
+    def statusChanged(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            sleep(0.5)
+            self.player.play()
+            
+    def closeEvent(self, event: QCloseEvent):
+        self.player.stop()
+        return super().closeEvent(event)
+    
+    def OnClicked_btnConfirm(self):
+        self.close()
         
 class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()
@@ -2392,3 +2779,287 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.pgbLoadDIcom.setValue(progress)
         if progress >= 100:
             self.close()
+            
+class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
+    def __init__(self, dcmTag, dicom, answer):
+        super(CoordinateSystemManual, self).__init__()
+        self.setupUi(self)
+        self.SetWindow2Center()
+        
+        "create VTK"
+        ## 建立 VTK 物件 ############################################################################################
+        self.reader = vtkDICOMImageReader()
+        
+        self.actorAxial = vtkImageActor()
+        
+        self.windowLevelLookup = vtkWindowLevelLookupTable()
+        self.mapColors = vtkImageMapToColors()
+        self.cameraAxial = vtkCamera()
+        
+        self.renderer = vtkRenderer()
+        
+        self.actorBallRed = vtkActor()
+        self.actorBallGreen = vtkActor()
+        self.actorBallBlue = vtkActor()
+        ############################################################################################
+        "hint: self.dicomLow = dicomLow = dicom"
+        "hint: self.dcmTagLow = dcmTagLow = dcmTag"
+        self.dcmTag = dcmTag
+        self.dicom = dicom
+        self.answer = answer
+        
+        self.Display()
+        
+        return
+        
+    def Display(self):
+        ## 顯示 ############################################################################################
+        "folderPath"
+        folderDir = self.dcmTag.get("folderDir")
+        "vtk"
+        self.reader.SetDirectoryName(folderDir)
+        self.reader.Update()
+        
+        self.iren = self.qvtkWidget_registrtion.GetRenderWindow().GetInteractor()
+        
+        self.vtkImage = self.reader.GetOutput()
+        self.vtkImage.SetOrigin(0, 0, 0)
+        self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
+        self.dicomBoundsRange = self.vtkImage.GetBounds()
+        self.imageDimensions = self.vtkImage.GetDimensions()
+        self.pixel2Mm = self.vtkImage.GetSpacing()
+        
+        "ui"
+        self.ScrollBar.setMinimum(1)
+        self.ScrollBar.setMaximum(self.imageDimensions[2]-1)
+        self.ScrollBar.setValue(int((self.imageDimensions[2])/2))
+        
+        "vtk"
+        
+        self.windowLevelLookup.Build()
+        thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
+        self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
+        self.windowLevelLookup.SetLevel(thresholdValue)
+        
+        self.mapColors.SetInputConnection(self.reader.GetOutputPort())
+        self.mapColors.SetLookupTable(self.windowLevelLookup)
+        self.mapColors.Update()
+        
+        self.cameraAxial.SetViewUp(0, 1, 0)
+        self.cameraAxial.SetPosition(0, 0, 1)
+        self.cameraAxial.SetFocalPoint(0, 0, 0)
+        self.cameraAxial.ComputeViewPlaneNormal()
+        self.cameraAxial.ParallelProjectionOn()
+        
+        self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], self.ScrollBar.value(), self.ScrollBar.value())
+        
+        self.renderer.SetBackground(0, 0, 0)
+        self.renderer.SetBackground(.2, .3, .4)
+        self.renderer.AddActor(self.actorAxial)
+        self.renderer.SetActiveCamera(self.cameraAxial)
+        self.renderer.ResetCamera(self.dicomBoundsRange)
+        
+        "show"
+        self.qvtkWidget_registrtion.GetRenderWindow().AddRenderer(self.renderer)
+        self.istyle = CoordinateSystemManualInteractorStyle(self)
+        self.pick_point = self.iren.SetInteractorStyle(self.istyle)
+        
+        self.iren.Initialize()
+        self.iren.Start()
+        ############################################################################################
+        return
+        
+    def SetWindow2Center(self):
+        ## 視窗置中 ############################################################################################
+        "screen size"
+        screen = QDesktopWidget().screenGeometry()
+        "window size"
+        size = self.geometry()
+        x = (screen.width() - size.width()) // 2
+        y = (screen.height() - size.height()) // 2
+        self.move(x, y)
+        ############################################################################################
+        return
+    
+    def ScrollBarChange(self):
+        ## 調整顯示切面 ############################################################################################
+        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
+            ## 調整是否顯示點 ############################################################################################
+        try:
+            ballRed = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallRed)
+            else:
+                self.renderer.RemoveActor(self.actorBallRed)
+            ballGreen = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballGreen[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallGreen)
+            else:
+                self.renderer.RemoveActor(self.actorBallGreen)
+            ballBlue = self.dcmTag.get("candidateBall")[0]
+            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballBlue[2]) < self.dicom.radius:
+                self.renderer.AddActor(self.actorBallBlue)
+            else:
+                self.renderer.RemoveActor(self.actorBallBlue)
+        except:
+            pass
+            ############################################################################################
+        self.iren.Initialize()
+        self.iren.Start()
+        ############################################################################################
+        return
+
+    def okAndClose(self):
+        ## 確認後儲存定位球資料 ############################################################################################
+        if np.array(self.dcmTag.get("candidateBall")).shape[0] >= 3:
+            flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
+            if flage == True:
+                self.dcmTag.update({"candidateBallVTK": answer})
+                self.close()
+                
+                "open another ui window to check registration result"
+                # self.ui_CS = CoordinateSystem(self.dcmTag, self.dicom)
+                # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+                # self.ui_CS.show()
+            else:
+                QMessageBox.critical(self, "error", "get candidate ball error")
+                print('get candidate ball error / SetRegistration_L() error')
+                
+            return
+        else:
+            QMessageBox.information(self, "information", "need to set 3 balls")
+            return
+        ############################################################################################
+    def Cancel(self):
+        ## 關閉視窗 ############################################################################################
+        self.close()
+        ############################################################################################
+
+class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
+    def __init__(self, setPointWindow):
+        self.setPointWindow = setPointWindow
+        
+        self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
+        
+        self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
+        
+        return
+    
+    def right_button_press_event(self, obj, event):
+        """turn off right button"""
+        ## 關閉右鍵功能 ############################################################################################
+        pass
+        ############################################################################################
+        return
+    
+    
+    def left_button_press_event(self, obj, event):
+        """Get the location of the click (in window coordinates)"""
+        ## 左鍵點選點 ############################################################################################
+        points = self.GetInteractor().GetEventPosition()
+        picker = vtkCellPicker()
+        picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
+        pick_point = picker.GetPickPosition()
+        ############################################################################################
+        ## 儲存點 ############################################################################################
+        if picker.GetCellId() != -1:
+            if np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
+                QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+                return
+            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 0:
+                self.setPointWindow.dcmTag.update({"candidateBall":np.array([np.array(pick_point)])})
+                flage = 1
+                print("pick_point - ",flage," : ", pick_point)
+            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 1:
+                tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 1, pick_point, 0)
+                self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
+                flage = 2
+                print("pick_point - ",flage," : ", pick_point)
+            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 2:
+                tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 2, pick_point, 0)
+                self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
+                self.setPointWindow.dcmTag.update({"flagecandidateBall": True})
+                flage = 3
+                print("pick_point - ",flage," : ", pick_point)
+            else:
+                print("GetClickedPosition error / Set candidateBall System error / else")
+                return
+            self.DrawPoint(pick_point, flage)
+        else:
+            print("picker.GetCellId() = -1")
+        ############################################################################################
+        return
+    
+    def DrawPoint(self, pick_point, flage):
+        """draw point"""
+        ## 畫點 ############################################################################################
+        radius = 3.5
+        if flage == 1:
+            "red"
+            self.CreateBallRed(pick_point, radius)
+        elif flage == 2:
+            "green"
+            self.CreateBallGreen(pick_point, radius)
+        elif flage == 3:
+            "blue"
+            self.CreateBallBlue(pick_point, radius)
+        ############################################################################################
+        return
+    
+    def CreateBallGreen(self, pick_point, radius):
+        ## 建立綠球 ############################################################################################
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(pick_point)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.setPointWindow.actorBallGreen.SetMapper(mapper)
+        self.setPointWindow.actorBallGreen.GetProperty().SetColor(0, 1, 0)
+        
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallGreen)
+        self.setPointWindow.iren.Initialize()
+        self.setPointWindow.iren.Start()
+        ############################################################################################
+        return
+    
+    def CreateBallRed(self, pick_point, radius):
+        ## 建立紅球 ############################################################################################
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(pick_point)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.setPointWindow.actorBallRed.SetMapper(mapper)
+        self.setPointWindow.actorBallRed.GetProperty().SetColor(1, 0, 0)
+        
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallRed)
+        self.setPointWindow.iren.Initialize()
+        self.setPointWindow.iren.Start()
+        ############################################################################################
+        return
+    
+    def CreateBallBlue(self, pick_point, radius):
+        ## 建立藍球 ############################################################################################
+        sphereSource = vtkSphereSource()
+        sphereSource.SetCenter(pick_point)
+        sphereSource.SetRadius(radius)
+        sphereSource.SetPhiResolution(100)
+        sphereSource.SetThetaResolution(100)
+        
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(sphereSource.GetOutputPort())
+        self.setPointWindow.actorBallBlue.SetMapper(mapper)
+        self.setPointWindow.actorBallBlue.GetProperty().SetColor(0, 0, 1)
+        
+        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallBlue)
+        self.setPointWindow.iren.Initialize()
+        self.setPointWindow.iren.Start()
+        ############################################################################################
+        return
