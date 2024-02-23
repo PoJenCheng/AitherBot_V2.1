@@ -1016,7 +1016,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>10</number>
+           <number>4</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -1063,8 +1063,8 @@ color: rgb(255, 255, 208);</string>
               </property>
               <property name="minimumSize">
                <size>
-                <width>640</width>
-                <height>490</height>
+                <width>690</width>
+                <height>628</height>
                </size>
               </property>
               <property name="maximumSize">
@@ -1171,8 +1171,8 @@ color: rgb(255, 255, 208);</string>
               </property>
               <property name="minimumSize">
                <size>
-                <width>640</width>
-                <height>490</height>
+                <width>690</width>
+                <height>628</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -1229,6 +1229,9 @@ margin-right:0px;
            </layout>
           </widget>
           <widget class="QWidget" name="pgRobotRegSphere">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(80, 138, 182);</string>
+           </property>
            <layout class="QGridLayout" name="gridLayout_9">
             <item row="0" column="0" colspan="4">
              <widget class="QLabel" name="label_title_3">
@@ -1404,13 +1407,13 @@ color: rgb(255, 255, 208);</string>
               </property>
               <property name="minimumSize">
                <size>
-                <width>800</width>
+                <width>798</width>
                 <height>600</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>800</width>
+                <width>798</width>
                 <height>600</height>
                </size>
               </property>
@@ -1555,7 +1558,7 @@ margin-right:0px;
 color: rgb(255, 255, 208);</string>
               </property>
               <property name="text">
-               <string>Setupt the laser device.</string>
+               <string>Setup the laser device.</string>
               </property>
              </widget>
             </item>
