@@ -1662,25 +1662,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.stkMain.setCurrentWidget(self.pgScene)
+            # self.stkMain.setCurrentWidget(self.pgScene)
             # self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgLaser)
-            self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
+            # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
             # self.loadingRobot = 100
-            # self.Laser = Robot.LineLaser()
-            # self.Laser.signalProgress.connect(self.Laser_OnLoading)
-            # self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            # self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
-            # tLaser= threading.Thread(target = self.Laser.Initialize)
-            # tLaser.start()
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            tLaser= threading.Thread(target = self.Laser.Initialize)
+            tLaser.start()
             
             # self.loadingLaser = 100
-            # self.robot = Robot.MOTORSUBFUNCTION()
-            # self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
             
-            # self.tRobot = threading.Thread(target = self.robot.Initialize)
-            # self.tRobot.start()
+            self.tRobot = threading.Thread(target = self.robot.Initialize)
+            self.tRobot.start()
             
     def SetStageButtonStyle(self, index:int):
         
