@@ -105,6 +105,7 @@ class MOTORCONTROL(QObject):
         # self.bTrackLight_GY = 'GVL.LaserTrack_GY'
         # self.bTrackLight_RE = 'GVL.LaserTrack_RE'
 
+
         try:
             self.plc = pyads.Connection('5.97.65.198.1.1', 851)
             # self.plc = pyads.Connection('5.97.65.198.1.1', pyads.PORT_TC3PLC1)
@@ -112,7 +113,6 @@ class MOTORCONTROL(QObject):
             self.plc.open()
             print(f'plc open status : {self.plc.is_open}')
         except:
-
             input("Motor or auduino connect fail. Please check it and press 'Enter'")
 
     def MotorInitial(self):
@@ -323,6 +323,77 @@ class MOTORCONTROL(QObject):
     #     self.plc.write_by_name(self.bTrackLight_GY,False)
     #     self.plc.write_by_name(self.bTrackLight_RE,False)
 
+
+class RobotSupportArm():
+    def __init__(self):
+        try:
+            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
+            self.plc.open()
+            print(f'plc open status : {self.plc.is_open}')
+        except:
+            input("Motor or auduino connect fail. Please check it and press 'Enter'")
+            
+        self.RobotArmEn1 = 'GVL.RobotArmEn1'
+        self.RobotArmEn2 = 'GVL.RobotArmEn2'
+        self.SupportMove = 'GVL.SupportMove'
+        self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
+        self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
+        self.Tolerance = 100
+        
+        self.plc.write_by_name(self.EnableSupportEn1,False) 
+        self.plc.write_by_name(self.EnableSupportEn2,False)
+    
+    def ReadEncoder(self):
+        En1 = self.plc.read_by_name(self.RobotArmEn1)
+        En2 = self.plc.read_by_name(self.RobotArmEn2)
+        return En1, En2
+    
+    def ReleaseAllEncoder(self):
+        ReleaseStatus = False
+        Release = self.plc.read_by_name(self.SupportMove)
+        while Release == True:
+            ReleaseStatus = True
+            self.plc.write_by_name(self.EnableSupportEn1,True) 
+            self.plc.write_by_name(self.EnableSupportEn2,True)
+            Release = self.plc.read_by_name(self.SupportMove)
+                            
+        self.plc.write_by_name(self.EnableSupportEn1,False) 
+        self.plc.write_by_name(self.EnableSupportEn2,False)
+        if ReleaseStatus == False:
+            self.ReleaseAllEncoder()
+    
+    def SetTargetPos(self):
+        self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
+        return self.TargetEn1, self.TargetEn2
+    
+    def CaliEncoder1(self):
+        caliStatus  = False
+        while caliStatus is False:
+            RealTimePos = self.ReadEncoder()
+            footController = self.plc.read_by_name(self.SupportMove)
+            if footController == True:
+                self.plc.write_by_name(self.EnableSupportEn1,True) #將軸一enable
+                print(abs(RealTimePos[0]-self.TargetEn1))
+                if abs(RealTimePos[0]-self.TargetEn1) <= self.Tolerance:
+                    self.plc.write_by_name(self.EnableSupportEn1,False)
+                    caliStatus = True
+    
+    def CaliEncoder2(self):
+        caliStatus  = False
+        while caliStatus is False:
+            RealTimePos = self.ReadEncoder()
+            footController = self.plc.read_by_name(self.SupportMove)
+            if footController == True:
+                self.plc.write_by_name(self.EnableSupportEn2,True) #將軸二enable
+                print(abs(RealTimePos[1]-self.TargetEn2))
+                if abs(RealTimePos[1]-self.TargetEn2) <= self.Tolerance:
+                    self.plc.write_by_name(self.EnableSupportEn2,False)
+                    caliStatus = True
+                
+    
+    def BackToTargetPos(self):
+        self.CaliEncoder2()
+        self.CaliEncoder1()
 
 class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
     bConnected = False

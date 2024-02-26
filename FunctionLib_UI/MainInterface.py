@@ -1681,6 +1681,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
+            # self.RobotSupportArm = 100
+            self.RobotSupportArm = Robot.RobotSupportArm()
+            
+            
     def SetStageButtonStyle(self, index:int):
         
         if self.IsStage(index, STAGE_ROBOT):
