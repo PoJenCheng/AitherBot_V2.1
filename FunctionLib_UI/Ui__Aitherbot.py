@@ -379,6 +379,10 @@ class Ui_MainWindow(object):
 "    background-color: rgb(55, 96, 125);\n"
 "}\n"
 "\n"
+"#btnRobotRelease, #btnRobotFix, #btnRobotSetTarget, #btnRobotBackTarget{\n"
+"    font: 9pt \"Arial\";\n"
+"}\n"
+"\n"
 "QPushButton{\n"
 "    font: 12pt \"Arial\";\n"
 "    background-color:rgb(109, 247, 190);\n"
@@ -426,6 +430,34 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.btnSceneView)
         spacerItem16 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem16)
+        self.btnRobotRelease = QtWidgets.QPushButton(self.wdgNaviBar)
+        self.btnRobotRelease.setEnabled(True)
+        self.btnRobotRelease.setMinimumSize(QtCore.QSize(146, 50))
+        self.btnRobotRelease.setMaximumSize(QtCore.QSize(146, 16777215))
+        self.btnRobotRelease.setStyleSheet("")
+        self.btnRobotRelease.setObjectName("btnRobotRelease")
+        self.verticalLayout.addWidget(self.btnRobotRelease)
+        self.btnRobotFix = QtWidgets.QPushButton(self.wdgNaviBar)
+        self.btnRobotFix.setEnabled(True)
+        self.btnRobotFix.setMinimumSize(QtCore.QSize(146, 50))
+        self.btnRobotFix.setMaximumSize(QtCore.QSize(146, 16777215))
+        self.btnRobotFix.setStyleSheet("")
+        self.btnRobotFix.setObjectName("btnRobotFix")
+        self.verticalLayout.addWidget(self.btnRobotFix)
+        self.btnRobotSetTarget = QtWidgets.QPushButton(self.wdgNaviBar)
+        self.btnRobotSetTarget.setEnabled(True)
+        self.btnRobotSetTarget.setMinimumSize(QtCore.QSize(146, 50))
+        self.btnRobotSetTarget.setMaximumSize(QtCore.QSize(146, 16777215))
+        self.btnRobotSetTarget.setStyleSheet("")
+        self.btnRobotSetTarget.setObjectName("btnRobotSetTarget")
+        self.verticalLayout.addWidget(self.btnRobotSetTarget)
+        self.btnRobotBackTarget = QtWidgets.QPushButton(self.wdgNaviBar)
+        self.btnRobotBackTarget.setEnabled(True)
+        self.btnRobotBackTarget.setMinimumSize(QtCore.QSize(146, 50))
+        self.btnRobotBackTarget.setMaximumSize(QtCore.QSize(146, 16777215))
+        self.btnRobotBackTarget.setStyleSheet("")
+        self.btnRobotBackTarget.setObjectName("btnRobotBackTarget")
+        self.verticalLayout.addWidget(self.btnRobotBackTarget)
         self.horizontalLayout_16.addWidget(self.wdgNaviBar)
         self.stkScene = QtWidgets.QStackedWidget(self.pgScene)
         self.stkScene.setStyleSheet("#stkScene > QWidget{\n"
@@ -2220,7 +2252,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(4)
+        self.stkScene.setCurrentIndex(5)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -2264,6 +2296,10 @@ class Ui_MainWindow(object):
         self.btnSceneRobot.setText(_translate("MainWindow", "Robot Setting"))
         self.btnSceneLaser.setText(_translate("MainWindow", "Laser Setting"))
         self.btnSceneView.setText(_translate("MainWindow", "Image View"))
+        self.btnRobotRelease.setText(_translate("MainWindow", "Release Robot arm"))
+        self.btnRobotFix.setText(_translate("MainWindow", "Fix Robot arm"))
+        self.btnRobotSetTarget.setText(_translate("MainWindow", "Setting Target"))
+        self.btnRobotBackTarget.setText(_translate("MainWindow", "Back To Target"))
         self.lblDirections.setText(_translate("MainWindow", "Please put the AitherBot on homing platform first."))
         self.btnNext_confirmHomingStep1.setText(_translate("MainWindow", "Confirm"))
         self.label_7.setText(_translate("MainWindow", "Making sure there is clear around the AitherBot"))
