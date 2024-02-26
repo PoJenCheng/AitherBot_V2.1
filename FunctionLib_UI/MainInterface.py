@@ -685,6 +685,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.importDicom(self.dicomData)
         self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
         
+        self.btnRobotRelease.clicked.connect(self.Robot_ReleaseArm)
+        self.btnRobotFix.clicked.connect(self.Robot_FixArm)
+        self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
+        self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -1664,7 +1669,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.stkMain.setCurrentWidget(self.pgScene)
             # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgLaser)
+            # self.stkScene.setCurrentWidget(self.pgLaserAdjust)
+            # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
             # self.loadingRobot = 100
             self.Laser = Robot.LineLaser()
@@ -1672,6 +1678,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
             self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
             tLaser= threading.Thread(target = self.Laser.Initialize)
+            # tLaser= threading.Thread(target = self.sti_RunLaser)
             tLaser.start()
             
             # self.loadingLaser = 100
@@ -1946,6 +1953,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             self.dataTmp.append([])
             self.dataTmp.append(d1)
+        
+        self.recordData.extend(d1)
+        # fftResult = np.fft.fft(d1)
+        # frequency = np.fft.fftfreq()
             
         return self.dataTmp
     
@@ -1953,12 +1964,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.startNum = -110
         self.recordTime = datetime.now().timestamp()
         delta = datetime.now().timestamp() - self.recordTime
+        
+        self.recordData = []
         while delta < 5:
             delta = datetime.now().timestamp() - self.recordTime
             self.laserFigure.update_figure(self.sti_LaserOutput())
             self.startNum += np.sin(delta * np.pi) * 2
             
             sleep(0.1)
+        fft_result = np.fft.fft(self.recordData)
         
     def closeEvent(self, event):
         self.Laser_Close()
@@ -2241,6 +2255,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
     def Robot_Stop(self):
         QMessageBox.information(None, 'Info', 'Robot Stop')
+        
+    def Robot_ReleaseArm(self):
+        print('robot release')
+    
+    def Robot_FixArm(self):
+        print('fix arm')
+        
+    def Robot_SettingTarget(self):
+        print('setting robot target')
+        
+    def Robot_BackToTarget(self):
+        print('Back to target')
         
     def Laser_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
