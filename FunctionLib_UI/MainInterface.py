@@ -1941,7 +1941,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # startNum += step
             y = self.startNum + np.sin(i/700 * np.pi) * 10
             d1.append(y)
-        
+
         avg = np.average(d1)
         if avg < -120 or avg > -80:
             self.dataTmp.append(d1)
@@ -1951,10 +1951,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.dataTmp.append(d1)
         
         self.recordData.extend(d1)
-        # fftResult = np.fft.fft(d1)
-        # frequency = np.fft.fftfreq()
             
-        return self.dataTmp
+        return self.dataTmp, avg
     
     def sti_RunLaser(self):
         self.startNum = -110
@@ -1962,13 +1960,30 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         delta = datetime.now().timestamp() - self.recordTime
         
         self.recordData = []
-        while delta < 5:
+        
+        xAxis = np.arange(1, 11)
+        data1sec = []
+        cycleCount = 0
+        while delta < 10:
             delta = datetime.now().timestamp() - self.recordTime
-            self.laserFigure.update_figure(self.sti_LaserOutput())
+            data, avg = self.sti_LaserOutput()
+            self.laserFigure.update_figure(data)
             self.startNum += np.sin(delta * np.pi) * 2
             
+            data1sec.append(avg)
+            if len(data1sec) > 10:
+                data1sec.pop(0)
+                
+                slope, intercept = np.polyfit(xAxis, data1sec, 1)
+                if hasattr(self, 'lastSlope'):
+                    if self.lastSlope * slope < 0:
+                        cycleCount += 1
+                self.lastSlope = slope
+                print(f'slope = {slope}')
             sleep(0.1)
-        fft_result = np.fft.fft(self.recordData)
+        # fft_result = np.fft.fft(self.recordData)
+        
+        print(f'total cycle = {cycleCount}')
         
     def closeEvent(self, event):
         self.Laser_Close()
@@ -2373,6 +2388,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         receiveData = []
         # self.TriggerSetting()
         print("Cheast Breathing Measure Start")
+        
         while self.bLaserRecording is True:
             receiveDataTemp.append(self.Laser.ModelBuilding())
             self.laserFigure.update_figure(self.Laser.PlotProfile())
@@ -2526,8 +2542,11 @@ class Canvas(FigureCanvasQTAgg):
             self.axes.set_yticklabels([str(abs(tick)) for tick in self.axes.get_yticks()])
         
         
+        # print(f'data type = {len(receiveData[0])}')
         self.line1.set_data(range(len(receiveData[0])), receiveData[0])
         self.line2.set_data(range(len(receiveData[1])), receiveData[1])
+        # self.line1.set_data(range(receiveData[0].shape[0]), receiveData[0])
+        # self.line2.set_data(range(receiveData[1].shape[0]), receiveData[1])
         self.draw()#重新绘制
         
 class WidgetProcess(QWidget):
