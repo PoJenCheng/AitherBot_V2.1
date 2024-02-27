@@ -1688,8 +1688,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
-    def SetStageButtonStyle(self, index:int):
-        
+            # self.RobotSupportArm = 100
+            self.RobotSupportArm = Robot.RobotSupportArm()   
+            
+    def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
             self.btnSceneRobot.setStyleSheet('background-color:rgb(109, 190, 247);')
             self.btnSceneLaser.setStyleSheet('')
