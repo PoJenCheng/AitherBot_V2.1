@@ -49,8 +49,10 @@ baseShift_Z = -26.7 #15.5
 
 
 "Laser setting parameter"
-laserDataRepeatRange = 1
+nValidCycle = 5
+laserDataRepeatRange = 0.05
 filterTolerance = 1
+toleranceLaserData = 5
 yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80

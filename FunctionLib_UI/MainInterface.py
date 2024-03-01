@@ -54,6 +54,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalLoadingReady = pyqtSignal()
     signalSetProgress = pyqtSignal(QProgressBar, int)
     signalSetCheck = pyqtSignal(QWidget, bool)
+    signalShowPlot = pyqtSignal(float) # for Laser test
+    signalShowMessage = pyqtSignal(str, str, bool)
+    signalModelBuilding = pyqtSignal(bool)
+    
     player = QMediaPlayer()
     robot = None
     
@@ -583,6 +587,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkMain.currentChanged.connect(self.MainSceneChanged)
         self.signalLoadingReady.connect(self.onSignal_LoadingReady)
         self.signalSetProgress.connect(self.onSignal_SetProgress)
+        self.signalShowMessage.connect(self.onSignal_ShowMessage)
+        self.signalModelBuilding.connect(self.onSignal_ModelBuilding)
         
         # self.btnBack_scanCT.clicked.connect(self.BackScene)
         # self.btnBack_settingLaser.clicked.connect(self.BackScene)
@@ -689,6 +695,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.clicked.connect(self.Robot_FixArm)
         self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
+        
+        
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1669,10 +1677,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.stkMain.setCurrentWidget(self.pgScene)
             # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgLaserAdjust)
+            self.stkScene.setCurrentWidget(self.pgLaser)
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
-            # self.loadingRobot = 100
+            self.loadingRobot = 100
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -1682,14 +1690,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
             
             # self.loadingLaser = 100
-            self.robot = Robot.MOTORSUBFUNCTION()
-            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            # self.robot = Robot.MOTORSUBFUNCTION()
+            # self.robot.signalProgress.connect(self.Robot_OnLoading)
             
-            self.tRobot = threading.Thread(target = self.robot.Initialize)
-            self.tRobot.start()
+            # self.tRobot = threading.Thread(target = self.robot.Initialize)
+            # self.tRobot.start()
             
             # self.RobotSupportArm = 100
-            self.RobotSupportArm = Robot.RobotSupportArm()   
+            # self.RobotSupportArm = Robot.RobotSupportArm()   
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1917,6 +1925,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         index = self.stkMain.currentIndex()
         self.stkMain.setCurrentIndex(index + 1)
         
+    def onSignal_ModelBuilding(self, bValid):
+        if bValid:
+            self.btnNext_scanCT.setEnabled(True)
+        else:
+            self.btnNext_scanCT.setEnabled(False)
         
     def onSignal_SetProgress(self, progressBar, percent):
         if not isinstance(progressBar, QProgressBar):
@@ -1933,6 +1946,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             widget.update()
         else:
             widget.setStyleSheet('border-image:none;')
+            
+    def onSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
+        if len(msg) > 0:
+            if not bIsError:
+                QMessageBox.information(None, title, msg)
+            else:
+                QMessageBox.critical(None, title, msg)
+            
             
     def sti_LaserOutput(self):
         # if not hasattr(self, 'dataTmp'):
@@ -2320,6 +2341,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            self.stkScene.blockSignals(True)
+            self.stkScene.setCurrentWidget(self.pgLaser)
+            self.stkScene.blockSignals(False)
+            self.bFinishLaser = False
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2333,15 +2358,53 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.layout.addWidget(self.laserProfileFigure)
         self.bLaserShowProfile = True
         self.lytLaserAdjust.addWidget(self.laserFigure)
+        
+        self.signalShowPlot.connect(self.Laser_OnShowPlot)
         t = threading.Thread(target = self.Laser_Adjustment)
         t.start()
         
+    def Laser_OnShowPlot(self, cycle):
+        y = self.Laser.slopeData
+        x = np.arange(len(y))
+        title = f'breathing cycle {cycle} times'
+        plt.title(title)
+        plt.ylabel('breathing speed')
+        plt.plot(x, y)
+        plt.show()
+        
+        # dataTemp = np.array(self.Laser.dataTemp)
+        # xAxis = np.arange(len(dataTemp))
+        # # slope, intercept = np.polyfit(xAxis, dataTemp, 1)
+        # # yFit = xAxis * slope + intercept
+        # diff = np.diff(dataTemp)
+        # # fitDiff = np.array(np.array(dataTemp) - yFit)
+        # mean = np.mean(dataTemp)
+        # std_ev = np.std(dataTemp)
+        # stdDiff = dataTemp - mean
+        # threshold = std_ev * 3
+        # with np.printoptions(formatter={'all':lambda x:f'{x:.3f}'}):
+        #     if not hasattr(self, 'count'):
+                
+        #         print(f'diff = \n{diff}')
+        #         print(f'std value = {std_ev}, diff=\n{stdDiff}')
+        #         # print(f'fitDiff = \n{fitDiff}')
+        #         self.count = 1
+            
+        # plt.plot(xAxis, dataTemp)
+        # plt.show()
+        
     def Laser_Adjustment(self):
         while self.bLaserShowProfile:
-            self.laserFigure.update_figure(self.Laser.PlotProfile())
+            plotData = self.Laser.PlotProfile()
+            if plotData is not None:
+                self.laserFigure.update_figure(plotData)
+            
             # FPS 30
             sleep(0.033)
         print("Laser Adjust Done!")
+        # self.signalShowPlot.emit()
+        
+        
         
     def Laser_StopLaserProfile(self):
         # if self.Button_StopLaserDisplay.isChecked():
@@ -2386,23 +2449,40 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.Laser is None:
             return
         
-        receiveDataTemp = []
+        receiveDataTemp = {}
         receiveData = []
         # self.TriggerSetting()
         print("Cheast Breathing Measure Start")
-        
+        startTime = preTime = time.time()
+        time.strftime
         while self.bLaserRecording is True:
-            receiveDataTemp.append(self.Laser.ModelBuilding())
-            self.laserFigure.update_figure(self.Laser.PlotProfile())
-            self.recordBreathingBase = True
-        print("Breathing recording stopped.")
+            plotData = self.Laser.PlotProfile()
+            curTime = time.time()
+            deltaTime = int((curTime - startTime) * 1000)
+            if plotData is not None:
+                self.laserFigure.update_figure(plotData)
+                receiveDataTemp[deltaTime] = self.Laser.ModelBuilding()
+                cycle, bValid = self.Laser.DataCheckCycle(receiveDataTemp)
+                self.signalModelBuilding.emit(bValid)
+                self.recordBreathingBase = True
+        print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
+        receiveData = receiveDataTemp.copy()
+        delItems = [receiveData.pop(key, None) for key, item in receiveDataTemp.items() if not item]
+        # receiveData = [subarray for subarray in receiveDataTemp.values() if subarray]
+        # receiveData = [subarray for subarray in receiveDataTemp if subarray]
         
-        receiveDataTemp = [subarray for subarray in receiveDataTemp if subarray]
         # rearrange receiveData
-        for item in receiveDataTemp:
-            receiveData.append(item[0]) 
+        # for item in receiveDataTemp:
+        #     receiveData.append(item[0]) 
         self.Laser.DataBaseChecking(receiveData) # make sure no data lost
-        self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria) 
+        if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
+            cycle, bValid = self.Laser.DataCheckCycle()
+            self.signalShowPlot.emit(cycle)
+            if not bValid:
+                self.ToSceneLaser()
+            else:
+                self.signalShowMessage.emit('Model building Succeed', 'Success', False)
+        
         
     def Laser_OnTracking(self):
         if self.Laser is None:

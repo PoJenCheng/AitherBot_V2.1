@@ -1253,7 +1253,8 @@ class LineLaser(MOTORCONTROL, QObject):
             dataTemp = []
             for i in range(laserStartPoint,laserEndPoint):
                 dataTemp.append(self.z[i])
-            self.receiveData.append(dataTemp)                
+            # self.receiveData.append(dataTemp)   
+            self.receiveData = dataTemp             
             # print(receiveData)
             #延遲0.1s
             sleep(0.01)
@@ -1263,13 +1264,18 @@ class LineLaser(MOTORCONTROL, QObject):
                 
     def DataBaseChecking(self,receiveData):  # make sure whether data lost
         try:
-            for item in receiveData:
+            # for item in receiveData:
+            #     for j in range(1,(laserEndPoint-laserStartPoint)):
+            #         currentTemp = abs(item[j]-item[j-1])
+            #         if currentTemp > 10:
+            #             error = 10/0
+            for item in receiveData.values():
                 for j in range(1,(laserEndPoint-laserStartPoint)):
                     currentTemp = abs(item[j]-item[j-1])
                     if currentTemp > 10:
                         error = 10/0
             print("Model Base Checking done!")
-            self.signalModelPassed.emit(True)
+            # self.signalModelPassed.emit(True)
             # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
         except:
             # self.RobotSystem.DisplayError()
@@ -1313,7 +1319,8 @@ class LineLaser(MOTORCONTROL, QObject):
             dataTemp = []
             for i in range(laserStartPoint,laserEndPoint):
                 dataTemp.append(self.z[i])
-            self.receiveData.append(dataTemp)
+            # self.receiveData.append(dataTemp)
+            self.receiveData = dataTemp
             
             # Rearrange data
             # self.DataRearrange(self.receiveData)
@@ -1385,7 +1392,8 @@ class LineLaser(MOTORCONTROL, QObject):
                     for i in range(laserEndPoint-laserStartPoint):
                         dis = upperLaserRawData[i] - lowerLaserRawData[i] #a-b
                         if dis != 0:
-                            diff = upperLaserRawData[i] - self.receiveData[0][i] #a-c
+                            # diff = upperLaserRawData[i] - self.receiveData[0][i] #a-c
+                            diff = upperLaserRawData[i] - self.receiveData[i] #a-c
                             if abs(diff) <=2:
                                 diffPercentage = diff/dis #(a-c)/(a-b)
                                 pointPercentage.append(upperPointPercentage - diffPointPercentage*diffPercentage)
@@ -1428,40 +1436,133 @@ class LineLaser(MOTORCONTROL, QObject):
         if self.ret < 1:
             raise ConnectionAbortedError("Error while delete: " + str(self.ret))
         
-    def DataRearrange(self,receiveData, yellowLightCriteria, greenLightCriteria): #如果有重複的數值，則刪除
-        self.laserDataBase = []
-        self.laserDataBase.append(receiveData[0])
-        k = 0
-        index = 0
-        for line in range(len(receiveData)):
-            k += 1
-            tolerance = 0
-            if k < len(receiveData):
-                for point in range(len(receiveData[line])):
-                    skip = False
-                    if skip is False:
-                        if receiveData[k][point] != 0:
-                            tolerance += abs(receiveData[k][point] - receiveData[index][point])
-                        else:
-                            skip = True                
-                if tolerance > laserDataRepeatRange:
-                    self.laserDataBase.append(receiveData[k])
-                    index = k
+    def DataRearrange(self,receiveData:dict, yellowLightCriteria, greenLightCriteria): #如果有重複的數值，則刪除
+        self.laserDataBase = {} 
+        key, item = next(iter(receiveData.items()))
+        self.laserDataBase[key] = item
+        # self.laserDataBase.append(receiveData[0])
+        # k = 0
+        index = key
         
-        self.DataFilter(yellowLightCriteria)
+        for k, (key, item) in enumerate(receiveData.items()):
+            # k += 1
+            if k == 0:
+                continue
+            # lastItem = list(receiveData.values())[k - 1]
+            lastItem = list(self.laserDataBase.values())[-1]
+            listTolerance = np.abs(np.array(item) - np.array(lastItem))
+            meanTolerance = np.mean(listTolerance)
+            
+            if meanTolerance > laserDataRepeatRange:
+                self.laserDataBase[key] = item
+            
+            
+        # for line in range(len(receiveData)):
+        #     k += 1
+        #     tolerance = 0
+        #     if k < len(receiveData):
+        #         for point in range(len(receiveData[line])):
+        #             skip = False
+        #             if skip is False:
+        #                 if receiveData[k][point] != 0:
+        #                     tolerance += abs(receiveData[k][point] - receiveData[index][point])
+        #                 else:
+        #                     skip = True                
+        #         if tolerance > laserDataRepeatRange:
+        #             self.laserDataBase.append(receiveData[k])
+        #             index = k
+        
+        if len(self.laserDataBase) > 5:
+            self.DataFilter(yellowLightCriteria)
+            return True
+        
+        self.signalModelPassed.emit(False)
+        return False
+        
+    def DataCheckCycle(self, laserData:dict = None):
+        arrMean = []
+        if laserData is None:
+            laserData = self.laserDataBase
+            
+        for data in laserData.values():
+            # arrMean.append(np.mean(data))
+            arrMean.append(np.mean(data))
+            
+        countCycle = 0
+        # xAxis = np.arange(20)
+        # meanDiff = np.diff(arrMean) 
+        subData = []
+        slopePre = 0
+        listSlope = []
+        timeDelta = 0
+        
+        listKey = []
+        for i, (key, item) in enumerate(laserData.items()):
+            if i == 0:
+                timeDelta = key
+            else:
+                timeDelta = np.diff(listKey).sum()
+                
+                if timeDelta < 1000 or len(subData) < 2:
+                    subData.append(arrMean[i])
+                    listKey.append(key)
+                    
+                else:
+                    print(f'key list = {listKey}')
+                    xAxis = np.arange(len(subData))
+                    slope, intercept = np.polyfit(xAxis, subData, 1)
+                    if slopePre * slope < 0:
+                        countCycle += 1
+                    slopePre = slope
+                    listSlope.append(slope)
+                    
+                    listKey.pop(0)
+                    listKey.append(key)
+                    subData.pop(0)
+                    subData.append(arrMean[i])
+                    # subData = []
+            
+        # for i in range(len(arrMean) - 20):
+        #     subData = arrMean[i:i+20]
+        #     slope, intercept = np.polyfit(xAxis, subData, 1)
+        #     if slopePre * slope < 0:
+        #         countCycle += 1
+        #     slopePre = slope
+        #     listSlope.append(slope)
+            
+        self.slopeData = listSlope
+        # print(f'cycle data = \n{arrMean}')
+        # print(f'slope data = \n{listSlope}')
+        cycle = (countCycle / 2)
+        bValid = False
+        if cycle >= nValidCycle:
+            # self.signalModelPassed.emit(True) 
+            bValid = True
+        return cycle, bValid
+        
                     
     def DataFilter(self,yellowLightCriteria): #將高頻的數值刪除
         self.laserDataBase_filter = {}
-        for lineNum in range(len(self.laserDataBase)):
+        # for lineNum in range(len(self.laserDataBase)):
+        #     ignorePointTemp = []
+        #     ignorePointTemp = lowPass(self.laserDataBase[lineNum])
+        #     self.laserDataBase_filter[lineNum]=ignorePointTemp
+        for i, (key, item) in enumerate(self.laserDataBase.items()):
             ignorePointTemp = []
-            ignorePointTemp = lowPass(self.laserDataBase[lineNum])
-            self.laserDataBase_filter[lineNum]=ignorePointTemp
-        self.CalculateHeightAvg(yellowLightCriteria)
+            ignorePointTemp = lowPass(item)
+            self.laserDataBase_filter[key]=ignorePointTemp
+            
+        if len(self.laserDataBase_filter) > 5:
+            self.CalculateHeightAvg(yellowLightCriteria)
             
     def CalculateHeightAvg(self,yellowLightCriteria):  #得到相對應的percentage
         heightAvg = {}
-        for lineNum in range(len(self.laserDataBase_filter)):
-            X = np.array(self.laserDataBase_filter[lineNum])
+        # for lineNum in range(len(self.laserDataBase_filter)):
+        #     X = np.array(self.laserDataBase_filter[lineNum])
+        #     heightAvg[self.CalHeightAvg(X)] = X
+        #     # heightAvg.append(getChestProfile.calHeightAvg(X))
+        for item in self.laserDataBase_filter.values():
+            X = np.array(item)
             heightAvg[self.CalHeightAvg(X)] = X
             # heightAvg.append(getChestProfile.calHeightAvg(X))
 
@@ -1479,7 +1580,8 @@ class LineLaser(MOTORCONTROL, QObject):
         
     def CalculateRealTimeHeightAvg(self):
         self.realTimeHeightAvgValue = []
-        valueTemp = np.array(self.CalHeightAvg(self.receiveData[0]))
+        # valueTemp = np.array(self.CalHeightAvg(self.receiveData[0]))
+        valueTemp = np.array(self.CalHeightAvg(self.receiveData))
         self.realTimeHeightAvgValue.append(valueTemp)
             
     def PlotProfile(self): 
@@ -1505,7 +1607,14 @@ class LineLaser(MOTORCONTROL, QObject):
         dataTemp = []
         for i in range(len(self.z)):
             dataTemp.append(self.z[i]*-1)
-        receiveData.append(dataTemp)
+        
+        self.dataTemp = dataTemp
+        
+        diff = np.abs(np.diff(dataTemp))
+        
+        # when diff > tolerance, skip this data
+        if np.any(diff > toleranceLaserData):
+            return None
         
         output = []
         avg = np.average(dataTemp)
