@@ -1440,57 +1440,30 @@ class LineLaser(MOTORCONTROL, QObject):
         self.laserDataBase = {} 
         key, item = next(iter(receiveData.items()))
         self.laserDataBase[key] = item
-        # self.laserDataBase.append(receiveData[0])
-        # k = 0
-        index = key
         
         for k, (key, item) in enumerate(receiveData.items()):
-            # k += 1
             if k == 0:
                 continue
-            # lastItem = list(receiveData.values())[k - 1]
             lastItem = list(self.laserDataBase.values())[-1]
             listTolerance = np.abs(np.array(item) - np.array(lastItem))
             meanTolerance = np.mean(listTolerance)
             
             if meanTolerance > laserDataRepeatRange:
                 self.laserDataBase[key] = item
-            
-            
-        # for line in range(len(receiveData)):
-        #     k += 1
-        #     tolerance = 0
-        #     if k < len(receiveData):
-        #         for point in range(len(receiveData[line])):
-        #             skip = False
-        #             if skip is False:
-        #                 if receiveData[k][point] != 0:
-        #                     tolerance += abs(receiveData[k][point] - receiveData[index][point])
-        #                 else:
-        #                     skip = True                
-        #         if tolerance > laserDataRepeatRange:
-        #             self.laserDataBase.append(receiveData[k])
-        #             index = k
         
         if len(self.laserDataBase) > 5:
             self.DataFilter(yellowLightCriteria)
             return True
         
-        self.signalModelPassed.emit(False)
         return False
         
     def DataCheckCycle(self, laserData:dict = None):
-        arrMean = []
+        # arrMean = []
         if laserData is None:
             laserData = self.laserDataBase
-            
-        for data in laserData.values():
-            # arrMean.append(np.mean(data))
-            arrMean.append(np.mean(data))
+
             
         countCycle = 0
-        # xAxis = np.arange(20)
-        # meanDiff = np.diff(arrMean) 
         subData = []
         slopePre = 0
         listSlope = []
@@ -1498,17 +1471,18 @@ class LineLaser(MOTORCONTROL, QObject):
         
         listKey = []
         for i, (key, item) in enumerate(laserData.items()):
+            mean = np.mean(item)
             if i == 0:
                 timeDelta = key
             else:
                 timeDelta = np.diff(listKey).sum()
                 
                 if timeDelta < 1000 or len(subData) < 2:
-                    subData.append(arrMean[i])
+                    # subData.append(arrMean[i])
+                    subData.append(mean)
                     listKey.append(key)
                     
                 else:
-                    print(f'key list = {listKey}')
                     xAxis = np.arange(len(subData))
                     slope, intercept = np.polyfit(xAxis, subData, 1)
                     if slopePre * slope < 0:
@@ -1519,24 +1493,14 @@ class LineLaser(MOTORCONTROL, QObject):
                     listKey.pop(0)
                     listKey.append(key)
                     subData.pop(0)
-                    subData.append(arrMean[i])
-                    # subData = []
-            
-        # for i in range(len(arrMean) - 20):
-        #     subData = arrMean[i:i+20]
-        #     slope, intercept = np.polyfit(xAxis, subData, 1)
-        #     if slopePre * slope < 0:
-        #         countCycle += 1
-        #     slopePre = slope
-        #     listSlope.append(slope)
+                    # subData.append(arrMean[i])
+                    subData.append(mean)
             
         self.slopeData = listSlope
-        # print(f'cycle data = \n{arrMean}')
-        # print(f'slope data = \n{listSlope}')
         cycle = (countCycle / 2)
+        print(f'cycle = {cycle}')
         bValid = False
         if cycle >= nValidCycle:
-            # self.signalModelPassed.emit(True) 
             bValid = True
         return cycle, bValid
         

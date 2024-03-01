@@ -56,7 +56,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalSetCheck = pyqtSignal(QWidget, bool)
     signalShowPlot = pyqtSignal(float) # for Laser test
     signalShowMessage = pyqtSignal(str, str, bool)
-    signalModelBuilding = pyqtSignal(bool)
+    signalModelBuildingPass = pyqtSignal(bool)
+    signalModelBuildingUI = pyqtSignal(bool)
     
     player = QMediaPlayer()
     robot = None
@@ -588,7 +589,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalLoadingReady.connect(self.onSignal_LoadingReady)
         self.signalSetProgress.connect(self.onSignal_SetProgress)
         self.signalShowMessage.connect(self.onSignal_ShowMessage)
-        self.signalModelBuilding.connect(self.onSignal_ModelBuilding)
+        self.signalModelBuildingUI.connect(self.onSignal_ModelBuilding)
+        self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
         
         # self.btnBack_scanCT.clicked.connect(self.BackScene)
         # self.btnBack_settingLaser.clicked.connect(self.BackScene)
@@ -1574,6 +1576,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnNext_startBuildModel:
                 self.Laser_StartRecordBreathingBase()
                 print('start model building')
+            elif button == self.btnNext_scanCT:
+                self.Laser_StopRecordBreathingBase()
             elif button == self.btnNext_endBuildModel:
                 self.Laser_StopRecordBreathingBase()
                 print('end model building')
@@ -2341,10 +2345,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
-            self.stkScene.blockSignals(True)
-            self.stkScene.setCurrentWidget(self.pgLaser)
-            self.stkScene.blockSignals(False)
-            self.bFinishLaser = False
+            self.ToSceneLaser()
+           
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2450,24 +2452,29 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return
         
         receiveDataTemp = {}
-        receiveData = []
+        receiveData = {}
         # self.TriggerSetting()
         print("Cheast Breathing Measure Start")
         startTime = preTime = time.time()
         time.strftime
+        
         while self.bLaserRecording is True:
             plotData = self.Laser.PlotProfile()
             curTime = time.time()
             deltaTime = int((curTime - startTime) * 1000)
             if plotData is not None:
                 self.laserFigure.update_figure(plotData)
-                receiveDataTemp[deltaTime] = self.Laser.ModelBuilding()
-                cycle, bValid = self.Laser.DataCheckCycle(receiveDataTemp)
-                self.signalModelBuilding.emit(bValid)
-                self.recordBreathingBase = True
+                rawData = self.Laser.ModelBuilding()
+                if len(rawData) > 0:
+                    receiveData[deltaTime] = rawData
+                    if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
+                        cycle, bValid = self.Laser.DataCheckCycle()
+                        self.signalModelBuildingUI.emit(bValid)
+                        
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
-        receiveData = receiveDataTemp.copy()
-        delItems = [receiveData.pop(key, None) for key, item in receiveDataTemp.items() if not item]
+        # receiveData = receiveDataTemp.copy()
+        # delItems = [receiveData.pop(key, None) for key, item in receiveDataTemp.items() if not item]
+        # print(f'del Items = {delItems}')
         # receiveData = [subarray for subarray in receiveDataTemp.values() if subarray]
         # receiveData = [subarray for subarray in receiveDataTemp if subarray]
         
@@ -2479,9 +2486,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             cycle, bValid = self.Laser.DataCheckCycle()
             self.signalShowPlot.emit(cycle)
             if not bValid:
-                self.ToSceneLaser()
+                self.signalModelBuildingPass.emit(False)
             else:
-                self.signalShowMessage.emit('Model building Succeed', 'Success', False)
+                self.recordBreathingBase = True
+                self.signalModelBuildingPass.emit(True)
+                # self.signalShowMessage.emit('Model building Succeed', 'Success', False)
         
         
     def Laser_OnTracking(self):
