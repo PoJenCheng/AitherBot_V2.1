@@ -1576,7 +1576,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # elif button == self.btnNext_startBuildModel:
             #     self.Laser_StartRecordBreathingBase()
             #     print('start model building')
-            elif button == self.btnNext_scanCT:
+            elif button == self.btnNext_startBuildModel:
                 self.Laser_StopRecordBreathingBase()
             elif button == self.btnNext_endBuildModel:
                 self.Laser_StopRecordBreathingBase()

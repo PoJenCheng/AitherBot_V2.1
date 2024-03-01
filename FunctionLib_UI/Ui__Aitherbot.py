@@ -980,13 +980,13 @@ class Ui_MainWindow(object):
         self.label_title_5.setObjectName("label_title_5")
         self.gridLayout_11.addWidget(self.label_title_5, 0, 0, 1, 4)
         self.stkScene.addWidget(self.pgModelBuilding)
-        self.pgStartCT = QtWidgets.QWidget()
-        self.pgStartCT.setObjectName("pgStartCT")
-        self.gridLayout_18 = QtWidgets.QGridLayout(self.pgStartCT)
+        self.pgStartInhaleCT = QtWidgets.QWidget()
+        self.pgStartInhaleCT.setObjectName("pgStartInhaleCT")
+        self.gridLayout_18 = QtWidgets.QGridLayout(self.pgStartInhaleCT)
         self.gridLayout_18.setObjectName("gridLayout_18")
         spacerItem26 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_18.addItem(spacerItem26, 1, 0, 1, 1)
-        self.label_title_10 = QtWidgets.QLabel(self.pgStartCT)
+        self.label_title_10 = QtWidgets.QLabel(self.pgStartInhaleCT)
         self.label_title_10.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_10.setMaximumSize(QtCore.QSize(16777215, 100))
         self.label_title_10.setStyleSheet("    color:#eeeeee;\n"
@@ -996,11 +996,13 @@ class Ui_MainWindow(object):
         self.label_title_10.setAlignment(QtCore.Qt.AlignCenter)
         self.label_title_10.setObjectName("label_title_10")
         self.gridLayout_18.addWidget(self.label_title_10, 0, 0, 1, 3)
-        self.wdgLaserPlot2 = QtWidgets.QWidget(self.pgStartCT)
-        self.wdgLaserPlot2.setMinimumSize(QtCore.QSize(500, 0))
-        self.wdgLaserPlot2.setObjectName("wdgLaserPlot2")
-        self.gridLayout_18.addWidget(self.wdgLaserPlot2, 1, 1, 2, 1)
-        self.tbsCTScan = QtWidgets.QTextBrowser(self.pgStartCT)
+        self.wdgInhaleImg = QtWidgets.QWidget(self.pgStartInhaleCT)
+        self.wdgInhaleImg.setMinimumSize(QtCore.QSize(488, 520))
+        self.wdgInhaleImg.setMaximumSize(QtCore.QSize(488, 520))
+        self.wdgInhaleImg.setStyleSheet("border-image:url(image/Inhale.png);")
+        self.wdgInhaleImg.setObjectName("wdgInhaleImg")
+        self.gridLayout_18.addWidget(self.wdgInhaleImg, 1, 1, 2, 1)
+        self.tbsCTScan = QtWidgets.QTextBrowser(self.pgStartInhaleCT)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1017,7 +1019,7 @@ class Ui_MainWindow(object):
 "selection-background-color: none;")
         self.tbsCTScan.setObjectName("tbsCTScan")
         self.gridLayout_18.addWidget(self.tbsCTScan, 1, 2, 1, 1)
-        self.wdgIntraCT_2 = QtWidgets.QWidget(self.pgStartCT)
+        self.wdgIntraCT_2 = QtWidgets.QWidget(self.pgStartInhaleCT)
         self.wdgIntraCT_2.setMinimumSize(QtCore.QSize(600, 450))
         self.wdgIntraCT_2.setMaximumSize(QtCore.QSize(600, 450))
         self.wdgIntraCT_2.setStyleSheet("border-image:url(image/IntraCT.jpg);")
@@ -1025,7 +1027,7 @@ class Ui_MainWindow(object):
         self.gridLayout_18.addWidget(self.wdgIntraCT_2, 2, 2, 1, 1)
         self.horizontalLayout_9 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_9.setObjectName("horizontalLayout_9")
-        self.btnNext_scanCT = QtWidgets.QPushButton(self.pgStartCT)
+        self.btnNext_scanCT = QtWidgets.QPushButton(self.pgStartInhaleCT)
         self.btnNext_scanCT.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -1062,13 +1064,100 @@ class Ui_MainWindow(object):
         self.btnNext_scanCT.setObjectName("btnNext_scanCT")
         self.horizontalLayout_9.addWidget(self.btnNext_scanCT)
         self.gridLayout_18.addLayout(self.horizontalLayout_9, 3, 0, 1, 3)
-        self.stkScene.addWidget(self.pgStartCT)
+        self.stkScene.addWidget(self.pgStartInhaleCT)
+        self.pgStartExhaleCT = QtWidgets.QWidget()
+        self.pgStartExhaleCT.setObjectName("pgStartExhaleCT")
+        self.gridLayout_34 = QtWidgets.QGridLayout(self.pgStartExhaleCT)
+        self.gridLayout_34.setObjectName("gridLayout_34")
+        self.wdgIntraCT_3 = QtWidgets.QWidget(self.pgStartExhaleCT)
+        self.wdgIntraCT_3.setMinimumSize(QtCore.QSize(600, 450))
+        self.wdgIntraCT_3.setMaximumSize(QtCore.QSize(600, 450))
+        self.wdgIntraCT_3.setStyleSheet("border-image:url(image/IntraCT.jpg);")
+        self.wdgIntraCT_3.setObjectName("wdgIntraCT_3")
+        self.gridLayout_34.addWidget(self.wdgIntraCT_3, 2, 2, 1, 1)
+        self.wdgExhaleImg = QtWidgets.QWidget(self.pgStartExhaleCT)
+        self.wdgExhaleImg.setMinimumSize(QtCore.QSize(488, 520))
+        self.wdgExhaleImg.setMaximumSize(QtCore.QSize(488, 520))
+        self.wdgExhaleImg.setStyleSheet("border-image:url(image/Exhale.png);")
+        self.wdgExhaleImg.setObjectName("wdgExhaleImg")
+        self.gridLayout_34.addWidget(self.wdgExhaleImg, 1, 1, 2, 1)
+        self.tbsCTScan_2 = QtWidgets.QTextBrowser(self.pgStartExhaleCT)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tbsCTScan_2.sizePolicy().hasHeightForWidth())
+        self.tbsCTScan_2.setSizePolicy(sizePolicy)
+        self.tbsCTScan_2.setMinimumSize(QtCore.QSize(800, 0))
+        self.tbsCTScan_2.setMouseTracking(False)
+        self.tbsCTScan_2.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.tbsCTScan_2.setStyleSheet("font: 24pt \"Arial\";\n"
+"background-color:rgb(77,132,173);\n"
+"color:rgb(255, 255, 208);\n"
+"border:0px;\n"
+"selection-color: none;\n"
+"selection-background-color: none;")
+        self.tbsCTScan_2.setObjectName("tbsCTScan_2")
+        self.gridLayout_34.addWidget(self.tbsCTScan_2, 1, 2, 1, 1)
+        spacerItem27 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_34.addItem(spacerItem27, 1, 0, 1, 1)
+        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_34.addItem(spacerItem28, 1, 3, 1, 1)
+        self.label_title_14 = QtWidgets.QLabel(self.pgStartExhaleCT)
+        self.label_title_14.setMinimumSize(QtCore.QSize(0, 100))
+        self.label_title_14.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.label_title_14.setStyleSheet("    color:#eeeeee;\n"
+"    font: 64pt \"Cascadia Code SemiBold\";\n"
+"    padding:0px;\n"
+"    margin:0px;")
+        self.label_title_14.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_title_14.setObjectName("label_title_14")
+        self.gridLayout_34.addWidget(self.label_title_14, 0, 0, 1, 4)
+        self.horizontalLayout_25 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_25.setObjectName("horizontalLayout_25")
+        self.btnNext_scanCT_2 = QtWidgets.QPushButton(self.pgStartExhaleCT)
+        self.btnNext_scanCT_2.setEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnNext_scanCT_2.sizePolicy().hasHeightForWidth())
+        self.btnNext_scanCT_2.setSizePolicy(sizePolicy)
+        self.btnNext_scanCT_2.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnNext_scanCT_2.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    margin-top:5px;\n"
+"    margin-bottom:0px;\n"
+"    margin-left:3px;\n"
+"    margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnNext_scanCT_2.setObjectName("btnNext_scanCT_2")
+        self.horizontalLayout_25.addWidget(self.btnNext_scanCT_2)
+        self.gridLayout_34.addLayout(self.horizontalLayout_25, 3, 0, 1, 4)
+        self.stkScene.addWidget(self.pgStartExhaleCT)
         self.pgModelFinish = QtWidgets.QWidget()
         self.pgModelFinish.setObjectName("pgModelFinish")
         self.gridLayout_17 = QtWidgets.QGridLayout(self.pgModelFinish)
         self.gridLayout_17.setObjectName("gridLayout_17")
-        spacerItem27 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_17.addItem(spacerItem27, 1, 0, 1, 1)
+        spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_17.addItem(spacerItem29, 1, 0, 1, 1)
         self.widget_5 = QtWidgets.QWidget(self.pgModelFinish)
         self.widget_5.setMinimumSize(QtCore.QSize(1186, 403))
         self.widget_5.setMaximumSize(QtCore.QSize(1186, 403))
@@ -1086,8 +1175,8 @@ class Ui_MainWindow(object):
         self.wdgCheck.setStyleSheet("background-image:url(image/check-mark.png)")
         self.wdgCheck.setObjectName("wdgCheck")
         self.gridLayout_17.addWidget(self.widget_5, 1, 1, 1, 1)
-        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_17.addItem(spacerItem28, 1, 2, 1, 1)
+        spacerItem30 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_17.addItem(spacerItem30, 1, 2, 1, 1)
         self.label_title_9 = QtWidgets.QLabel(self.pgModelFinish)
         self.label_title_9.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_9.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -1100,8 +1189,8 @@ class Ui_MainWindow(object):
         self.gridLayout_17.addWidget(self.label_title_9, 0, 0, 1, 3)
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_8.addItem(spacerItem29)
+        spacerItem31 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem31)
         self.btnNext_endBuildModel = QtWidgets.QPushButton(self.pgModelFinish)
         self.btnNext_endBuildModel.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
@@ -1138,8 +1227,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnNext_endBuildModel.setObjectName("btnNext_endBuildModel")
         self.horizontalLayout_8.addWidget(self.btnNext_endBuildModel)
-        spacerItem30 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_8.addItem(spacerItem30)
+        spacerItem32 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem32)
         self.gridLayout_17.addLayout(self.horizontalLayout_8, 2, 0, 1, 3)
         self.stkScene.addWidget(self.pgModelFinish)
         self.pgImportDicom = QtWidgets.QWidget()
@@ -1158,8 +1247,8 @@ class Ui_MainWindow(object):
         self.gridLayout_20.addWidget(self.label_title_12, 0, 0, 1, 1)
         self.horizontalLayout_11 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
-        spacerItem31 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_11.addItem(spacerItem31)
+        spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_11.addItem(spacerItem33)
         self.btnFromUSB = QtWidgets.QPushButton(self.pgImportDicom)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -1220,8 +1309,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnFromCD.setObjectName("btnFromCD")
         self.horizontalLayout_11.addWidget(self.btnFromCD)
-        spacerItem32 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_11.addItem(spacerItem32)
+        spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_11.addItem(spacerItem34)
         self.gridLayout_20.addLayout(self.horizontalLayout_11, 1, 0, 1, 1)
         self.stkScene.addWidget(self.pgImportDicom)
         self.pgDicomList = QtWidgets.QWidget()
@@ -1397,8 +1486,8 @@ class Ui_MainWindow(object):
         self.gridLayout_12.addWidget(self.label_title_6, 0, 0, 1, 3)
         self.horizontalLayout_12 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_12.setObjectName("horizontalLayout_12")
-        spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem33)
+        spacerItem35 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_12.addItem(spacerItem35)
         self.btnCancel = QtWidgets.QPushButton(self.pgDicomList)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -1465,8 +1554,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnImport.setObjectName("btnImport")
         self.horizontalLayout_12.addWidget(self.btnImport)
-        spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem34)
+        spacerItem36 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_12.addItem(spacerItem36)
         self.gridLayout_12.addLayout(self.horizontalLayout_12, 3, 0, 1, 3)
         self.stkScene.addWidget(self.pgDicomList)
         self.pgRegistration = QtWidgets.QWidget()
@@ -1765,7 +1854,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 166, 255))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 144, 239))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -1803,11 +1892,11 @@ class Ui_MainWindow(object):
         self.sldWindowWidth.setOrientation(QtCore.Qt.Horizontal)
         self.sldWindowWidth.setObjectName("sldWindowWidth")
         self.verticalLayout_2.addWidget(self.sldWindowWidth)
-        spacerItem35 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem35)
+        spacerItem37 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem37)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 189))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 206, 181))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -1859,12 +1948,12 @@ class Ui_MainWindow(object):
         self.lblDistanceToTarget.setObjectName("lblDistanceToTarget")
         self.horizontalLayout_24.addWidget(self.lblDistanceToTarget)
         self.verticalLayout_3.addLayout(self.horizontalLayout_24)
-        spacerItem36 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_3.addItem(spacerItem36)
+        spacerItem38 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem38)
         self.toolBox.addItem(self.pgTrajectory, "")
         self.verticalLayout_4.addWidget(self.toolBox)
-        spacerItem37 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem37)
+        spacerItem39 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_4.addItem(spacerItem39)
         self.tabWidget.addTab(self.tabPlanning, "")
         self.tabGuidance = QtWidgets.QWidget()
         self.tabGuidance.setObjectName("tabGuidance")
@@ -1951,8 +2040,8 @@ class Ui_MainWindow(object):
         self.pushButton_8.setMinimumSize(QtCore.QSize(0, 50))
         self.pushButton_8.setObjectName("pushButton_8")
         self.gridLayout_32.addWidget(self.pushButton_8, 2, 1, 1, 1)
-        spacerItem38 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_32.addItem(spacerItem38, 3, 0, 1, 1)
+        spacerItem40 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_32.addItem(spacerItem40, 3, 0, 1, 1)
         self.tabWidget.addTab(self.tabGuidance, "")
         self.gridLayout_5.addWidget(self.tabWidget, 0, 1, 1, 1)
         self.stkScene.addWidget(self.pgImageView)
@@ -2133,8 +2222,8 @@ class Ui_MainWindow(object):
         self.label_23 = QtWidgets.QLabel(self.pgSterileStep3)
         self.label_23.setObjectName("label_23")
         self.gridLayout_30.addWidget(self.label_23, 1, 1, 1, 1)
-        spacerItem39 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem39, 0, 2, 1, 1)
+        spacerItem41 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem41, 0, 2, 1, 1)
         self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_22.setSpacing(0)
         self.horizontalLayout_22.setObjectName("horizontalLayout_22")
@@ -2153,8 +2242,8 @@ class Ui_MainWindow(object):
         self.lblJoint2.setObjectName("lblJoint2")
         self.horizontalLayout_22.addWidget(self.lblJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_22, 2, 1, 1, 1)
-        spacerItem40 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem40, 0, 0, 1, 1)
+        spacerItem42 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem42, 0, 0, 1, 1)
         self.horizontalLayout_21 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_21.setContentsMargins(0, 0, -1, 0)
         self.horizontalLayout_21.setSpacing(0)
@@ -2225,8 +2314,8 @@ class Ui_MainWindow(object):
         self.stkJoint2.addWidget(self.pgJoint2Pass)
         self.horizontalLayout_21.addWidget(self.stkJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_21, 3, 1, 1, 1)
-        spacerItem41 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_30.addItem(spacerItem41, 4, 1, 1, 1)
+        spacerItem43 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_30.addItem(spacerItem43, 4, 1, 1, 1)
         self.stkScene.addWidget(self.pgSterileStep3)
         self.pgInstallAdaptor = QtWidgets.QWidget()
         self.pgInstallAdaptor.setObjectName("pgInstallAdaptor")
@@ -2243,10 +2332,10 @@ class Ui_MainWindow(object):
         self.wdgMediaSetAdaptor.setMinimumSize(QtCore.QSize(800, 600))
         self.wdgMediaSetAdaptor.setObjectName("wdgMediaSetAdaptor")
         self.gridLayout_7.addWidget(self.wdgMediaSetAdaptor, 1, 1, 1, 1)
-        spacerItem42 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem42, 1, 0, 1, 1)
-        spacerItem43 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem43, 1, 3, 1, 1)
+        spacerItem44 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem44, 1, 0, 1, 1)
+        spacerItem45 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem45, 1, 3, 1, 1)
         self.label_title_11 = QtWidgets.QLabel(self.pgInstallAdaptor)
         self.label_title_11.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_11.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -2305,7 +2394,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(6)
+        self.stkScene.setCurrentIndex(8)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -2329,6 +2418,7 @@ class Ui_MainWindow(object):
         self.btnConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm_2.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnRegistrationOK.clicked.connect(MainWindow.NextScene) # type: ignore
+        self.btnNext_scanCT_2.clicked.connect(MainWindow.NextScene) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -2373,7 +2463,7 @@ class Ui_MainWindow(object):
         self.btnStartBuildModel.setText(_translate("MainWindow", "Start"))
         self.btnNext_startBuildModel.setText(_translate("MainWindow", "Confirm"))
         self.label_title_5.setText(_translate("MainWindow", "Breath Model Building"))
-        self.label_title_10.setText(_translate("MainWindow", "Intra-op CT Scan"))
+        self.label_title_10.setText(_translate("MainWindow", "Inhale CT Scan"))
         self.tbsCTScan.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -2382,6 +2472,15 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\';\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The process of CT must have full and halt sets.</p></body></html>"))
         self.btnNext_scanCT.setText(_translate("MainWindow", "Confirm"))
+        self.tbsCTScan_2.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Arial\'; font-size:24pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Please <span style=\" color:#ff0000;\">STOP</span> record breathing database button <span style=\" color:#ff0000;\">after whole of CT processing are done</span>. </p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\';\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The process of CT must have full and halt sets.</p></body></html>"))
+        self.label_title_14.setText(_translate("MainWindow", "Exhale CT Scan"))
+        self.btnNext_scanCT_2.setText(_translate("MainWindow", "Confirm"))
         self.label_title_9.setText(_translate("MainWindow", "Model Building Finished"))
         self.btnNext_endBuildModel.setText(_translate("MainWindow", "Confirm"))
         self.label_title_12.setText(_translate("MainWindow", "Select Dicom Source"))
