@@ -580,8 +580,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             }
             """)
         
-        
-        
         self.wdgPlanning.clicked.connect(self.onClick_Planning)
         self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
         self.stkScene.currentChanged.connect(self.SceneChanged)
@@ -608,7 +606,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.laserFigure = Canvas(self, dpi = 200)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
-        self.lytLaserModel = QVBoxLayout(self.wdgLaserPlot2)
+        # self.lytLaserModel = QVBoxLayout(self.wdgLaserPlot2)
+        self.lytLaserModel = QVBoxLayout(self.wdgIntraCT)
         
         
         self.btnSceneLaser.setEnabled(False)
@@ -698,6 +697,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
         
+        self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         
         
     def Focus(self, pos):
@@ -1573,9 +1573,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
                 print('stopped Adjust laser')
-            elif button == self.btnNext_startBuildModel:
-                self.Laser_StartRecordBreathingBase()
-                print('start model building')
+            # elif button == self.btnNext_startBuildModel:
+            #     self.Laser_StartRecordBreathingBase()
+            #     print('start model building')
             elif button == self.btnNext_scanCT:
                 self.Laser_StopRecordBreathingBase()
             elif button == self.btnNext_endBuildModel:
@@ -1931,9 +1931,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def onSignal_ModelBuilding(self, bValid):
         if bValid:
-            self.btnNext_scanCT.setEnabled(True)
+            self.btnNext_startBuildModel.setEnabled(True)
         else:
-            self.btnNext_scanCT.setEnabled(False)
+            self.btnNext_startBuildModel.setEnabled(False)
         
     def onSignal_SetProgress(self, progressBar, percent):
         if not isinstance(progressBar, QProgressBar):

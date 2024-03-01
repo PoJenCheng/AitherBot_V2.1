@@ -895,7 +895,43 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         spacerItem24 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem24)
+        self.btnStartBuildModel = QtWidgets.QPushButton(self.pgModelBuilding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnStartBuildModel.sizePolicy().hasHeightForWidth())
+        self.btnStartBuildModel.setSizePolicy(sizePolicy)
+        self.btnStartBuildModel.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnStartBuildModel.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnStartBuildModel.setObjectName("btnStartBuildModel")
+        self.horizontalLayout_7.addWidget(self.btnStartBuildModel)
         self.btnNext_startBuildModel = QtWidgets.QPushButton(self.pgModelBuilding)
+        self.btnNext_startBuildModel.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -922,6 +958,11 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_startBuildModel.setObjectName("btnNext_startBuildModel")
         self.horizontalLayout_7.addWidget(self.btnNext_startBuildModel)
@@ -2264,7 +2305,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(8)
+        self.stkScene.setCurrentIndex(6)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -2329,6 +2370,7 @@ class Ui_MainWindow(object):
         self.label_title_8.setText(_translate("MainWindow", "Setting Laser"))
         self.btnNext_startAdjustLaser.setText(_translate("MainWindow", "Confirm"))
         self.label_12.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Do not</span><span style=\" font-size:24pt;\"> move the laser until whole of the surgical processing is done.</span></p></body></html>"))
+        self.btnStartBuildModel.setText(_translate("MainWindow", "Start"))
         self.btnNext_startBuildModel.setText(_translate("MainWindow", "Confirm"))
         self.label_title_5.setText(_translate("MainWindow", "Breath Model Building"))
         self.label_title_10.setText(_translate("MainWindow", "Intra-op CT Scan"))
