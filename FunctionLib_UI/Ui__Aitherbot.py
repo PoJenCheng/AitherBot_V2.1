@@ -985,6 +985,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_9 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_9.setObjectName("horizontalLayout_9")
         self.btnNext_scanCT = QtWidgets.QPushButton(self.pgStartCT)
+        self.btnNext_scanCT.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1007,10 +1008,15 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
+"    margin-top:5px;\n"
+"    margin-bottom:0px;\n"
+"    margin-left:3px;\n"
+"    margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_scanCT.setObjectName("btnNext_scanCT")
         self.horizontalLayout_9.addWidget(self.btnNext_scanCT)
@@ -1056,6 +1062,7 @@ class Ui_MainWindow(object):
         spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_8.addItem(spacerItem29)
         self.btnNext_endBuildModel = QtWidgets.QPushButton(self.pgModelFinish)
+        self.btnNext_endBuildModel.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1082,6 +1089,11 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_endBuildModel.setObjectName("btnNext_endBuildModel")
         self.horizontalLayout_8.addWidget(self.btnNext_endBuildModel)
@@ -2252,7 +2264,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(5)
+        self.stkScene.setCurrentIndex(8)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
