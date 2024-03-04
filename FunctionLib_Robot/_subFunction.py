@@ -17,7 +17,12 @@ def lowPass(filterData):
                 k += 1
                 ignorePoint.append(point)
     
-    for i in range(len(ignorePoint)):
-        filterData[ignorePoint[i]] = 0
+    mask = np.ones_like(filterData, dtype=bool)
+    mask[ignorePoint] = False
+    
+    ndFilterData = np.array(filterData)
+    filterData = ndFilterData[mask]
+    # for i in range(len(ignorePoint)):
+    #     filterData[ignorePoint[i]] = 0
     
     return filterData

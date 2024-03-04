@@ -995,6 +995,13 @@ class LineLaser(MOTORCONTROL, QObject):
     signalBreathingRatio = pyqtSignal(float)
     initProgress = 0
     bStop = False
+    receiveData             = []
+    avgValueList            = []
+    realTimeHeightAvgValue  = []
+    laserDataBase           = {}
+    laserDataBase_filter    = {}
+    percentageBase          = {}
+    ret = None
     
     def __init__(self):
         QObject.__init__(self)
@@ -1409,6 +1416,12 @@ class LineLaser(MOTORCONTROL, QObject):
         except:
             pass
         
+    def CheckInhale(self, arr):
+        self.CalHeightAvg(arr)
+            
+        
+        
+        
     def CloseLaser(self):
         if hasattr(self, 'ret'):
             if self.ret & llt.CONVERT_X == 0 or self.ret & llt.CONVERT_Z == 0 or self.ret & llt.CONVERT_MAXIMUM == 0:
@@ -1460,7 +1473,7 @@ class LineLaser(MOTORCONTROL, QObject):
     def DataCheckCycle(self, laserData:dict = None):
         # arrMean = []
         if laserData is None:
-            laserData = self.laserDataBase
+            laserData = self.laserDataBase_filter
 
             
         countCycle = 0
@@ -1534,11 +1547,16 @@ class LineLaser(MOTORCONTROL, QObject):
         minAvg =  min(list(list(heightAvg.keys())))
         dis = maxAvg - minAvg
         self.percentageBase = {}
-        for item in list(heightAvg.items()):
-            avg = list(item)[0]
-            self.percentage = ((maxAvg-avg)/dis)*100
+        # for item in list(heightAvg.items()):
+        #     avg = list(item)[0]
+        #     percentage = ((maxAvg-avg)/dis)*100
+        #     # if self.percentage >= yellowLightCriteria:
+        #     self.percentageBase[percentage] = item
+        for key, item in heightAvg.items():
+            avg = key
+            percentage = ((maxAvg-avg)/dis)*100
             # if self.percentage >= yellowLightCriteria:
-            self.percentageBase[self.percentage] = item
+            self.percentageBase[percentage] = item
         self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
         # print(self.percentageBase)
         
