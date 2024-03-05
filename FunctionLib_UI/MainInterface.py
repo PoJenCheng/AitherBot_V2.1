@@ -97,6 +97,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     bLaserForceClose = False
     Laser = None
     recordBreathingBase = False 
+    tInhale = None
     
     dicView = {}
     # dicView_H = {}
@@ -698,6 +699,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
         
         self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
+        
+        self.pgbInhale.setValue(0)
         
         
     def Focus(self, pos):
@@ -1689,6 +1692,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
             self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
             tLaser= threading.Thread(target = self.Laser.Initialize)
             # tLaser= threading.Thread(target = self.sti_RunLaser)
             tLaser.start()
@@ -2349,6 +2353,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
             self.ToSceneLaser()
            
+    def Laser_OnSignalInhale(self, bInhale:bool):
+        
+        if bInhale:
+            now = time.time()
+            if self.tInhale is None:
+                self.tInhale = now
+                
+            if now - self.tInhale >= 1:
+                value = self.pgbInhale.value() + 20
+                self.pgbInhale.setValue(value)
+                self.tInhale = now
+                
+                if value == 100:
+                    self.btnNext_scanCT.setEnabled(True)
+                    self.tCheckInhale.stop()
+        else:
+            self.pgbInhale.setValue(0)
+            self.tInhale = None
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
