@@ -1730,6 +1730,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser = Robot.LineLaser()
             # self.Laser.TriggerSetting(self)
             self.Laser_ShowLaserProfile()
+        elif currentWidget == self.pgStartInhaleCT:
+            self.Laser_GetAverage()
         elif currentWidget == self.pgDicomList:
             self.dlgHint = DlgHint()
             # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -2481,7 +2483,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # rearrange receiveData
         # for item in receiveDataTemp:
         #     receiveData.append(item[0]) 
-        self.Laser.DataBaseChecking(receiveData) # make sure no data lost
+        # self.Laser.DataBaseChecking(receiveData) # make sure no data lost
         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
             cycle, bValid = self.Laser.DataCheckCycle()
             self.signalShowPlot.emit(cycle)
@@ -2491,7 +2493,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.recordBreathingBase = True
                 self.signalModelBuildingPass.emit(True)
                 # self.signalShowMessage.emit('Model building Succeed', 'Success', False)
-        
+                # print(f'parcentage = \n{self.Laser.percentageBase}')
         
     def Laser_OnTracking(self):
         if self.Laser is None:
@@ -2536,6 +2538,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 print("Robot Compensation error")
         # else:
         #     self.trackingBreathingCommand = True
+    
+    def Laser_GetAverage(self):
+        self.tCheckInhale = QTimer()
+        self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
+        self.tCheckInhale.start(10)
+        
         
     def Laser_GetAverageRatio(self, ratio):
         self.avgValueDataTmp = []

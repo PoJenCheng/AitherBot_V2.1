@@ -996,6 +996,7 @@ class LineLaser(MOTORCONTROL, QObject):
     initProgress = 0
     bStop = False
     receiveData             = []
+    receiveDataTTemp        = None
     avgValueList            = []
     realTimeHeightAvgValue  = []
     laserDataBase           = {}
@@ -1131,16 +1132,37 @@ class LineLaser(MOTORCONTROL, QObject):
     # 計算高度均值
     def CalHeightAvg(self, arr):
         try:
-            nonZeroArray = np.nonzero(arr) # 取得非0的個數
-            sum = 0
-            for index in range(len(arr)):
-                sum += arr[index]**2
-            squareSum = sum**0.5
-            return squareSum/len(nonZeroArray[0])
+            # nonZeroArray = np.nonzero(arr) # 取得非0的個數
+            # sum = 0
+            # for index in range(len(arr)):
+            #     sum += arr[index]**2
+            # squareSum = sum**0.5
+            # return squareSum/len(nonZeroArray[0])
+            nonZeroArray = arr[np.nonzero(arr)] # 取得非0的個數
+            if len(nonZeroArray) > 0:
+                sum = np.sum(nonZeroArray ** 2)
+                return np.sqrt(sum) / len(nonZeroArray)
+            else:
+                return 0
+            
         except:
-            self.RobotSystem.DisplayError()
+            # self.RobotSystem.DisplayError()
             print("Calculate height avg error")
-
+            
+    def CheckInhale(self):
+        arr = self.GetLaserData()
+        if arr is not None:
+            arrAvg = self.CalHeightAvg(arr)
+            # for avg in self.percentageBase.keys():
+            #     if arrAvg > avg:
+            #         break
+            heightAvg = list(self.percentageBase.keys())
+            maxAvg =  max(heightAvg)
+            minAvg =  min(heightAvg)
+            dis = maxAvg - minAvg
+            percentage = ((maxAvg-arrAvg)/dis) * 100
+                
+            print(f'arrAvg = {arrAvg}, percentage = {percentage}')
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):
         avgBase = list(arr.values())
@@ -1151,6 +1173,44 @@ class LineLaser(MOTORCONTROL, QObject):
         value90 = min(avgBase)
         value95 = min(percentage95)
         return  value90, value95
+    
+    def GetLaserData(self):
+        receiveData = None
+        
+        # profileGetStatus = False
+        # while profileGetStatus is False:
+        self.ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
+                                    ct.byref(self.lost_profiles))
+        if self.ret != len(self.profile_buffer):
+                #當沒有資料顯示NO NEW PROFILE
+            if (self.ret == llt.ERROR_PROFTRANS_NO_NEW_PROFILE):
+                # print("NO NEW PROFILE")
+                sleep((self.idle_time + self.exposure_time)/100000)
+                #輸入q跳出迴圈
+                if keyboard.is_pressed("q"):
+                    self.noProfileReceived = False
+                else :
+                    pass
+            else:
+                    raise ValueError("Error get profile buffer data: " + str(self.ret))
+                    self.noProfileReceived = False
+        else:
+        
+            #將RawData轉成距離值
+            #resolution ln:50
+            #scanner_type ln:62
+            #每點的距離值抓取z每點位置抓x
+            self.ret = llt.convert_profile_2_values(self.hLLT, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1,
+                                    self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
+            #顯示Z軸第一個點
+            # for i in range(laserStartPoint,laserEndPoint):
+            #     receiveData.append(self.z[i])
+            # for i in range(len(self.z)):
+            #     receiveData.append(self.z[i])
+            receiveData = np.array(self.z)
+            #延遲0.1s
+            sleep(0.01)
+        return receiveData
 
     def Get_Key(self, val):
         for key, value in self.percentageBase.items():
@@ -1230,43 +1290,54 @@ class LineLaser(MOTORCONTROL, QObject):
             self.RobotSystem.DisplayError()
             print("Laser connect fail.")
 
-               
+    
     def ModelBuilding(self):
-        # self.TriggerSetting()
-        self.receiveData = []
-        ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
-                                    ct.byref(self.lost_profiles))
-        if ret != len(self.profile_buffer):
-            #當沒有資料顯示NO NEW PROFILE
-            if (ret == llt.ERROR_PROFTRANS_NO_NEW_PROFILE):
-                # print("NO NEW PROFILE")
-                sleep((self.idle_time + self.exposure_time)/100000)
-                #輸入q跳出迴圈
-                if keyboard.is_pressed("q"):
-                    self.noProfileReceived = False
-                else :
-                    pass
-            else:
-                    raise ValueError("Error get profile buffer data: " + str(ret))
-                    self.noProfileReceived = False
-        else:
-            #將RawData轉成距離值
-            #resolution ln:50
-            #scanner_type ln:62
-            #每點的距離值抓取z每點位置抓x
-            self.ret = llt.convert_profile_2_values(self.hLLT, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1,
-                                    self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
-            #顯示Z軸第一個點
-            dataTemp = []
-            for i in range(laserStartPoint,laserEndPoint):
-                dataTemp.append(self.z[i])
-            # self.receiveData.append(dataTemp)   
-            self.receiveData = dataTemp             
-            # print(receiveData)
-            #延遲0.1s
-            sleep(0.01)
+        # # self.TriggerSetting()
+        if self.receiveDataTemp is None:
+            # self.receiveData = []
+            # ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
+            #                             ct.byref(self.lost_profiles))
+            # if ret != len(self.profile_buffer):
+            #     #當沒有資料顯示NO NEW PROFILE
+            #     if (ret == llt.ERROR_PROFTRANS_NO_NEW_PROFILE):
+            #         # print("NO NEW PROFILE")
+            #         sleep((self.idle_time + self.exposure_time)/100000)
+            #         #輸入q跳出迴圈
+            #         if keyboard.is_pressed("q"):
+            #             self.noProfileReceived = False
+            #         else :
+            #             pass
+            #     else:
+            #             raise ValueError("Error get profile buffer data: " + str(ret))
+            #             self.noProfileReceived = False
+            # else:
+            #     #將RawData轉成距離值
+            #     #resolution ln:50
+            #     #scanner_type ln:62
+            #     #每點的距離值抓取z每點位置抓x
+            #     self.ret = llt.convert_profile_2_values(self.hLLT, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1,
+            #                             self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
+            #     #顯示Z軸第一個點
+            #     dataTemp = []
+            
+            
+            # # dataTemp = self.GetLaserData()
+        
+            # # for i in range(laserStartPoint,laserEndPoint):
+            # #     dataTemp.append(self.z[i])
+            self.receiveDataTemp = self.GetLaserData()
+            if self.receiveDataTemp is None:
+                return []
+        
+        
+        self.receiveData = self.receiveDataTemp[laserStartPoint:laserEndPoint + 1]  
+        self.receiveDataTemp = None
+        # self.receiveData = dataTemp[laserStartPoint:laserEndPoint + 1]           
+        # print(receiveData)
+        #延遲0.1s
+        sleep(0.01)
 
-            # self.DataBaseChecking()
+        # self.DataBaseChecking()
         return self.receiveData
                 
     def DataBaseChecking(self,receiveData):  # make sure whether data lost
@@ -1297,38 +1368,44 @@ class LineLaser(MOTORCONTROL, QObject):
     # def RealTimeHeightAvg(self,yellowLightCriteria,greenLightCriteria):
     def RealTimeHeightAvg(self):
         # self.triggerSetting()
-        self.receiveData = []
-        meanPercentage = 0
-        ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
-                                    ct.byref(self.lost_profiles))
-        if ret != len(self.profile_buffer):
-            #當沒有資料顯示NO NEW PROFILE
-            if (ret == llt.ERROR_PROFTRANS_NO_NEW_PROFILE):
-                # print("NO NEW PROFILE")
-                sleep((self.idle_time + self.exposure_time)/100000)
-                #輸入q跳出迴圈
-                if keyboard.is_pressed("q"):
-                    self.noProfileReceived = False
-                else :
-                    pass
-            else:
-                    raise ValueError("Error get profile buffer data: " + str(ret))
-                    self.noProfileReceived = False
-        else:
-            #將RawData轉成距離值
-            #resolution ln:50
-            #scanner_type ln:62
-            #每點的距離值抓取z每點位置抓x
-            self.ret = llt.convert_profile_2_values(self.hLLT, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1,
-                                    self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
-            # print(receiveData)
-            #延遲0.1s
-            dataTemp = []
-            for i in range(laserStartPoint,laserEndPoint):
-                dataTemp.append(self.z[i])
+        # self.receiveData = []
+        # meanPercentage = 0
+        # ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
+        #                             ct.byref(self.lost_profiles))
+        # if ret != len(self.profile_buffer):
+        #     #當沒有資料顯示NO NEW PROFILE
+        #     if (ret == llt.ERROR_PROFTRANS_NO_NEW_PROFILE):
+        #         # print("NO NEW PROFILE")
+        #         sleep((self.idle_time + self.exposure_time)/100000)
+        #         #輸入q跳出迴圈
+        #         if keyboard.is_pressed("q"):
+        #             self.noProfileReceived = False
+        #         else :
+        #             pass
+        #     else:
+        #             raise ValueError("Error get profile buffer data: " + str(ret))
+        #             self.noProfileReceived = False
+        # else:
+        #     #將RawData轉成距離值
+        #     #resolution ln:50
+        #     #scanner_type ln:62
+        #     #每點的距離值抓取z每點位置抓x
+        #     self.ret = llt.convert_profile_2_values(self.hLLT, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1,
+        #                             self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
+        #     # print(receiveData)
+        #     #延遲0.1s
+        #     dataTemp = []
+        #     for i in range(laserStartPoint,laserEndPoint):
+        #         dataTemp.append(self.z[i])
             # self.receiveData.append(dataTemp)
-            self.receiveData = dataTemp
             
+        if self.receiveDataTemp is None:
+            self.receiveDataTemp = self.GetLaserData()
+            if self.receiveDataTemp is None:
+                return 0
+        else:
+            self.receiveData = self.receiveDataTemp[laserStartPoint : laserEndPoint + 1]
+            self.receiveDataTemp = None
             # Rearrange data
             # self.DataRearrange(self.receiveData)
             self.CalculateRealTimeHeightAvg()
@@ -1337,8 +1414,10 @@ class LineLaser(MOTORCONTROL, QObject):
             realTimeAvgValue = self.realTimeHeightAvgValue[0]
             # 燈號控制
             self.avgValueList = []
-            for item in self.percentageBase.items():
-                self.avgValueList.append(list(item)[1][0])
+            # for item in self.percentageBase.items():
+            for item in self.percentageBase.values():
+                # self.avgValueList.append(list(item)[1][0])
+                self.avgValueList.append(item)
             # minValue = min(self.avgValueList)
             # maxValue = max(self.avgValueList)
             self.avgValueList = sorted(self.avgValueList, reverse=True)
@@ -1415,11 +1494,6 @@ class LineLaser(MOTORCONTROL, QObject):
             return meanPercentage    
         except:
             pass
-        
-    def CheckInhale(self, arr):
-        self.CalHeightAvg(arr)
-            
-        
         
         
     def CloseLaser(self):
@@ -1511,7 +1585,6 @@ class LineLaser(MOTORCONTROL, QObject):
             
         self.slopeData = listSlope
         cycle = (countCycle / 2)
-        print(f'cycle = {cycle}')
         bValid = False
         if cycle >= nValidCycle:
             bValid = True
@@ -1568,6 +1641,7 @@ class LineLaser(MOTORCONTROL, QObject):
             
     def PlotProfile(self): 
         receiveData = []
+        output = []
         profileGetStatus = False
         while profileGetStatus is False:
             self.ret = llt.get_actual_profile(self.hLLT, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.PROFILE,
@@ -1577,7 +1651,7 @@ class LineLaser(MOTORCONTROL, QObject):
                 profileGetStatus = False
             else:
                 profileGetStatus = True
-                
+        
         #將RawData轉成距離值
         #resolution ln:50
         #scanner_type ln:62
@@ -1586,12 +1660,12 @@ class LineLaser(MOTORCONTROL, QObject):
                                 self.null_ptr_short, self.intensities, self.null_ptr_short, self.x, self.z, self.null_ptr_int, self.null_ptr_int)
         # print(receiveData)
         #延遲0.1s
-        dataTemp = []
-        for i in range(len(self.z)):
-            dataTemp.append(self.z[i]*-1)
-        
-        self.dataTemp = dataTemp
-        
+        # dataTemp = []
+        # for i in range(len(self.z)):
+        #     dataTemp.append(self.z[i]*-1)
+        # self.receiveDataTemp = np.array(self.GetLaserData())
+        self.receiveDataTemp = np.array(self.z)
+        dataTemp = self.receiveDataTemp * -1
         diff = np.abs(np.diff(dataTemp))
         
         # when diff > tolerance, skip this data
