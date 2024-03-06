@@ -122,37 +122,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicomHigh = DISPLAY()
         
         self.modelHide = QStandardItemModel()
-        self.dicomData = []
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 3), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['高金生', 'F123456789', 'M', 'CT', '512 x 512 x 209', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 15, hours = 3), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['高金生', 'F123456789', 'M', 'MR', '512 x 512 x 128', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 6, hours = 9), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['克蕾兒', 'F229034126', 'F', 'MR', '256 x 256 x 78', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 4, hours = 14), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['克蕾兒', 'F229034126', 'F', 'CT', '512 x 512 x 978', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 41, hours = 4), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['克蕾兒', 'F229034126', 'F', 'MR', '256 x 256 x 74', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 5, hours = 6), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['高金生', 'F123456789', 'M', 'CT', '512 x 512 x 329', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 4), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['浅川 悠', 'A299919191', 'F', 'CT', '512 x 512 x 209', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 4), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['史塔克', 'E125392530', 'M', 'CT', '512 x 512 x 224', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 30), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['史塔克', 'E125392530', 'M', 'MR', '512 x 512 x 132', todayStr])
-        
-        todayStr = datetime.strftime(datetime.now() - timedelta(days = 2), '%Y/%m/%d %H:%M')
-        self.dicomData.append(['里昂', 'F123987940', 'M', 'CT', '512 x 512 x 365', todayStr])
         
         self.regFn = REGISTRATION()
         self.dicView['LT'] = self.wdgLeftTop
@@ -201,6 +170,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkJoint2.setCurrentWidget(self.pgJoint2Fail)
         
         self.stkSignalLight.setCurrentWidget(self.pgRedLight)
+        self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
+        
         self.cbxLanguage.setCurrentIndex(self.language)
         
         # Figure in Inhale
@@ -231,6 +202,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        
+        
         
         self.SetUIEnable_Trajectory(False)
         self.init_ui()
@@ -2356,6 +2329,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnSignalInhale(self, bInhale:bool):
         
         if bInhale:
+            self.stkSignalLightInhale.setCurrentWidget(self.pgGreenLightInhale)
+            
             now = time.time()
             if self.tInhale is None:
                 self.tInhale = now
@@ -2367,8 +2342,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 if value == 100:
                     self.btnNext_scanCT.setEnabled(True)
+                    self.NextScene()
                     # self.tCheckInhale.stop()
         else:
+            self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
             self.tInhale = None
                     
@@ -2494,6 +2471,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                         cycle, bValid = self.Laser.DataCheckCycle()
                         self.signalModelBuildingUI.emit(bValid)
+                        if bValid:
+                            self.bLaserRecording = False
+                            
                         
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
         # receiveData = receiveDataTemp.copy()

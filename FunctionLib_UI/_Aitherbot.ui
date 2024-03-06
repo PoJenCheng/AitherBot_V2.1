@@ -2195,7 +2195,26 @@ QPushButton:disabled{
               </property>
              </spacer>
             </item>
-            <item row="1" column="2" rowspan="2">
+            <item row="1" column="1" rowspan="2">
+             <widget class="QWidget" name="wdgInhaleImg" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>488</width>
+                <height>520</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>488</width>
+                <height>520</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">border-image:url(image/Inhale.png);</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
              <widget class="QTextBrowser" name="tbsCTScan">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -2253,26 +2272,7 @@ p, li { white-space: pre-wrap; }
               </property>
              </spacer>
             </item>
-            <item row="2" column="1" rowspan="2">
-             <widget class="QWidget" name="wdgInhaleImg" native="true">
-              <property name="minimumSize">
-               <size>
-                <width>488</width>
-                <height>520</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>488</width>
-                <height>520</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">border-image:url(image/Inhale.png);</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
+            <item row="2" column="2">
              <widget class="QWidget" name="wdgIntraCT_2" native="true">
               <property name="minimumSize">
                <size>
@@ -2288,13 +2288,6 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="styleSheet">
                <string notr="true">border-image:url(image/IntraCT.jpg);</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1" colspan="2">
-             <widget class="QProgressBar" name="pgbInhale">
-              <property name="value">
-               <number>24</number>
               </property>
              </widget>
             </item>
@@ -2347,6 +2340,124 @@ QPushButton:disabled{
                 </property>
                 <property name="text">
                  <string>Confirm</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="3" column="1" colspan="2">
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+              <item>
+               <widget class="QStackedWidget" name="stkSignalLightInhale">
+                <property name="minimumSize">
+                 <size>
+                  <width>64</width>
+                  <height>64</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>64</width>
+                  <height>64</height>
+                 </size>
+                </property>
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <widget class="QWidget" name="pgRedLightInhale">
+                 <layout class="QGridLayout" name="gridLayout_35">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QWidget" name="wdgRedLightInhale" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">#wdgRedLightInhale{
+	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
+	stop:0 rgba(255, 255, 255, 255),
+	stop:0.4 rgba(255, 0, 0, 255),
+	stop:1 rgba(255, 0, 0, 255));
+	border-radius:24px;
+}</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="pgGreenLightInhale">
+                 <layout class="QGridLayout" name="gridLayout_36">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QWidget" name="wdgGreenLightInhale" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">#wdgGreenLightInhale{
+	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
+	stop:0 rgba(255, 255, 255, 255),
+	stop:0.4 rgba(0, 255, 0, 255),
+	stop:1 rgba(0, 255, 0, 255));
+	border-radius:24px;
+}</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+              <item>
+               <widget class="QProgressBar" name="pgbInhale">
+                <property name="value">
+                 <number>24</number>
                 </property>
                </widget>
               </item>
@@ -3745,7 +3856,7 @@ QTabBar::tab:selected{
 </string>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tabPlanning">
                <attribute name="title">
@@ -3823,8 +3934,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>166</width>
-                     <height>255</height>
+                     <width>300</width>
+                     <height>318</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
