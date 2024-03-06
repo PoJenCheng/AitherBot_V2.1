@@ -1162,7 +1162,6 @@ class LineLaser(MOTORCONTROL, QObject):
             dis = maxAvg - minAvg
             percentage = ((maxAvg-arrAvg)/dis) * 100
             
-            print(f'percentage:{percentage:.1f}%')
             bInhale = False
             if percentage > 90 and percentage <= 100:
                 bInhale = True

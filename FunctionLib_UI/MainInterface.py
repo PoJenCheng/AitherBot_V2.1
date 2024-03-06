@@ -2316,12 +2316,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.signalLoadingReady.emit()
                     self.stkMain.setCurrentWidget(self.pgScene)
                     
+    def Laser_autoNextPage(self, msgbox = None):
+        if isinstance(msgbox, QMessageBox):
+            msgbox.accept()
+        self.NextScene()
+                    
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
             return
         
         if bPass:
-            QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
+            # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
+            
+            msgbox = QMessageBox(text = 'Model Base Checking done!')
+            QTimer.singleShot(2000, lambda: self.Laser_autoNextPage(msgbox))
+            msgbox.setWindowTitle('Model Building Succeed')
+            msgbox.setIcon(1)
+            msgbox.exec_()
+            
+            
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
             self.ToSceneLaser()
@@ -2341,8 +2354,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.tInhale = now
                 
                 if value == 100:
+                    self.tCheckInhale.stop()
                     self.btnNext_scanCT.setEnabled(True)
-                    self.NextScene()
+                    QTimer.singleShot(500, self.NextScene)
+                    
                     # self.tCheckInhale.stop()
         else:
             self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
