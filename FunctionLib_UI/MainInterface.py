@@ -2367,7 +2367,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 if value == 100:
                     self.btnNext_scanCT.setEnabled(True)
-                    self.tCheckInhale.stop()
+                    # self.tCheckInhale.stop()
         else:
             self.pgbInhale.setValue(0)
             self.tInhale = None
@@ -2508,7 +2508,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.Laser.DataBaseChecking(receiveData) # make sure no data lost
         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
             cycle, bValid = self.Laser.DataCheckCycle()
-            self.signalShowPlot.emit(cycle)
+            # self.signalShowPlot.emit(cycle)
             if not bValid:
                 self.signalModelBuildingPass.emit(False)
             else:

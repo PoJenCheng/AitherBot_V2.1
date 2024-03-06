@@ -1154,20 +1154,42 @@ class LineLaser(MOTORCONTROL, QObject):
     def CheckInhale(self):
         arr = self.GetLaserData()
         if arr is not None:
+            arr = arr[laserStartPoint:laserEndPoint]
             arrAvg = self.CalHeightAvg(arr)
-            # for avg in self.percentageBase.keys():
-            #     if arrAvg > avg:
-            #         break
-            heightAvg = list(self.percentageBase.keys())
-            maxAvg =  max(heightAvg)
-            minAvg =  min(heightAvg)
+            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
+            maxAvg =  items[-1][0]
+            minAvg =  items[0][0]
             dis = maxAvg - minAvg
             percentage = ((maxAvg-arrAvg)/dis) * 100
-                
+            
+            print(f'percentage:{percentage:.1f}%')
             bInhale = False
             if percentage > 90 and percentage <= 100:
                 bInhale = True
             self.signalInhaleProgress.emit(bInhale)
+            
+            # self.receiveData = arr[laserStartPoint:laserEndPoint]
+            # self.CalculateRealTimeHeightAvg()
+            # # print(self.realTimeHeightAvgValue)
+            
+            # realTimeAvgValue = self.realTimeHeightAvgValue[0]
+            # # 燈號控制
+            # self.avgValueList = []
+            # # for item in self.percentageBase.items():
+            # for item in self.percentageBase.values():
+            #     # self.avgValueList.append(list(item)[1])
+            #     self.avgValueList.append(list(item)[0])
+                
+            # # minValue = min(self.avgValueList)
+            # # maxValue = max(self.avgValueList)
+            # self.avgValueList = sorted(self.avgValueList, reverse=True)
+            # percentage = self.PercentagePrediction(realTimeAvgValue)
+            # if percentage:
+            #     print(f'percentage:{percentage:.1f}')
+            #     bInhale = False
+            #     if percentage > 90 and percentage <= 100:
+            #         bInhale = True
+            #     self.signalInhaleProgress.emit(bInhale)
                 
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):
@@ -1336,7 +1358,7 @@ class LineLaser(MOTORCONTROL, QObject):
                 return []
         
         
-        self.receiveData = self.receiveDataTemp[laserStartPoint:laserEndPoint + 1]  
+        self.receiveData = self.receiveDataTemp[laserStartPoint:laserEndPoint]  
         self.receiveDataTemp = None
         # self.receiveData = dataTemp[laserStartPoint:laserEndPoint + 1]           
         # print(receiveData)
@@ -1465,13 +1487,21 @@ class LineLaser(MOTORCONTROL, QObject):
             
             # 取得兩條Avg的raw data
             if len(rangeAvgValue) == 2:
-                for item in self.percentageBase.values():
-                    if item[0] == rangeAvgValue[0]:
-                        lowerLaserRawData = item[1]
-                        lowerTempValue = item
-                    elif item[0] == rangeAvgValue[1]:
-                        upperLaserRawData = item[1]                                                 
-                        upperTempValue = item
+                # for item in self.percentageBase.values():
+                #     if item[0] == rangeAvgValue[0]:
+                #         lowerLaserRawData = item[1]
+                #         lowerTempValue = item
+                #     elif item[0] == rangeAvgValue[1]:
+                #         upperLaserRawData = item[1]                                                 
+                #         upperTempValue = item
+                for i, items in enumerate(self.percentageBase.values()):
+                    avg, item = items
+                    if avg == rangeAvgValue[0]:
+                        lowerLaserRawData = item
+                        lowerTempValue = items
+                    elif avg == rangeAvgValue[1]:
+                        upperLaserRawData = item                                                 
+                        upperTempValue = items
                     
                 # 線性內插，找出各點的比例值
                 pointPercentage = []
@@ -1479,7 +1509,10 @@ class LineLaser(MOTORCONTROL, QObject):
             
                 lowerPointPercentage = self.Get_Key(lowerTempValue[0])
                 upperPointPercentage = self.Get_Key(upperTempValue[0])
+                # lowerPointPercentage = rangeAvgValue[0]
+                # upperPointPercentage = rangeAvgValue[1]
                 diffPointPercentage = upperPointPercentage - lowerPointPercentage # x-y
+                # print(f'diff = {diffPointPercentage}')
                 try:
                     for i in range(laserEndPoint-laserStartPoint):
                         dis = upperLaserRawData[i] - lowerLaserRawData[i] #a-b
@@ -1489,7 +1522,10 @@ class LineLaser(MOTORCONTROL, QObject):
                             if abs(diff) <=2:
                                 diffPercentage = diff/dis #(a-c)/(a-b)
                                 pointPercentage.append(upperPointPercentage - diffPointPercentage*diffPercentage)
-                    meanPercentage = np.mean(pointPercentage)
+                    if len(pointPercentage) > 0:
+                        meanPercentage = np.mean(pointPercentage)
+                    else:
+                        return 0
                 except:
                     self.RobotSystem.DisplayError()
                     print("Predict percentage error")
@@ -1631,18 +1667,18 @@ class LineLaser(MOTORCONTROL, QObject):
         #     percentage = ((maxAvg-avg)/dis)*100
         #     # if self.percentage >= yellowLightCriteria:
         #     self.percentageBase[percentage] = item
-        for key, item in heightAvg.items():
-            avg = key
+        for avg, item in heightAvg.items():
+            # avg = key
             percentage = ((maxAvg-avg)/dis)*100
             # if self.percentage >= yellowLightCriteria:
-            self.percentageBase[percentage] = item
+            self.percentageBase[percentage] = (avg, item)
         self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
         # print(self.percentageBase)
         
     def CalculateRealTimeHeightAvg(self):
         self.realTimeHeightAvgValue = []
         # valueTemp = np.array(self.CalHeightAvg(self.receiveData[0]))
-        valueTemp = np.array(self.CalHeightAvg(self.receiveData))
+        valueTemp = self.CalHeightAvg(self.receiveData)
         self.realTimeHeightAvgValue.append(valueTemp)
             
     def PlotProfile(self): 
@@ -1675,8 +1711,8 @@ class LineLaser(MOTORCONTROL, QObject):
         diff = np.abs(np.diff(dataTemp))
         
         # when diff > tolerance, skip this data
-        if np.any(diff > toleranceLaserData):
-            return None
+        # if np.any(diff > toleranceLaserData):
+        #     return None
         
         output = []
         avg = np.average(dataTemp)
