@@ -2457,7 +2457,7 @@ QPushButton:disabled{
               <item>
                <widget class="QProgressBar" name="pgbInhale">
                 <property name="value">
-                 <number>24</number>
+                 <number>0</number>
                 </property>
                </widget>
               </item>
@@ -2467,24 +2467,46 @@ QPushButton:disabled{
           </widget>
           <widget class="QWidget" name="pgStartExhaleCT">
            <layout class="QGridLayout" name="gridLayout_34">
-            <item row="2" column="2">
-             <widget class="QWidget" name="wdgIntraCT_3" native="true">
+            <item row="0" column="0" colspan="4">
+             <widget class="QLabel" name="label_title_14">
               <property name="minimumSize">
                <size>
-                <width>600</width>
-                <height>450</height>
+                <width>0</width>
+                <height>100</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>600</width>
-                <height>450</height>
+                <width>16777215</width>
+                <height>100</height>
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">border-image:url(image/IntraCT.jpg);</string>
+               <string notr="true">	color:#eeeeee;
+	font: 64pt &quot;Cascadia Code SemiBold&quot;;
+	padding:0px;
+	margin:0px;</string>
+              </property>
+              <property name="text">
+               <string>Exhale CT Scan</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
+            </item>
+            <item row="1" column="0">
+             <spacer name="horizontalSpacer_22">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item row="1" column="1" rowspan="2">
              <widget class="QWidget" name="wdgExhaleImg" native="true">
@@ -2515,7 +2537,7 @@ QPushButton:disabled{
               </property>
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>400</width>
                 <height>0</height>
                </size>
               </property>
@@ -2544,19 +2566,6 @@ p, li { white-space: pre-wrap; }
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <spacer name="horizontalSpacer_22">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="1" column="3">
              <spacer name="horizontalSpacer_25">
               <property name="orientation">
@@ -2570,35 +2579,144 @@ p, li { white-space: pre-wrap; }
               </property>
              </spacer>
             </item>
-            <item row="0" column="0" colspan="4">
-             <widget class="QLabel" name="label_title_14">
+            <item row="2" column="2">
+             <widget class="QWidget" name="wdgIntraCT_3" native="true">
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>100</height>
+                <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>16777215</width>
-                <height>100</height>
+                <width>600</width>
+                <height>450</height>
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">	color:#eeeeee;
-	font: 64pt &quot;Cascadia Code SemiBold&quot;;
-	padding:0px;
-	margin:0px;</string>
-              </property>
-              <property name="text">
-               <string>Exhale CT Scan</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <string notr="true">border-image:url(image/IntraCT.jpg);</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="0" colspan="4">
+            <item row="3" column="1" colspan="2">
+             <layout class="QHBoxLayout" name="horizontalLayout_27">
+              <item>
+               <widget class="QStackedWidget" name="stkSignalLightExhale">
+                <property name="minimumSize">
+                 <size>
+                  <width>64</width>
+                  <height>64</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>64</width>
+                  <height>64</height>
+                 </size>
+                </property>
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <widget class="QWidget" name="pgRedLightExhale">
+                 <layout class="QGridLayout" name="gridLayout_37">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QWidget" name="wdgRedLightExhale" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">#wdgRedLightExhale{
+	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
+	stop:0 rgba(255, 255, 255, 255),
+	stop:0.4 rgba(255, 0, 0, 255),
+	stop:1 rgba(255, 0, 0, 255));
+	border-radius:24px;
+}</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="pgGreenLightExhale">
+                 <layout class="QGridLayout" name="gridLayout_38">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QWidget" name="wdgGreenLightExhale" native="true">
+                    <property name="minimumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>48</width>
+                      <height>48</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">#wdgGreenLightExhale{
+	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
+	stop:0 rgba(255, 255, 255, 255),
+	stop:0.4 rgba(0, 255, 0, 255),
+	stop:1 rgba(0, 255, 0, 255));
+	border-radius:24px;
+}</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+              <item>
+               <widget class="QProgressBar" name="pgbExhale">
+                <property name="value">
+                 <number>0</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="4" column="0" colspan="4">
              <layout class="QHBoxLayout" name="horizontalLayout_25">
               <item>
                <widget class="QPushButton" name="btnNext_scanCT_2">

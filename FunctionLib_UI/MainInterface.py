@@ -98,6 +98,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     Laser = None
     recordBreathingBase = False 
     tInhale = None
+    tExhale = None
+    tCheckInhale = None
+    tCheckExhale = None
     
     dicView = {}
     # dicView_H = {}
@@ -1666,6 +1669,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
             self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
             self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             tLaser= threading.Thread(target = self.Laser.Initialize)
             # tLaser= threading.Thread(target = self.sti_RunLaser)
             tLaser.start()
@@ -1708,7 +1712,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser.TriggerSetting(self)
             self.Laser_ShowLaserProfile()
         elif currentWidget == self.pgStartInhaleCT:
-            self.Laser_GetAverage()
+            self.Laser_CheckInhale()
+        elif currentWidget == self.pgStartExhaleCT:
+            self.Laser_CheckExhale()
         elif currentWidget == self.pgDicomList:
             self.dlgHint = DlgHint()
             # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -2348,6 +2354,29 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
             self.tInhale = None
+            
+    def Laser_OnSignalExhale(self, bExhale:bool):
+        
+        if bExhale:
+            self.stkSignalLightExhale.setCurrentWidget(self.pgGreenLightExhale)
+            
+            now = time.time()
+            if self.tExhale is None:
+                self.tExhale = now
+                
+            if now - self.tExhale >= 1:
+                value = self.pgbExhale.value() + 20
+                self.pgbExhale.setValue(value)
+                self.tExhale = now
+                
+                if value == 100:
+                    self.btnNext_scanCT_2.setEnabled(True)
+                    self.NextScene()
+                    # self.tCheckInhale.stop()
+        else:
+            self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
+            self.pgbExhale.setValue(0)
+            self.tExhale = None
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2541,10 +2570,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # else:
         #     self.trackingBreathingCommand = True
     
-    def Laser_GetAverage(self):
+    def Laser_CheckInhale(self):
         self.tCheckInhale = QTimer()
         self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
         self.tCheckInhale.start(10)
+        
+    def Laser_CheckExhale(self):
+        self.tCheckExhale = QTimer()
+        self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
+        self.tCheckExhale.start(10)
         
         
     def Laser_GetAverageRatio(self, ratio):
@@ -2596,7 +2630,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 f.write(f'{data},')
                 
     def Laser_Close(self):
-        
+        if self.tCheckInhale:
+            self.tCheckInhale.stop()
+            
+        if self.tCheckExhale:
+            self.tCheckExhale.stop()
+            
+            
         if self.bLaserTracking or self.bLaserRecording or self.bLaserShowProfile:
             self.bLaserForceClose = True
             

@@ -57,5 +57,7 @@ yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
+INHALE_AREA = 85
+EXHALE_AREA = 15
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point

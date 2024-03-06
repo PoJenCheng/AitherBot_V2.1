@@ -992,6 +992,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
 class LineLaser(MOTORCONTROL, QObject):
     signalProgress = pyqtSignal(str, int)
     signalInhaleProgress = pyqtSignal(bool)
+    signalExhaleProgress = pyqtSignal(bool)
     signalModelPassed = pyqtSignal(bool)
     signalBreathingRatio = pyqtSignal(float)
     initProgress = 0
@@ -1162,9 +1163,8 @@ class LineLaser(MOTORCONTROL, QObject):
             dis = maxAvg - minAvg
             percentage = ((maxAvg-arrAvg)/dis) * 100
             
-            print(f'percentage:{percentage:.1f}%')
             bInhale = False
-            if percentage > 90 and percentage <= 100:
+            if percentage >= INHALE_AREA and percentage <= 100:
                 bInhale = True
             self.signalInhaleProgress.emit(bInhale)
             
@@ -1190,6 +1190,22 @@ class LineLaser(MOTORCONTROL, QObject):
             #     if percentage > 90 and percentage <= 100:
             #         bInhale = True
             #     self.signalInhaleProgress.emit(bInhale)
+            
+    def CheckExhale(self):
+        arr = self.GetLaserData()
+        if arr is not None:
+            arr = arr[laserStartPoint:laserEndPoint]
+            arrAvg = self.CalHeightAvg(arr)
+            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
+            maxAvg =  items[-1][0]
+            minAvg =  items[0][0]
+            dis = maxAvg - minAvg
+            percentage = ((maxAvg-arrAvg)/dis) * 100
+            
+            bExhale = False
+            if percentage <= EXHALE_AREA and percentage >= 0:
+                bExhale = True
+            self.signalExhaleProgress.emit(bExhale)
                 
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):

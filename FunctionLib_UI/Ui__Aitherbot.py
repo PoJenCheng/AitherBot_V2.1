@@ -1113,7 +1113,7 @@ class Ui_MainWindow(object):
         self.stkSignalLightInhale.addWidget(self.pgGreenLightInhale)
         self.horizontalLayout_26.addWidget(self.stkSignalLightInhale)
         self.pgbInhale = QtWidgets.QProgressBar(self.pgStartInhaleCT)
-        self.pgbInhale.setProperty("value", 24)
+        self.pgbInhale.setProperty("value", 0)
         self.pgbInhale.setObjectName("pgbInhale")
         self.horizontalLayout_26.addWidget(self.pgbInhale)
         self.gridLayout_18.addLayout(self.horizontalLayout_26, 3, 1, 1, 2)
@@ -1122,12 +1122,18 @@ class Ui_MainWindow(object):
         self.pgStartExhaleCT.setObjectName("pgStartExhaleCT")
         self.gridLayout_34 = QtWidgets.QGridLayout(self.pgStartExhaleCT)
         self.gridLayout_34.setObjectName("gridLayout_34")
-        self.wdgIntraCT_3 = QtWidgets.QWidget(self.pgStartExhaleCT)
-        self.wdgIntraCT_3.setMinimumSize(QtCore.QSize(600, 450))
-        self.wdgIntraCT_3.setMaximumSize(QtCore.QSize(600, 450))
-        self.wdgIntraCT_3.setStyleSheet("border-image:url(image/IntraCT.jpg);")
-        self.wdgIntraCT_3.setObjectName("wdgIntraCT_3")
-        self.gridLayout_34.addWidget(self.wdgIntraCT_3, 2, 2, 1, 1)
+        self.label_title_14 = QtWidgets.QLabel(self.pgStartExhaleCT)
+        self.label_title_14.setMinimumSize(QtCore.QSize(0, 100))
+        self.label_title_14.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.label_title_14.setStyleSheet("    color:#eeeeee;\n"
+"    font: 64pt \"Cascadia Code SemiBold\";\n"
+"    padding:0px;\n"
+"    margin:0px;")
+        self.label_title_14.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_title_14.setObjectName("label_title_14")
+        self.gridLayout_34.addWidget(self.label_title_14, 0, 0, 1, 4)
+        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_34.addItem(spacerItem28, 1, 0, 1, 1)
         self.wdgExhaleImg = QtWidgets.QWidget(self.pgStartExhaleCT)
         self.wdgExhaleImg.setMinimumSize(QtCore.QSize(488, 520))
         self.wdgExhaleImg.setMaximumSize(QtCore.QSize(488, 520))
@@ -1140,7 +1146,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tbsCTScan_2.sizePolicy().hasHeightForWidth())
         self.tbsCTScan_2.setSizePolicy(sizePolicy)
-        self.tbsCTScan_2.setMinimumSize(QtCore.QSize(0, 0))
+        self.tbsCTScan_2.setMinimumSize(QtCore.QSize(400, 0))
         self.tbsCTScan_2.setMouseTracking(False)
         self.tbsCTScan_2.setFocusPolicy(QtCore.Qt.NoFocus)
         self.tbsCTScan_2.setStyleSheet("font: 24pt \"Arial\";\n"
@@ -1151,20 +1157,64 @@ class Ui_MainWindow(object):
 "selection-background-color: none;")
         self.tbsCTScan_2.setObjectName("tbsCTScan_2")
         self.gridLayout_34.addWidget(self.tbsCTScan_2, 1, 2, 1, 1)
-        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_34.addItem(spacerItem28, 1, 0, 1, 1)
         spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_34.addItem(spacerItem29, 1, 3, 1, 1)
-        self.label_title_14 = QtWidgets.QLabel(self.pgStartExhaleCT)
-        self.label_title_14.setMinimumSize(QtCore.QSize(0, 100))
-        self.label_title_14.setMaximumSize(QtCore.QSize(16777215, 100))
-        self.label_title_14.setStyleSheet("    color:#eeeeee;\n"
-"    font: 64pt \"Cascadia Code SemiBold\";\n"
-"    padding:0px;\n"
-"    margin:0px;")
-        self.label_title_14.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_title_14.setObjectName("label_title_14")
-        self.gridLayout_34.addWidget(self.label_title_14, 0, 0, 1, 4)
+        self.wdgIntraCT_3 = QtWidgets.QWidget(self.pgStartExhaleCT)
+        self.wdgIntraCT_3.setMinimumSize(QtCore.QSize(0, 0))
+        self.wdgIntraCT_3.setMaximumSize(QtCore.QSize(600, 450))
+        self.wdgIntraCT_3.setStyleSheet("border-image:url(image/IntraCT.jpg);")
+        self.wdgIntraCT_3.setObjectName("wdgIntraCT_3")
+        self.gridLayout_34.addWidget(self.wdgIntraCT_3, 2, 2, 1, 1)
+        self.horizontalLayout_27 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_27.setObjectName("horizontalLayout_27")
+        self.stkSignalLightExhale = QtWidgets.QStackedWidget(self.pgStartExhaleCT)
+        self.stkSignalLightExhale.setMinimumSize(QtCore.QSize(64, 64))
+        self.stkSignalLightExhale.setMaximumSize(QtCore.QSize(64, 64))
+        self.stkSignalLightExhale.setObjectName("stkSignalLightExhale")
+        self.pgRedLightExhale = QtWidgets.QWidget()
+        self.pgRedLightExhale.setObjectName("pgRedLightExhale")
+        self.gridLayout_37 = QtWidgets.QGridLayout(self.pgRedLightExhale)
+        self.gridLayout_37.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_37.setSpacing(0)
+        self.gridLayout_37.setObjectName("gridLayout_37")
+        self.wdgRedLightExhale = QtWidgets.QWidget(self.pgRedLightExhale)
+        self.wdgRedLightExhale.setMinimumSize(QtCore.QSize(48, 48))
+        self.wdgRedLightExhale.setMaximumSize(QtCore.QSize(48, 48))
+        self.wdgRedLightExhale.setStyleSheet("#wdgRedLightExhale{\n"
+"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
+"    stop:0 rgba(255, 255, 255, 255),\n"
+"    stop:0.4 rgba(255, 0, 0, 255),\n"
+"    stop:1 rgba(255, 0, 0, 255));\n"
+"    border-radius:24px;\n"
+"}")
+        self.wdgRedLightExhale.setObjectName("wdgRedLightExhale")
+        self.gridLayout_37.addWidget(self.wdgRedLightExhale, 0, 0, 1, 1)
+        self.stkSignalLightExhale.addWidget(self.pgRedLightExhale)
+        self.pgGreenLightExhale = QtWidgets.QWidget()
+        self.pgGreenLightExhale.setObjectName("pgGreenLightExhale")
+        self.gridLayout_38 = QtWidgets.QGridLayout(self.pgGreenLightExhale)
+        self.gridLayout_38.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_38.setSpacing(0)
+        self.gridLayout_38.setObjectName("gridLayout_38")
+        self.wdgGreenLightExhale = QtWidgets.QWidget(self.pgGreenLightExhale)
+        self.wdgGreenLightExhale.setMinimumSize(QtCore.QSize(48, 48))
+        self.wdgGreenLightExhale.setMaximumSize(QtCore.QSize(48, 48))
+        self.wdgGreenLightExhale.setStyleSheet("#wdgGreenLightExhale{\n"
+"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
+"    stop:0 rgba(255, 255, 255, 255),\n"
+"    stop:0.4 rgba(0, 255, 0, 255),\n"
+"    stop:1 rgba(0, 255, 0, 255));\n"
+"    border-radius:24px;\n"
+"}")
+        self.wdgGreenLightExhale.setObjectName("wdgGreenLightExhale")
+        self.gridLayout_38.addWidget(self.wdgGreenLightExhale, 0, 0, 1, 1)
+        self.stkSignalLightExhale.addWidget(self.pgGreenLightExhale)
+        self.horizontalLayout_27.addWidget(self.stkSignalLightExhale)
+        self.pgbExhale = QtWidgets.QProgressBar(self.pgStartExhaleCT)
+        self.pgbExhale.setProperty("value", 0)
+        self.pgbExhale.setObjectName("pgbExhale")
+        self.horizontalLayout_27.addWidget(self.pgbExhale)
+        self.gridLayout_34.addLayout(self.horizontalLayout_27, 3, 1, 1, 2)
         self.horizontalLayout_25 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_25.setObjectName("horizontalLayout_25")
         self.btnNext_scanCT_2 = QtWidgets.QPushButton(self.pgStartExhaleCT)
@@ -1203,7 +1253,7 @@ class Ui_MainWindow(object):
 "}")
         self.btnNext_scanCT_2.setObjectName("btnNext_scanCT_2")
         self.horizontalLayout_25.addWidget(self.btnNext_scanCT_2)
-        self.gridLayout_34.addLayout(self.horizontalLayout_25, 3, 0, 1, 4)
+        self.gridLayout_34.addLayout(self.horizontalLayout_25, 4, 0, 1, 4)
         self.stkScene.addWidget(self.pgStartExhaleCT)
         self.pgModelFinish = QtWidgets.QWidget()
         self.pgModelFinish.setObjectName("pgModelFinish")
@@ -2449,6 +2499,7 @@ class Ui_MainWindow(object):
         self.stkMain.setCurrentIndex(2)
         self.stkScene.setCurrentIndex(7)
         self.stkSignalLightInhale.setCurrentIndex(1)
+        self.stkSignalLightExhale.setCurrentIndex(1)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -2526,6 +2577,7 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\'; font-size:20pt;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:20pt;\">The process of CT must have full and halt sets.</span></p></body></html>"))
         self.btnNext_scanCT.setText(_translate("MainWindow", "Confirm"))
+        self.label_title_14.setText(_translate("MainWindow", "Exhale CT Scan"))
         self.tbsCTScan_2.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -2533,7 +2585,6 @@ class Ui_MainWindow(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt;\">Please </span><span style=\" font-size:18pt; color:#ff0000;\">STOP</span><span style=\" font-size:18pt;\"> record breathing database button </span><span style=\" font-size:18pt; color:#ff0000;\">after whole of CT processing are done</span><span style=\" font-size:18pt;\">. </span></p>\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\'; font-size:18pt;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt;\">The process of CT must have full and halt sets.</span></p></body></html>"))
-        self.label_title_14.setText(_translate("MainWindow", "Exhale CT Scan"))
         self.btnNext_scanCT_2.setText(_translate("MainWindow", "Confirm"))
         self.label_title_9.setText(_translate("MainWindow", "Model Building Finished"))
         self.btnNext_endBuildModel.setText(_translate("MainWindow", "Confirm"))
