@@ -1136,50 +1136,18 @@ class Ui_MainWindow(object):
         self.gridLayout_34.addWidget(self.wdgIntraCT_3, 2, 2, 1, 1)
         self.horizontalLayout_27 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_27.setObjectName("horizontalLayout_27")
-        self.stkSignalLightExhale = QtWidgets.QStackedWidget(self.pgStartExhaleCT)
-        self.stkSignalLightExhale.setMinimumSize(QtCore.QSize(64, 64))
-        self.stkSignalLightExhale.setMaximumSize(QtCore.QSize(64, 64))
-        self.stkSignalLightExhale.setObjectName("stkSignalLightExhale")
-        self.pgRedLightExhale = QtWidgets.QWidget()
-        self.pgRedLightExhale.setObjectName("pgRedLightExhale")
-        self.gridLayout_37 = QtWidgets.QGridLayout(self.pgRedLightExhale)
-        self.gridLayout_37.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout_37.setSpacing(0)
-        self.gridLayout_37.setObjectName("gridLayout_37")
-        self.wdgRedLightExhale = QtWidgets.QWidget(self.pgRedLightExhale)
-        self.wdgRedLightExhale.setMinimumSize(QtCore.QSize(48, 48))
-        self.wdgRedLightExhale.setMaximumSize(QtCore.QSize(48, 48))
-        self.wdgRedLightExhale.setStyleSheet("#wdgRedLightExhale{\n"
-"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
-"    stop:0 rgba(255, 255, 255, 255),\n"
-"    stop:0.4 rgba(255, 0, 0, 255),\n"
-"    stop:1 rgba(255, 0, 0, 255));\n"
-"    border-radius:24px;\n"
-"}")
-        self.wdgRedLightExhale.setObjectName("wdgRedLightExhale")
-        self.gridLayout_37.addWidget(self.wdgRedLightExhale, 0, 0, 1, 1)
-        self.stkSignalLightExhale.addWidget(self.pgRedLightExhale)
-        self.pgGreenLightExhale = QtWidgets.QWidget()
-        self.pgGreenLightExhale.setObjectName("pgGreenLightExhale")
-        self.gridLayout_38 = QtWidgets.QGridLayout(self.pgGreenLightExhale)
-        self.gridLayout_38.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout_38.setSpacing(0)
-        self.gridLayout_38.setObjectName("gridLayout_38")
-        self.wdgGreenLightExhale = QtWidgets.QWidget(self.pgGreenLightExhale)
-        self.wdgGreenLightExhale.setMinimumSize(QtCore.QSize(48, 48))
-        self.wdgGreenLightExhale.setMaximumSize(QtCore.QSize(48, 48))
-        self.wdgGreenLightExhale.setStyleSheet("#wdgGreenLightExhale{\n"
-"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
-"    stop:0 rgba(255, 255, 255, 255),\n"
-"    stop:0.4 rgba(0, 255, 0, 255),\n"
-"    stop:1 rgba(0, 255, 0, 255));\n"
-"    border-radius:24px;\n"
-"}")
-        self.wdgGreenLightExhale.setObjectName("wdgGreenLightExhale")
-        self.gridLayout_38.addWidget(self.wdgGreenLightExhale, 0, 0, 1, 1)
-        self.stkSignalLightExhale.addWidget(self.pgGreenLightExhale)
-        self.horizontalLayout_27.addWidget(self.stkSignalLightExhale)
+        self.wdgIndicatorExhale = QtWidgets.QWidget(self.pgStartExhaleCT)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgIndicatorExhale.sizePolicy().hasHeightForWidth())
+        self.wdgIndicatorExhale.setSizePolicy(sizePolicy)
+        self.wdgIndicatorExhale.setMinimumSize(QtCore.QSize(300, 60))
+        self.wdgIndicatorExhale.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgIndicatorExhale.setObjectName("wdgIndicatorExhale")
+        self.horizontalLayout_27.addWidget(self.wdgIndicatorExhale)
         self.pgbExhale = QtWidgets.QProgressBar(self.pgStartExhaleCT)
+        self.pgbExhale.setMinimumSize(QtCore.QSize(0, 60))
         self.pgbExhale.setProperty("value", 0)
         self.pgbExhale.setObjectName("pgbExhale")
         self.horizontalLayout_27.addWidget(self.pgbExhale)
@@ -2466,8 +2434,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(7)
-        self.stkSignalLightExhale.setCurrentIndex(1)
+        self.stkScene.setCurrentIndex(8)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)

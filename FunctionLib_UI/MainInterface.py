@@ -101,6 +101,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     tExhale = None
     tCheckInhale = None
     tCheckExhale = None
+    indicatorInhale = None
+    indicatorExhale = None
     
     dicView = {}
     # dicView_H = {}
@@ -675,8 +677,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
         
         self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
-        
-        self.pgbInhale.setValue(0)
         
         
     def Focus(self, pos):
@@ -2340,7 +2340,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             msgbox = QMessageBox(text = 'Model Base Checking done!')
             QTimer.singleShot(2000, lambda: self.Laser_autoNextPage(msgbox))
             msgbox.setWindowTitle('Model Building Succeed')
-            msgbox.setIcon(1)
+            msgbox.setIcon(QMessageBox.Information)
             msgbox.exec_()
             
             
@@ -2373,12 +2373,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
             self.tInhale = None
-        self.indicator.setValue(percentage)
+        self.indicatorInhale.setValue(percentage)
         
     def Laser_OnSignalExhale(self, bExhale:bool, percentage:float):
         
         if bExhale:
-            self.stkSignalLightExhale.setCurrentWidget(self.pgGreenLightExhale)
+            # self.stkSignalLightExhale.setCurrentWidget(self.pgGreenLightExhale)
             
             now = time.time()
             if self.tExhale is None:
@@ -2394,11 +2394,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.NextScene()
                     # self.tCheckInhale.stop()
         else:
-            self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
+            # self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
             self.pgbExhale.setValue(0)
             self.tExhale = None
             
-        self.indicator.setValue(percentage)
+        self.indicatorExhale.setValue(percentage)
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2596,9 +2596,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_CheckInhale(self):
         layout = self.wdgIndicatorInhale.layout()
         if layout is None:
-            self.indicator = Indicator() 
+            self.indicatorInhale = Indicator(TYPE_INHALE) 
             layout = QVBoxLayout(self.wdgIndicatorInhale)
-            layout.addWidget(self.indicator)
+            layout.addWidget(self.indicatorInhale)
             layout.setContentsMargins(0, 0, 0, 0)
         
         
@@ -2607,6 +2607,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.tCheckInhale.start(10)
         
     def Laser_CheckExhale(self):
+        layout = self.wdgIndicatorExhale.layout()
+        if layout is None:
+            self.indicatorExhale = Indicator(TYPE_EXHALE) 
+            layout = QVBoxLayout(self.wdgIndicatorExhale)
+            layout.addWidget(self.indicatorExhale)
+            layout.setContentsMargins(0, 0, 0, 0)
+            
         self.tCheckExhale = QTimer()
         self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
         self.tCheckExhale.start(10)
