@@ -2366,12 +2366,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if value == 100:
                     self.tCheckInhale.stop()
                     self.btnNext_scanCT.setEnabled(True)
-                    QTimer.singleShot(500, self.NextScene)
+                    # QTimer.singleShot(500, self.NextScene)
                     
                     # self.tCheckInhale.stop()
         else:
             # self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
+            self.btnNext_scanCT.setEnabled(False)
             self.tInhale = None
         self.indicatorInhale.setValue(percentage)
         
@@ -2391,13 +2392,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 if value == 100:
                     self.btnNext_scanCT_2.setEnabled(True)
-                    self.NextScene()
+                    # self.NextScene()
                     # self.tCheckInhale.stop()
         else:
             # self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
             self.pgbExhale.setValue(0)
+            self.btnNext_scanCT_2.setEnabled(False)
             self.tExhale = None
-            
         self.indicatorExhale.setValue(percentage)
                     
     def Laser_ShowLaserProfile(self):

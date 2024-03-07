@@ -195,7 +195,7 @@ class Indicator(QWidget):
             painter.drawRect(rect)
             
             rectXGreen = rectXRed + rectWidthRed
-            rectWidthGreen = rect_width * 0.2
+            rectWidthGreen = rect_width * 0.8
             
             linear = QLinearGradient(rectXGreen, 0, rectXGreen + rectWidthGreen, 0)
             linear.setColorAt(0, QColor(0, 255, 0))
