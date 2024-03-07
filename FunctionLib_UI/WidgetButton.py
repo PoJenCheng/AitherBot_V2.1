@@ -141,12 +141,20 @@ class Indicator(QWidget):
         if self.value > 100 or self.value < 0:
             font = painter.font()
             font.setFamily('Arial')
-            font.setPointSize(24)
+            font.setPointSize(36)
+            
+            fm = QFontMetrics(font)
             painter.setFont(font)
             painter.setPen(QColor(255, 255, 255))
-            painter.drawText(1, self.height() - 4, 'OUT OF RANGE')
+            
+            strText = 'OUT OF RANGE'
+            posX = int((self.width() - fm.width(strText)) * 0.5)
+            posY = int((self.height() + fm.height()) * 0.5) - 3
+            # painter.drawText(posX + 1, self.height() - 4, strText)
+            painter.drawText(posX + 1, posY + 1, strText)
             painter.setPen(QColor(255, 0, 0))
-            painter.drawText(0, self.height() - 5, 'OUT OF RANGE')
+            # painter.drawText(posX, self.height() - 5, strText)
+            painter.drawText(posX, posY, strText)
         elif self.uidType == TYPE_INHALE:
             # 繪製背景矩形
             rect_width = self.width() - self.pointer_width
