@@ -1711,6 +1711,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser = Robot.LineLaser()
             # self.Laser.TriggerSetting(self)
             self.Laser_ShowLaserProfile()
+        elif currentWidget == self.pgModelBuilding:
+            self.btnStartBuildModel.setEnabled(True)
+            self.btnNext_startBuildModel.setEnabled(False)
         elif currentWidget == self.pgStartInhaleCT:
             self.Laser_CheckInhale()
         elif currentWidget == self.pgStartExhaleCT:
@@ -2474,6 +2477,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.Button_StopRecording.setEnabled(True)
         # self.Button_StopLaserDisplay.setStyleSheet("")
         # self.Button_RecordCycle.setStyleSheet("background-color:#4DE680")
+        self.btnStartBuildModel.setEnabled(False)
         self.recordBreathingBase = False
         self.bLaserRecording = True
         self.lytLaserModel.addWidget(self.laserFigure)
@@ -2590,9 +2594,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     self.trackingBreathingCommand = True
     
     def Laser_CheckInhale(self):
-        self.indicator = Indicator()
-        layout = QVBoxLayout(self.wdgIndicatorInhale)
-        layout.addWidget(self.indicator)
+        layout = self.wdgIndicatorInhale.layout()
+        if layout is None:
+            self.indicator = Indicator() 
+            layout = QVBoxLayout(self.wdgIndicatorInhale)
+            layout.addWidget(self.indicator)
+            layout.setContentsMargins(0, 0, 0, 0)
+        
         
         self.tCheckInhale = QTimer()
         self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
