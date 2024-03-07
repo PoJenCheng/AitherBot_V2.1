@@ -2346,7 +2346,7 @@ QPushButton:disabled{
              </layout>
             </item>
             <item row="3" column="1" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_26">
+             <layout class="QVBoxLayout" name="verticalLayout_8">
               <property name="spacing">
                <number>0</number>
               </property>
@@ -2377,7 +2377,7 @@ QPushButton:disabled{
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>60</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="value">
@@ -2523,7 +2523,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item row="3" column="1" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_27">
+             <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
                <widget class="QWidget" name="wdgIndicatorExhale" native="true">
                 <property name="sizePolicy">
@@ -2551,11 +2551,20 @@ p, li { white-space: pre-wrap; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>60</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="value">
                  <number>0</number>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="textDirection">
+                 <enum>QProgressBar::BottomToTop</enum>
                 </property>
                </widget>
               </item>
