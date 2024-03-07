@@ -1069,49 +1069,11 @@ class Ui_MainWindow(object):
         self.gridLayout_18.addLayout(self.horizontalLayout_9, 5, 0, 1, 4)
         self.horizontalLayout_26 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_26.setObjectName("horizontalLayout_26")
-        self.stkSignalLightInhale = QtWidgets.QStackedWidget(self.pgStartInhaleCT)
-        self.stkSignalLightInhale.setMinimumSize(QtCore.QSize(64, 64))
-        self.stkSignalLightInhale.setMaximumSize(QtCore.QSize(64, 64))
-        self.stkSignalLightInhale.setObjectName("stkSignalLightInhale")
-        self.pgRedLightInhale = QtWidgets.QWidget()
-        self.pgRedLightInhale.setObjectName("pgRedLightInhale")
-        self.gridLayout_35 = QtWidgets.QGridLayout(self.pgRedLightInhale)
-        self.gridLayout_35.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout_35.setSpacing(0)
-        self.gridLayout_35.setObjectName("gridLayout_35")
-        self.wdgRedLightInhale = QtWidgets.QWidget(self.pgRedLightInhale)
-        self.wdgRedLightInhale.setMinimumSize(QtCore.QSize(48, 48))
-        self.wdgRedLightInhale.setMaximumSize(QtCore.QSize(48, 48))
-        self.wdgRedLightInhale.setStyleSheet("#wdgRedLightInhale{\n"
-"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
-"    stop:0 rgba(255, 255, 255, 255),\n"
-"    stop:0.4 rgba(255, 0, 0, 255),\n"
-"    stop:1 rgba(255, 0, 0, 255));\n"
-"    border-radius:24px;\n"
-"}")
-        self.wdgRedLightInhale.setObjectName("wdgRedLightInhale")
-        self.gridLayout_35.addWidget(self.wdgRedLightInhale, 0, 0, 1, 1)
-        self.stkSignalLightInhale.addWidget(self.pgRedLightInhale)
-        self.pgGreenLightInhale = QtWidgets.QWidget()
-        self.pgGreenLightInhale.setObjectName("pgGreenLightInhale")
-        self.gridLayout_36 = QtWidgets.QGridLayout(self.pgGreenLightInhale)
-        self.gridLayout_36.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout_36.setSpacing(0)
-        self.gridLayout_36.setObjectName("gridLayout_36")
-        self.wdgGreenLightInhale = QtWidgets.QWidget(self.pgGreenLightInhale)
-        self.wdgGreenLightInhale.setMinimumSize(QtCore.QSize(48, 48))
-        self.wdgGreenLightInhale.setMaximumSize(QtCore.QSize(48, 48))
-        self.wdgGreenLightInhale.setStyleSheet("#wdgGreenLightInhale{\n"
-"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
-"    stop:0 rgba(255, 255, 255, 255),\n"
-"    stop:0.4 rgba(0, 255, 0, 255),\n"
-"    stop:1 rgba(0, 255, 0, 255));\n"
-"    border-radius:24px;\n"
-"}")
-        self.wdgGreenLightInhale.setObjectName("wdgGreenLightInhale")
-        self.gridLayout_36.addWidget(self.wdgGreenLightInhale, 0, 0, 1, 1)
-        self.stkSignalLightInhale.addWidget(self.pgGreenLightInhale)
-        self.horizontalLayout_26.addWidget(self.stkSignalLightInhale)
+        self.wdgIndicatorInhale = QtWidgets.QWidget(self.pgStartInhaleCT)
+        self.wdgIndicatorInhale.setMinimumSize(QtCore.QSize(300, 0))
+        self.wdgIndicatorInhale.setMaximumSize(QtCore.QSize(16777215, 40))
+        self.wdgIndicatorInhale.setObjectName("wdgIndicatorInhale")
+        self.horizontalLayout_26.addWidget(self.wdgIndicatorInhale)
         self.pgbInhale = QtWidgets.QProgressBar(self.pgStartInhaleCT)
         self.pgbInhale.setProperty("value", 0)
         self.pgbInhale.setObjectName("pgbInhale")
@@ -2498,7 +2460,6 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
         self.stkScene.setCurrentIndex(7)
-        self.stkSignalLightInhale.setCurrentIndex(1)
         self.stkSignalLightExhale.setCurrentIndex(1)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)

@@ -173,7 +173,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkJoint2.setCurrentWidget(self.pgJoint2Fail)
         
         self.stkSignalLight.setCurrentWidget(self.pgRedLight)
-        self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
+        # self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
         
         self.cbxLanguage.setCurrentIndex(self.language)
         
@@ -2345,10 +2345,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
             self.ToSceneLaser()
            
-    def Laser_OnSignalInhale(self, bInhale:bool):
+    def Laser_OnSignalInhale(self, bInhale:bool, percentage:float):
         
         if bInhale:
-            self.stkSignalLightInhale.setCurrentWidget(self.pgGreenLightInhale)
+            # self.stkSignalLightInhale.setCurrentWidget(self.pgGreenLightInhale)
+            
             
             now = time.time()
             if self.tInhale is None:
@@ -2366,11 +2367,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                     # self.tCheckInhale.stop()
         else:
-            self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
+            # self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
             self.tInhale = None
-            
-    def Laser_OnSignalExhale(self, bExhale:bool):
+        self.indicator.setValue(percentage)
+        
+    def Laser_OnSignalExhale(self, bExhale:bool, percentage:float):
         
         if bExhale:
             self.stkSignalLightExhale.setCurrentWidget(self.pgGreenLightExhale)
@@ -2392,6 +2394,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
             self.pgbExhale.setValue(0)
             self.tExhale = None
+            
+        self.indicator.setValue(percentage)
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2586,6 +2590,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     self.trackingBreathingCommand = True
     
     def Laser_CheckInhale(self):
+        self.indicator = Indicator()
+        layout = QVBoxLayout(self.wdgIndicatorInhale)
+        layout.addWidget(self.indicator)
+        
         self.tCheckInhale = QTimer()
         self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
         self.tCheckInhale.start(10)

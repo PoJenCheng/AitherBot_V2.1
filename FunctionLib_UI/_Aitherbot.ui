@@ -2348,110 +2348,19 @@ QPushButton:disabled{
             <item row="3" column="1" colspan="2">
              <layout class="QHBoxLayout" name="horizontalLayout_26">
               <item>
-               <widget class="QStackedWidget" name="stkSignalLightInhale">
+               <widget class="QWidget" name="wdgIndicatorInhale" native="true">
                 <property name="minimumSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>300</width>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>16777215</width>
+                  <height>40</height>
                  </size>
                 </property>
-                <property name="currentIndex">
-                 <number>1</number>
-                </property>
-                <widget class="QWidget" name="pgRedLightInhale">
-                 <layout class="QGridLayout" name="gridLayout_35">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="spacing">
-                   <number>0</number>
-                  </property>
-                  <item row="0" column="0">
-                   <widget class="QWidget" name="wdgRedLightInhale" native="true">
-                    <property name="minimumSize">
-                     <size>
-                      <width>48</width>
-                      <height>48</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>48</width>
-                      <height>48</height>
-                     </size>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">#wdgRedLightInhale{
-	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
-	stop:0 rgba(255, 255, 255, 255),
-	stop:0.4 rgba(255, 0, 0, 255),
-	stop:1 rgba(255, 0, 0, 255));
-	border-radius:24px;
-}</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-                <widget class="QWidget" name="pgGreenLightInhale">
-                 <layout class="QGridLayout" name="gridLayout_36">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="spacing">
-                   <number>0</number>
-                  </property>
-                  <item row="0" column="0">
-                   <widget class="QWidget" name="wdgGreenLightInhale" native="true">
-                    <property name="minimumSize">
-                     <size>
-                      <width>48</width>
-                      <height>48</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>48</width>
-                      <height>48</height>
-                     </size>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">#wdgGreenLightInhale{
-	background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,
-	stop:0 rgba(255, 255, 255, 255),
-	stop:0.4 rgba(0, 255, 0, 255),
-	stop:1 rgba(0, 255, 0, 255));
-	border-radius:24px;
-}</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
                </widget>
               </item>
               <item>

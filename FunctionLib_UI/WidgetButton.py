@@ -108,6 +108,69 @@ class NaviButton(QPushButton):
         self.setText(f'Homing...{percent:.1%}')
         self.update()
         
+class Indicator(QWidget):
+    pointer_height = 20
+    pointer_width  = 30
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.value = 0  # 初始值
+        self.setStyleSheet('border:none')
+
+    def setValue(self, value):
+        # 設定值，更新畫面
+        self.value = value
+        self.update()
         
+    def move(self, value):
+        self.value = max(0, min(self.value + value, 100))
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # 繪製背景矩形
+        rect_width = self.width() - self.pointer_width
+        rect_height = self.height() - self.pointer_height
+        rectXRed = self.pointer_width * 0.5
+        rectWidthRed = rect_width * 0.8
+        rect = QRectF(rectXRed, 0, rectWidthRed, rect_height)
+        
+        linear = QLinearGradient(rectXRed, 0, rectXRed + rectWidthRed, 0)
+        linear.setColorAt(0, Qt.red)
+        # linear.setColorAt(0.5, QColor(255, 150, 0))
+        linear.setColorAt(1, QColor(0, 255, 0))
+        
+        painter.setBrush(linear)
+        painter.drawRect(rect)
+        
+        
+        
+        rectXGreen = rectXRed + rectWidthRed
+        rectWidthGreen = rect_width * 0.2
+        
+        # linear = QLinearGradient(rectXGreen, 0, rectXGreen + rectWidthGreen, 0)
+        # linear.setColorAt(0, QColor(255, 255, 0))
+        # linear.setColorAt(1, QColor(0, 255, 0))
+        
+        rect = QRectF(rectXGreen, 0, rectWidthGreen,  rect_height)
+        painter.setBrush(QColor(0, 255, 0)) 
+        painter.drawRect(rect)
+
+        # 計算指針位置
+        scale = rect_width * 0.01
+        pointer_x = self.value * scale + self.pointer_width * 0.5
+        pointer_y = rect_height
+
+        # 繪製指針三角形
+        pointer = QPolygon([
+            QPoint(int(pointer_x), int(pointer_y)),
+            QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
+            QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
+        ])
+
+        painter.setBrush(QColor(255, 255, 255))  
+        painter.drawPolygon(pointer)        
         
         
