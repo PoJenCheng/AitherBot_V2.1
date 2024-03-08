@@ -1383,6 +1383,37 @@ class LineLaser(MOTORCONTROL, QObject):
 
         # self.DataBaseChecking()
         return self.receiveData
+    
+    def ModelAnalyze(self, dicData:dict):
+        tStartInhale = list(dicData.keys())[0]
+        tEndInhale = tStartInhale
+        bInStable = False
+        listInhale = []
+        listInhaleTemp = []
+        avg = avgMean = 0
+        for tTime, data in dicData.items():
+            avg = self.CalHeightAvg(data)
+            if avg:
+                # 檢查data的平均是否停留在一個區間內3秒不動，是就紀錄下平均值
+                if abs(avg - avgMean) < 0.5:
+                    if bInStable == False:
+                        tStartInhale = tTime
+                        bInStable = True
+                    listInhaleTemp.append(avg)
+                elif bInStable:
+                    if tTime - tStartInhale > 3000:
+                        listInhale.extend(listInhaleTemp)
+                        listInhaleTemp = []
+                    bInStable = False
+            avgMean = np.mean(listInhaleTemp)
+            
+        if len(listInhale) >= 2:
+            valInhale = min(listInhale)
+            valExhale = max(listInhale)
+            
+            return (valInhale, valExhale)
+       
+        return None
                 
     def DataBaseChecking(self,receiveData):  # make sure whether data lost
         try:
@@ -1683,11 +1714,11 @@ class LineLaser(MOTORCONTROL, QObject):
         #     percentage = ((maxAvg-avg)/dis)*100
         #     # if self.percentage >= yellowLightCriteria:
         #     self.percentageBase[percentage] = item
-        for avg, item in heightAvg.items():
-            # avg = key
+        for item in heightAvg.items():
+            avg, _ = item
             percentage = ((maxAvg-avg)/dis)*100
             # if self.percentage >= yellowLightCriteria:
-            self.percentageBase[percentage] = (avg, item)
+            self.percentageBase[percentage] = item
         self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
         # print(self.percentageBase)
         
@@ -1724,7 +1755,7 @@ class LineLaser(MOTORCONTROL, QObject):
         # self.receiveDataTemp = np.array(self.GetLaserData())
         self.receiveDataTemp = np.array(self.z)
         dataTemp = self.receiveDataTemp * -1
-        diff = np.abs(np.diff(dataTemp))
+        # diff = np.abs(np.diff(dataTemp))
         
         # when diff > tolerance, skip this data
         # if np.any(diff > toleranceLaserData):
