@@ -2368,7 +2368,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.tInhale = now
                 
                 if value == 100:
-                    self.tCheckInhale.stop()
                     self.btnNext_scanCT.setEnabled(True)
                     # QTimer.singleShot(500, self.NextScene)
                     
