@@ -1395,21 +1395,27 @@ class LineLaser(MOTORCONTROL, QObject):
             avg = self.CalHeightAvg(data)
             if avg:
                 # 檢查data的平均是否停留在一個區間內3秒不動，是就紀錄下平均值
-                if abs(avg - avgMean) < 0.5:
+                if abs(avg - avgMean) < 0.01:
                     if bInStable == False:
                         tStartInhale = tTime
                         bInStable = True
                     listInhaleTemp.append(avg)
                 elif bInStable:
                     if tTime - tStartInhale > 3000:
-                        listInhale.extend(listInhaleTemp)
+                        listInhale.append(listInhaleTemp)
                         listInhaleTemp = []
                     bInStable = False
-            avgMean = np.mean(listInhaleTemp)
+                    
+                # if len(listInhaleTemp) > 0:
+                #     avgMean = np.mean(listInhaleTemp)
+                # else:
+                avgMean = avg
             
-        if len(listInhale) >= 2:
-            valInhale = min(listInhale)
-            valExhale = max(listInhale)
+        if len(listInhale) > 2:
+            # skip first element, first element is laser inital position
+            mean = (np.mean(listInhale[1]), np.mean(listInhale[2]))
+            valInhale = min(mean)
+            valExhale = max(mean)
             
             return (valInhale, valExhale)
        

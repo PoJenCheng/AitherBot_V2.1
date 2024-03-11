@@ -2408,7 +2408,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         strLabelName = 'lblCycle' + str(nCycle)
         if hasattr(self, strLabelName):
             label = eval(str('self.') + strLabelName)
-            label.setText(f'Inhale:{tupAvg[0]}, Exhale:{tupAvg[1]}')
+            label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2502,7 +2502,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.bLaserRecording = True
         self.lytLaserModel.addWidget(self.laserFigure)
         # t = threading.Thread(target = self.Laser_RecordBreathing)
-        t = threading.Thread(target = self.Laser_RecordBreathingCycle, args = (1))
+        t = threading.Thread(target = self.Laser_RecordBreathingCycle, args = (1,))
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
@@ -2591,10 +2591,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     dataCycle[nCycle][deltaTime] = rawData
                     tupAvg = self.Laser.ModelAnalyze(dataCycle[nCycle])
                     
-                    if len(tupAvg) >= 2:
+                    if tupAvg is not None:
                         self.signalModelCycle.emit(tupAvg, nCycle)
                         nCycle += 1
+                        if nCycle > 5:
+                            self.bLaserRecording = False
                         dataCycle[nCycle] = {}
+                        
                     # if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                     #     cycle, bValid = self.Laser.DataCheckCycle()
                     #     self.signalModelBuildingUI.emit(bValid)
@@ -2602,16 +2605,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     #         self.bLaserRecording = False
                             
                         
-        # print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
+        print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
         
-        # if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-        #     cycle, bValid = self.Laser.DataCheckCycle()
-        #     # self.signalShowPlot.emit(cycle)
-        #     if not bValid:
-        #         self.signalModelBuildingPass.emit(False)
-        #     else:
-        #         self.recordBreathingBase = True
-        #         self.signalModelBuildingPass.emit(True)
+        if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
+            cycle, bValid = self.Laser.DataCheckCycle()
+            self.signalShowPlot.emit(cycle)
+            if not bValid:
+                self.signalModelBuildingPass.emit(False)
+            else:
+                self.recordBreathingBase = True
+                self.signalModelBuildingPass.emit(True)
         
     def Laser_OnTracking(self):
         if self.Laser is None:
