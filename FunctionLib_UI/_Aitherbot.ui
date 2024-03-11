@@ -1953,20 +1953,30 @@ margin-right:0px;
 	background-color: rgb(0, 167, 218);
 }
 
+/*
 #lblCycle1{
 	border-top-left-radius:20px;
-}
+}*/
 
 #lblCycle5{
 	border-bottom-left-radius:20px;
 }
 
+/*
 #wdgCheckCycle1{
 	border-top-right-radius:20px;
 }
+*/
 
 #wdgCheckCycle5{
 	border-bottom-right-radius:20px;
+}
+
+#lblCounter{
+	font: 96pt &quot;Arial&quot;;
+	color: rgb(255, 0, 0);
+	border-top-left-radius:20px;
+	border-top-right-radius:20px;
 }</string>
               </property>
               <layout class="QGridLayout" name="gridLayout_35">
@@ -1982,7 +1992,51 @@ margin-right:0px;
                <property name="verticalSpacing">
                 <number>2</number>
                </property>
+               <item row="5" column="1">
+                <widget class="QWidget" name="wdgCheckCycle5" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
                <item row="1" column="1">
+                <widget class="QWidget" name="wdgCheckCycle1" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
                 <widget class="QWidget" name="wdgCheckCycle2" native="true">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2004,7 +2058,51 @@ margin-right:0px;
                  </property>
                 </widget>
                </item>
-               <item row="3" column="0">
+               <item row="3" column="1">
+                <widget class="QWidget" name="wdgCheckCycle3" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QWidget" name="wdgCheckCycle4" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
                 <widget class="QLabel" name="lblCycle4">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2027,138 +2125,6 @@ margin-right:0px;
                 </widget>
                </item>
                <item row="2" column="0">
-                <widget class="QLabel" name="lblCycle3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 3</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="lblCycle1">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 1</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="QWidget" name="wdgCheckCycle3" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>58</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QWidget" name="wdgCheckCycle1" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>58</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="lblCycle5">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 5</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="1">
-                <widget class="QWidget" name="wdgCheckCycle5" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>58</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
                 <widget class="QLabel" name="lblCycle2">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2180,8 +2146,8 @@ margin-right:0px;
                  </property>
                 </widget>
                </item>
-               <item row="3" column="1">
-                <widget class="QWidget" name="wdgCheckCycle4" native="true">
+               <item row="3" column="0">
+                <widget class="QLabel" name="lblCycle3">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                    <horstretch>0</horstretch>
@@ -2190,19 +2156,63 @@ margin-right:0px;
                  </property>
                  <property name="minimumSize">
                   <size>
-                   <width>58</width>
+                   <width>400</width>
                    <height>58</height>
                   </size>
                  </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
+                 <property name="text">
+                  <string>Cycle 3</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
                  </property>
                 </widget>
                </item>
-               <item row="2" column="2">
+               <item row="1" column="0">
+                <widget class="QLabel" name="lblCycle1">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>400</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cycle 1</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="lblCycle5">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>400</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cycle 5</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="2">
                 <spacer name="horizontalSpacer_35">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
@@ -2214,6 +2224,22 @@ margin-right:0px;
                   </size>
                  </property>
                 </spacer>
+               </item>
+               <item row="0" column="0" colspan="2">
+                <widget class="QLabel" name="lblCounter">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>120</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>

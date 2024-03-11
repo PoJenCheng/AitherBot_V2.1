@@ -1670,6 +1670,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
             self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             tLaser= threading.Thread(target = self.Laser.Initialize)
             # tLaser= threading.Thread(target = self.sti_RunLaser)
@@ -2404,6 +2405,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tExhale = None
         self.indicatorExhale.setValue(percentage)
         
+    def Laser_OnSignalShowCounter(self, ms:int):
+        ms = int(ms * 0.001)
+        self.lblCounter.setText(str(ms))
+    
     def Laser_OnSignalUpdateCycle(self, tupAvg:tuple, nCycle:int):
         strLabelName = 'lblCycle' + str(nCycle)
         if hasattr(self, strLabelName):

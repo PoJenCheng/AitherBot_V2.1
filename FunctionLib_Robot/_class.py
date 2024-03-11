@@ -995,6 +995,7 @@ class LineLaser(MOTORCONTROL, QObject):
     signalExhaleProgress = pyqtSignal(bool, float)
     signalModelPassed = pyqtSignal(bool)
     signalBreathingRatio = pyqtSignal(float)
+    signalCycleCounter = pyqtSignal(int)
     initProgress = 0
     bStop = False
     receiveData             = []
@@ -1400,12 +1401,14 @@ class LineLaser(MOTORCONTROL, QObject):
                         tStartInhale = tTime
                         bInStable = True
                     listInhaleTemp.append(avg)
+                    self.signalCycleCounter.emit(tTime - tStartInhale)
                 elif bInStable:
+                    
                     if tTime - tStartInhale > 3000:
                         listInhale.append(listInhaleTemp)
                         listInhaleTemp = []
                     bInStable = False
-                    
+                    self.signalCycleCounter.emit(0)
                 # if len(listInhaleTemp) > 0:
                 #     avgMean = np.mean(listInhaleTemp)
                 # else:
