@@ -1207,6 +1207,19 @@ class LineLaser(MOTORCONTROL, QObject):
             if percentage <= EXHALE_AREA and percentage >= 0:
                 bExhale = True
             self.signalExhaleProgress.emit(bExhale, percentage)
+            
+    # private function
+    # filter out range data from model
+    def filterOutRange(self, indexes):
+        if isinstance(indexes, (tuple, list, np.ndarray)):
+            if len(indexes) < 2:
+                print('too less number parameters in function "filterOutRange"')
+            else:
+                indexMin = min(indexes)
+                indexMax = max(indexes)
+                lstDatabase = list(self.percentageBase.items())[indexMin:indexMax + 1]
+                self.percentageBase = dict(lstDatabase)
+                
                 
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):
@@ -1261,6 +1274,104 @@ class LineLaser(MOTORCONTROL, QObject):
         for key, value in self.percentageBase.items():
             if val == value[0]:
                 return key
+            
+    def GetClosestAvg(self, avg):
+        if isinstance(avg, (tuple, list, np.ndarray)):
+            if len(avg) >= 2:
+                # avgInhale = min(avg)
+                # avgExhale = max(avg)
+                avg = np.array(avg)
+                
+                idInhale = np.argmin(avg)
+                idExhale = np.argmax(avg)
+                
+                avgInhale = avg[idInhale]
+                avgExhale = avg[idExhale]
+        
+                avgList = []
+                for keyAvg, _ in self.percentageBase.values():
+                    avgList.append(keyAvg)
+                
+                avgList = np.array(avgList)
+                diffInhale = np.abs(avgList - avgInhale)
+                diffExhale = np.abs(avgList - avgExhale)
+                
+                indexInhale = np.argmin(diffInhale)
+                indexExhale = np.argmin(diffExhale)
+                
+                avgInhale = avgList[indexInhale]
+                avgExhale = avgList[indexExhale]
+                
+                self.filterOutRange((indexInhale, indexExhale))
+                
+                avg[idInhale] = avgInhale
+                avg[idExhale] = avgExhale
+                
+                return avg
+            else:
+                avg = avg[0]
+        
+        avgList = []
+        for keyAvg, _ in self.percentageBase.values():
+            avgList.append(keyAvg)
+            
+        avgList = np.array(avgList)
+        diff = np.abs(avgList - avg)
+        
+        avgClosest:float = avgList[np.argmin(diff)]
+        
+        return avgClosest
+            
+    def GetPercentFromAvg(self, avg, bCutInRange = False):
+        # if bCutInRange and isinstance(avg, tuple) and len(avg) >= 2:
+        #     filterFront = []
+        #     filterBack = []
+        #     for key, (keyAvg, _) in self.percentageBase.items():
+        #         if keyAvg < avg[0]:
+        #             filterFront.append(key)
+        #         elif keyAvg > avg[1]:
+        #             filterBack.append(key)
+            
+        #     if len(filterFront) > 2:
+        #         filterFront.pop(-1)
+                
+        #     if len(filterBack) > 2:
+        #         filterBack.pop(0)
+                
+        #     lstFilter = np.concatenate((filterFront, filterBack))
+                
+        #     for key in lstFilter:
+        #         del self.percentageBase[key]
+        
+        avgRange = self.GetClosestAvg(avg)
+            
+        items = list(self.percentageBase.values())
+        maxAvg =  items[-1][0]
+        minAvg =  items[0][0]
+        dis = maxAvg - minAvg
+        percentage = 0
+        
+        if dis > 0:
+            
+            if isinstance(avgRange, np.ndarray):
+                # avgInhale, avgExhale = avgRange
+                
+                # percentageInhale = ((maxAvg - avgInhale) / dis) * 100
+                # lstPercent = [percentageInhale]
+                
+                lstPercent = []
+                for avg in avgRange:
+                    percent = ((maxAvg - avg) / dis) * 100
+                    lstPercent.append(percent)
+                    
+                # percentageExhale = ((maxAvg - avgExhale) / dis) * 100
+                # lstPercent.append(percentageExhale)
+                
+                return lstPercent
+            else:
+                percentage = ((maxAvg - avg) / dis) * 100
+        
+        return percentage               
     
     def TriggerSetting(self):
         try:
@@ -1391,9 +1502,12 @@ class LineLaser(MOTORCONTROL, QObject):
         bInStable = False
         listInhale = []
         listInhaleTemp = []
-        avg = avgMean = 0
-        for tTime, data in dicData.items():
+        for i, (tTime, data) in enumerate(dicData.items()):
             avg = self.CalHeightAvg(data)
+            if i == 0:
+                avgMean = avg
+                continue
+            
             if avg:
                 # 檢查data的平均是否停留在一個區間內3秒不動，是就紀錄下平均值
                 if abs(avg - avgMean) < 0.01:
@@ -1409,6 +1523,8 @@ class LineLaser(MOTORCONTROL, QObject):
                         listInhaleTemp = []
                     bInStable = False
                     self.signalCycleCounter.emit(0)
+                else:
+                    listInhaleTemp = []
                 # if len(listInhaleTemp) > 0:
                 #     avgMean = np.mean(listInhaleTemp)
                 # else:
@@ -1416,10 +1532,16 @@ class LineLaser(MOTORCONTROL, QObject):
             
         if len(listInhale) > 2:
             # skip first element, first element is laser inital position
-            mean = (np.mean(listInhale[1]), np.mean(listInhale[2]))
-            valInhale = min(mean)
-            valExhale = max(mean)
             
+            if listInhale[1][0] > listInhale[2][0]:
+                valInhale = min(listInhale[2])
+                valExhale = max(listInhale[1])
+            else:
+                valInhale = min(listInhale[1])
+                valExhale = max(listInhale[2])
+            
+            # mean = (np.mean(listInhale[1]), np.mean(listInhale[2]))
+           
             return (valInhale, valExhale)
        
         return None
@@ -1623,12 +1745,12 @@ class LineLaser(MOTORCONTROL, QObject):
         
     def DataRearrange(self,receiveData:dict, yellowLightCriteria, greenLightCriteria): #如果有重複的數值，則刪除
         self.laserDataBase = {} 
-        key, item = next(iter(receiveData.items()))
+        iterItem = iter(receiveData.items())
+        key, item = next(iterItem)
         self.laserDataBase[key] = item
         
-        for k, (key, item) in enumerate(receiveData.items()):
-            if k == 0:
-                continue
+        for key, item in iterItem:
+            
             lastItem = list(self.laserDataBase.values())[-1]
             listTolerance = np.abs(np.array(item) - np.array(lastItem))
             meanTolerance = np.mean(listTolerance)
@@ -1711,11 +1833,13 @@ class LineLaser(MOTORCONTROL, QObject):
         #     # heightAvg.append(getChestProfile.calHeightAvg(X))
         for item in self.laserDataBase_filter.values():
             X = np.array(item)
-            heightAvg[self.CalHeightAvg(X)] = X
+            avg = self.CalHeightAvg(X)
+            if avg > 0:
+                heightAvg[avg] = X
             # heightAvg.append(getChestProfile.calHeightAvg(X))
 
-        maxAvg =  max(list(list(heightAvg.keys())))
-        minAvg =  min(list(list(heightAvg.keys())))
+        maxAvg =  max(list(heightAvg.keys()))
+        minAvg =  min(list(heightAvg.keys()))
         dis = maxAvg - minAvg
         self.percentageBase = {}
         # for item in list(heightAvg.items()):
