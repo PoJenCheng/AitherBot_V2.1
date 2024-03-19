@@ -2415,11 +2415,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ms = int(ms * 0.001)
         self.lblCounter.setText(str(ms))
     
-    def Laser_OnSignalUpdateCycle(self, tupAvg:tuple, nCycle:int):
+    def Laser_OnSignalUpdateCycle(self, tupPercent:tuple, nCycle:int):
         strLabelName = 'lblCycle' + str(nCycle)
         if hasattr(self, strLabelName):
-            label = eval(str('self.') + strLabelName)
-            label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
+            label = eval('self.' + strLabelName)
+            # label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
+            if tupPercent[0] >= 80 and tupPercent[1] <= 20:
+                label.setStyleSheet('background-color:rgb(0, 255, 0)')
+            else:
+                label.setStyleSheet('background-color:rgb(255, 0, 0)')
+            
+        strWdgName = 'wdgCheckCycle' + str(nCycle)
+        if hasattr(self, strWdgName):
+            wdg = eval('self.' + strWdgName)
+            if tupPercent[0] >= 80 and tupPercent[1] <= 20:
+                wdg.setStyleSheet('background-color:rgb(0, 255, 0);image:url("image/check.png");')
+            else:
+                wdg.setStyleSheet('background-color:rgb(255, 0, 0);')
+        
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -2683,7 +2696,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             for i, (percentIn, percentEx) in enumerate(lstPercent, 1):
                                 print(f'cycle {i} = ({percentIn}, {percentEx})')
                             print('=' * 50)
-                        self.signalModelCycle.emit(tupAvg, nCycle)
+                        self.signalModelCycle.emit(lstPercent[-1], nCycle)
                         
                         while dataCycle.get(nCycle + 1) is not None:
                             nCycle += 1
