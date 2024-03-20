@@ -1530,15 +1530,22 @@ class LineLaser(MOTORCONTROL, QObject):
                 # else:
                 avgMean = avg
             
-        if len(listInhale) > 2:
+        if len(listInhale) >= 2:
             # skip first element, first element is laser inital position
             
-            if listInhale[1][0] > listInhale[2][0]:
-                valInhale = min(listInhale[2])
-                valExhale = max(listInhale[1])
-            else:
+            # if listInhale[1][0] > listInhale[2][0]:
+            #     valInhale = min(listInhale[2])
+            #     valExhale = max(listInhale[1])
+            # else:
+            #     valInhale = min(listInhale[1])
+            #     valExhale = max(listInhale[2])
+            
+            if listInhale[0][0] > listInhale[1][0]:
                 valInhale = min(listInhale[1])
-                valExhale = max(listInhale[2])
+                valExhale = max(listInhale[0])
+            else:
+                valInhale = min(listInhale[0])
+                valExhale = max(listInhale[1])
             
             # mean = (np.mean(listInhale[1]), np.mean(listInhale[2]))
            

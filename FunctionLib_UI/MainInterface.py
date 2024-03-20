@@ -209,6 +209,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
         
+        self.btnNext_endBuildModel.setEnabled(True)
+        
         self.SetUIEnable_Trajectory(False)
         self.init_ui()
         
@@ -1566,6 +1568,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnNext_endBuildModel:
                 self.Laser_StopRecordBreathingBase()
                 print('end model building')
+            elif button == self.btnNext_scanCT:
+                if self.tCheckInhale:
+                    self.tCheckInhale.stop()
+            elif button == self.btnNext_scanCT_2:
+                if self.tCheckExhale:
+                    self.tCheckExhale.stop()
             elif button == self.btnFromUSB:
                 ## 開啟視窗選取資料夾 ############################################################################################
                 # self.logUI.info('Import Dicom inhale/_Low')
@@ -2339,7 +2347,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_autoNextPage(self, msgbox = None):
         if isinstance(msgbox, QMessageBox):
             msgbox.accept()
-        self.NextScene()
+        # self.NextScene()
+        self.stkScene.setCurrentWidget(self.pgStartInhaleCT)
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -2421,7 +2430,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             label = eval('self.' + strLabelName)
             # label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
             if tupPercent[0] >= 80 and tupPercent[1] <= 20:
-                label.setStyleSheet('background-color:rgb(0, 255, 0)')
+                label.setStyleSheet('background-color:rgb(0, 100, 0)')
             else:
                 label.setStyleSheet('background-color:rgb(255, 0, 0)')
             
@@ -2429,7 +2438,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if hasattr(self, strWdgName):
             wdg = eval('self.' + strWdgName)
             if tupPercent[0] >= 80 and tupPercent[1] <= 20:
-                wdg.setStyleSheet('background-color:rgb(0, 255, 0);image:url("image/check.png");')
+                wdg.setStyleSheet('background-color:rgb(0, 100, 0);image:url("image/check.png");')
             else:
                 wdg.setStyleSheet('background-color:rgb(255, 0, 0);')
         
@@ -2537,8 +2546,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
             lstPercent = np.reshape(lstPercent, (-1, 2))
             
-            for i, (percentIn, percentEx) in enumerate(lstPercent):
-                print(f'cycle {indexes[i]} = ({percentIn}, {percentEx})')
+            for i, percent in zip(indexes, lstPercent):
+                percent = tuple(percent)
+                percentIn, percentEx = percent
+                self.signalModelCycle.emit(percent, i)
+                print(f'cycle {i} = ({percentIn}, {percentEx})')
                 if percentIn < 80 or percentEx > 20:
                     bPass = False
                     
@@ -2693,10 +2705,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             
                             # if percentIn < 80 or percentEx > 20:
                             #     nCycle -= 1
-                            for i, (percentIn, percentEx) in enumerate(lstPercent, 1):
+                            for i, percent in enumerate(lstPercent, 1):
+                                percent = tuple(percent)
+                                percentIn, percentEx = percent
+                                self.signalModelCycle.emit(percent, i)
                                 print(f'cycle {i} = ({percentIn}, {percentEx})')
                             print('=' * 50)
-                        self.signalModelCycle.emit(lstPercent[-1], nCycle)
                         
                         while dataCycle.get(nCycle + 1) is not None:
                             nCycle += 1
