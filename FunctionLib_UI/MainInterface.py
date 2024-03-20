@@ -587,7 +587,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.lytLaserAdjust.addWidget(self.laserFigure)
         # self.lytLaserModel = QVBoxLayout(self.wdgLaserPlot2)
         # self.lytLaserModel = QVBoxLayout(self.wdgIntraCT)
-        self.lytLaserModel = QVBoxLayout(self.wdgLaserFig)
+        # self.lytLaserModel = QVBoxLayout(self.wdgLaserFig)
         
         
         self.btnSceneLaser.setEnabled(False)
@@ -2594,7 +2594,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnStartBuildModel_2.setEnabled(False)
         self.recordBreathingBase = False
         self.bLaserRecording = True
-        self.lytLaserModel.addWidget(self.laserFigure)
+        # self.lytLaserModel.addWidget(self.laserFigure)
+        self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
         # t = threading.Thread(target = self.Laser_RecordBreathing)
         t = threading.Thread(target = self.Laser_RecordBreathingCycle, args = (1,))
         t.start()

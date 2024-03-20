@@ -2411,6 +2411,30 @@ QPushButton:disabled{
                 <height>0</height>
                </size>
               </property>
+              <property name="styleSheet">
+               <string notr="true">QLabel{
+	color:rgb(255, 255, 255);
+	font: 24pt &quot;Arial&quot;;
+}</string>
+              </property>
+              <layout class="QHBoxLayout" name="lytLaserModel">
+               <item>
+                <widget class="QLabel" name="lblHintModelBuilding">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;Please keep in &lt;/span&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;Inhale state&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; until at least &lt;/span&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;3 second&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </widget>
             </item>
            </layout>
