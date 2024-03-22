@@ -89,6 +89,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     bToggleInhale = True
     bRegistration = False
     
+    errDevice = 0
     #robot parameter
     bTrackingBreathing = False
     
@@ -679,13 +680,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         # self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
-        
-    def testFunc(self, n):
-        bPass = all(n % i > 0 for i in range(2, n))
-        if bPass:
-            return bPass
-        else:
-            return bPass, 13
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1677,7 +1671,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkScene.setCurrentWidget(self.pgLaser)
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
-            self.loadingRobot = 100
+            # self.loadingRobot = 100
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -1685,17 +1679,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
-            tLaser= threading.Thread(target = self.Laser.Initialize)
+            self.tLaser= threading.Thread(target = self.Laser.Initialize)
             # tLaser= threading.Thread(target = self.sti_RunLaser)
-            tLaser.start()
+            self.tLaser.start()
             
             # self.loadingLaser = 100
-            # self.robot = Robot.MOTORSUBFUNCTION()
-            # self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            # self.tRobot = threading.Thread(target = self.robot.Initialize)
-            # self.tRobot.start()
+            self.tRobot = threading.Thread(target = self.robot.Initialize)
+            self.tRobot.start()
             
             # self.RobotSupportArm = 100
             # self.RobotSupportArm = Robot.RobotSupportArm()   
@@ -2213,6 +2209,42 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         for view in self.dicView.values():
                 view.close()
                 
+    def RobotSystem_OnFailed(self, errDevice:int):
+        if errDevice == DEVICE_ROBOT:
+            msg = 'robot connection error'
+        elif errDevice == DEVICE_LASER:
+            msg = 'laser connection error'
+            
+        self.errDevice |= errDevice
+        if not hasattr(self, 'msgbox'):
+            msgbox = QMessageBox()
+            msgbox.setIcon(QMessageBox.Question)
+            msgbox.setWindowTitle('CONNECTION ERROR')
+            msgbox.setText(msg + '\nRetry again?')
+            # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msgbox.addButton('Retry', 3)
+            msgbox.addButton('Shutdown', 3)
+            
+            self.msgbox = msgbox
+            ret = msgbox.exec_()
+            
+            if ret == 0:
+                del self.msgbox
+                
+                
+                if (self.errDevice & DEVICE_ROBOT) != 0:
+                    self.errDevice &= ~DEVICE_ROBOT
+                    self.tRobot = threading.Thread(target = self.robot.Initialize)
+                    self.tRobot.start()
+                    
+                if (self.errDevice & DEVICE_LASER) != 0:
+                    self.errDevice &= ~DEVICE_LASER
+                    self.tLaser= threading.Thread(target = self.Laser.Initialize)
+                    self.tLaser.start()
+                
+            elif ret == 1:
+                self.close()
+                
     def Robot_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
         bSucceed = True
@@ -2231,10 +2263,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # while self.loadingRobot < 100:
         
         self.signalSetProgress.emit(self.pgbRobot, progress)
-        if self.Robot_SetLoadingMessage(strState) == False:
-            self.Laser.bStop = True
-            QMessageBox.critical(None, 'ERROR', 'Robot connection Failed, system will shutdown')
-            self.close()
+        self.Robot_SetLoadingMessage(strState)
+        # if self.Robot_SetLoadingMessage(strState) == False:
+            # # self.Laser.bStop = True
+            # QMessageBox.critical(None, 'ERROR', 'Robot connection Failed, system will shutdown')
+            # self.close()
         # text = self.pteProgress.toPlainText()
         # self.pteProgress.setPlainText(text + '\n' + strState)
         # self.pteProgress.moveCursor(QTextCursor.End)
@@ -2423,6 +2456,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnSignalShowCounter(self, ms:int):
         ms = int(ms * 0.001)
         self.lblCounter.setText(str(ms))
+        
+    def Laser_OnSignalShowMessage(self, msg:str):
+        msgbox = QMessageBox()
+        msgbox.setIcon(QMessageBox.Question)
+        msgbox.setWindowTitle('CONNECTION ERROR')
+        msgbox.setText(msg + '\nRetry again?')
+        # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msgbox.addButton('Retry', 3)
+        msgbox.addButton('Shutdown', 3)
+        ret = msgbox.exec_()
+        
+        if ret == 0:
+            print('retry again babe~~')
+            self.tLaser= threading.Thread(target = self.Laser.Initialize)
+            self.tLaser.start()
+        elif ret == 1:
+            self.close()
     
     def Laser_OnSignalUpdateCycle(self, tupPercent:tuple, nCycle:int):
         strLabelName = 'lblCycle' + str(nCycle)
@@ -2673,16 +2723,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dataCycle[nCycle] = {}
         print("Cheast Breathing Measure Start")
         startTime = time.time()
-        
+        lastTime = startTime
         while self.bLaserRecording is True:
             plotData = self.Laser.PlotProfile()
             curTime = time.time()
             deltaTime = int((curTime - startTime) * 1000)
+            
             if plotData is not None:
                 self.laserFigure.update_figure(plotData)
                 rawData = self.Laser.ModelBuilding()
                 if len(rawData) > 0:
+                    if len(receiveData) > 0:
+                        lastData = list(receiveData.values())[-1]
+                        diffData = np.abs(lastData - rawData)
+                        avgDiff = np.mean(diffData)
+                        if avgDiff < 0.05:
+                            if curTime - lastTime > 10:
+                                continue
+                        else:
+                            lastTime = curTime
+                    
                     receiveData[deltaTime] = rawData
+                    print(f'receive data length = {len(receiveData)}')
                     dataCycle[nCycle][deltaTime] = rawData
                     tupAvg = self.Laser.ModelAnalyze(dataCycle[nCycle])
                     

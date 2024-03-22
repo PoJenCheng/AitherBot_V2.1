@@ -26,7 +26,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # from matplotlib.backends.backend_gt5agg import FigureCanvasGTKAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-
+from time import *
 
 upper_G_length = 0
 upper_G_angle = 0
@@ -397,6 +397,7 @@ class RobotSupportArm():
 
 class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
     bConnected = False
+    signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
     fHomeProgress = 0.0
@@ -447,99 +448,152 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
         else:
             msg = '[ERROR]' + msg
             
+            
         self.signalProgress.emit(msg, self.initProgress)
         
-        return True
+        return bSucceed
         
     def onSignal_errMsg(self, msg:str):
         self.setInitProgress(msg, False)
+        
+    def retryFunc(self, func, startTime, motorName:str):
+        endTime = time()
+        ret = None
+        while endTime - startTime < TIMEOVER:
+            try:
+                ret = func()
+                
+            except:
+                msg = f'Failed on {motorName}, system will re-try after 3 seconds.'
+                print(msg)
+                self.setInitProgress(msg, False)
+                sleep(3)
+            else:
+                if isinstance(ret, str):
+                    return True, ret
+                else:
+                    return True
+            finally:
+                endTime = time()
+        
+        # self.setInitProgress('Fail to link to robot', False)
+        # self.bConnected = False
+        if isinstance(ret, str):
+            return False, ret
+        else:
+            return False
             
     def Initialize(self):
         robotCheckStatus = False
         nRetry = 0
-        while robotCheckStatus is False:
-            try:
-                "Setting Motor ID"
-                # self.signalProgress.emit('connecting motor [FLDC_Up]...', 0)
-                self.FLDC_Up = MOTORCONTROL(1)
-                if self.setInitProgress('connecting motor [FLDC_Up]...') == False:
-                    return
-                # self.signalProgress.emit('connecting motor [BLDC_Up]...', 10)
-                self.BLDC_Up = MOTORCONTROL(2)
-                if self.setInitProgress('connecting motor [BLDC_Up]...') == False:
-                    return
-                # self.signalProgress.emit('connecting motor [FLDC_Down]...', 20)
-                self.FLDC_Down = MOTORCONTROL(3)
-                if self.setInitProgress('connecting motor [FLDC_Down]...') == False:
-                    return
-                # self.signalProgress.emit('connecting motor [BLDC_Down]...', 30)
-                self.BLDC_Down = MOTORCONTROL(4)
-                if self.setInitProgress('connecting motor [BLDC_Down]...') == False:
-                    return
-                # self.signalProgress.emit('connecting motor [Robot System]...', 40)
-                self.RobotSystem = MOTORCONTROL(5)
-                if self.setInitProgress('connecting motor [Robot System]...') == False:
-                    return
-                
-                self.FLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
-                self.BLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
-                self.FLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
-                self.BLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
+        funcRetry = None
+        self.initProgress = 0
+        startTime = time()
+        # while robotCheckStatus is False:
+        # try:
+        "Setting Motor ID"
+        # self.signalProgress.emit('connecting motor [FLDC_Up]...', 0)
+        self.FLDC_Up = MOTORCONTROL(1)
+        if self.setInitProgress('connecting motor [FLDC_Up]...') == False:
+            return
+        # self.signalProgress.emit('connecting motor [BLDC_Up]...', 10)
+        self.BLDC_Up = MOTORCONTROL(2)
+        if self.setInitProgress('connecting motor [BLDC_Up]...') == False:
+            return
+        # self.signalProgress.emit('connecting motor [FLDC_Down]...', 20)
+        self.FLDC_Down = MOTORCONTROL(3)
+        if self.setInitProgress('connecting motor [FLDC_Down]...') == False:
+            return
+        # self.signalProgress.emit('connecting motor [BLDC_Down]...', 30)
+        self.BLDC_Down = MOTORCONTROL(4)
+        if self.setInitProgress('connecting motor [BLDC_Down]...') == False:
+            return
+        # self.signalProgress.emit('connecting motor [Robot System]...', 40)
+        self.RobotSystem = MOTORCONTROL(5)
+        if self.setInitProgress('connecting motor [Robot System]...') == False:
+            return
+        
+        keyMotor = ['FLDC_Up', 'BLDC_Up', 'FLDC_Down', 'BLDC_Down']
+        lstMotor = [self.FLDC_Up, self.BLDC_Up, self.FLDC_Down, self.BLDC_Down]
+        dicMotor = dict(zip(keyMotor, lstMotor))
+            
+            # self.FLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
+            # self.BLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
+            # self.FLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
+            # self.BLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
+        for key, motor in dicMotor.items():
+            motor.signalInitErrMsg.connect(self.onSignal_errMsg)
+            
+            ret = self.retryFunc(motor.MotorInitial, startTime, key)
+            if self.setInitProgress(f'Initializing motor [{key}]...', ret) == False:
+                self.signalInitFailed.emit(1)
+                return False
+            
+            ret, msg = self.retryFunc(motor.MotorDriverEnable, startTime, key)
+            if self.setInitProgress(msg, ret) == False:
+                self.signalInitFailed.emit(DEVICE_ROBOT)
+                return False
+        self.setInitProgress('Homing process Completed')
+            # "Motor Initial"
+            # self.signalProgress.emit('Initializing motor [FLDC_Up]...', 50)
+            # ret = self.retryFunc(self.FLDC_Up.MotorInitial, startTime)
+            # self.FLDC_Up.MotorInitial()
+            # if self.setInitProgress('Initializing motor [FLDC_Up]...', ret) == False:
+            #     return
+            # # self.signalProgress.emit('Initializing motor [BLDC_Up]...', 60)
+            # funcRetry = self.BLDC_Up.MotorInitial
+            # self.BLDC_Up.MotorInitial()
+            # if self.setInitProgress('Initializing motor [BLDC_Up]...') == False:
+            #     return
+            # # self.signalProgress.emit('Initializing motor [FLDC_Down]...', 70)
+            # funcRetry = self.FLDC_Down.MotorInitial
+            # self.FLDC_Down.MotorInitial()
+            # if self.setInitProgress('Initializing motor [FLDC_Down]...') == False:
+            #     return
+            # # self.signalProgress.emit('Initializing motor [BLDC_Down]...', 80)
+            # funcRetry = self.BLDC_Down.MotorInitial
+            # self.BLDC_Down.MotorInitial()
+            # if self.setInitProgress('Initializing motor [BLDC_Down]...') == False:
+            #     return
 
-                "Motor Initial"
-                # self.signalProgress.emit('Initializing motor [FLDC_Up]...', 50)
-                self.FLDC_Up.MotorInitial()
-                if self.setInitProgress('Initializing motor [FLDC_Up]...') == False:
-                    return
-                # self.signalProgress.emit('Initializing motor [BLDC_Up]...', 60)
-                self.BLDC_Up.MotorInitial()
-                if self.setInitProgress('Initializing motor [BLDC_Up]...') == False:
-                    return
-                # self.signalProgress.emit('Initializing motor [FLDC_Down]...', 70)
-                self.FLDC_Down.MotorInitial()
-                if self.setInitProgress('Initializing motor [FLDC_Down]...') == False:
-                    return
-                # self.signalProgress.emit('Initializing motor [BLDC_Down]...', 80)
-                self.BLDC_Down.MotorInitial()
-                if self.setInitProgress('Initializing motor [BLDC_Down]...') == False:
-                    return
-
-                robotCheckStatus = True
-                self.bConnected = True
-                print("Surgical robot connect success.")
-            except:
-                print("Fail to link to robot, system will re-try after 3 seconds.")
-                nRetry += 1
-                sleep(3)
-                
-                if nRetry >= 3:
-                    self.setInitProgress('Fail to link to robot', False)
-                    self.bConnected = False
-                    return
+        robotCheckStatus = True
+        self.bConnected = True
+        print("Surgical robot connect success.")
+        # except:
+            # print("Fail to link to robot, system will re-try after 3 seconds.")
+            # nRetry += 1
+            # sleep(3)
+            
+            # if nRetry >= 3:
+            #     self.setInitProgress('Fail to link to robot', False)
+            #     self.bConnected = False
+            #     return
+            # if self.retryFunc(funcRetry) == False:
+            #     return
         
 
         "Motor Enable"
         motorEnableStatus = False
-        while motorEnableStatus is False:
-            try:
-                "Motor Enable"
-                # self.signalProgress.emit('Enabling motor...', 90)
-                msg = self.BLDC_Up.MotorDriverEnable()
-                self.setInitProgress(msg)
-                msg = self.BLDC_Down.MotorDriverEnable()
-                self.setInitProgress(msg)
-                msg = self.FLDC_Up.MotorDriverEnable()
-                self.setInitProgress(msg)
-                msg = self.FLDC_Down.MotorDriverEnable()
-                self.setInitProgress(msg)
-                motorEnableStatus = True
-                self.SetZero()
-                print("Motor are enabled.")
-                # self.signalProgress.emit('Homing process Completed', 100)
-                self.setInitProgress('Homing process Completed')
-            except:
-                self.setInitProgress('Robot control system connect fail.', False)
-                print("Robot control system connect fail.")
+        # while motorEnableStatus is False:
+        # try:
+        #     "Motor Enable"
+        #     # self.signalProgress.emit('Enabling motor...', 90)
+        #     msg = self.BLDC_Up.MotorDriverEnable()
+        #     self.setInitProgress(msg)
+        #     msg = self.BLDC_Down.MotorDriverEnable()
+        #     self.setInitProgress(msg)
+        #     msg = self.FLDC_Up.MotorDriverEnable()
+        #     self.setInitProgress(msg)
+        #     msg = self.FLDC_Down.MotorDriverEnable()
+        #     self.setInitProgress(msg)
+        #     motorEnableStatus = True
+        #     self.SetZero()
+        #     print("Motor are enabled.")
+        #     # self.signalProgress.emit('Homing process Completed', 100)
+        #     self.setInitProgress('Homing process Completed')
+        # except:
+        #     self.setInitProgress('Robot control system connect fail.', False)
+        #     print("Robot control system connect fail.")
         
         # self.LightSafe()
         
@@ -990,6 +1044,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
             print("Wrong type. Please try it again.")
                
 class LineLaser(MOTORCONTROL, QObject):
+    signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalInhaleProgress = pyqtSignal(bool, float)
     signalExhaleProgress = pyqtSignal(bool, float)
@@ -1011,6 +1066,25 @@ class LineLaser(MOTORCONTROL, QObject):
     def __init__(self):
         QObject.__init__(self)
         
+    def retryFunc(self, func, startTime, *args):
+        endTime = time()
+        
+        retryTimes = 0
+        ret = func(*args)
+        if ret < 1:
+            while (endTime - startTime) < TIMEOVER:
+                sleep(3)
+                ret = func(*args)
+                if ret > 1:
+                    return ret
+                retryTimes += 1
+                print(f'laser connection retry {retryTimes} times')
+                endTime = time()
+            
+        return ret
+        
+        
+        
     def setProgress(self, msg:str, bSucceed:bool = True):
         # self.initProgress = inc_progress
         if self.bStop:
@@ -1021,6 +1095,8 @@ class LineLaser(MOTORCONTROL, QObject):
         
         if bSucceed:
             self.initProgress = min(self.initProgress + nStep, 100)
+        else:
+            msg = '[ERROR]' + msg
         self.signalProgress.emit(msg, self.initProgress)
         
     def Initialize(self):
@@ -1037,6 +1113,8 @@ class LineLaser(MOTORCONTROL, QObject):
         self.shutter_opened = ct.c_double(0.0)
         self.shutter_closed = ct.c_double(0.0)
         self.profile_count = ct.c_uint(0)
+        
+        self.initProgress = 0
 
         # Null pointer if data not necessary
         self.null_ptr_short = ct.POINTER(ct.c_ushort)()
@@ -1044,65 +1122,95 @@ class LineLaser(MOTORCONTROL, QObject):
 
         # Create instance 
         self.hLLT = llt.create_llt_device(llt.TInterfaceType.INTF_TYPE_ETHERNET)
-        print(self.hLLT)
-        # Get available interfaces
-        ret = llt.get_device_interfaces_fast(self.hLLT, self.available_interfaces, len(self.available_interfaces))
-        if ret < 1:
-            raise ValueError("Error getting interfaces : " + str(ret))
-
-        # Set IP address
-        ret = llt.set_device_interface(self.hLLT, self.available_interfaces[0], 0)
-        if ret < 1:
-            raise ValueError("Error setting device interface: " + str(ret))
-
-        self.setProgress('Laser Device interface setting......succeed')
-        # Connect
-        tryTimes = 0
-        while tryTimes < 5:
-            ret = llt.connect(self.hLLT)
+        print(f'LLT = {self.hLLT}')
+        
+        startTime = time()
+        try:
+            # Get available interfaces
+            args = (self.hLLT, self.available_interfaces, len(self.available_interfaces))
+            func = llt.get_device_interfaces_fast 
+            # ret = llt.get_device_interfaces_fast(self.hLLT, self.available_interfaces, len(self.available_interfaces))
+            ret = self.retryFunc(func, startTime, *args)
             if ret < 1:
-                tryTimes += 1
-                print(f'connection retry {tryTimes} times')
-                if tryTimes >= 5:
-                    self.setProgress('[ERROR]Laser device connection ......failed', False)
-                    raise ConnectionError("Error connect: " + str(ret))
-            else:
-                break
-        
-        self.setProgress('Laser device connection ......succeed')
-        # Get available resolutions
-        ret = llt.get_resolutions(self.hLLT, self.available_resolutions, len(self.available_resolutions))
-        if ret < 1:
-            self.setProgress('[ERROR]Laser device get resolution ......failed', False)
-            raise ValueError("Error getting resolutions : " + str(ret))
+                self.setProgress('Laser Device interface setting......failed', False)
+                raise ValueError("Error getting interfaces : " + str(ret))
 
-        # Set max. resolution
-        self.resolution = self.available_resolutions[0]
-        ret = llt.set_resolution(self.hLLT, self.resolution)
-        if ret < 1:
-            self.setProgress('[ERROR]Laser device set resolution ......failed', False)
-            raise ValueError("Error getting resolutions : " + str(ret))
+            # Set IP address
+            args = (self.hLLT, self.available_interfaces[0], 0)
+            func = llt.set_device_interface
+            # ret = llt.set_device_interface(self.hLLT, self.available_interfaces[0], 0)
+            ret = self.retryFunc(func, startTime, *args)
+            if ret < 1:
+                self.setProgress('Laser Device interface setting......succeed', False)
+                raise ValueError("Error setting device interface: " + str(ret))
 
-        self.setProgress('Laser device resolution setting ......succeed')
-        
-        # Declare measuring data arrays
-        self.profile_buffer = (ct.c_ubyte*(self.resolution*64))()
-        self.x = (ct.c_double * self.resolution)()
-        self.z = (ct.c_double * self.resolution)()
-        self.intensities = (ct.c_ushort * self.resolution)()
+            self.setProgress('Laser Device interface setting......succeed')
+            # Connect
+            # tryTimes = 0
+            # while tryTimes < 5:
+            #     ret = llt.connect(self.hLLT)
+            #     if ret < 1:
+            #         tryTimes += 1
+            #         print(f'connection retry {tryTimes} times')
+            #         if tryTimes >= 5:
+            #             self.setProgress('[ERROR]Laser device connection ......failed', False)
+            #             raise ConnectionError("Error connect: " + str(ret))
+            #     else:
+            #         break
+            ret = self.retryFunc(llt.connect, startTime, self.hLLT)
+            if ret < 1:
+                raise ConnectionError("Error connect: " + str(ret))
+            
+            self.setProgress('Laser device connection ......succeed')
+            # Get available resolutions
+            args = (self.hLLT, self.available_resolutions, len(self.available_resolutions))
+            func = llt.get_resolutions
+            # ret = llt.get_resolutions(self.hLLT, self.available_resolutions, len(self.available_resolutions))
+            ret = self.retryFunc(func, startTime, *args)
+            if ret < 1:
+                self.setProgress('[ERROR]Laser device get resolution ......failed', False)
+                raise ValueError("Error getting resolutions : " + str(ret))
 
-        # Scanner type
-        ret = llt.get_llt_type(self.hLLT, ct.byref(self.scanner_type))
-        if ret < 1:
-            self.setProgress('[ERROR]Laser device get scanner type ......failed', False)
-            raise ValueError("Error scanner type: " + str(ret))
+            # Set max. resolution
+            self.resolution = self.available_resolutions[0]
+            args = (self.hLLT, self.resolution)
+            func = llt.set_resolution
+            # ret = llt.set_resolution(self.hLLT, self.resolution)
+            ret = self.retryFunc(func, startTime, *args)
+            if ret < 1:
+                self.setProgress('[ERROR]Laser device set resolution ......failed', False)
+                raise ValueError("Error getting resolutions : " + str(ret))
 
-        self.setProgress('Laser device get scanner type ......succeed')
-        # Set profile config
-        ret = llt.set_profile_config(self.hLLT, llt.TProfileConfig.PROFILE)
-        if ret < 1:
-            self.setProgress('[ERROR]Laser device set profile config ......failed', False)
-            raise ValueError("Error setting profile config: " + str(ret))
+            self.setProgress('Laser device resolution setting ......succeed')
+            
+            # Declare measuring data arrays
+            self.profile_buffer = (ct.c_ubyte*(self.resolution*64))()
+            self.x = (ct.c_double * self.resolution)()
+            self.z = (ct.c_double * self.resolution)()
+            self.intensities = (ct.c_ushort * self.resolution)()
+            
+            # Scanner type
+            ret = self.retryFunc(llt.get_llt_type, startTime, self.hLLT, ct.byref(self.scanner_type))
+            # ret = llt.get_llt_type(self.hLLT, ct.byref(self.scanner_type))
+            if ret < 1:
+                self.setProgress('[ERROR]Laser device get scanner type ......failed', False)
+                raise ValueError("Error scanner type: " + str(ret))
+
+            self.setProgress('Laser device get scanner type ......succeed')
+            # Set profile config
+            # ret = llt.set_profile_config(self.hLLT, llt.TProfileConfig.PROFILE)
+            ret = self.retryFunc(llt.set_profile_config, startTime, self.hLLT, llt.TProfileConfig.PROFILE)
+            if ret < 1:
+                self.setProgress('[ERROR]Laser device set profile config ......failed', False)
+                raise ValueError("Error setting profile config: " + str(ret))
+        except ValueError as msg:
+            print(msg)
+            self.signalInitFailed.emit(DEVICE_LASER)
+            return
+        except ConnectionError as msg:
+            print(msg)
+            self.signalInitFailed.emit(DEVICE_LASER)
+            return
 
         self.setProgress('Laser device set profile config ......succeed')
         # Set trigger free run
@@ -1724,7 +1832,7 @@ class LineLaser(MOTORCONTROL, QObject):
         
         
     def CloseLaser(self):
-        if hasattr(self, 'ret'):
+        if hasattr(self, 'ret') and self.ret is not None:
             if self.ret & llt.CONVERT_X == 0 or self.ret & llt.CONVERT_Z == 0 or self.ret & llt.CONVERT_MAXIMUM == 0:
                 raise ValueError("Error converting data: " + str(self.ret))
 
@@ -1898,7 +2006,8 @@ class LineLaser(MOTORCONTROL, QObject):
         # diff = np.abs(np.diff(dataTemp))
         
         # when diff > tolerance, skip this data
-        # if np.any(diff > toleranceLaserData):
+        # avg = np.average(diff)
+        # if avg < toleranceLaserData:
         #     return None
         
         output = []
