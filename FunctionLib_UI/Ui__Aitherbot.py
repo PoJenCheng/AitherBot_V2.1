@@ -1025,6 +1025,40 @@ class Ui_MainWindow(object):
         self.lblCounter.setAlignment(QtCore.Qt.AlignCenter)
         self.lblCounter.setObjectName("lblCounter")
         self.gridLayout_35.addWidget(self.lblCounter, 0, 0, 1, 2)
+        self.spinBox = QtWidgets.QSpinBox(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.spinBox.sizePolicy().hasHeightForWidth())
+        self.spinBox.setSizePolicy(sizePolicy)
+        self.spinBox.setMinimumSize(QtCore.QSize(400, 100))
+        self.spinBox.setStyleSheet("QSpinBox{\n"
+"    padding-right: 0px;\n"
+"    padding-left: 0px;\n"
+"    font: 24pt \"Arial\";\n"
+"}\n"
+"\n"
+"QSpinBox::up-button{\n"
+"    width:40%;\n"
+"    margin-right:0px;\n"
+"    margin-left:0px;\n"
+"}\n"
+"\n"
+"QSpinBox::down-button{\n"
+"    width:40%;\n"
+"    margin-right:0px;\n"
+"    margin-left:0px;\n"
+"}")
+        self.spinBox.setWrapping(False)
+        self.spinBox.setFrame(True)
+        self.spinBox.setAlignment(QtCore.Qt.AlignCenter)
+        self.spinBox.setMinimum(1)
+        self.spinBox.setMaximum(100)
+        self.spinBox.setSingleStep(1)
+        self.spinBox.setProperty("value", 1)
+        self.spinBox.setDisplayIntegerBase(10)
+        self.spinBox.setObjectName("spinBox")
+        self.gridLayout_35.addWidget(self.spinBox, 0, 2, 1, 1)
         self.gridLayout_36.addWidget(self.wdgBreathingCycle, 1, 1, 1, 1)
         self.horizontalLayout_26 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_26.setObjectName("horizontalLayout_26")

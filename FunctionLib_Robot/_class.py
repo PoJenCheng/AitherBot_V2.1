@@ -1618,7 +1618,7 @@ class LineLaser(MOTORCONTROL, QObject):
             
             if avg:
                 # 檢查data的平均是否停留在一個區間內3秒不動，是就紀錄下平均值
-                if abs(avg - avgMean) < 0.01:
+                if abs(avg - avgMean) < toleranceLaserData:
                     if bInStable == False:
                         tStartInhale = tTime
                         bInStable = True

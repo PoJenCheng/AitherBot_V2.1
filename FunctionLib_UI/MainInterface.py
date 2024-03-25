@@ -681,6 +681,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
         
+        self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -1201,6 +1203,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.ChangeCurrentDicom(self.btnDicomHigh.objectName())
         pass
     
+    def OnValueChanged_spin(self, value:int):
+        global toleranceLaserData
+        toleranceLaserData = value * 0.01
+    
     def OnValueChanged_sldTrajectory(self, value):
         # print(f'value = {value}')
         # sldValue = self.sldTrajectory.maximum() - value
@@ -1671,7 +1677,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkScene.setCurrentWidget(self.pgLaser)
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
-            # self.loadingRobot = 100
+            self.loadingRobot = 100
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -1686,12 +1692,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser.start()
             
             # self.loadingLaser = 100
-            self.robot = Robot.MOTORSUBFUNCTION()
-            self.robot.signalProgress.connect(self.Robot_OnLoading)
-            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            # self.robot = Robot.MOTORSUBFUNCTION()
+            # self.robot.signalProgress.connect(self.Robot_OnLoading)
+            # self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            self.tRobot = threading.Thread(target = self.robot.Initialize)
-            self.tRobot.start()
+            # self.tRobot = threading.Thread(target = self.robot.Initialize)
+            # self.tRobot.start()
             
             # self.RobotSupportArm = 100
             # self.RobotSupportArm = Robot.RobotSupportArm()   
@@ -2961,6 +2967,7 @@ class Canvas(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
         fig.set_facecolor('#4D84AD')
         self.axes = fig.add_subplot(111)#
+        self.axes.set_facecolor('#4D84AD')
         
         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
         self.setParent(parent)
