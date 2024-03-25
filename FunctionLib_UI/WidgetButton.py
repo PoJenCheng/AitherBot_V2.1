@@ -228,4 +228,98 @@ class Indicator(QWidget):
             painter.setBrush(QColor(255, 255, 255))  
             painter.drawPolygon(pointer)        
         
+class messageBox(QMessageBox):
+    
+    def __init__(self, icon:int, text:str):
+        super().__init__()
+        
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        if icon:
+            self.setIcon(icon)
+            
+        self.setText(text)
+        
+        layout = self.layout()
+        widget = QWidget()
+        widget.setObjectName('msgWidget')
+        layout.addWidget(widget)
+        
+        # self.addButton('Reborn', 3)
+        # self.addButton('exit', 3)
+        
+        subLayout = QGridLayout(widget)
+        col = 0
+        
+        self.hLayout = QHBoxLayout()
+        self.hLayout.setContentsMargins(0, 0, 0, 0)
+        self.hLayout.setSpacing(0)
+        for item in self.children():
+            
+            if isinstance(item, QLabel):
+                subLayout.addWidget(item, 0, col)
+                col += 1
+                
+            # if isinstance(item, QDialogButtonBox):
+            #     self.hLayout.addWidget(item)
+                
+        subLayout.addLayout(self.hLayout, 1, 0, 1, 2)
+        widget.setStyleSheet("""
+                             
+                                #msgWidget{
+                                    background-color:rgba(93, 161, 209, 180);
+                                    border-radius:10px;
+                                }
+                                
+                                QWidget{
+                                    font:24pt "Arial";
+                                    color:rgb(255, 255, 208);
+                                }
+                                
+                                QPushButton{
+                                    background-color:rgb(109, 190, 247);
+                                    border-top:1px solid #ddd;
+                                    border-left:1px solid #ddd;
+                                    border-bottom:2px solid #444;
+                                    border-right:2px solid #444;
+                                    padding:10px;
+                                    min-width:200px;
+                                }
+                                
+                                QPushButton:pressed{
+                                    border-top:2px solid #444;
+                                    border-left:2px solid #444;
+                                    border-bottom:1px solid #ddd;
+                                    border-right:1px solid #ddd;
+                                }
+                                
+                             """)
+        
+        
+    def addButtons(self, *buttonName):
+        
+        for button in buttonName:
+            self.addButton(button, 3)
+        
+        # for button in buttonName:
+        #     self.hLayout.addWidget(QPushButton(button))
+            
+        for item in self.children():
+            if isinstance(item, QDialogButtonBox):
+                # item.layout().setSpacing(0)
+                self.hLayout.addWidget(item)
+                
+                lstButton = [button for button in item.children() if isinstance(button, QPushButton)]
+                
+                if len(lstButton) > 1:
+                    lstButton[0].setStyleSheet("""
+                                                border-top-left-radius:30px;
+                                                border-bottom-left-radius:30px;
+                                                """)
+                    
+                    lstButton[-1].setStyleSheet("""
+                                                border-top-right-radius:30px;
+                                                border-bottom-right-radius:30px;
+                                                """)
         

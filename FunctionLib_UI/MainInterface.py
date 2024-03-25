@@ -1677,7 +1677,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkScene.setCurrentWidget(self.pgLaser)
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
-            self.loadingRobot = 100
+            # self.loadingRobot = 100
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -1692,12 +1692,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser.start()
             
             # self.loadingLaser = 100
-            # self.robot = Robot.MOTORSUBFUNCTION()
-            # self.robot.signalProgress.connect(self.Robot_OnLoading)
-            # self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            # self.tRobot = threading.Thread(target = self.robot.Initialize)
-            # self.tRobot.start()
+            self.tRobot = threading.Thread(target = self.robot.Initialize)
+            self.tRobot.start()
             
             # self.RobotSupportArm = 100
             # self.RobotSupportArm = Robot.RobotSupportArm()   
@@ -2223,13 +2223,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         self.errDevice |= errDevice
         if not hasattr(self, 'msgbox'):
-            msgbox = QMessageBox()
-            msgbox.setIcon(QMessageBox.Question)
-            msgbox.setWindowTitle('CONNECTION ERROR')
-            msgbox.setText(msg + '\nRetry again?')
-            # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msgbox.addButton('Retry', 3)
-            msgbox.addButton('Shutdown', 3)
+            msgbox = messageBox(QMessageBox.Question, msg + '\nRetry again?')
+            msgbox.addButtons('Retry', 'Shutdown')
+            # msgbox.setIcon(QMessageBox.Question)
+            # msgbox.setText(msg + '\nRetry again?')
+            # msgbox.addButton('Retry', 3)
+            # msgbox.addButton('Shutdown', 3)
             
             self.msgbox = msgbox
             ret = msgbox.exec_()
