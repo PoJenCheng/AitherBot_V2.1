@@ -1215,6 +1215,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.ChangeCurrentDicom(self.btnDicomHigh.objectName())
         pass
     
+    def OnValueChanged_spin(self, value:int):
+        gVars['toleranceLaserData'] = value * 0.01
+    
     def OnValueChanged_sldTrajectory(self, value):
         # print(f'value = {value}')
         # sldValue = self.sldTrajectory.maximum() - value
