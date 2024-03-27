@@ -1031,7 +1031,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.spinBox.sizePolicy().hasHeightForWidth())
         self.spinBox.setSizePolicy(sizePolicy)
-        self.spinBox.setMinimumSize(QtCore.QSize(400, 100))
+        self.spinBox.setMinimumSize(QtCore.QSize(300, 100))
         self.spinBox.setStyleSheet("QSpinBox{\n"
 "    padding-right: 0px;\n"
 "    padding-left: 0px;\n"
