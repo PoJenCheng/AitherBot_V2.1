@@ -1226,75 +1226,7 @@ class LineLaser(MOTORCONTROL, QObject):
         except:
             self.RobotSystem.DisplayError()
             print("Calculate height avg error")
-            
-    def CheckInhale(self):
-        arr = self.GetLaserData()
-        if arr is not None:
-            arr = arr[laserStartPoint:laserEndPoint]
-            arrAvg = self.CalHeightAvg(arr)
-            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
-            maxAvg =  items[-1][0]
-            minAvg =  items[0][0]
-            dis = maxAvg - minAvg
-            percentage = ((maxAvg-arrAvg)/dis) * 100
-            
-            bInhale = False
-            if percentage >= INHALE_AREA and percentage <= 100:
-                bInhale = True
-            self.signalInhaleProgress.emit(bInhale, percentage)
-            
-            # self.receiveData = arr[laserStartPoint:laserEndPoint]
-            # self.CalculateRealTimeHeightAvg()
-            # # print(self.realTimeHeightAvgValue)
-            
-            # realTimeAvgValue = self.realTimeHeightAvgValue[0]
-            # # 燈號控制
-            # self.avgValueList = []
-            # # for item in self.percentageBase.items():
-            # for item in self.percentageBase.values():
-            #     # self.avgValueList.append(list(item)[1])
-            #     self.avgValueList.append(list(item)[0])
-                
-            # # minValue = min(self.avgValueList)
-            # # maxValue = max(self.avgValueList)
-            # self.avgValueList = sorted(self.avgValueList, reverse=True)
-            # percentage = self.PercentagePrediction(realTimeAvgValue)
-            # if percentage:
-            #     print(f'percentage:{percentage:.1f}')
-            #     bInhale = False
-            #     if percentage > 90 and percentage <= 100:
-            #         bInhale = True
-            #     self.signalInhaleProgress.emit(bInhale)
-            
-    def CheckExhale(self):
-        arr = self.GetLaserData()
-        if arr is not None:
-            arr = arr[laserStartPoint:laserEndPoint]
-            arrAvg = self.CalHeightAvg(arr)
-            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
-            maxAvg =  items[-1][0]
-            minAvg =  items[0][0]
-            dis = maxAvg - minAvg
-            percentage = ((maxAvg-arrAvg)/dis) * 100
-            
-            bExhale = False
-            if percentage <= EXHALE_AREA and percentage >= 0:
-                bExhale = True
-            self.signalExhaleProgress.emit(bExhale, percentage)
-            
-    # private function
-    # filter out range data from model
-    def filterOutRange(self, indexes):
-        if isinstance(indexes, (tuple, list, np.ndarray)):
-            if len(indexes) < 2:
-                print('too less number parameters in function "filterOutRange"')
-            else:
-                indexMin = min(indexes)
-                indexMax = max(indexes)
-                lstDatabase = list(self.percentageBase.items())[indexMin:indexMax + 1]
-                self.percentageBase = dict(lstDatabase)
-                
-                
+
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):
         avgBase = list(arr.values())
