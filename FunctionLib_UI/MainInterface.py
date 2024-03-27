@@ -586,9 +586,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.laserFigure = Canvas(self, dpi = 200)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
-        # self.lytLaserModel = QVBoxLayout(self.wdgLaserPlot2)
-        # self.lytLaserModel = QVBoxLayout(self.wdgIntraCT)
-        # self.lytLaserModel = QVBoxLayout(self.wdgLaserFig)
         
         
         self.btnSceneLaser.setEnabled(False)
