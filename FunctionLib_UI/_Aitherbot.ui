@@ -2251,7 +2251,7 @@ margin-right:0px;
                  </property>
                  <property name="minimumSize">
                   <size>
-                   <width>400</width>
+                   <width>300</width>
                    <height>100</height>
                   </size>
                  </property>
@@ -5910,7 +5910,7 @@ margin-right:0px;
   <slot>BackScene()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btgDicom"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="btgDicom"/>
  </buttongroups>
 </ui>
