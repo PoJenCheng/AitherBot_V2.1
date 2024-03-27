@@ -517,10 +517,6 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
         lstMotor = [self.FLDC_Up, self.BLDC_Up, self.FLDC_Down, self.BLDC_Down]
         dicMotor = dict(zip(keyMotor, lstMotor))
             
-            # self.FLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
-            # self.BLDC_Up.signalInitErrMsg.connect(self.onSignal_errMsg)
-            # self.FLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
-            # self.BLDC_Down.signalInitErrMsg.connect(self.onSignal_errMsg)
         for key, motor in dicMotor.items():
             motor.signalInitErrMsg.connect(self.onSignal_errMsg)
             
@@ -534,68 +530,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
                 self.signalInitFailed.emit(DEVICE_ROBOT)
                 return False
         self.setInitProgress('Homing process Completed')
-            # "Motor Initial"
-            # self.signalProgress.emit('Initializing motor [FLDC_Up]...', 50)
-            # ret = self.retryFunc(self.FLDC_Up.MotorInitial, startTime)
-            # self.FLDC_Up.MotorInitial()
-            # if self.setInitProgress('Initializing motor [FLDC_Up]...', ret) == False:
-            #     return
-            # # self.signalProgress.emit('Initializing motor [BLDC_Up]...', 60)
-            # funcRetry = self.BLDC_Up.MotorInitial
-            # self.BLDC_Up.MotorInitial()
-            # if self.setInitProgress('Initializing motor [BLDC_Up]...') == False:
-            #     return
-            # # self.signalProgress.emit('Initializing motor [FLDC_Down]...', 70)
-            # funcRetry = self.FLDC_Down.MotorInitial
-            # self.FLDC_Down.MotorInitial()
-            # if self.setInitProgress('Initializing motor [FLDC_Down]...') == False:
-            #     return
-            # # self.signalProgress.emit('Initializing motor [BLDC_Down]...', 80)
-            # funcRetry = self.BLDC_Down.MotorInitial
-            # self.BLDC_Down.MotorInitial()
-            # if self.setInitProgress('Initializing motor [BLDC_Down]...') == False:
-            #     return
 
         robotCheckStatus = True
         self.bConnected = True
         print("Surgical robot connect success.")
-        # except:
-            # print("Fail to link to robot, system will re-try after 3 seconds.")
-            # nRetry += 1
-            # sleep(3)
-            
-            # if nRetry >= 3:
-            #     self.setInitProgress('Fail to link to robot', False)
-            #     self.bConnected = False
-            #     return
-            # if self.retryFunc(funcRetry) == False:
-            #     return
-        
 
         "Motor Enable"
         motorEnableStatus = False
-        # while motorEnableStatus is False:
-        # try:
-        #     "Motor Enable"
-        #     # self.signalProgress.emit('Enabling motor...', 90)
-        #     msg = self.BLDC_Up.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.BLDC_Down.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.FLDC_Up.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.FLDC_Down.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     motorEnableStatus = True
-        #     self.SetZero()
-        #     print("Motor are enabled.")
-        #     # self.signalProgress.emit('Homing process Completed', 100)
-        #     self.setInitProgress('Homing process Completed')
-        # except:
-        #     self.setInitProgress('Robot control system connect fail.', False)
-        #     print("Robot control system connect fail.")
-        
-        # self.LightSafe()
         
     def OnSignal_progress(self, progress:float):
         self.fHomeProgress = progress
