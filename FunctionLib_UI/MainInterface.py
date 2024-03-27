@@ -111,7 +111,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.language = lang
         self.setupUi(self)
         self.ui = Ui_MainWindow()
-        
+    
         self.dicomLow = DISPLAY()
         self.dicomHigh = DISPLAY()
         
@@ -228,6 +228,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.SetUIEnable_Trajectory(False)
         self.init_ui()
+        self.btnRobotRelease.setEnabled(True)
+        self.btnRobotFix.setEnabled(False)
+        self.btnRobotSetTarget.setEnabled(False)
+        self.btnRobotBackTarget.setEnabled(False)
+        self.settingTarget = False
         
         
     def addCrossSectionItemInSelector(self):
@@ -1673,15 +1678,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
             # self.loadingRobot = 100
-            self.Laser = Robot.LineLaser()
-            self.Laser.signalProgress.connect(self.Laser_OnLoading)
-            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
-            tLaser= threading.Thread(target = self.Laser.Initialize)
-            # tLaser= threading.Thread(target = self.sti_RunLaser)
-            tLaser.start()
+            # self.Laser = Robot.LineLaser()
+            # self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            # self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            # self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            # tLaser= threading.Thread(target = self.Laser.Initialize)
+            # # tLaser= threading.Thread(target = self.sti_RunLaser)
+            # tLaser.start()
             
-            # self.loadingLaser = 100
+            self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             
@@ -1689,7 +1694,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot.start()
             
             # self.RobotSupportArm = 100
-            self.RobotSupportArm = Robot.RobotSupportArm()   
+            self.RobotSupportArm = Robot.RobotSupportArm()
+            self.OperationLight = Robot.OperationLight()
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2231,7 +2237,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
         
         self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.uiHoming.setModal(True)
+        self.uiHoming.setModal(False)
         self.uiHoming.exec_()
         self.listSubDialog.append(self.uiHoming)
         # self.NextScene()
@@ -2254,16 +2260,49 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Robot_Stop(self):
         QMessageBox.information(None, 'Info', 'Robot Stop')
         
+    def ReleaseRobotArm(self):
+        self.OperationLight.DynamicCompensation()
+        self.FixArmStatus = False
+        while self.FixArmStatus == False:
+            self.RobotSupportArm.ReleaseAllEncoder()
+            print('robot release')
+        
     def Robot_ReleaseArm(self):
-        print('robot release')
+        self.btnRobotRelease.setEnabled(False)
+        self.btnRobotFix.setEnabled(True)
+        self.btnRobotSetTarget.setEnabled(False)
+        self.btnRobotBackTarget.setEnabled(False)
+        self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
+        self.tReleaseArm.start()
     
     def Robot_FixArm(self):
+        self.btnRobotRelease.setEnabled(True)
+        self.btnRobotFix.setEnabled(False)
+        self.btnRobotSetTarget.setEnabled(True)
+        if self.settingTarget == True:
+            self.btnRobotBackTarget.setEnabled(True)
+        else:
+            self.btnRobotBackTarget.setEnabled(False)
+        self.FixArmStatus = True
         print('fix arm')
         
     def Robot_SettingTarget(self):
+        self.btnRobotSetTarget.setEnabled(False)
+        if self.settingTarget:
+            self.btnRobotBackTarget.setEnabled(True)
+        else:
+            self.btnRobotBackTarget.setEnabled(False)
+        self.RobotSupportArm.SetTargetPos()
+        self.settingTarget = True
         print('setting robot target')
         
     def Robot_BackToTarget(self):
+        # self.btnRobotRelease.setEnabled(True)
+        # self.btnRobotFix.setEnabled(False)
+        self.btnRobotSetTarget.setEnabled(False)
+        self.btnRobotBackTarget.setEnabled(False)
+        sleep(2)
+        self.RobotSupportArm.BackToTargetPos()
         print('Back to target')
         
     def Laser_SetLoadingMessage(self, msg:str):
@@ -2496,6 +2535,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         except Exception as e:
             print(e)
             print("close Laser error")
+        
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
@@ -3091,3 +3131,5 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         self.setPointWindow.iren.Start()
         ############################################################################################
         return
+    
+    

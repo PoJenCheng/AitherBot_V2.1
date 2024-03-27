@@ -197,7 +197,7 @@ class MainWidget(QMainWindow,Ui_MainWindow, MOTORSUBFUNCTION, LineLaser):
         # # self.recordBreathingBase = False        
         
         # "Laser Button Color Initialization"
-        # # self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
+        self.Button_StartLaserDisplay.setStyleSheet("background-color:#DCDCDC")
         # # self.Button_StopLaserDisplay.setStyleSheet("background-color:#DCDCDC")
         # # self.Button_RecordCycle.setStyleSheet("background-color:#DCDCDC")
         # # self.Button_StopRecording.setStyleSheet("background-color:#DCDCDC")
