@@ -30,10 +30,10 @@ maxManualRotateSpeed = 200
 jogResolution = 1
 differential_time = 2
 normalSpeed = 1000
-shiftingFLDC_up = -335.5664 - 8486.0156
-shiftingBLDC_Up = -37846.5820 + 1.6699
-shiftingFLDC_Down = -769.5703 - 14868.9844
-shiftingBLDC_Down = -37612.4414 + 2.5488
+shiftingFLDC_up = -7407.9492-11.0742
+shiftingBLDC_Up = -37126.9336-0.0879
+shiftingFLDC_Down = -8178.5742-6828.7500
+shiftingBLDC_Down = -37000.0195+0.1758
 robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 129
@@ -43,9 +43,9 @@ global data
 data = ''
 
 "distance between point ball and robot base"
-baseShift_X = -174  #205
+baseShift_X = -178
 baseShift_Y = 32.5 #70 - 2.5
-baseShift_Z = -26.7 #15.5
+baseShift_Z = -21.4 #15.5
 
 
 "Laser setting parameter"

@@ -5,7 +5,8 @@ import ctypes as ct
 import sys
 import numpy as np
 import keyboard
-# import serial
+import winsound
+import serial
 # import random
 # import atexit
 from pylltLib import pyllt as llt
@@ -97,42 +98,37 @@ class MOTORCONTROL(QObject):
         self.bActualVelocity = 'GVL.bActualVelocity'
         self.fbActualVelocity = 'GVL.Axis' + str(self.motorAxis) + '_Velocity'
         self.fbStatusVelocity = 'GVL.StatusVelocity_' + str(self.motorAxis)
+        self.fResetStatus = 'GVL.ResetStatus_'+str(self.motorAxis)
         # self.bLimitSwitch5 = 'GVL.LimitSwitch5'
         # self.bLimitSwitch6 = 'GVL.LimitSwitch6'
         self.bDualAbsolute = 'GVL.bDualAbsolute'
-        # self.bDisplayLight_GY = 'GVL.DisplayLight_GY'
-        # self.bDisplayLight_RE = 'GVL.DisplayLight_RE'
-        # self.bTrackLight_GY = 'GVL.LaserTrack_GY'
-        # self.bTrackLight_RE = 'GVL.LaserTrack_RE'
+
 
 
         try:
             self.plc = pyads.Connection('5.97.65.198.1.1', 851)
             # self.plc = pyads.Connection('5.97.65.198.1.1', pyads.PORT_TC3PLC1)
-        # ser = serial.Serial(port='COM6', baudrate=9600, timeout=2)
+            # ser = serial.Serial(port='COM5', baudrate=9600, timeout=2)
             self.plc.open()
             print(f'plc open status : {self.plc.is_open}')
         except:
             input("Motor or auduino connect fail. Please check it and press 'Enter'")
 
     def MotorInitial(self):
-        try:
-            self.plc.write_by_name(self.bMotorStopLabel, False)
-            self.plc.write_by_name(self.bServoEnableLabel, False)
-            self.plc.write_by_name(self.bVelocityLabel, False)
-            self.plc.write_by_name(self.bMoveAbsolute, False)
-            self.plc.write_by_name(self.bDualRotateRelative, False)
-            self.plc.write_by_name(self.bDualLinearRelative, False)
-            self.plc.write_by_name(self.bMoveRelative, False)
-            self.plc.write_by_name(self.bReset, False)
-            self.plc.write_by_name(self.bSetPosition, False)
-            self.plc.write_by_name(self.bMultiMoveRelative, False)
-            self.plc.write_by_name(self.bActualPosition, True)
-            sleep(0.5)
-        except:
-            self.plc.write_by_name(self.bDisplayLight_GY,True)
-            self.plc.write_by_name(self.bDisplayLight_RE,True)
+        self.plc.write_by_name(self.bMotorStopLabel, False)
+        self.plc.write_by_name(self.bServoEnableLabel, False)
+        self.plc.write_by_name(self.bVelocityLabel, False)
+        self.plc.write_by_name(self.bMoveAbsolute, False)
+        self.plc.write_by_name(self.bDualRotateRelative, False)
+        self.plc.write_by_name(self.bDualLinearRelative, False)
+        self.plc.write_by_name(self.bMoveRelative, False)
+        self.plc.write_by_name(self.bReset, False)
+        self.plc.write_by_name(self.bSetPosition, False)
+        self.plc.write_by_name(self.bMultiMoveRelative, False)
+        self.plc.write_by_name(self.bActualPosition, True)
+        sleep(0.5)
 
+    
     def TurnOffChecking(self):
         while self.plc.read_by_name(self.bMoveSpeed) == True:
             self.plc.write_by_name(self.bMoveSpeed, False)
@@ -158,7 +154,9 @@ class MOTORCONTROL(QObject):
             return f"The servo motor {self.motorAxis} is enabled."
         else:
             print(f"Fail to enable the servo motor {self.motorAxis}.")
-            self.signalInitErrMsg.emit(f"Fail to enable the servo motor {self.motorAxis}.")
+            # self.signalInitErrMsg.emit(f"Fail to enable the servo motor {self.motorAxis}.")
+            print(f"Reset servo motor {self.motorAxis}")
+            self.ResetMC()
             sleep(1)
             self.MotorDriverEnable()
             
@@ -295,34 +293,60 @@ class MOTORCONTROL(QObject):
             self.plc.write_by_name(self.bMoveRelative, False)
             moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
             
-    # def DisplayRun(self):
-    #     self.plc.write_by_name(self.bDisplayLight_GY,True)
-    #     self.plc.write_by_name(self.bDisplayLight_RE,False)
+    def ResetMC(self):
+        while self.plc.read_by_name(self.fResetStatus) == False:
+            self.plc.write_by_name(self.bReset,True)
+        while self.plc.read_by_name(self.fResetStatus) == True:
+            self.plc.write_by_name(self.bReset,False)
             
-    # def DisplaySafe(self):
-    #     self.plc.write_by_name(self.bDisplayLight_GY,False)
-    #     self.plc.write_by_name(self.bDisplayLight_RE,False)
-        
-    # def DisplayError(self):
-    #     self.plc.write_by_name(self.bDisplayLight_GY,True)
-    #     self.plc.write_by_name(self.bDisplayLight_RE,True)
-        
-    # def TrackGreen(self):
-    #     self.plc.write_by_name(self.bTrackLight_GY,True)
-    #     self.plc.write_by_name(self.bTrackLight_RE,False)
-    
-    # def TrackYellow(self):
-    #     self.plc.write_by_name(self.bTrackLight_GY,True)
-    #     self.plc.write_by_name(self.bTrackLight_RE,True)
-        
-    # def TrackRed(self):
-    #     self.plc.write_by_name(self.bTrackLight_GY,False)
-    #     self.plc.write_by_name(self.bTrackLight_RE,True)
-        
-    # def TrackNull(self):
-    #     self.plc.write_by_name(self.bTrackLight_GY,False)
-    #     self.plc.write_by_name(self.bTrackLight_RE,False)
 
+class OperationLight():
+    def __init__(self):
+        self.bDisplayLight_GR = 'GVL.DisplayLight_GR'
+        self.bDisplayLight_OR = 'GVL.DisplayLight_OR'
+        self.bDisplayLight_RE = 'GVL.DisplayLight_RE'
+        self.DynamicCompensationLight = 'GVL.DynamicCompensation'
+        self.EnableCompensation = 'GVL.EnableCompensation'
+        
+        try:
+            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
+            self.plc.open()
+            print(f'plc open status : {self.plc.is_open}')
+            
+            self.plc.write_by_name(self.bDisplayLight_GR,False)
+            self.plc.write_by_name(self.bDisplayLight_OR,False)
+            self.plc.write_by_name(self.bDisplayLight_RE,False)
+        except:
+            input("Motor or auduino connect fail. Please check it and press 'Enter'")
+            self.plc.write_by_name(self.bDisplayLight_GR,False)
+            self.plc.write_by_name(self.bDisplayLight_OR,False)
+            self.plc.write_by_name(self.bDisplayLight_RE,True)
+            
+    def DisplayRun(self):
+        self.plc.write_by_name(self.bDisplayLight_GR,False)
+        self.plc.write_by_name(self.bDisplayLight_OR,True)
+        self.plc.write_by_name(self.bDisplayLight_RE,False)
+            
+    def DisplaySafe(self):
+        self.plc.write_by_name(self.bDisplayLight_GR,True)
+        self.plc.write_by_name(self.bDisplayLight_OR,False)
+        self.plc.write_by_name(self.bDisplayLight_RE,False)
+        
+    def DisplayError(self):
+        self.plc.write_by_name(self.bDisplayLight_GR,False)
+        self.plc.write_by_name(self.bDisplayLight_OR,False)
+        self.plc.write_by_name(self.bDisplayLight_RE,True)
+
+    def DynamicCompensation(self):
+        EnableCompensation = self.plc.read_by_name(self.EnableCompensation)
+        while EnableCompensation == False:
+            sleep(0.2)
+            self.plc.write_by_name(self.DynamicCompensationLight,True)
+            sleep(0.2)
+            self.plc.write_by_name(self.DynamicCompensationLight,False)
+            EnableCompensation = self.plc.read_by_name(self.EnableCompensation)
+        self.plc.write_by_name(self.DynamicCompensationLight,False)
+    
 
 class RobotSupportArm():
     def __init__(self):
@@ -339,6 +363,8 @@ class RobotSupportArm():
         self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
         self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
         self.Tolerance = 100
+        self.frequency = 1000
+        self.duration = 1000
         
         self.plc.write_by_name(self.EnableSupportEn1,False) 
         self.plc.write_by_name(self.EnableSupportEn2,False)
@@ -349,22 +375,17 @@ class RobotSupportArm():
         return En1, En2
     
     def ReleaseAllEncoder(self):
-        ReleaseStatus = False
         Release = self.plc.read_by_name(self.SupportMove)
         while Release == True:
-            ReleaseStatus = True
             self.plc.write_by_name(self.EnableSupportEn1,True) 
             self.plc.write_by_name(self.EnableSupportEn2,True)
             Release = self.plc.read_by_name(self.SupportMove)
                             
         self.plc.write_by_name(self.EnableSupportEn1,False) 
         self.plc.write_by_name(self.EnableSupportEn2,False)
-        if ReleaseStatus == False:
-            self.ReleaseAllEncoder()
     
     def SetTargetPos(self):
         self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
-        return self.TargetEn1, self.TargetEn2
     
     def CaliEncoder1(self):
         caliStatus  = False
@@ -373,11 +394,11 @@ class RobotSupportArm():
             footController = self.plc.read_by_name(self.SupportMove)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn1,True) #將軸一enable
-                print(abs(RealTimePos[0]-self.TargetEn1))
                 if abs(RealTimePos[0]-self.TargetEn1) <= self.Tolerance:
                     self.plc.write_by_name(self.EnableSupportEn1,False)
                     caliStatus = True
-    
+                    winsound.Beep(self.frequency, self.duration)
+                    
     def CaliEncoder2(self):
         caliStatus  = False
         while caliStatus is False:
@@ -385,17 +406,17 @@ class RobotSupportArm():
             footController = self.plc.read_by_name(self.SupportMove)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn2,True) #將軸二enable
-                print(abs(RealTimePos[1]-self.TargetEn2))
                 if abs(RealTimePos[1]-self.TargetEn2) <= self.Tolerance:
                     self.plc.write_by_name(self.EnableSupportEn2,False)
                     caliStatus = True
+                    winsound.Beep(self.frequency, self.duration)
                 
-    
     def BackToTargetPos(self):
         self.CaliEncoder2()
         self.CaliEncoder1()
+        
 
-class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
+class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
     bConnected = False
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
@@ -406,6 +427,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
     
     def __init__(self):
         QObject.__init__(self)
+        OperationLight.__init__(self)
         
     def sti_init(self):
         # for test
@@ -574,36 +596,36 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
 
         "Motor Enable"
         motorEnableStatus = False
-        # while motorEnableStatus is False:
-        # try:
-        #     "Motor Enable"
-        #     # self.signalProgress.emit('Enabling motor...', 90)
-        #     msg = self.BLDC_Up.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.BLDC_Down.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.FLDC_Up.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     msg = self.FLDC_Down.MotorDriverEnable()
-        #     self.setInitProgress(msg)
-        #     motorEnableStatus = True
-        #     self.SetZero()
-        #     print("Motor are enabled.")
-        #     # self.signalProgress.emit('Homing process Completed', 100)
-        #     self.setInitProgress('Homing process Completed')
-        # except:
-        #     self.setInitProgress('Robot control system connect fail.', False)
-        #     print("Robot control system connect fail.")
+        while motorEnableStatus is False:
+            try:
+                "Motor Enable"
+                # self.signalProgress.emit('Enabling motor...', 90)
+                msg = self.BLDC_Up.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.BLDC_Down.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.FLDC_Up.MotorDriverEnable()
+                self.setInitProgress(msg)
+                msg = self.FLDC_Down.MotorDriverEnable()
+                self.setInitProgress(msg)
+                motorEnableStatus = True
+                self.SetZero()
+                print("Motor are enabled.")
+                # self.signalProgress.emit('Homing process Completed', 100)
+                self.setInitProgress('Homing process Completed')
+                self.DisplaySafe()
+                
+            except:
+                self.setInitProgress('Robot control system connect fail.', False)
+                # self.DisplayError()
+                print("Robot control system connect fail.")
         
-        # self.LightSafe()
         
     def OnSignal_progress(self, progress:float):
         self.fHomeProgress = progress
         self.signalHomingProgress.emit(self.fHomeProgress)
         print(f'subProgress = {progress}')
-    
-    def LightSafe(self):
-        self.RobotSystem.DisplaySafe()
+
     
     def FLDC_ButtonDisable(self):
         self.FLDC_Up.MoveRelativeButtonDisable()
@@ -815,23 +837,23 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
             QMessageBox.critical(None, 'error', 'Robot Connection Failure')
             return False
         else:
-        # self.RobotSystem.DisplayRun()
+            self.DisplayRun()
             self.fHomeProgress = 0.0
             print("Home Processing Started.")
             self.Home(1000, 1000,1, 0.125)  #dir = 1 前進 ; dir = 3 後退
-            sleep(0.5)
+            sleep(1)
             self.HomeLinearMotion(-3500,-3500,1000, 0.25)
-            sleep(0.5)
+            sleep(1)
             self.Home(100, 100,1, 0.375)
-            sleep(0.5)
+            sleep(1)
             self.SetZero(0.5)
             self.HomeLinearMotion(shiftingBLDC_Up, shiftingBLDC_Up, 2500, 0.666)
-            # sleep(0.1)
+            sleep(0.1)
             self.HomeRotation(0.832)
             self.ReSetMotor()
             self.SetZero(1.0)
             self.signalHomingProgress.emit(1.0)
-            # self.RobotSystem.DisplaySafe()
+            self.DisplaySafe()
         return True
  
 
@@ -976,11 +998,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
         "Linear motion command"
         LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
         LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
-        self.RobotSystem.DisplayRun()
+        self.DisplayRun()
         self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                  RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
         print("Compensation is Done!")
-        self.RobotSystem.DisplaySafe()
+        self.DisplaySafe()
 
     def RealTimeTracking(self,percentage):
         "obtain entry point and target point"
@@ -994,8 +1016,8 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
     def P2P(self):
         "obtain entry point and target point"
         self.movingPoint = self.CapturePoint()
-        self.entryPoint = self.movingPoint[0]
-        self.targetPoint = self.movingPoint[1]
+        self.entryPoint = self.movingPoint[0]  # from robot to entry point
+        self.targetPoint = self.movingPoint[1] # from robot to target point
         self.MoveToPoint()
 
     def P2P_Manual(self, entryPoint, targetPoint):
@@ -1040,8 +1062,12 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, QObject):
                     self.MoveToPoint()
             print("Cycle Run Processing is Done!")
         except:
-            self.RobotSystem.DisplayError()
+            # self.DisplayError()
             print("Wrong type. Please try it again.")
+            
+    def EnableDynamicTrack(self):
+        self.DynamicCompensation()
+        print("Dynamic Tracking Done!")
                
 class LineLaser(MOTORCONTROL, QObject):
     signalInitFailed = pyqtSignal(int)
@@ -1258,77 +1284,9 @@ class LineLaser(MOTORCONTROL, QObject):
                 return 0
             
         except:
-            # self.RobotSystem.DisplayError()
+            self.RobotSystem.DisplayError()
             print("Calculate height avg error")
-            
-    def CheckInhale(self):
-        arr = self.GetLaserData()
-        if arr is not None:
-            arr = arr[laserStartPoint:laserEndPoint]
-            arrAvg = self.CalHeightAvg(arr)
-            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
-            maxAvg =  items[-1][0]
-            minAvg =  items[0][0]
-            dis = maxAvg - minAvg
-            percentage = ((maxAvg-arrAvg)/dis) * 100
-            
-            bInhale = False
-            if percentage >= INHALE_AREA and percentage <= 100:
-                bInhale = True
-            self.signalInhaleProgress.emit(bInhale, percentage)
-            
-            # self.receiveData = arr[laserStartPoint:laserEndPoint]
-            # self.CalculateRealTimeHeightAvg()
-            # # print(self.realTimeHeightAvgValue)
-            
-            # realTimeAvgValue = self.realTimeHeightAvgValue[0]
-            # # 燈號控制
-            # self.avgValueList = []
-            # # for item in self.percentageBase.items():
-            # for item in self.percentageBase.values():
-            #     # self.avgValueList.append(list(item)[1])
-            #     self.avgValueList.append(list(item)[0])
-                
-            # # minValue = min(self.avgValueList)
-            # # maxValue = max(self.avgValueList)
-            # self.avgValueList = sorted(self.avgValueList, reverse=True)
-            # percentage = self.PercentagePrediction(realTimeAvgValue)
-            # if percentage:
-            #     print(f'percentage:{percentage:.1f}')
-            #     bInhale = False
-            #     if percentage > 90 and percentage <= 100:
-            #         bInhale = True
-            #     self.signalInhaleProgress.emit(bInhale)
-            
-    def CheckExhale(self):
-        arr = self.GetLaserData()
-        if arr is not None:
-            arr = arr[laserStartPoint:laserEndPoint]
-            arrAvg = self.CalHeightAvg(arr)
-            items = list(self.percentageBase.values()) # items = (key, item), key = items[0] = avg
-            maxAvg =  items[-1][0]
-            minAvg =  items[0][0]
-            dis = maxAvg - minAvg
-            percentage = ((maxAvg-arrAvg)/dis) * 100
-            
-            bExhale = False
-            if percentage <= EXHALE_AREA and percentage >= 0:
-                bExhale = True
-            self.signalExhaleProgress.emit(bExhale, percentage)
-            
-    # private function
-    # filter out range data from model
-    def filterOutRange(self, indexes):
-        if isinstance(indexes, (tuple, list, np.ndarray)):
-            if len(indexes) < 2:
-                print('too less number parameters in function "filterOutRange"')
-            else:
-                indexMin = min(indexes)
-                indexMax = max(indexes)
-                lstDatabase = list(self.percentageBase.items())[indexMin:indexMax + 1]
-                self.percentageBase = dict(lstDatabase)
-                
-                
+
     # 得到percentageBase中超過90與95%的高度平均值
     def GetAvg(self, arr):
         avgBase = list(arr.values())
@@ -1551,7 +1509,6 @@ class LineLaser(MOTORCONTROL, QObject):
             
             self.setProgress('Laser device set feature ......succeed')
         except:
-            self.RobotSystem.DisplayError()
             print("Laser connect fail.")
 
     
@@ -1677,7 +1634,6 @@ class LineLaser(MOTORCONTROL, QObject):
             # self.signalModelPassed.emit(True)
             # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
         except:
-            # self.RobotSystem.DisplayError()
             print("Model Building Fail")
             print("Please try to build chest model again.")
             self.signalModelPassed.emit(False)
@@ -1820,7 +1776,6 @@ class LineLaser(MOTORCONTROL, QObject):
                     else:
                         return 0
                 except:
-                    self.RobotSystem.DisplayError()
                     print("Predict percentage error")
             
             else:
