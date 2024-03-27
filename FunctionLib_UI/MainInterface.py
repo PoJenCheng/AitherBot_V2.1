@@ -1204,8 +1204,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pass
     
     def OnValueChanged_spin(self, value:int):
-        global toleranceLaserData
-        toleranceLaserData = value * 0.01
+        gVars['toleranceLaserData'] = value * 0.01
     
     def OnValueChanged_sldTrajectory(self, value):
         # print(f'value = {value}')
