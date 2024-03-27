@@ -865,13 +865,315 @@ class Ui_MainWindow(object):
         self.wdgLaserPlot.setObjectName("wdgLaserPlot")
         self.gridLayout_16.addWidget(self.wdgLaserPlot, 1, 0, 3, 1)
         self.stkScene.addWidget(self.pgLaserAdjust)
+        self.pgModelBuilding1 = QtWidgets.QWidget()
+        self.pgModelBuilding1.setObjectName("pgModelBuilding1")
+        self.gridLayout_36 = QtWidgets.QGridLayout(self.pgModelBuilding1)
+        self.gridLayout_36.setObjectName("gridLayout_36")
+        self.wdgBreathingCycle = QtWidgets.QWidget(self.pgModelBuilding1)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgBreathingCycle.sizePolicy().hasHeightForWidth())
+        self.wdgBreathingCycle.setSizePolicy(sizePolicy)
+        self.wdgBreathingCycle.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgBreathingCycle.setStyleSheet("QLabel{\n"
+"    \n"
+"    font: 24pt \"Arial\";\n"
+"    color: rgb(255, 255, 255);\n"
+"}\n"
+"\n"
+"#wdgBreathingCycle QWidget{\n"
+"    background-color: rgb(0, 167, 218);\n"
+"}\n"
+"\n"
+"/*\n"
+"#lblCycle1{\n"
+"    border-top-left-radius:20px;\n"
+"}*/\n"
+"\n"
+"#lblCycle5{\n"
+"    border-bottom-left-radius:20px;\n"
+"}\n"
+"\n"
+"/*\n"
+"#wdgCheckCycle1{\n"
+"    border-top-right-radius:20px;\n"
+"}\n"
+"*/\n"
+"\n"
+"#wdgCheckCycle5{\n"
+"    border-bottom-right-radius:20px;\n"
+"}\n"
+"\n"
+"#lblCounter{\n"
+"    font: 96pt \"Arial\";\n"
+"    color: rgb(255, 0, 0);\n"
+"    border-top-left-radius:20px;\n"
+"    border-top-right-radius:20px;\n"
+"}")
+        self.wdgBreathingCycle.setObjectName("wdgBreathingCycle")
+        self.gridLayout_35 = QtWidgets.QGridLayout(self.wdgBreathingCycle)
+        self.gridLayout_35.setContentsMargins(-1, 0, -1, 0)
+        self.gridLayout_35.setHorizontalSpacing(0)
+        self.gridLayout_35.setVerticalSpacing(2)
+        self.gridLayout_35.setObjectName("gridLayout_35")
+        self.wdgCheckCycle5 = QtWidgets.QWidget(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgCheckCycle5.sizePolicy().hasHeightForWidth())
+        self.wdgCheckCycle5.setSizePolicy(sizePolicy)
+        self.wdgCheckCycle5.setMinimumSize(QtCore.QSize(58, 58))
+        self.wdgCheckCycle5.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgCheckCycle5.setObjectName("wdgCheckCycle5")
+        self.gridLayout_35.addWidget(self.wdgCheckCycle5, 5, 1, 1, 1)
+        self.wdgCheckCycle1 = QtWidgets.QWidget(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgCheckCycle1.sizePolicy().hasHeightForWidth())
+        self.wdgCheckCycle1.setSizePolicy(sizePolicy)
+        self.wdgCheckCycle1.setMinimumSize(QtCore.QSize(58, 58))
+        self.wdgCheckCycle1.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgCheckCycle1.setObjectName("wdgCheckCycle1")
+        self.gridLayout_35.addWidget(self.wdgCheckCycle1, 1, 1, 1, 1)
+        self.wdgCheckCycle2 = QtWidgets.QWidget(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgCheckCycle2.sizePolicy().hasHeightForWidth())
+        self.wdgCheckCycle2.setSizePolicy(sizePolicy)
+        self.wdgCheckCycle2.setMinimumSize(QtCore.QSize(58, 58))
+        self.wdgCheckCycle2.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgCheckCycle2.setObjectName("wdgCheckCycle2")
+        self.gridLayout_35.addWidget(self.wdgCheckCycle2, 2, 1, 1, 1)
+        self.wdgCheckCycle3 = QtWidgets.QWidget(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgCheckCycle3.sizePolicy().hasHeightForWidth())
+        self.wdgCheckCycle3.setSizePolicy(sizePolicy)
+        self.wdgCheckCycle3.setMinimumSize(QtCore.QSize(58, 58))
+        self.wdgCheckCycle3.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgCheckCycle3.setObjectName("wdgCheckCycle3")
+        self.gridLayout_35.addWidget(self.wdgCheckCycle3, 3, 1, 1, 1)
+        self.wdgCheckCycle4 = QtWidgets.QWidget(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgCheckCycle4.sizePolicy().hasHeightForWidth())
+        self.wdgCheckCycle4.setSizePolicy(sizePolicy)
+        self.wdgCheckCycle4.setMinimumSize(QtCore.QSize(58, 58))
+        self.wdgCheckCycle4.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgCheckCycle4.setObjectName("wdgCheckCycle4")
+        self.gridLayout_35.addWidget(self.wdgCheckCycle4, 4, 1, 1, 1)
+        self.lblCycle4 = QtWidgets.QLabel(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblCycle4.sizePolicy().hasHeightForWidth())
+        self.lblCycle4.setSizePolicy(sizePolicy)
+        self.lblCycle4.setMinimumSize(QtCore.QSize(400, 58))
+        self.lblCycle4.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCycle4.setObjectName("lblCycle4")
+        self.gridLayout_35.addWidget(self.lblCycle4, 4, 0, 1, 1)
+        self.lblCycle2 = QtWidgets.QLabel(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblCycle2.sizePolicy().hasHeightForWidth())
+        self.lblCycle2.setSizePolicy(sizePolicy)
+        self.lblCycle2.setMinimumSize(QtCore.QSize(400, 58))
+        self.lblCycle2.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCycle2.setObjectName("lblCycle2")
+        self.gridLayout_35.addWidget(self.lblCycle2, 2, 0, 1, 1)
+        self.lblCycle3 = QtWidgets.QLabel(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblCycle3.sizePolicy().hasHeightForWidth())
+        self.lblCycle3.setSizePolicy(sizePolicy)
+        self.lblCycle3.setMinimumSize(QtCore.QSize(400, 58))
+        self.lblCycle3.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCycle3.setObjectName("lblCycle3")
+        self.gridLayout_35.addWidget(self.lblCycle3, 3, 0, 1, 1)
+        self.lblCycle1 = QtWidgets.QLabel(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblCycle1.sizePolicy().hasHeightForWidth())
+        self.lblCycle1.setSizePolicy(sizePolicy)
+        self.lblCycle1.setMinimumSize(QtCore.QSize(400, 58))
+        self.lblCycle1.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCycle1.setObjectName("lblCycle1")
+        self.gridLayout_35.addWidget(self.lblCycle1, 1, 0, 1, 1)
+        self.lblCycle5 = QtWidgets.QLabel(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblCycle5.sizePolicy().hasHeightForWidth())
+        self.lblCycle5.setSizePolicy(sizePolicy)
+        self.lblCycle5.setMinimumSize(QtCore.QSize(400, 58))
+        self.lblCycle5.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCycle5.setObjectName("lblCycle5")
+        self.gridLayout_35.addWidget(self.lblCycle5, 5, 0, 1, 1)
+        spacerItem23 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_35.addItem(spacerItem23, 3, 2, 1, 1)
+        self.lblCounter = QtWidgets.QLabel(self.wdgBreathingCycle)
+        self.lblCounter.setMinimumSize(QtCore.QSize(0, 120))
+        self.lblCounter.setText("")
+        self.lblCounter.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblCounter.setObjectName("lblCounter")
+        self.gridLayout_35.addWidget(self.lblCounter, 0, 0, 1, 2)
+        self.spinBox = QtWidgets.QSpinBox(self.wdgBreathingCycle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.spinBox.sizePolicy().hasHeightForWidth())
+        self.spinBox.setSizePolicy(sizePolicy)
+        self.spinBox.setMinimumSize(QtCore.QSize(400, 100))
+        self.spinBox.setStyleSheet("QSpinBox{\n"
+"    padding-right: 0px;\n"
+"    padding-left: 0px;\n"
+"    font: 24pt \"Arial\";\n"
+"}\n"
+"\n"
+"QSpinBox::up-button{\n"
+"    width:40%;\n"
+"    margin-right:0px;\n"
+"    margin-left:0px;\n"
+"}\n"
+"\n"
+"QSpinBox::down-button{\n"
+"    width:40%;\n"
+"    margin-right:0px;\n"
+"    margin-left:0px;\n"
+"}")
+        self.spinBox.setWrapping(False)
+        self.spinBox.setFrame(True)
+        self.spinBox.setAlignment(QtCore.Qt.AlignCenter)
+        self.spinBox.setMinimum(1)
+        self.spinBox.setMaximum(100)
+        self.spinBox.setSingleStep(1)
+        self.spinBox.setProperty("value", 1)
+        self.spinBox.setDisplayIntegerBase(10)
+        self.spinBox.setObjectName("spinBox")
+        self.gridLayout_35.addWidget(self.spinBox, 0, 2, 1, 1)
+        self.gridLayout_36.addWidget(self.wdgBreathingCycle, 1, 1, 1, 1)
+        self.horizontalLayout_26 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_26.setObjectName("horizontalLayout_26")
+        spacerItem24 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_26.addItem(spacerItem24)
+        self.btnStartBuildModel_2 = QtWidgets.QPushButton(self.pgModelBuilding1)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnStartBuildModel_2.sizePolicy().hasHeightForWidth())
+        self.btnStartBuildModel_2.setSizePolicy(sizePolicy)
+        self.btnStartBuildModel_2.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnStartBuildModel_2.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnStartBuildModel_2.setObjectName("btnStartBuildModel_2")
+        self.horizontalLayout_26.addWidget(self.btnStartBuildModel_2)
+        self.btnNext_startBuildModel_2 = QtWidgets.QPushButton(self.pgModelBuilding1)
+        self.btnNext_startBuildModel_2.setEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnNext_startBuildModel_2.sizePolicy().hasHeightForWidth())
+        self.btnNext_startBuildModel_2.setSizePolicy(sizePolicy)
+        self.btnNext_startBuildModel_2.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnNext_startBuildModel_2.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnNext_startBuildModel_2.setObjectName("btnNext_startBuildModel_2")
+        self.horizontalLayout_26.addWidget(self.btnNext_startBuildModel_2)
+        spacerItem25 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_26.addItem(spacerItem25)
+        self.gridLayout_36.addLayout(self.horizontalLayout_26, 3, 0, 1, 2)
+        spacerItem26 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_36.addItem(spacerItem26, 2, 1, 1, 1)
+        spacerItem27 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_36.addItem(spacerItem27, 0, 1, 1, 1)
+        self.wdgLaserFig = QtWidgets.QWidget(self.pgModelBuilding1)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgLaserFig.sizePolicy().hasHeightForWidth())
+        self.wdgLaserFig.setSizePolicy(sizePolicy)
+        self.wdgLaserFig.setMinimumSize(QtCore.QSize(0, 0))
+        self.wdgLaserFig.setStyleSheet("QLabel{\n"
+"    color:rgb(255, 255, 255);\n"
+"    font: 24pt \"Arial\";\n"
+"}")
+        self.wdgLaserFig.setObjectName("wdgLaserFig")
+        self.lytLaserModel = QtWidgets.QHBoxLayout(self.wdgLaserFig)
+        self.lytLaserModel.setObjectName("lytLaserModel")
+        self.lblHintModelBuilding = QtWidgets.QLabel(self.wdgLaserFig)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblHintModelBuilding.sizePolicy().hasHeightForWidth())
+        self.lblHintModelBuilding.setSizePolicy(sizePolicy)
+        self.lblHintModelBuilding.setWordWrap(True)
+        self.lblHintModelBuilding.setObjectName("lblHintModelBuilding")
+        self.lytLaserModel.addWidget(self.lblHintModelBuilding)
+        self.gridLayout_36.addWidget(self.wdgLaserFig, 0, 0, 3, 1)
+        self.stkScene.addWidget(self.pgModelBuilding1)
         self.pgModelBuilding = QtWidgets.QWidget()
         self.pgModelBuilding.setStyleSheet("")
         self.pgModelBuilding.setObjectName("pgModelBuilding")
         self.gridLayout_11 = QtWidgets.QGridLayout(self.pgModelBuilding)
         self.gridLayout_11.setObjectName("gridLayout_11")
-        spacerItem23 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_11.addItem(spacerItem23, 1, 0, 1, 1)
+        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_11.addItem(spacerItem28, 1, 0, 1, 1)
         self.label_12 = QtWidgets.QLabel(self.pgModelBuilding)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -893,9 +1195,45 @@ class Ui_MainWindow(object):
         self.gridLayout_11.addWidget(self.wdgIntraCT, 1, 1, 1, 1)
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        spacerItem24 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_7.addItem(spacerItem24)
+        spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_7.addItem(spacerItem29)
+        self.btnStartBuildModel = QtWidgets.QPushButton(self.pgModelBuilding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnStartBuildModel.sizePolicy().hasHeightForWidth())
+        self.btnStartBuildModel.setSizePolicy(sizePolicy)
+        self.btnStartBuildModel.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnStartBuildModel.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnStartBuildModel.setObjectName("btnStartBuildModel")
+        self.horizontalLayout_7.addWidget(self.btnStartBuildModel)
         self.btnNext_startBuildModel = QtWidgets.QPushButton(self.pgModelBuilding)
+        self.btnNext_startBuildModel.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -922,11 +1260,16 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_startBuildModel.setObjectName("btnNext_startBuildModel")
         self.horizontalLayout_7.addWidget(self.btnNext_startBuildModel)
-        spacerItem25 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_7.addItem(spacerItem25)
+        spacerItem30 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_7.addItem(spacerItem30)
         self.gridLayout_11.addLayout(self.horizontalLayout_7, 2, 0, 1, 4)
         self.label_title_5 = QtWidgets.QLabel(self.pgModelBuilding)
         self.label_title_5.setMinimumSize(QtCore.QSize(0, 100))
@@ -939,13 +1282,11 @@ class Ui_MainWindow(object):
         self.label_title_5.setObjectName("label_title_5")
         self.gridLayout_11.addWidget(self.label_title_5, 0, 0, 1, 4)
         self.stkScene.addWidget(self.pgModelBuilding)
-        self.pgStartCT = QtWidgets.QWidget()
-        self.pgStartCT.setObjectName("pgStartCT")
-        self.gridLayout_18 = QtWidgets.QGridLayout(self.pgStartCT)
+        self.pgStartInhaleCT = QtWidgets.QWidget()
+        self.pgStartInhaleCT.setObjectName("pgStartInhaleCT")
+        self.gridLayout_18 = QtWidgets.QGridLayout(self.pgStartInhaleCT)
         self.gridLayout_18.setObjectName("gridLayout_18")
-        spacerItem26 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_18.addItem(spacerItem26, 1, 0, 1, 1)
-        self.label_title_10 = QtWidgets.QLabel(self.pgStartCT)
+        self.label_title_10 = QtWidgets.QLabel(self.pgStartInhaleCT)
         self.label_title_10.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_10.setMaximumSize(QtCore.QSize(16777215, 100))
         self.label_title_10.setStyleSheet("    color:#eeeeee;\n"
@@ -954,21 +1295,26 @@ class Ui_MainWindow(object):
 "    margin:0px;")
         self.label_title_10.setAlignment(QtCore.Qt.AlignCenter)
         self.label_title_10.setObjectName("label_title_10")
-        self.gridLayout_18.addWidget(self.label_title_10, 0, 0, 1, 3)
-        self.wdgLaserPlot2 = QtWidgets.QWidget(self.pgStartCT)
-        self.wdgLaserPlot2.setMinimumSize(QtCore.QSize(500, 0))
-        self.wdgLaserPlot2.setObjectName("wdgLaserPlot2")
-        self.gridLayout_18.addWidget(self.wdgLaserPlot2, 1, 1, 2, 1)
-        self.tbsCTScan = QtWidgets.QTextBrowser(self.pgStartCT)
+        self.gridLayout_18.addWidget(self.label_title_10, 0, 0, 1, 4)
+        spacerItem31 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_18.addItem(spacerItem31, 1, 0, 1, 1)
+        self.wdgInhaleImg = QtWidgets.QWidget(self.pgStartInhaleCT)
+        self.wdgInhaleImg.setMinimumSize(QtCore.QSize(488, 520))
+        self.wdgInhaleImg.setMaximumSize(QtCore.QSize(488, 520))
+        self.wdgInhaleImg.setStyleSheet("border-image:url(image/Inhale.png);")
+        self.wdgInhaleImg.setObjectName("wdgInhaleImg")
+        self.gridLayout_18.addWidget(self.wdgInhaleImg, 1, 1, 2, 1)
+        self.tbsCTScan = QtWidgets.QTextBrowser(self.pgStartInhaleCT)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tbsCTScan.sizePolicy().hasHeightForWidth())
         self.tbsCTScan.setSizePolicy(sizePolicy)
-        self.tbsCTScan.setMinimumSize(QtCore.QSize(800, 0))
+        self.tbsCTScan.setMinimumSize(QtCore.QSize(400, 0))
+        self.tbsCTScan.setMaximumSize(QtCore.QSize(16777215, 400))
         self.tbsCTScan.setMouseTracking(False)
         self.tbsCTScan.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.tbsCTScan.setStyleSheet("font: 24pt \"Arial\";\n"
+        self.tbsCTScan.setStyleSheet("font: 18pt \"Arial\";\n"
 "background-color:rgb(77,132,173);\n"
 "color:rgb(255, 255, 208);\n"
 "border:0px;\n"
@@ -976,15 +1322,18 @@ class Ui_MainWindow(object):
 "selection-background-color: none;")
         self.tbsCTScan.setObjectName("tbsCTScan")
         self.gridLayout_18.addWidget(self.tbsCTScan, 1, 2, 1, 1)
-        self.wdgIntraCT_2 = QtWidgets.QWidget(self.pgStartCT)
-        self.wdgIntraCT_2.setMinimumSize(QtCore.QSize(600, 450))
+        spacerItem32 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_18.addItem(spacerItem32, 1, 3, 1, 1)
+        self.wdgIntraCT_2 = QtWidgets.QWidget(self.pgStartInhaleCT)
+        self.wdgIntraCT_2.setMinimumSize(QtCore.QSize(0, 0))
         self.wdgIntraCT_2.setMaximumSize(QtCore.QSize(600, 450))
         self.wdgIntraCT_2.setStyleSheet("border-image:url(image/IntraCT.jpg);")
         self.wdgIntraCT_2.setObjectName("wdgIntraCT_2")
         self.gridLayout_18.addWidget(self.wdgIntraCT_2, 2, 2, 1, 1)
         self.horizontalLayout_9 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_9.setObjectName("horizontalLayout_9")
-        self.btnNext_scanCT = QtWidgets.QPushButton(self.pgStartCT)
+        self.btnNext_scanCT = QtWidgets.QPushButton(self.pgStartInhaleCT)
+        self.btnNext_scanCT.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1007,21 +1356,153 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
+"    margin-top:5px;\n"
+"    margin-bottom:0px;\n"
+"    margin-left:3px;\n"
+"    margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_scanCT.setObjectName("btnNext_scanCT")
         self.horizontalLayout_9.addWidget(self.btnNext_scanCT)
-        self.gridLayout_18.addLayout(self.horizontalLayout_9, 3, 0, 1, 3)
-        self.stkScene.addWidget(self.pgStartCT)
+        self.gridLayout_18.addLayout(self.horizontalLayout_9, 5, 0, 1, 4)
+        self.verticalLayout_8 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_8.setSpacing(0)
+        self.verticalLayout_8.setObjectName("verticalLayout_8")
+        self.wdgIndicatorInhale = QtWidgets.QWidget(self.pgStartInhaleCT)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgIndicatorInhale.sizePolicy().hasHeightForWidth())
+        self.wdgIndicatorInhale.setSizePolicy(sizePolicy)
+        self.wdgIndicatorInhale.setMinimumSize(QtCore.QSize(300, 60))
+        self.wdgIndicatorInhale.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgIndicatorInhale.setObjectName("wdgIndicatorInhale")
+        self.verticalLayout_8.addWidget(self.wdgIndicatorInhale)
+        self.pgbInhale = QtWidgets.QProgressBar(self.pgStartInhaleCT)
+        self.pgbInhale.setMinimumSize(QtCore.QSize(0, 0))
+        self.pgbInhale.setProperty("value", 0)
+        self.pgbInhale.setObjectName("pgbInhale")
+        self.verticalLayout_8.addWidget(self.pgbInhale)
+        self.gridLayout_18.addLayout(self.verticalLayout_8, 3, 1, 1, 2)
+        self.stkScene.addWidget(self.pgStartInhaleCT)
+        self.pgStartExhaleCT = QtWidgets.QWidget()
+        self.pgStartExhaleCT.setObjectName("pgStartExhaleCT")
+        self.gridLayout_34 = QtWidgets.QGridLayout(self.pgStartExhaleCT)
+        self.gridLayout_34.setObjectName("gridLayout_34")
+        self.label_title_14 = QtWidgets.QLabel(self.pgStartExhaleCT)
+        self.label_title_14.setMinimumSize(QtCore.QSize(0, 100))
+        self.label_title_14.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.label_title_14.setStyleSheet("    color:#eeeeee;\n"
+"    font: 64pt \"Cascadia Code SemiBold\";\n"
+"    padding:0px;\n"
+"    margin:0px;")
+        self.label_title_14.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_title_14.setObjectName("label_title_14")
+        self.gridLayout_34.addWidget(self.label_title_14, 0, 0, 1, 4)
+        spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_34.addItem(spacerItem33, 1, 0, 1, 1)
+        self.wdgExhaleImg = QtWidgets.QWidget(self.pgStartExhaleCT)
+        self.wdgExhaleImg.setMinimumSize(QtCore.QSize(488, 520))
+        self.wdgExhaleImg.setMaximumSize(QtCore.QSize(488, 520))
+        self.wdgExhaleImg.setStyleSheet("border-image:url(image/Exhale.png);")
+        self.wdgExhaleImg.setObjectName("wdgExhaleImg")
+        self.gridLayout_34.addWidget(self.wdgExhaleImg, 1, 1, 2, 1)
+        self.tbsCTScan_2 = QtWidgets.QTextBrowser(self.pgStartExhaleCT)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tbsCTScan_2.sizePolicy().hasHeightForWidth())
+        self.tbsCTScan_2.setSizePolicy(sizePolicy)
+        self.tbsCTScan_2.setMinimumSize(QtCore.QSize(400, 0))
+        self.tbsCTScan_2.setMouseTracking(False)
+        self.tbsCTScan_2.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.tbsCTScan_2.setStyleSheet("font: 24pt \"Arial\";\n"
+"background-color:rgb(77,132,173);\n"
+"color:rgb(255, 255, 208);\n"
+"border:0px;\n"
+"selection-color: none;\n"
+"selection-background-color: none;")
+        self.tbsCTScan_2.setObjectName("tbsCTScan_2")
+        self.gridLayout_34.addWidget(self.tbsCTScan_2, 1, 2, 1, 1)
+        spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_34.addItem(spacerItem34, 1, 3, 1, 1)
+        self.wdgIntraCT_3 = QtWidgets.QWidget(self.pgStartExhaleCT)
+        self.wdgIntraCT_3.setMinimumSize(QtCore.QSize(0, 0))
+        self.wdgIntraCT_3.setMaximumSize(QtCore.QSize(600, 450))
+        self.wdgIntraCT_3.setStyleSheet("border-image:url(image/IntraCT.jpg);")
+        self.wdgIntraCT_3.setObjectName("wdgIntraCT_3")
+        self.gridLayout_34.addWidget(self.wdgIntraCT_3, 2, 2, 1, 1)
+        self.verticalLayout_9 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_9.setObjectName("verticalLayout_9")
+        self.wdgIndicatorExhale = QtWidgets.QWidget(self.pgStartExhaleCT)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgIndicatorExhale.sizePolicy().hasHeightForWidth())
+        self.wdgIndicatorExhale.setSizePolicy(sizePolicy)
+        self.wdgIndicatorExhale.setMinimumSize(QtCore.QSize(300, 60))
+        self.wdgIndicatorExhale.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.wdgIndicatorExhale.setObjectName("wdgIndicatorExhale")
+        self.verticalLayout_9.addWidget(self.wdgIndicatorExhale)
+        self.pgbExhale = QtWidgets.QProgressBar(self.pgStartExhaleCT)
+        self.pgbExhale.setMinimumSize(QtCore.QSize(0, 0))
+        self.pgbExhale.setProperty("value", 0)
+        self.pgbExhale.setAlignment(QtCore.Qt.AlignCenter)
+        self.pgbExhale.setOrientation(QtCore.Qt.Horizontal)
+        self.pgbExhale.setTextDirection(QtWidgets.QProgressBar.BottomToTop)
+        self.pgbExhale.setObjectName("pgbExhale")
+        self.verticalLayout_9.addWidget(self.pgbExhale)
+        self.gridLayout_34.addLayout(self.verticalLayout_9, 3, 1, 1, 2)
+        self.horizontalLayout_25 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_25.setObjectName("horizontalLayout_25")
+        self.btnNext_scanCT_2 = QtWidgets.QPushButton(self.pgStartExhaleCT)
+        self.btnNext_scanCT_2.setEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnNext_scanCT_2.sizePolicy().hasHeightForWidth())
+        self.btnNext_scanCT_2.setSizePolicy(sizePolicy)
+        self.btnNext_scanCT_2.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnNext_scanCT_2.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    margin-top:5px;\n"
+"    margin-bottom:0px;\n"
+"    margin-left:3px;\n"
+"    margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnNext_scanCT_2.setObjectName("btnNext_scanCT_2")
+        self.horizontalLayout_25.addWidget(self.btnNext_scanCT_2)
+        self.gridLayout_34.addLayout(self.horizontalLayout_25, 4, 0, 1, 4)
+        self.stkScene.addWidget(self.pgStartExhaleCT)
         self.pgModelFinish = QtWidgets.QWidget()
         self.pgModelFinish.setObjectName("pgModelFinish")
         self.gridLayout_17 = QtWidgets.QGridLayout(self.pgModelFinish)
         self.gridLayout_17.setObjectName("gridLayout_17")
-        spacerItem27 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_17.addItem(spacerItem27, 1, 0, 1, 1)
+        spacerItem35 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_17.addItem(spacerItem35, 1, 0, 1, 1)
         self.widget_5 = QtWidgets.QWidget(self.pgModelFinish)
         self.widget_5.setMinimumSize(QtCore.QSize(1186, 403))
         self.widget_5.setMaximumSize(QtCore.QSize(1186, 403))
@@ -1039,8 +1520,8 @@ class Ui_MainWindow(object):
         self.wdgCheck.setStyleSheet("background-image:url(image/check-mark.png)")
         self.wdgCheck.setObjectName("wdgCheck")
         self.gridLayout_17.addWidget(self.widget_5, 1, 1, 1, 1)
-        spacerItem28 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_17.addItem(spacerItem28, 1, 2, 1, 1)
+        spacerItem36 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_17.addItem(spacerItem36, 1, 2, 1, 1)
         self.label_title_9 = QtWidgets.QLabel(self.pgModelFinish)
         self.label_title_9.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_9.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -1053,9 +1534,10 @@ class Ui_MainWindow(object):
         self.gridLayout_17.addWidget(self.label_title_9, 0, 0, 1, 3)
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        spacerItem29 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_8.addItem(spacerItem29)
+        spacerItem37 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem37)
         self.btnNext_endBuildModel = QtWidgets.QPushButton(self.pgModelFinish)
+        self.btnNext_endBuildModel.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1082,11 +1564,16 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnNext_endBuildModel.setObjectName("btnNext_endBuildModel")
         self.horizontalLayout_8.addWidget(self.btnNext_endBuildModel)
-        spacerItem30 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_8.addItem(spacerItem30)
+        spacerItem38 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem38)
         self.gridLayout_17.addLayout(self.horizontalLayout_8, 2, 0, 1, 3)
         self.stkScene.addWidget(self.pgModelFinish)
         self.pgImportDicom = QtWidgets.QWidget()
@@ -1105,8 +1592,8 @@ class Ui_MainWindow(object):
         self.gridLayout_20.addWidget(self.label_title_12, 0, 0, 1, 1)
         self.horizontalLayout_11 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
-        spacerItem31 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_11.addItem(spacerItem31)
+        spacerItem39 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_11.addItem(spacerItem39)
         self.btnFromUSB = QtWidgets.QPushButton(self.pgImportDicom)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -1167,8 +1654,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnFromCD.setObjectName("btnFromCD")
         self.horizontalLayout_11.addWidget(self.btnFromCD)
-        spacerItem32 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_11.addItem(spacerItem32)
+        spacerItem40 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_11.addItem(spacerItem40)
         self.gridLayout_20.addLayout(self.horizontalLayout_11, 1, 0, 1, 1)
         self.stkScene.addWidget(self.pgImportDicom)
         self.pgDicomList = QtWidgets.QWidget()
@@ -1344,8 +1831,8 @@ class Ui_MainWindow(object):
         self.gridLayout_12.addWidget(self.label_title_6, 0, 0, 1, 3)
         self.horizontalLayout_12 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_12.setObjectName("horizontalLayout_12")
-        spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem33)
+        spacerItem41 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_12.addItem(spacerItem41)
         self.btnCancel = QtWidgets.QPushButton(self.pgDicomList)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -1412,8 +1899,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnImport.setObjectName("btnImport")
         self.horizontalLayout_12.addWidget(self.btnImport)
-        spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem34)
+        spacerItem42 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_12.addItem(spacerItem42)
         self.gridLayout_12.addLayout(self.horizontalLayout_12, 3, 0, 1, 3)
         self.stkScene.addWidget(self.pgDicomList)
         self.pgRegistration = QtWidgets.QWidget()
@@ -1750,8 +2237,8 @@ class Ui_MainWindow(object):
         self.sldWindowWidth.setOrientation(QtCore.Qt.Horizontal)
         self.sldWindowWidth.setObjectName("sldWindowWidth")
         self.verticalLayout_2.addWidget(self.sldWindowWidth)
-        spacerItem35 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem35)
+        spacerItem43 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem43)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
         self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 189))
@@ -1806,12 +2293,12 @@ class Ui_MainWindow(object):
         self.lblDistanceToTarget.setObjectName("lblDistanceToTarget")
         self.horizontalLayout_24.addWidget(self.lblDistanceToTarget)
         self.verticalLayout_3.addLayout(self.horizontalLayout_24)
-        spacerItem36 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_3.addItem(spacerItem36)
+        spacerItem44 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem44)
         self.toolBox.addItem(self.pgTrajectory, "")
         self.verticalLayout_4.addWidget(self.toolBox)
-        spacerItem37 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem37)
+        spacerItem45 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_4.addItem(spacerItem45)
         self.tabWidget.addTab(self.tabPlanning, "")
         self.tabGuidance = QtWidgets.QWidget()
         self.tabGuidance.setObjectName("tabGuidance")
@@ -1898,8 +2385,8 @@ class Ui_MainWindow(object):
         self.pushButton_8.setMinimumSize(QtCore.QSize(0, 50))
         self.pushButton_8.setObjectName("pushButton_8")
         self.gridLayout_32.addWidget(self.pushButton_8, 2, 1, 1, 1)
-        spacerItem38 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_32.addItem(spacerItem38, 3, 0, 1, 1)
+        spacerItem46 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_32.addItem(spacerItem46, 3, 0, 1, 1)
         self.tabWidget.addTab(self.tabGuidance, "")
         self.gridLayout_5.addWidget(self.tabWidget, 0, 1, 1, 1)
         self.stkScene.addWidget(self.pgImageView)
@@ -2080,8 +2567,8 @@ class Ui_MainWindow(object):
         self.label_23 = QtWidgets.QLabel(self.pgSterileStep3)
         self.label_23.setObjectName("label_23")
         self.gridLayout_30.addWidget(self.label_23, 1, 1, 1, 1)
-        spacerItem39 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem39, 0, 2, 1, 1)
+        spacerItem47 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem47, 0, 2, 1, 1)
         self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_22.setSpacing(0)
         self.horizontalLayout_22.setObjectName("horizontalLayout_22")
@@ -2100,8 +2587,8 @@ class Ui_MainWindow(object):
         self.lblJoint2.setObjectName("lblJoint2")
         self.horizontalLayout_22.addWidget(self.lblJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_22, 2, 1, 1, 1)
-        spacerItem40 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem40, 0, 0, 1, 1)
+        spacerItem48 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem48, 0, 0, 1, 1)
         self.horizontalLayout_21 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_21.setContentsMargins(0, 0, -1, 0)
         self.horizontalLayout_21.setSpacing(0)
@@ -2172,8 +2659,8 @@ class Ui_MainWindow(object):
         self.stkJoint2.addWidget(self.pgJoint2Pass)
         self.horizontalLayout_21.addWidget(self.stkJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_21, 3, 1, 1, 1)
-        spacerItem41 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_30.addItem(spacerItem41, 4, 1, 1, 1)
+        spacerItem49 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_30.addItem(spacerItem49, 4, 1, 1, 1)
         self.stkScene.addWidget(self.pgSterileStep3)
         self.pgInstallAdaptor = QtWidgets.QWidget()
         self.pgInstallAdaptor.setObjectName("pgInstallAdaptor")
@@ -2190,10 +2677,10 @@ class Ui_MainWindow(object):
         self.wdgMediaSetAdaptor.setMinimumSize(QtCore.QSize(800, 600))
         self.wdgMediaSetAdaptor.setObjectName("wdgMediaSetAdaptor")
         self.gridLayout_7.addWidget(self.wdgMediaSetAdaptor, 1, 1, 1, 1)
-        spacerItem42 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem42, 1, 0, 1, 1)
-        spacerItem43 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem43, 1, 3, 1, 1)
+        spacerItem50 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem50, 1, 0, 1, 1)
+        spacerItem51 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem51, 1, 3, 1, 1)
         self.label_title_11 = QtWidgets.QLabel(self.pgInstallAdaptor)
         self.label_title_11.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_11.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -2252,11 +2739,11 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(5)
+        self.stkScene.setCurrentIndex(6)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.toolBox.setCurrentIndex(0)
         self.stkSignalLight.setCurrentIndex(1)
         self.stkJoint1.setCurrentIndex(1)
@@ -2276,6 +2763,7 @@ class Ui_MainWindow(object):
         self.btnConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm_2.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnRegistrationOK.clicked.connect(MainWindow.NextScene) # type: ignore
+        self.btnNext_scanCT_2.clicked.connect(MainWindow.NextScene) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -2316,18 +2804,36 @@ class Ui_MainWindow(object):
         self.label_10.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">1. Adjusting the height between laser and human body. </span></p><p><span style=\" font-size:24pt;\">2. Please making sure the </span><span style=\" font-size:24pt; color:#ff0000;\">laser line is bounded at rectangle window</span><span style=\" font-size:24pt;\"> during human is breathing.</span></p></body></html>"))
         self.label_title_8.setText(_translate("MainWindow", "Setting Laser"))
         self.btnNext_startAdjustLaser.setText(_translate("MainWindow", "Confirm"))
+        self.lblCycle4.setText(_translate("MainWindow", "Cycle 4"))
+        self.lblCycle2.setText(_translate("MainWindow", "Cycle 2"))
+        self.lblCycle3.setText(_translate("MainWindow", "Cycle 3"))
+        self.lblCycle1.setText(_translate("MainWindow", "Cycle 1"))
+        self.lblCycle5.setText(_translate("MainWindow", "Cycle 5"))
+        self.btnStartBuildModel_2.setText(_translate("MainWindow", "Start"))
+        self.btnNext_startBuildModel_2.setText(_translate("MainWindow", "Confirm"))
+        self.lblHintModelBuilding.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">Please keep in </span><span style=\" font-size:24pt; color:#ff0000;\">Inhale state</span><span style=\" font-size:24pt;\"> until at least </span><span style=\" font-size:24pt; color:#ff0000;\">3 second</span></p></body></html>"))
         self.label_12.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Do not</span><span style=\" font-size:24pt;\"> move the laser until whole of the surgical processing is done.</span></p></body></html>"))
+        self.btnStartBuildModel.setText(_translate("MainWindow", "Start"))
         self.btnNext_startBuildModel.setText(_translate("MainWindow", "Confirm"))
         self.label_title_5.setText(_translate("MainWindow", "Breath Model Building"))
-        self.label_title_10.setText(_translate("MainWindow", "Intra-op CT Scan"))
+        self.label_title_10.setText(_translate("MainWindow", "Inhale CT Scan"))
         self.tbsCTScan.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Arial\'; font-size:24pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Please <span style=\" color:#ff0000;\">STOP</span> record breathing database button <span style=\" color:#ff0000;\">after whole of CT processing are done</span>. </p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\';\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The process of CT must have full and halt sets.</p></body></html>"))
+"</style></head><body style=\" font-family:\'Arial\'; font-size:18pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:20pt;\">Please </span><span style=\" font-size:20pt; color:#ff0000;\">STOP</span><span style=\" font-size:20pt;\"> record breathing database button </span><span style=\" font-size:20pt; color:#ff0000;\">after whole of CT processing are done</span><span style=\" font-size:20pt;\">. </span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\'; font-size:20pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:20pt;\">The process of CT must have full and halt sets.</span></p></body></html>"))
         self.btnNext_scanCT.setText(_translate("MainWindow", "Confirm"))
+        self.label_title_14.setText(_translate("MainWindow", "Exhale CT Scan"))
+        self.tbsCTScan_2.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Arial\'; font-size:24pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt;\">Please </span><span style=\" font-size:18pt; color:#ff0000;\">STOP</span><span style=\" font-size:18pt;\"> record breathing database button </span><span style=\" font-size:18pt; color:#ff0000;\">after whole of CT processing are done</span><span style=\" font-size:18pt;\">. </span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'PMingLiU\'; font-size:18pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt;\">The process of CT must have full and halt sets.</span></p></body></html>"))
+        self.btnNext_scanCT_2.setText(_translate("MainWindow", "Confirm"))
         self.label_title_9.setText(_translate("MainWindow", "Model Building Finished"))
         self.btnNext_endBuildModel.setText(_translate("MainWindow", "Confirm"))
         self.label_title_12.setText(_translate("MainWindow", "Select Dicom Source"))

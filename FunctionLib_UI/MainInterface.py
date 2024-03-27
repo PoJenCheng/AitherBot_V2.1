@@ -1685,6 +1685,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # tLaser= threading.Thread(target = self.Laser.Initialize)
             # # tLaser= threading.Thread(target = self.sti_RunLaser)
             # tLaser.start()
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            self.tLaser= threading.Thread(target = self.Laser.Initialize)
+            # tLaser= threading.Thread(target = self.sti_RunLaser)
+            self.tLaser.start()
             
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()

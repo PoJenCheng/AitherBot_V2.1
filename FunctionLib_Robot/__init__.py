@@ -49,11 +49,19 @@ baseShift_Z = -21.4 #15.5
 
 
 "Laser setting parameter"
-laserDataRepeatRange = 1
+nValidCycle = 5
+laserDataRepeatRange = 0.05
 filterTolerance = 1
+toleranceLaserData = 0.01
 yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
+INHALE_AREA = 80
+EXHALE_AREA = 20
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
+
+TIMEOVER = 20
+DEVICE_ROBOT = 1
+DEVICE_LASER = 2
