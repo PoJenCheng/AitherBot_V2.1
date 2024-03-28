@@ -68,3 +68,4 @@ gVars['toleranceLaserData'] = 0.01
 TIMEOVER = 20
 DEVICE_ROBOT = 1
 DEVICE_LASER = 2
+DEVICE_ALL = 3

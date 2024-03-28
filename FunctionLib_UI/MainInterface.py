@@ -1677,7 +1677,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.idEnabledDevice = nDevice
         
-        if (nDevice & DEVICE_ROBOT) and (nDevice & DEVICE_LASER):
+        if nDevice == (DEVICE_ALL):
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
@@ -1701,7 +1701,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
             
-        elif nDevice & DEVICE_ROBOT:
+        elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
@@ -1713,7 +1713,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.OperationLight = Robot.OperationLight()
-        elif nDevice & DEVICE_LASER:
+        elif nDevice == DEVICE_LASER:
             self.stkScene.setCurrentWidget(self.pgLaser)
             
             self.loadingRobot = 100
@@ -1734,7 +1734,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(0)
+            self.enableDevice(DEVICE_LASER)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
