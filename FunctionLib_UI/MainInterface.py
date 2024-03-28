@@ -90,6 +90,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     bRegistration = False
     
     errDevice = 0
+    idEnabledDevice = 0
     #robot parameter
     bTrackingBreathing = False
     
@@ -1672,28 +1673,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.bFull = not self.bFull
         
-    def MainSceneChanged(self, index):
-        if self.stkMain.currentWidget() == self.page_loading:
-            # self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgLaser)
-            # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
-            
-            # self.loadingRobot = 100
-            self.Laser = Robot.LineLaser()
-            self.Laser.signalProgress.connect(self.Laser_OnLoading)
-            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
-            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
-            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
-            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
-            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
-            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
-            self.tLaser= threading.Thread(target = self.Laser.Initialize)
-            # tLaser= threading.Thread(target = self.sti_RunLaser)
-            self.tLaser.start()
-            
-            # self.loadingLaser = 100
+    def enableDevice(self, nDevice:int = 0):
+        
+        self.idEnabledDevice = nDevice
+        
+        if (nDevice & DEVICE_ROBOT) and (nDevice & DEVICE_LASER):
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
@@ -1704,6 +1688,53 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.OperationLight = Robot.OperationLight()
+            
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            self.tLaser= threading.Thread(target = self.Laser.Initialize)
+            self.tLaser.start()
+            
+        elif nDevice & DEVICE_ROBOT:
+            self.loadingLaser = 100
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            
+            self.tRobot = threading.Thread(target = self.robot.Initialize)
+            self.tRobot.start()
+            
+            # self.RobotSupportArm = 100
+            self.RobotSupportArm = Robot.RobotSupportArm()
+            self.OperationLight = Robot.OperationLight()
+        elif nDevice & DEVICE_LASER:
+            self.stkScene.setCurrentWidget(self.pgLaser)
+            
+            self.loadingRobot = 100
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            self.tLaser= threading.Thread(target = self.Laser.Initialize)
+            self.tLaser.start()
+        else:
+            self.stkMain.setCurrentWidget(self.pgScene)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+        
+    def MainSceneChanged(self, index):
+        if self.stkMain.currentWidget() == self.page_loading:
+            self.enableDevice(0)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1735,6 +1766,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # elif currentWidget == self.pgModelBuilding:
         #     self.btnStartBuildModel.setEnabled(True)
         #     self.btnNext_startBuildModel.setEnabled(False)
+        
         elif currentWidget == self.pgModelBuilding1:
             self.btnStartBuildModel_2.setEnabled(True)
             self.btnNext_startBuildModel_2.setEnabled(False)
@@ -1785,6 +1817,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.indexCurrentStage = index
         # if self.stkScene.currentWidget() == self.pgImageView:
         #     self.wdgNaviBar.hide()
+        
+        if self.idEnabledDevice == DEVICE_ROBOT:
+            if currentWidget == self.pgLaser:
+                self.stkScene.setCurrentWidget(self.pgImportDicom)
         
     def IsStage(self,index:int, stage:str):
                 
@@ -2475,6 +2511,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
             self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
            
