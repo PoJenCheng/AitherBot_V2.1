@@ -593,8 +593,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.laserFigure = Canvas(self, dpi = 200)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
-
-        
         
         self.btnSceneLaser.setEnabled(False)
         self.btnSceneRobot.setEnabled(False)
@@ -687,7 +685,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
         
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
-        
+            
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -1678,7 +1676,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.stkMain.setCurrentWidget(self.pgScene)
             # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgLaserAdjust)
+            # self.stkScene.setCurrentWidget(self.pgLaser)
             # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
             
             # self.loadingRobot = 100
@@ -2400,6 +2398,41 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.pteProgress.mergeCurrentCharFormat(fmt) 
         self.pteProgress.appendPlainText(msg)
         
+    def Laser_SetBreathingCycleUI(self, nID:int = -1, bEnabled:bool = None):
+        lstItem = []
+        if nID == -1:
+            nNo = 1
+            while True:
+                if not self.Laser_SetBreathingCycleUI(nNo, bEnabled):
+                    break
+                nNo += 1
+                
+        else:
+            strLabelName = 'lblCycle' + str(nID)
+            if hasattr(self, strLabelName):
+                label = eval('self.' + strLabelName)
+                lstItem.append(label)
+            else:
+                return False
+                
+            strWdgName = 'wdgCheckCycle' + str(nID)
+            if hasattr(self, strWdgName):
+                wdg = eval('self.' + strWdgName)
+                lstItem.append(wdg)
+            else:
+                return False
+                
+            for item in lstItem:
+                if hasattr(item, 'setStyleSheet'):
+                    if bEnabled == True:
+                        item.setStyleSheet('background-color:rgb(0, 100, 0)')
+                    elif bEnabled == False:
+                        item.setStyleSheet('background-color:rgb(255, 0, 0)')
+                    else:
+                        item.setStyleSheet('')
+                        
+        return True
+        
     def Laser_OnLoading(self, strState:str, progress:int):
         # QThread.msleep(1000)
         self.loadingLaser = progress
@@ -2442,6 +2475,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
            
     def Laser_OnSignalInhale(self, bInhale:bool, percentage:float):
@@ -2501,39 +2535,45 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.lblCounter.setText(str(ms))
         
     def Laser_OnSignalShowMessage(self, msg:str):
-        msgbox = QMessageBox()
+        msgbox = messageBox()
         msgbox.setIcon(QMessageBox.Question)
         msgbox.setWindowTitle('CONNECTION ERROR')
         msgbox.setText(msg + '\nRetry again?')
         # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msgbox.addButton('Retry', 3)
-        msgbox.addButton('Shutdown', 3)
+        # msgbox.addButton('Retry', 3)
+        # msgbox.addButton('Shutdown', 3)
+        msgbox.addButtons('Retry', 'Shutdown')
         ret = msgbox.exec_()
         
         if ret == 0:
-            print('retry again babe~~')
-            self.tLaser= threading.Thread(target = self.Laser.Initialize)
+            self.tLaser = threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
         elif ret == 1:
             self.close()
     
     def Laser_OnSignalUpdateCycle(self, tupPercent:tuple, nCycle:int):
-        strLabelName = 'lblCycle' + str(nCycle)
-        if hasattr(self, strLabelName):
-            label = eval('self.' + strLabelName)
-            # label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
-            if tupPercent[0] >= 80 and tupPercent[1] <= 20:
-                label.setStyleSheet('background-color:rgb(0, 100, 0)')
-            else:
-                label.setStyleSheet('background-color:rgb(255, 0, 0)')
+        # strLabelName = 'lblCycle' + str(nCycle)
+        # if hasattr(self, strLabelName):
+        #     label = eval('self.' + strLabelName)
+        #     # label.setText(f'Inhale:{tupAvg[0]:.3f}, Exhale:{tupAvg[1]:.3f}')
+        #     if tupPercent[0] >= 80 and tupPercent[1] <= 20:
+        #         label.setStyleSheet('background-color:rgb(0, 100, 0)')
+        #     else:
+        #         label.setStyleSheet('background-color:rgb(255, 0, 0)')
             
-        strWdgName = 'wdgCheckCycle' + str(nCycle)
-        if hasattr(self, strWdgName):
-            wdg = eval('self.' + strWdgName)
-            if tupPercent[0] >= 80 and tupPercent[1] <= 20:
-                wdg.setStyleSheet('background-color:rgb(0, 100, 0);image:url("image/check.png");')
-            else:
-                wdg.setStyleSheet('background-color:rgb(255, 0, 0);')
+        # strWdgName = 'wdgCheckCycle' + str(nCycle)
+        # if hasattr(self, strWdgName):
+        #     wdg = eval('self.' + strWdgName)
+        #     if tupPercent[0] >= 80 and tupPercent[1] <= 20:
+        #         wdg.setStyleSheet('background-color:rgb(0, 100, 0);image:url("image/check.png");')
+        #     else:
+        #         wdg.setStyleSheet('background-color:rgb(255, 0, 0);')
+        
+        if tupPercent[0] >= 80 and tupPercent[1] <= 20:
+            self.Laser_SetBreathingCycleUI(nCycle, True)
+        else:
+            self.Laser_SetBreathingCycleUI(nCycle, False)
+         
         
                     
     def Laser_ShowLaserProfile(self):
