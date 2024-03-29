@@ -689,7 +689,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
         
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
-            
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -1770,7 +1770,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # elif currentWidget == self.pgModelBuilding:
         #     self.btnStartBuildModel.setEnabled(True)
         #     self.btnNext_startBuildModel.setEnabled(False)
-        
         elif currentWidget == self.pgModelBuilding1:
             self.btnStartBuildModel_2.setEnabled(True)
             self.btnNext_startBuildModel_2.setEnabled(False)
@@ -2381,9 +2380,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
+                # self.RobotRun()
                 
     def Robot_Stop(self):
         QMessageBox.information(None, 'Info', 'Robot Stop')
+        
+    def RobotRun(self):
+        if self.homeStatus is True:
+            self.robot.P2P()
+            print("Robot run processing is done!")
+            # QMessageBox.information(self, "information", "Robot run processing is done!")
+            
+            #執行呼吸補償
+            self.robot.breathingCompensation()
+        else:
+            print("Please execute home processing first.")
+            QMessageBox.information(self, "information", "Please execute home processing first.")
         
     def ReleaseRobotArm(self):
         self.OperationLight.DynamicCompensation()

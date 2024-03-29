@@ -428,6 +428,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
+        self.SupportMove = 'GVL.SupportMove'
         
     def sti_init(self):
         # for test
@@ -733,10 +734,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
             homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
             if homeStatus_Enable == False:
                 if self.FLDC_Up.homeValue() == 0:
-                    self.FLDC_Up.MoveVelocitySetting(50, 500, 1)
+                    self.FLDC_Up.MoveVelocitySetting(250, 500, 1)
                     self.FLDC_Up.bMoveVelocityEnable()
                 if self.FLDC_Down.homeValue() == 0:
-                    self.FLDC_Down.MoveVelocitySetting(50, 500, 1)
+                    self.FLDC_Down.MoveVelocitySetting(250, 500, 1)
                     self.FLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
@@ -859,13 +860,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
             target4 = 0
             
     def CaptureRealTimePoint(self, percentage):
-        # entry_full = np.array([354.61890598,54.93392833,-85.62637816])
-        # target_full = np.array([ 354.55446918,45.55959477,-126.77388984])
-        # entry_halt = np.array([354.61892983,55.93381232,-85.61114631])
-        # target_halt = np.array([ 354.55311805,54.57378253,-127.63668602])
-        # pointTemp = np.array(
-        #     [entry_full, target_full, entry_halt, target_halt])
-        pointTemp = self.PlanningPath
+        entry_full = np.array([5,20.93392833,-85.62637816])
+        target_full = np.array([ 35,80.55959477,-126.77388984])
+        entry_halt = np.array([5,10.93381232,-85.61114631])
+        target_halt = np.array([ 20,72.57378253,-127.63668602])
+        pointTemp = np.array(
+            [entry_full, target_full, entry_halt, target_halt])
+        # pointTemp = self.PlanningPath
 
         "translate base from ball to robot"
         calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
@@ -885,13 +886,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
         return realTimeEntry, realTimeTarget
 
     def CapturePoint(self):
-        # entry_full = np.array([354.61890598,54.93392833,-85.62637816])
-        # target_full = np.array([ 354.55446918,45.55959477,-126.77388984])
-        # entry_halt = np.array([354.61892983,55.93381232,-85.61114631])
-        # target_halt = np.array([ 354.55311805,54.57378253,-127.63668602])
-        # pointTemp = np.array(
-        #     [entry_full, target_full, entry_halt, target_halt])
-        pointTemp = self.PlanningPath
+        entry_full = np.array([5,20.93392833,-85.62637816])
+        target_full = np.array([ 35,80.55959477,-126.77388984])
+        entry_halt = np.array([5,10.93381232,-85.61114631])
+        target_halt = np.array([ 20,72.57378253,-127.63668602])
+        pointTemp = np.array(
+            [entry_full, target_full, entry_halt, target_halt])
+        # pointTemp = self.PlanningPath
 
         "translate base from ball to robot"
         calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
@@ -908,14 +909,58 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
         return breathingFull_entry, breathingFull_target
 
     def MoveToPoint(self):
+        reachTarget = False
+        while reachTarget == False:
+            Release = self.plc.read_by_name(self.SupportMove)
+            if Release == True:
+                "obtain upper point"
+                # print(f"Entry point is {self.entryPoint}")
+                t_upper = (upperHigh - self.entryPoint[2]) / \
+                    (self.targetPoint[2]-self.entryPoint[2])
+                upperPointX = self.entryPoint[0] + \
+                    (self.targetPoint[0]-self.entryPoint[0])*t_upper
+                upperPointY = self.entryPoint[1] + \
+                    (self.targetPoint[1]-self.entryPoint[1])*t_upper
+
+                "obtain lower point"
+                t = (lowerHigh - self.entryPoint[2]) / \
+                    (self.targetPoint[2]-self.entryPoint[2])
+                lowerPointX = self.entryPoint[0] + \
+                    (self.targetPoint[0]-self.entryPoint[0])*t
+                lowerPointY = self.entryPoint[1] + \
+                    (self.targetPoint[1]-self.entryPoint[1])*t
+
+                "Calculate rotation and movement of upper layer"
+                upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
+                lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+
+                "robot motion"
+                "rotation command"
+                RotationCount_axis3 = float(
+                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+                RotationCount_axis1 = float(
+                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+                "Linear motion command"
+                LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
+                LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+                self.DisplayRun()
+                self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
+                                        RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)
+                print("Compensation is Done!")
+                reachTarget = True
+                self.DisplaySafe()
+                
+    def MoveToPoint_temp(self):
+        OperationLight.DynamicCompensation(self)
+        # breathingCompensation = self.plc.read_by_name(self.SupportMove)
         "obtain upper point"
         # print(f"Entry point is {self.entryPoint}")
-        t = (upperHigh - self.entryPoint[2]) / \
+        t_upper = (upperHigh - self.entryPoint[2]) / \
             (self.targetPoint[2]-self.entryPoint[2])
         upperPointX = self.entryPoint[0] + \
-            (self.targetPoint[0]-self.entryPoint[0])*t
+            (self.targetPoint[0]-self.entryPoint[0])*t_upper
         upperPointY = self.entryPoint[1] + \
-            (self.targetPoint[1]-self.entryPoint[1])*t
+            (self.targetPoint[1]-self.entryPoint[1])*t_upper
 
         "obtain lower point"
         t = (lowerHigh - self.entryPoint[2]) / \
@@ -940,7 +985,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
         LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
         self.DisplayRun()
         self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
-                                 RotationCount_axis3, LinearCount_axis4, 800, 800, 800, 800)
+                                RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)
         print("Compensation is Done!")
         self.DisplaySafe()
 
@@ -959,6 +1004,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
         self.entryPoint = self.movingPoint[0]  # from robot to entry point
         self.targetPoint = self.movingPoint[1] # from robot to target point
         self.MoveToPoint()
+        
+    def breathingCompensation(self):
+        "obtain entry point and target point"
+        self.movingPoint = self.CaptureRealTimePoint(85)
+        self.entryPoint = self.movingPoint[0]  # from robot to entry point
+        self.targetPoint = self.movingPoint[1] # from robot to target point
+        self.MoveToPoint_temp()
 
     def P2P_Manual(self, entryPoint, targetPoint):
         "get entry and target points manually."
