@@ -333,12 +333,12 @@ class messageBox(QMessageBox):
                 
                 if len(lstButton) > 1:
                     lstButton[0].setStyleSheet("""
-                                                border-top-left-radius:30px;
-                                                border-bottom-left-radius:30px;
+                                                border-top-left-radius:20px;
+                                                border-bottom-left-radius:20px;
                                                 """)
                     
                     lstButton[-1].setStyleSheet("""
-                                                border-top-right-radius:30px;
-                                                border-bottom-right-radius:30px;
+                                                border-top-right-radius:20px;
+                                                border-bottom-right-radius:20px;
                                                 """)
         
