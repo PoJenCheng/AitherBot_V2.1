@@ -1738,7 +1738,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice()
+            self.enableDevice(DEVICE_ROBOT)
+            # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2398,7 +2399,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QMessageBox.information(self, "information", "Please execute home processing first.")
         
     def ReleaseRobotArm(self):
-        self.OperationLight.DynamicCompensation()
         self.FixArmStatus = False
         while self.FixArmStatus == False:
             self.RobotSupportArm.ReleaseAllEncoder()
@@ -2971,8 +2971,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Button_StopLaserTracking.setChecked(False)
         if hasattr(self, 'robot'):
             try:
-                self.robot.RealTimeTracking(self.breathingPercentage)
-                self.MoveToPoint()
+                # self.robot.RealTimeTracking(self.breathingPercentage)
+                self.RobotRun()
             except:
                 print("Robot Compensation error")
         # else:
