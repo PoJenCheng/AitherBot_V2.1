@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\Leon\Aitherbot-Project-V1.9.5\FunctionLib_UI\dlgInstallAdaptor.ui'
+# Form implementation generated from reading ui file 'c:\Leon\AitherBot_V2.1\FunctionLib_UI\dlgInstallAdaptor.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -22,7 +22,7 @@ class Ui_dlgInstallAdaptor(object):
         self.wdgMedia = QtWidgets.QWidget(dlgInstallAdaptor)
         self.wdgMedia.setMinimumSize(QtCore.QSize(800, 600))
         self.wdgMedia.setMaximumSize(QtCore.QSize(800, 600))
-        self.wdgMedia.setStyleSheet("")
+        self.wdgMedia.setStyleSheet("image:url(image/foot_pedal.png)")
         self.wdgMedia.setObjectName("wdgMedia")
         self.gridLayout.addWidget(self.wdgMedia, 0, 0, 1, 1)
         self.label = QtWidgets.QLabel(dlgInstallAdaptor)

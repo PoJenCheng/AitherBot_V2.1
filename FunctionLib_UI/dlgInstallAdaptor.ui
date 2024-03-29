@@ -35,7 +35,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">image:url(image/foot_pedal.png)</string>
      </property>
     </widget>
    </item>

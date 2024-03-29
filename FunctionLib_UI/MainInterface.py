@@ -1095,13 +1095,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dlgDriveTo.exec_()
         # self.listSubDialog.append(dlgDriveTo)
         
-        self.listSubDialog = []
-        
-        dlgRobotMoving = DlgRobotMoving()
-        dlgRobotMoving.signalStop.connect(self.Robot_Stop)
-        dlgRobotMoving.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        dlgRobotMoving.setModal(True)
-        dlgRobotMoving.exec_()
+        # dlgRobotMoving = DlgRobotMoving()
+        # dlgRobotMoving.signalStop.connect(self.Robot_Stop)
+        # dlgRobotMoving.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # dlgRobotMoving.setModal(True)
+        # dlgRobotMoving.exec_()
         
         self.stkSignalLight.setCurrentWidget(self.pgGreenLight)
         
@@ -1601,6 +1599,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnFromCD:
                 return
                 
+        self.player.stop()
         index = self.stkScene.currentIndex()
         index = min(self.stkScene.count() - 1, index + 1)
         self.stkScene.setCurrentIndex(index)
@@ -1739,7 +1738,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_LASER)
+            self.enableDevice()
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1798,6 +1797,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgRobotSupportArm:
             self.player.stop()
             self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+        elif currentWidget == self.pgSterileStep1:
+            self.player.stop()
+            self.playVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         else:
@@ -3303,22 +3305,21 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
         self.setupUi(self)
         
         
-        self.player = QMediaPlayer()
+        # self.player = QMediaPlayer()
         
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/InstallHolder.mp4')))
+        # self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/InstallHolder.mp4')))
         
-        videoWidget = QVideoWidget()
-        videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
-        self.player.setVideoOutput(videoWidget)
+        # videoWidget = QVideoWidget()
+        # videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
+        # self.player.setVideoOutput(videoWidget)
         
-        layout = QVBoxLayout(self.wdgMedia)
-        layout.addWidget(videoWidget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # layout = QVBoxLayout(self.wdgMedia)
+        # layout.addWidget(videoWidget)
+        # layout.setContentsMargins(0, 0, 0, 0)
         
-        self.player.play()
+        # self.player.play()
         
-        self.player.mediaStatusChanged.connect(self.statusChanged)
-        # self.player.playbackStateChanged(self.statusChanged)
+        # self.player.mediaStatusChanged.connect(self.statusChanged)
         self.btnConfirm.clicked.connect(self.OnClicked_btnConfirm)
         
     def statusChanged(self, status):
@@ -3327,7 +3328,7 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
             self.player.play()
             
     def closeEvent(self, event: QCloseEvent):
-        self.player.stop()
+        # self.player.stop()
         return super().closeEvent(event)
     
     def OnClicked_btnConfirm(self):

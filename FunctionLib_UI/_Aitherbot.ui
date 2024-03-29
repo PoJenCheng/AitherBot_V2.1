@@ -1120,7 +1120,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>15</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -4943,21 +4943,21 @@ border-bottom:1px solid #ccc;
            </property>
            <layout class="QGridLayout" name="gridLayout_8" rowminimumheight="0,0" columnminimumwidth="1,0">
             <item row="0" column="0">
-             <widget class="QWidget" name="wdgFootPedal" native="true">
+             <widget class="QWidget" name="wdgChangeTool" native="true">
               <property name="minimumSize">
                <size>
-                <width>825</width>
-                <height>563</height>
+                <width>800</width>
+                <height>600</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>825</width>
-                <height>563</height>
+                <width>800</width>
+                <height>600</height>
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">image:url(image/foot_pedal.png);</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -4974,7 +4974,7 @@ border-bottom:1px solid #ccc;
 color: rgb(255, 255, 208);</string>
               </property>
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;Press foot pedal to &lt;/span&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;unlock&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; robot&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;Remove locator and install holder&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; at the end-effector of AitherBot.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="wordWrap">
                <bool>true</bool>
