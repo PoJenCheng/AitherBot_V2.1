@@ -16,7 +16,7 @@ class Ui_dlgInstallAdaptor(object):
         dlgInstallAdaptor.setObjectName("dlgInstallAdaptor")
         dlgInstallAdaptor.setWindowModality(QtCore.Qt.NonModal)
         dlgInstallAdaptor.resize(1229, 711)
-        dlgInstallAdaptor.setStyleSheet("background-color: rgb(77, 132, 173);")
+        dlgInstallAdaptor.setStyleSheet("background-color: #4D8CBB;")
         self.gridLayout = QtWidgets.QGridLayout(dlgInstallAdaptor)
         self.gridLayout.setObjectName("gridLayout")
         self.wdgMedia = QtWidgets.QWidget(dlgInstallAdaptor)
