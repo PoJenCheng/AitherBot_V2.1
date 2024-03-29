@@ -23,6 +23,7 @@ import os
 # from FunctionLib_UI.ui_demo_1 import *
 from FunctionLib_UI.Ui__Aitherbot import *
 from FunctionLib_UI.ViewPortUnit import *
+from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
@@ -219,6 +220,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         self.settingTarget = False
+        
+        self.spinBox.lineEdit().setHidden(True)
         
         
     def addCrossSectionItemInSelector(self):
@@ -1208,7 +1211,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pass
     
     def OnValueChanged_spin(self, value:int):
-        gVars['toleranceLaserData'] = value * 0.01
+        fValue = value * 0.01
+        gVars['toleranceLaserData'] = fValue
+        self.lblThreshold.setText(str(fValue))
     
     def OnValueChanged_sldTrajectory(self, value):
         # print(f'value = {value}')

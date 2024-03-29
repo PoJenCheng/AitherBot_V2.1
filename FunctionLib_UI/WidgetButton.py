@@ -16,6 +16,25 @@ class WidgetButton(QWidget):
     
     def __init__(self, parent: QWidget):
         super().__init__(parent)
+        
+    def copyFrom(self, widget:QWidget):
+        meta_widget = widget.metaObject()
+        meta_button = self.metaObject()
+        
+        # 获取widget的属性数量
+        prop_count = meta_widget.propertyCount()
+        for i in range(prop_count):
+            prop = meta_widget.property(i)
+            prop_name = prop.name()
+            
+            # 检查属性是否可写
+            if prop.isWritable():
+                value = prop.read(widget)
+                prop_button = meta_button.property(meta_button.indexOfProperty(prop_name))
+                
+                # 检查button是否有对应的属性
+                if prop_button.isValid() and prop_button.isWritable():
+                    prop_button.write(self, value)
 
     def paintEvent(self, event):
         opt = QStyleOption()
