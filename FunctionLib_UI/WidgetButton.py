@@ -316,10 +316,14 @@ class messageBox(QMessageBox):
                              """)
         
         
-    def addButtons(self, *buttonName):
+    def addButtons(self, *buttonName, **kwButtonName):
         
+       
         for button in buttonName:
             self.addButton(button, 3)
+        
+        for name, action in kwButtonName.items():
+            self.addButton(name, action)
         
         # for button in buttonName:
         #     self.hLayout.addWidget(QPushButton(button))
@@ -342,3 +346,9 @@ class messageBox(QMessageBox):
                                                 border-bottom-right-radius:20px;
                                                 """)
         
+    def showMsg(msg:str, icon:int = 0, *args, **kwargs):
+        
+        print(f'args = {args}, kwargs = {kwargs}')
+        msgbox = messageBox(icon, msg)
+        msgbox.addButtons('fuck off', 'damn it')
+        msgbox.exec_()
