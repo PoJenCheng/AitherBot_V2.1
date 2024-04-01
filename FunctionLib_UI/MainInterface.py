@@ -1737,7 +1737,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_ROBOT)
+            self.enableDevice(DEVICE_LASER)
             # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
@@ -1877,6 +1877,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.stkScene.setCurrentWidget(self.pgLaser)
                 index = self.stkScene.indexOf(self.pgLaser)
                 self.stkScene.setCurrentIndex(index)
+                self.Laser_SetBreathingCycleUI()
         elif stage == STAGE_DICOM:
             # self.bFinishRobot = True
             # self.bFinishLaser = True
@@ -2460,7 +2461,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if not self.Laser_SetBreathingCycleUI(nNo, bEnabled):
                     break
                 nNo += 1
-                
+            self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
         else:
             strLabelName = 'lblCycle' + str(nID)
             if hasattr(self, strLabelName):
@@ -2529,7 +2530,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
-            self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
+            # self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
             self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
            
