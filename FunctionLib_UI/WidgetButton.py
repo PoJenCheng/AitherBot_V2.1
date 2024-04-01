@@ -347,8 +347,11 @@ class messageBox(QMessageBox):
                                                 """)
         
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):
-        
-        print(f'args = {args}, kwargs = {kwargs}')
+        # if len(args) == 0 and len(kwargs) == 0:
+        #     QMessageBox.warning(None, 'messagebox error', 'at least one button ')
         msgbox = messageBox(icon, msg)
-        msgbox.addButtons('fuck off', 'damn it')
+        if len(args) == 0 and len(kwargs) == 0:
+            msgbox.addButtons('Got it')
+        else:
+            msgbox.addButtons(*args, **kwargs)
         msgbox.exec_()

@@ -223,7 +223,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.spinBox.lineEdit().setHidden(True)
         
-        
     def addCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
