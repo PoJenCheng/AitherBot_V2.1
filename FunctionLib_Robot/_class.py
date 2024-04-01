@@ -1080,6 +1080,10 @@ class LineLaser(MOTORCONTROL, QObject):
     percentageBase          = {}
     ret = None
     
+    #手動紀錄
+    bManualRecord           = False 
+    lstManualRecordData     = []
+    
     
     def __init__(self):
         QObject.__init__(self)
@@ -1635,14 +1639,20 @@ class LineLaser(MOTORCONTROL, QObject):
             
             if avg:
                 # 檢查data的平均是否停留在一個區間內3秒不動，是就紀錄下平均值
-                if abs(avg - avgMean) < gVars['toleranceLaserData']:
+                if self.bManualRecord == True:
+                    # listInhale.append(listInhaleTemp)
+                    self.lstManualRecordData.append(avg)
+                    print(avg)
+                    listInhaleTemp = []
+                    bInStable = False
+                    self.bManualRecord = False
+                elif abs(avg - avgMean) < gVars['toleranceLaserData']:
                     if bInStable == False:
                         tStartInhale = tTime
                         bInStable = True
                     listInhaleTemp.append(avg)
                     self.signalCycleCounter.emit(tTime - tStartInhale)
                 elif bInStable:
-                    
                     if tTime - tStartInhale > 3000:
                         listInhale.append(listInhaleTemp)
                         listInhaleTemp = []
@@ -1650,20 +1660,16 @@ class LineLaser(MOTORCONTROL, QObject):
                     self.signalCycleCounter.emit(0)
                 else:
                     listInhaleTemp = []
-                # if len(listInhaleTemp) > 0:
-                #     avgMean = np.mean(listInhaleTemp)
-                # else:
                 avgMean = avg
+        
+        if len(self.lstManualRecordData) >= 2:
+            valInhale, valExhale = self.lstManualRecordData
+            self.lstManualRecordData = []
             
-        if len(listInhale) >= 2:
-            # skip first element, first element is laser inital position
-            
-            # if listInhale[1][0] > listInhale[2][0]:
-            #     valInhale = min(listInhale[2])
-            #     valExhale = max(listInhale[1])
-            # else:
-            #     valInhale = min(listInhale[1])
-            #     valExhale = max(listInhale[2])
+            if valExhale < valInhale:
+                valExhale, valInhale = valInhale, valExhale
+            return (valInhale, valExhale)
+        elif len(listInhale) >= 2:
             
             if listInhale[0][0] > listInhale[1][0]:
                 valInhale = min(listInhale[1])

@@ -1120,7 +1120,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>15</number>
+           <number>6</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -1949,6 +1949,11 @@ margin-right:0px;
 	color: rgb(255, 255, 255);
 }
 
+QPushButton{
+	font: 24pt &quot;Arial&quot;;
+	color: rgb(255, 255, 0);
+}
+
 #wdgBreathingCycle QWidget{
 	background-color: rgb(0, 167, 218);
 }
@@ -1992,94 +1997,6 @@ margin-right:0px;
                <property name="verticalSpacing">
                 <number>2</number>
                </property>
-               <item row="3" column="0">
-                <widget class="QLabel" name="lblCycle3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 3</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="lblCycle1">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 1</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1">
-                <widget class="QWidget" name="wdgCheckCycle3" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>58</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="lblCycle5">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>400</width>
-                   <height>58</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Cycle 5</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
                <item row="0" column="3">
                 <widget class="QSpinBox" name="spinBox">
                  <property name="sizePolicy">
@@ -2141,8 +2058,119 @@ QSpinBox::down-button{
                  </property>
                 </widget>
                </item>
-               <item row="2" column="1">
-                <widget class="QWidget" name="wdgCheckCycle2" native="true">
+               <item row="0" column="0" colspan="2">
+                <widget class="QLabel" name="lblCounter">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>120</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="lblCycle1">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>400</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cycle 1</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <widget class="QLabel" name="lblThreshold">
+                 <property name="text">
+                  <string>0.01</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QWidget" name="wdgCheckCycle4" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QWidget" name="wdgCheckCycle3" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>58</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="lblCycle5">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>400</width>
+                   <height>58</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cycle 5</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QWidget" name="wdgCheckCycle5" native="true">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                    <horstretch>0</horstretch>
@@ -2185,27 +2213,18 @@ QSpinBox::down-button{
                  </property>
                 </widget>
                </item>
-               <item row="5" column="1">
-                <widget class="QWidget" name="wdgCheckCycle5" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
+               <item row="3" column="3">
+                <spacer name="horizontalSpacer_35">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
                  </property>
-                 <property name="minimumSize">
+                 <property name="sizeHint" stdset="0">
                   <size>
-                   <width>58</width>
-                   <height>58</height>
+                   <width>40</width>
+                   <height>20</height>
                   </size>
                  </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
+                </spacer>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="lblCycle2">
@@ -2229,8 +2248,8 @@ QSpinBox::down-button{
                  </property>
                 </widget>
                </item>
-               <item row="4" column="1">
-                <widget class="QWidget" name="wdgCheckCycle4" native="true">
+               <item row="2" column="1">
+                <widget class="QWidget" name="wdgCheckCycle2" native="true">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                    <horstretch>0</horstretch>
@@ -2273,39 +2292,32 @@ QSpinBox::down-button{
                  </property>
                 </widget>
                </item>
-               <item row="3" column="3">
-                <spacer name="horizontalSpacer_35">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+               <item row="3" column="0">
+                <widget class="QLabel" name="lblCycle3">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
                  </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="0" column="0" colspan="2">
-                <widget class="QLabel" name="lblCounter">
                  <property name="minimumSize">
                   <size>
-                   <width>0</width>
-                   <height>120</height>
+                   <width>400</width>
+                   <height>58</height>
                   </size>
                  </property>
                  <property name="text">
-                  <string/>
+                  <string>Cycle 3</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
                  </property>
                 </widget>
                </item>
-               <item row="0" column="2">
-                <widget class="QLabel" name="lblThreshold">
+               <item row="6" column="0" colspan="2">
+                <widget class="QPushButton" name="btnRecord">
                  <property name="text">
-                  <string>0.01</string>
+                  <string>Record</string>
                  </property>
                 </widget>
                </item>

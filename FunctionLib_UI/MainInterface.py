@@ -689,6 +689,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
         
+        self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -2487,6 +2489,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         item.setStyleSheet('')
                         
         return True
+    
+    def Laser_OnClick_btnRecord(self):
+        if self.Laser:
+            # self.Laser.bManualRecord = True
+            
+            rawData = self.Laser.GetLaserData()
+            
         
     def Laser_OnLoading(self, strState:str, progress:int):
         # QThread.msleep(1000)
@@ -2750,8 +2759,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
             return bPass
         return False
-                    
-        
         
     def Laser_StopLaserProfile(self):
         # if self.Button_StopLaserDisplay.isChecked():
@@ -2869,7 +2876,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             lastTime = curTime
                     
                     receiveData[deltaTime] = rawData
-                    print(f'receive data length = {len(receiveData)}')
                     dataCycle[nCycle][deltaTime] = rawData
                     tupAvg = self.Laser.ModelAnalyze(dataCycle[nCycle])
                     
