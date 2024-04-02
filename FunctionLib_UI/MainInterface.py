@@ -108,6 +108,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     tCheckExhale = None
     indicatorInhale = None
     indicatorExhale = None
+    receiveData = None
     
     dicView = {}
     # dicView_H = {}
@@ -2493,12 +2494,44 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnClick_btnRecord(self):
         if self.Laser:
             # self.Laser.bManualRecord = True
+            if not hasattr(self, 'recordAvg'):
+                self.recordAvg = []
             
             rawData = self.Laser.GetLaserData()
-            if rawData:
+            if rawData is not None:
                 rawData = rawData[laserStartPoint:laserEndPoint]
                 avg = self.Laser.CalHeightAvg(rawData)
-                print(f'now avg = {avg}')
+                self.recordAvg.append(avg)
+                # print(f'now avg = {avg}')
+                
+                lenOfAvg = len(self.recordAvg)
+                if lenOfAvg >= 2 and (lenOfAvg % 2) == 0:
+                        if self.Laser.DataRearrange(self.receiveData, self.yellowLightCriteria, self.greenLightCriteria):   
+                            # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                            lstPercent = self.Laser.GetPercentFromAvg(self.recordAvg)
+                            lstPercent = np.reshape(lstPercent, (-1, 2))
+                            
+                            for i, percent in enumerate(lstPercent, 1):
+                                percent = tuple(percent)
+                                percentIn, percentEx = percent
+                                self.signalModelCycle.emit(percent, i)
+                                print(f'cycle {i} = ({percentIn}, {percentEx})')
+                            print('=' * 50)
+                            
+                        if lenOfAvg >= 10:
+                            avgCycle = np.reshape(self.recordAvg, (-1, 2))
+                            self.recordAvg = []
+                            
+                            dataCycle = {k:{'avg':v} for k, v in zip(range(1, 6), avgCycle)}
+                            
+                            bValid = self.Laser_CheckCycles(dataCycle)
+                            self.bLaserRecording = False
+                            
+                            if not bValid:
+                                    self.signalModelBuildingPass.emit(False)
+                            else:
+                                self.recordBreathingBase = True
+                                self.signalModelBuildingPass.emit(True)
             else:
                 print('laser data is None')
         
@@ -2881,6 +2914,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             lastTime = curTime
                     
                     receiveData[deltaTime] = rawData
+                    self.receiveData = receiveData
+                    
                     dataCycle[nCycle][deltaTime] = rawData
                     tupAvg = self.Laser.ModelAnalyze(dataCycle[nCycle])
                     
