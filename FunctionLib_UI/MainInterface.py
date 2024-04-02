@@ -2495,9 +2495,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser.bManualRecord = True
             
             rawData = self.Laser.GetLaserData()
-            rawData = rawData[laserStartPoint:laserEndPoint]
-            avg = self.CalHeightAvg(rawData)
-            print(f'now avg = {avg}')
+            if rawData:
+                rawData = rawData[laserStartPoint:laserEndPoint]
+                avg = self.Laser.CalHeightAvg(rawData)
+                print(f'now avg = {avg}')
+            else:
+                print('laser data is None')
         
     def Laser_OnLoading(self, strState:str, progress:int):
         # QThread.msleep(1000)
