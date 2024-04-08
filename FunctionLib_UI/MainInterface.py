@@ -2471,7 +2471,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if not self.Laser_SetBreathingCycleUI(nNo, bEnabled):
                     break
                 nNo += 1
-            self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
+            if bEnabled is None:
+                self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
+                self.btnAutoRecord.setEnabled(True)
         else:
             strLabelName = 'lblCycle' + str(nID)
             if hasattr(self, strLabelName):
@@ -2501,10 +2503,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnClick_btnAutoRecord(self):
         if self.btnAutoRecord.isChecked():
             self.btnAutoRecord.setText('ON')
+            self.btnRecord.setEnabled(False)
             self.bAutoRecord = True
         else:
             self.bAutoRecord = False
             self.btnAutoRecord.setText('OFF')
+            self.btnRecord.setEnabled(True)
     
     def Laser_OnClick_btnRecord(self):
         if self.Laser:
@@ -2846,6 +2850,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return
         
         self.btnStartBuildModel_2.setEnabled(False)
+        self.btnAutoRecord.setEnabled(False)
         self.recordBreathingBase = False
         self.bLaserRecording = True
         # self.lytLaserModel.addWidget(self.laserFigure)
@@ -2963,23 +2968,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if tupAvg is not None and self.bAutoRecord:
                         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                             
-                            # if nCycle == 1 and dataCycle[nCycle].get('avg') is None:
-                            #     percentIn, percentEx = self.Laser.GetPercentFromAvg(tupAvg, True)
-                            #     print(f'cycle 1 = ({percentIn}, {percentEx})')
-                            #     dataCycle[nCycle]['avg'] = tupAvg
-                            # else:
-                            
                             self.dataCycle[nCycle]['avg'] = tupAvg
                             lstAvg = []
                             for i in range(nCycle):
                                 if self.dataCycle.get(i + 1):
                                     lstAvg.extend(self.dataCycle[i + 1]['avg'])
-                            # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                                    
                             lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
                             lstPercent = np.reshape(lstPercent, (-1, 2))
                             
-                            # if percentIn < 80 or percentEx > 20:
-                            #     nCycle -= 1
                             for i, percent in enumerate(lstPercent, 1):
                                 percent = tuple(percent)
                                 percentIn, percentEx = percent
@@ -2993,11 +2990,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             
                         if nCycle > 5:
                             bValid = self.Laser_CheckCycles(self.dataCycle)
-                            
-                            # if isinstance(ret, tuple):
-                            #     nCycle = ret[1]
-                            # else:
-                            #     self.bLaserRecording = not ret
                             self.bLaserRecording = False
                             
                             if not bValid:
@@ -3008,23 +3000,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                               
                         self.dataCycle[nCycle] = {}
                         
-                    if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-                        cycle, bValid = self.Laser.DataCheckCycle()
-                        self.signalModelBuildingUI.emit(bValid)
-                        if bValid:
-                            self.bLaserRecording = False
-                            
-                        
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
-        
-        # if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-        #     cycle, bValid = self.Laser.DataCheckCycle()
-        #     # self.signalShowPlot.emit(cycle)
-        #     if not bValid:
-        #         self.signalModelBuildingPass.emit(False)
-        #     else:
-        #         self.recordBreathingBase = True
-        #         self.signalModelBuildingPass.emit(True)
         
     def Laser_OnTracking(self):
         if self.Laser is None:
