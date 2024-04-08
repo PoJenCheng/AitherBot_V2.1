@@ -1738,8 +1738,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_ROBOT)
-            # self.enableDevice(DEVICE_ALL)
+            # self.enableDevice(DEVICE_ROBOT)
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2434,11 +2434,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         print('setting robot target')
         
     def Robot_BackToTarget(self):
-        # self.btnRobotRelease.setEnabled(True)
-        # self.btnRobotFix.setEnabled(False)
+        self.btnRobotRelease.setEnabled(False)
+        self.btnRobotFix.setEnabled(True)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
-        sleep(2)
         self.RobotSupportArm.BackToTargetPos()
         print('Back to target')
         
