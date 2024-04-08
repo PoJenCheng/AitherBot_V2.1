@@ -109,6 +109,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     indicatorInhale = None
     indicatorExhale = None
     receiveData = None
+    dataCycle = None
+    dataCycleManual = None
+    bUpdateCycleData = False
+    nCycle = 1
     
     dicView = {}
     # dicView_H = {}
@@ -2497,41 +2501,72 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if not hasattr(self, 'recordAvg'):
                 self.recordAvg = []
             
-            rawData = self.Laser.GetLaserData()
-            if rawData is not None:
-                rawData = rawData[laserStartPoint:laserEndPoint]
-                avg = self.Laser.CalHeightAvg(rawData)
+            # rawData = self.Laser.GetLaserData()
+            receiveData = self.receiveData.copy()
+            curTime = time.time()
+            deltaTime = int((curTime - receiveData['startTime']) * 1000)
+            
+            # find closest time data
+            dicDeltaTime = {keyTime: item for keyTime, item in receiveData.items() if isinstance(keyTime, int)}
+            lstDeltaTime = np.array(list(dicDeltaTime.keys()))
+            lstData = list(dicDeltaTime.values())
+            
+            lstSubDeltaTime = np.abs(lstDeltaTime - deltaTime)
+            minIndex = np.argmin(lstSubDeltaTime)
+            
+            recordData = lstData[minIndex]
+            
+            if recordData is not None:
+                
+                
+                avg = self.Laser.CalHeightAvg(recordData)
                 self.recordAvg.append(avg)
                 # print(f'now avg = {avg}')
                 
                 lenOfAvg = len(self.recordAvg)
                 if lenOfAvg >= 2 and (lenOfAvg % 2) == 0:
-                        if self.Laser.DataRearrange(self.receiveData, self.yellowLightCriteria, self.greenLightCriteria):   
-                            # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
-                            lstPercent = self.Laser.GetPercentFromAvg(self.recordAvg)
-                            lstPercent = np.reshape(lstPercent, (-1, 2))
+                    # self.indexSegment.append(minIndex)
+                    # receiveData = self.receiveData.copy()
+                    if self.Laser.DataRearrange(dicDeltaTime, self.yellowLightCriteria, self.greenLightCriteria):   
+                        # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                        
+                        if self.recordAvg[-2] > self.recordAvg[-1]:
+                            self.recordAvg[-2], self.recordAvg[-1] = self.recordAvg[-1], self.recordAvg[-2]
                             
-                            for i, percent in enumerate(lstPercent, 1):
-                                percent = tuple(percent)
-                                percentIn, percentEx = percent
-                                self.signalModelCycle.emit(percent, i)
-                                print(f'cycle {i} = ({percentIn}, {percentEx})')
-                            print('=' * 50)
-                            
-                        if lenOfAvg >= 10:
-                            avgCycle = np.reshape(self.recordAvg, (-1, 2))
-                            self.recordAvg = []
-                            
-                            dataCycle = {k:{'avg':v} for k, v in zip(range(1, 6), avgCycle)}
-                            
-                            bValid = self.Laser_CheckCycles(dataCycle)
-                            self.bLaserRecording = False
-                            
-                            if not bValid:
-                                    self.signalModelBuildingPass.emit(False)
-                            else:
-                                self.recordBreathingBase = True
-                                self.signalModelBuildingPass.emit(True)
+                        lstPercent = self.Laser.GetPercentFromAvg(self.recordAvg)
+                        lstPercent = np.reshape(lstPercent, (-1, 2))
+                        
+                        for i, percent in enumerate(lstPercent, 1):
+                            percent = tuple(percent)
+                            percentIn, percentEx = percent
+                            self.signalModelCycle.emit(percent, i)
+                            print(f'cycle {i} = ({percentIn}, {percentEx})')
+                        print('=' * 50)
+                        
+                        if self.dataCycleManual is None:
+                            self.dataCycleManual = {}
+                        self.dataCycleManual[self.nCycle] = self.dataCycle[1].copy()
+                        self.bUpdateCycleData = True
+                        
+                        self.dataCycleManual[self.nCycle]['avg'] = self.recordAvg[-2:]
+                        # self.recordAvg = []
+                        
+                    if lenOfAvg >= 10:
+                        # avgCycle = np.reshape(self.recordAvg, (-1, 2))
+                        # self.recordAvg = []
+                        
+                        # for i, item in enumerate(self.dataCycleManual.items()):
+                        #     item[i + 1]['avg'] = avgCycle[i]
+                        
+                        bValid = self.Laser_CheckCycles(self.dataCycleManual)
+                        self.bLaserRecording = False
+                        
+                        if not bValid:
+                                self.signalModelBuildingPass.emit(False)
+                        else:
+                            self.recordBreathingBase = True
+                            self.signalModelBuildingPass.emit(True)
+                    self.nCycle += 1
             else:
                 print('laser data is None')
         
@@ -2817,7 +2852,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.lytLaserModel.addWidget(self.laserFigure)
         self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
         # t = threading.Thread(target = self.Laser_RecordBreathing)
-        t = threading.Thread(target = self.Laser_RecordBreathingCycle, args = (1,))
+        t = threading.Thread(target = self.Laser_RecordBreathingCycle)
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
@@ -2884,15 +2919,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.signalShowMessage.emit('Model building Succeed', 'Success', False)
                 # print(f'parcentage = \n{self.Laser.percentageBase}')
                 
-    def Laser_RecordBreathingCycle(self, nCycle:int):
+    def Laser_RecordBreathingCycle(self):
         if self.Laser is None:
             return
         
-        receiveData = {}
-        dataCycle = {}
-        dataCycle[nCycle] = {}
+        nCycle = 1
+        self.dataCycle = {}
+        self.dataCycle[nCycle] = {}
         print("Cheast Breathing Measure Start")
         startTime = time.time()
+        receiveData = {'startTime':startTime}
         lastTime = startTime
         while self.bLaserRecording is True:
             plotData = self.Laser.PlotProfile()
@@ -2916,56 +2952,62 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     receiveData[deltaTime] = rawData
                     self.receiveData = receiveData
                     
-                    dataCycle[nCycle][deltaTime] = rawData
-                    tupAvg = self.Laser.ModelAnalyze(dataCycle[nCycle])
-                    
-                    if tupAvg is not None:
-                        if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-                            
-                            # if nCycle == 1 and dataCycle[nCycle].get('avg') is None:
-                            #     percentIn, percentEx = self.Laser.GetPercentFromAvg(tupAvg, True)
-                            #     print(f'cycle 1 = ({percentIn}, {percentEx})')
-                            #     dataCycle[nCycle]['avg'] = tupAvg
-                            # else:
-                            
-                            dataCycle[nCycle]['avg'] = tupAvg
-                            lstAvg = []
-                            for i in range(nCycle):
-                                if dataCycle.get(i + 1):
-                                    lstAvg.extend(dataCycle[i + 1]['avg'])
-                            # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
-                            lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
-                            lstPercent = np.reshape(lstPercent, (-1, 2))
-                            
-                            # if percentIn < 80 or percentEx > 20:
-                            #     nCycle -= 1
-                            for i, percent in enumerate(lstPercent, 1):
-                                percent = tuple(percent)
-                                percentIn, percentEx = percent
-                                self.signalModelCycle.emit(percent, i)
-                                print(f'cycle {i} = ({percentIn}, {percentEx})')
-                            print('=' * 50)
+                    if self.bUpdateCycleData == True:
+                        self.dataCycle[nCycle] = {}
+                        self.bUpdateCycleData = False
                         
-                        while dataCycle.get(nCycle + 1) is not None:
-                            nCycle += 1
-                        nCycle += 1
+                    self.dataCycle[nCycle][deltaTime] = rawData
+                    
+                    # auto recording
+                    # tupAvg = self.Laser.ModelAnalyze(self.dataCycle[nCycle])
+                    
+                    # if tupAvg is not None:
+                    #     if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                             
-                        if nCycle > 5:
-                            bValid = self.Laser_CheckCycles(dataCycle)
+                    #         # if nCycle == 1 and dataCycle[nCycle].get('avg') is None:
+                    #         #     percentIn, percentEx = self.Laser.GetPercentFromAvg(tupAvg, True)
+                    #         #     print(f'cycle 1 = ({percentIn}, {percentEx})')
+                    #         #     dataCycle[nCycle]['avg'] = tupAvg
+                    #         # else:
                             
-                            # if isinstance(ret, tuple):
-                            #     nCycle = ret[1]
-                            # else:
-                            #     self.bLaserRecording = not ret
-                            self.bLaserRecording = False
+                    #         self.dataCycle[nCycle]['avg'] = tupAvg
+                    #         lstAvg = []
+                    #         for i in range(nCycle):
+                    #             if self.dataCycle.get(i + 1):
+                    #                 lstAvg.extend(self.dataCycle[i + 1]['avg'])
+                    #         # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                    #         lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
+                    #         lstPercent = np.reshape(lstPercent, (-1, 2))
                             
-                            if not bValid:
-                                    self.signalModelBuildingPass.emit(False)
-                            else:
-                                self.recordBreathingBase = True
-                                self.signalModelBuildingPass.emit(True)
+                    #         # if percentIn < 80 or percentEx > 20:
+                    #         #     nCycle -= 1
+                    #         for i, percent in enumerate(lstPercent, 1):
+                    #             percent = tuple(percent)
+                    #             percentIn, percentEx = percent
+                    #             self.signalModelCycle.emit(percent, i)
+                    #             print(f'cycle {i} = ({percentIn}, {percentEx})')
+                    #         print('=' * 50)
+                        
+                    #     while self.dataCycle.get(nCycle + 1) is not None:
+                    #         nCycle += 1
+                    #     nCycle += 1
+                            
+                    #     if nCycle > 5:
+                    #         bValid = self.Laser_CheckCycles(self.dataCycle)
+                            
+                    #         # if isinstance(ret, tuple):
+                    #         #     nCycle = ret[1]
+                    #         # else:
+                    #         #     self.bLaserRecording = not ret
+                    #         self.bLaserRecording = False
+                            
+                    #         if not bValid:
+                    #                 self.signalModelBuildingPass.emit(False)
+                    #         else:
+                    #             self.recordBreathingBase = True
+                    #             self.signalModelBuildingPass.emit(True)
                               
-                        dataCycle[nCycle] = {}
+                    #     self.dataCycle[nCycle] = {}
                         
                     # if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                     #     cycle, bValid = self.Laser.DataCheckCycle()
