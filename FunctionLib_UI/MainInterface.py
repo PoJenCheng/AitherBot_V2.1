@@ -2932,7 +2932,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicDataCycle[nCycle] = {}
         print("Cheast Breathing Measure Start")
         startTime = time.time()
-        receiveData = {'startTime':startTime}
+        
+        if self.bAutoRecord:
+            receiveData = {}
+        else:
+            receiveData = {'startTime':startTime}
+            
+            
         lastTime = startTime
         while self.bLaserRecording is True:
             plotData = self.Laser.PlotProfile()
@@ -2963,16 +2969,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.dicDataCycle[nCycle][deltaTime] = rawData
                     
                     # auto recording
-                    tupAvg = self.Laser.ModelAnalyze(self.dataCycle[nCycle])
+                    tupAvg = self.Laser.ModelAnalyze(self.dicDataCycle[nCycle])
                     
                     if tupAvg is not None and self.bAutoRecord:
                         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                             
-                            self.dataCycle[nCycle]['avg'] = tupAvg
+                            self.dicDataCycle[nCycle]['avg'] = tupAvg
                             lstAvg = []
                             for i in range(nCycle):
-                                if self.dataCycle.get(i + 1):
-                                    lstAvg.extend(self.dataCycle[i + 1]['avg'])
+                                if self.dicDataCycle.get(i + 1):
+                                    lstAvg.extend(self.dicDataCycle[i + 1]['avg'])
                                     
                             lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
                             lstPercent = np.reshape(lstPercent, (-1, 2))
@@ -2984,12 +2990,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                 print(f'cycle {i} = ({percentIn}, {percentEx})')
                             print('=' * 50)
                         
-                        while self.dataCycle.get(nCycle + 1) is not None:
+                        while self.dicDataCycle.get(nCycle + 1) is not None:
                             nCycle += 1
                         nCycle += 1
                             
                         if nCycle > 5:
-                            bValid = self.Laser_CheckCycles(self.dataCycle)
+                            bValid = self.Laser_CheckCycles(self.dicDataCycle)
                             self.bLaserRecording = False
                             
                             if not bValid:
@@ -2998,7 +3004,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                 self.recordBreathingBase = True
                                 self.signalModelBuildingPass.emit(True)
                               
-                        self.dataCycle[nCycle] = {}
+                        self.dicDataCycle[nCycle] = {}
                         
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
         
