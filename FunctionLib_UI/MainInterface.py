@@ -108,9 +108,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     tCheckExhale = None
     indicatorInhale = None
     indicatorExhale = None
-    receiveData = None
-    dataCycle = None
-    dataCycleManual = None
+    
+    # laser manual recording
+    bAutoRecord = False
+    dicReceiveData = None
+    lstRecordAvg = []
+    dicDataCycle = None
+    dicDataCycleManual = {}
     bUpdateCycleData = False
     nCycle = 1
     
@@ -691,10 +695,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         # self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
-        
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
-        
         self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
+        self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -2495,14 +2498,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
         return True
     
+    def Laser_OnClick_btnAutoRecord(self):
+        if self.btnAutoRecord.isChecked():
+            self.btnAutoRecord.setText('ON')
+            self.bAutoRecord = True
+        else:
+            self.bAutoRecord = False
+            self.btnAutoRecord.setText('OFF')
+    
     def Laser_OnClick_btnRecord(self):
         if self.Laser:
             # self.Laser.bManualRecord = True
-            if not hasattr(self, 'recordAvg'):
-                self.recordAvg = []
             
-            # rawData = self.Laser.GetLaserData()
-            receiveData = self.receiveData.copy()
+            receiveData = self.dicReceiveData.copy()
             curTime = time.time()
             deltaTime = int((curTime - receiveData['startTime']) * 1000)
             
@@ -2518,22 +2526,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             if recordData is not None:
                 
-                
                 avg = self.Laser.CalHeightAvg(recordData)
-                self.recordAvg.append(avg)
-                # print(f'now avg = {avg}')
+                self.lstRecordAvg.append(avg)
                 
-                lenOfAvg = len(self.recordAvg)
+                lenOfAvg = len(self.lstRecordAvg)
                 if lenOfAvg >= 2 and (lenOfAvg % 2) == 0:
-                    # self.indexSegment.append(minIndex)
-                    # receiveData = self.receiveData.copy()
-                    if self.Laser.DataRearrange(dicDeltaTime, self.yellowLightCriteria, self.greenLightCriteria):   
-                        # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                    if self.Laser.DataRearrange(dicDeltaTime, self.yellowLightCriteria, self.greenLightCriteria):  
                         
-                        if self.recordAvg[-2] > self.recordAvg[-1]:
-                            self.recordAvg[-2], self.recordAvg[-1] = self.recordAvg[-1], self.recordAvg[-2]
+                        if self.lstRecordAvg[-2] > self.lstRecordAvg[-1]:
+                            self.lstRecordAvg[-2], self.lstRecordAvg[-1] = self.lstRecordAvg[-1], self.lstRecordAvg[-2]
                             
-                        lstPercent = self.Laser.GetPercentFromAvg(self.recordAvg)
+                        lstPercent = self.Laser.GetPercentFromAvg(self.lstRecordAvg)
                         lstPercent = np.reshape(lstPercent, (-1, 2))
                         
                         for i, percent in enumerate(lstPercent, 1):
@@ -2542,23 +2545,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             self.signalModelCycle.emit(percent, i)
                             print(f'cycle {i} = ({percentIn}, {percentEx})')
                         print('=' * 50)
-                        
-                        if self.dataCycleManual is None:
-                            self.dataCycleManual = {}
-                        self.dataCycleManual[self.nCycle] = self.dataCycle[1].copy()
+                            
+                        self.dicDataCycleManual[self.nCycle] = self.dicDataCycle[1].copy()
                         self.bUpdateCycleData = True
                         
-                        self.dataCycleManual[self.nCycle]['avg'] = self.recordAvg[-2:]
-                        # self.recordAvg = []
+                        self.dicDataCycleManual[self.nCycle]['avg'] = self.lstRecordAvg[-2:]
                         
                     if lenOfAvg >= 10:
-                        # avgCycle = np.reshape(self.recordAvg, (-1, 2))
-                        # self.recordAvg = []
                         
-                        # for i, item in enumerate(self.dataCycleManual.items()):
-                        #     item[i + 1]['avg'] = avgCycle[i]
-                        
-                        bValid = self.Laser_CheckCycles(self.dataCycleManual)
+                        bValid = self.Laser_CheckCycles(self.dicDataCycleManual)
                         self.bLaserRecording = False
                         
                         if not bValid:
@@ -2566,6 +2561,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         else:
                             self.recordBreathingBase = True
                             self.signalModelBuildingPass.emit(True)
+                            
+                        self.lstRecordAvg = []
+                        self.dicDataCycleManual = {}
+                        self.nCycle = 0
                     self.nCycle += 1
             else:
                 print('laser data is None')
@@ -2924,8 +2923,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return
         
         nCycle = 1
-        self.dataCycle = {}
-        self.dataCycle[nCycle] = {}
+        self.dicDataCycle = {}
+        self.dicDataCycle[nCycle] = {}
         print("Cheast Breathing Measure Start")
         startTime = time.time()
         receiveData = {'startTime':startTime}
@@ -2950,70 +2949,70 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             lastTime = curTime
                     
                     receiveData[deltaTime] = rawData
-                    self.receiveData = receiveData
+                    self.dicReceiveData = receiveData
                     
                     if self.bUpdateCycleData == True:
-                        self.dataCycle[nCycle] = {}
+                        self.dicDataCycle[nCycle] = {}
                         self.bUpdateCycleData = False
                         
-                    self.dataCycle[nCycle][deltaTime] = rawData
+                    self.dicDataCycle[nCycle][deltaTime] = rawData
                     
                     # auto recording
-                    # tupAvg = self.Laser.ModelAnalyze(self.dataCycle[nCycle])
+                    tupAvg = self.Laser.ModelAnalyze(self.dataCycle[nCycle])
                     
-                    # if tupAvg is not None:
-                    #     if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
+                    if tupAvg is not None and self.bAutoRecord:
+                        if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
                             
-                    #         # if nCycle == 1 and dataCycle[nCycle].get('avg') is None:
-                    #         #     percentIn, percentEx = self.Laser.GetPercentFromAvg(tupAvg, True)
-                    #         #     print(f'cycle 1 = ({percentIn}, {percentEx})')
-                    #         #     dataCycle[nCycle]['avg'] = tupAvg
-                    #         # else:
+                            # if nCycle == 1 and dataCycle[nCycle].get('avg') is None:
+                            #     percentIn, percentEx = self.Laser.GetPercentFromAvg(tupAvg, True)
+                            #     print(f'cycle 1 = ({percentIn}, {percentEx})')
+                            #     dataCycle[nCycle]['avg'] = tupAvg
+                            # else:
                             
-                    #         self.dataCycle[nCycle]['avg'] = tupAvg
-                    #         lstAvg = []
-                    #         for i in range(nCycle):
-                    #             if self.dataCycle.get(i + 1):
-                    #                 lstAvg.extend(self.dataCycle[i + 1]['avg'])
-                    #         # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
-                    #         lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
-                    #         lstPercent = np.reshape(lstPercent, (-1, 2))
+                            self.dataCycle[nCycle]['avg'] = tupAvg
+                            lstAvg = []
+                            for i in range(nCycle):
+                                if self.dataCycle.get(i + 1):
+                                    lstAvg.extend(self.dataCycle[i + 1]['avg'])
+                            # percentIn, percentEx = self.Laser.GetPercentFromAvg(lstAvg)
+                            lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
+                            lstPercent = np.reshape(lstPercent, (-1, 2))
                             
-                    #         # if percentIn < 80 or percentEx > 20:
-                    #         #     nCycle -= 1
-                    #         for i, percent in enumerate(lstPercent, 1):
-                    #             percent = tuple(percent)
-                    #             percentIn, percentEx = percent
-                    #             self.signalModelCycle.emit(percent, i)
-                    #             print(f'cycle {i} = ({percentIn}, {percentEx})')
-                    #         print('=' * 50)
+                            # if percentIn < 80 or percentEx > 20:
+                            #     nCycle -= 1
+                            for i, percent in enumerate(lstPercent, 1):
+                                percent = tuple(percent)
+                                percentIn, percentEx = percent
+                                self.signalModelCycle.emit(percent, i)
+                                print(f'cycle {i} = ({percentIn}, {percentEx})')
+                            print('=' * 50)
                         
-                    #     while self.dataCycle.get(nCycle + 1) is not None:
-                    #         nCycle += 1
-                    #     nCycle += 1
+                        while self.dataCycle.get(nCycle + 1) is not None:
+                            nCycle += 1
+                        nCycle += 1
                             
-                    #     if nCycle > 5:
-                    #         bValid = self.Laser_CheckCycles(self.dataCycle)
+                        if nCycle > 5:
+                            bValid = self.Laser_CheckCycles(self.dataCycle)
                             
-                    #         # if isinstance(ret, tuple):
-                    #         #     nCycle = ret[1]
-                    #         # else:
-                    #         #     self.bLaserRecording = not ret
-                    #         self.bLaserRecording = False
+                            # if isinstance(ret, tuple):
+                            #     nCycle = ret[1]
+                            # else:
+                            #     self.bLaserRecording = not ret
+                            self.bLaserRecording = False
                             
-                    #         if not bValid:
-                    #                 self.signalModelBuildingPass.emit(False)
-                    #         else:
-                    #             self.recordBreathingBase = True
-                    #             self.signalModelBuildingPass.emit(True)
+                            if not bValid:
+                                    self.signalModelBuildingPass.emit(False)
+                            else:
+                                self.recordBreathingBase = True
+                                self.signalModelBuildingPass.emit(True)
                               
-                    #     self.dataCycle[nCycle] = {}
+                        self.dataCycle[nCycle] = {}
                         
-                    # if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-                    #     cycle, bValid = self.Laser.DataCheckCycle()
-                    #     self.signalModelBuildingUI.emit(bValid)
-                    #     if bValid:
-                    #         self.bLaserRecording = False
+                    if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
+                        cycle, bValid = self.Laser.DataCheckCycle()
+                        self.signalModelBuildingUI.emit(bValid)
+                        if bValid:
+                            self.bLaserRecording = False
                             
                         
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
