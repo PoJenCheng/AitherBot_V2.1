@@ -94,7 +94,7 @@ class Ui_MainWindow(object):
         self.gridLayout_23.setObjectName("gridLayout_23")
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_23.addItem(spacerItem4, 5, 3, 1, 1)
-        self.wdgGuidance = QtWidgets.QWidget(self.wdgModeSelection)
+        self.wdgGuidance = WidgetButton(self.wdgModeSelection)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
