@@ -94,7 +94,7 @@ class Ui_MainWindow(object):
         self.gridLayout_23.setObjectName("gridLayout_23")
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_23.addItem(spacerItem4, 5, 3, 1, 1)
-        self.wdgGuidance = WidgetButton(self.wdgModeSelection)
+        self.wdgGuidance = QtWidgets.QWidget(self.wdgModeSelection)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -886,6 +886,10 @@ class Ui_MainWindow(object):
 "    color: rgb(255, 255, 0);\n"
 "}\n"
 "\n"
+"QPushButton:disabled{\n"
+"    background-color:#666\n"
+"}\n"
+"\n"
 "#wdgBreathingCycle QWidget{\n"
 "    background-color: rgb(0, 167, 218);\n"
 "}\n"
@@ -927,7 +931,9 @@ class Ui_MainWindow(object):
 "\n"
 "#btnAutoRecord:checked{\n"
 "    color:rgb(0, 255, 0)\n"
-"}")
+"}\n"
+"\n"
+"")
         self.wdgBreathingCycle.setObjectName("wdgBreathingCycle")
         self.gridLayout_35 = QtWidgets.QGridLayout(self.wdgBreathingCycle)
         self.gridLayout_35.setContentsMargins(0, 0, 0, 0)
@@ -2201,7 +2207,7 @@ class Ui_MainWindow(object):
         self.btnReloadDicom = QtWidgets.QPushButton(self.pgImage)
         self.btnReloadDicom.setMinimumSize(QtCore.QSize(48, 48))
         self.btnReloadDicom.setMaximumSize(QtCore.QSize(48, 48))
-        self.btnReloadDicom.setStyleSheet("image:url(image/load.png)")
+        self.btnReloadDicom.setStyleSheet("image:url(image/load.png);")
         self.btnReloadDicom.setText("")
         self.btnReloadDicom.setObjectName("btnReloadDicom")
         self.horizontalLayout_18.addWidget(self.btnReloadDicom)
@@ -2741,7 +2747,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(13)
+        self.stkScene.setCurrentIndex(6)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)

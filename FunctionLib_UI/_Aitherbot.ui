@@ -1120,7 +1120,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>13</number>
+           <number>6</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -1953,6 +1953,10 @@ QPushButton{
 	color: rgb(255, 255, 0);
 }
 
+QPushButton:disabled{
+	background-color:#666
+}
+
 #wdgBreathingCycle QWidget{
 	background-color: rgb(0, 167, 218);
 }
@@ -1994,7 +1998,9 @@ QLabel#lblAutoRecord{
 
 #btnAutoRecord:checked{
 	color:rgb(0, 255, 0)
-}</string>
+}
+
+</string>
               </property>
               <layout class="QGridLayout" name="gridLayout_35">
                <property name="leftMargin">
@@ -4529,7 +4535,7 @@ QToolBox QPushButton:disabled{
                          </size>
                         </property>
                         <property name="styleSheet">
-                         <string notr="true">image:url(image/load.png)</string>
+                         <string notr="true">image:url(image/load.png);</string>
                         </property>
                         <property name="text">
                          <string/>
