@@ -886,28 +886,18 @@ class Ui_MainWindow(object):
 "    color: rgb(255, 255, 0);\n"
 "}\n"
 "\n"
-"QPushButton:disabled{\n"
-"    background-color:#666\n"
+"#wdgBreathingCycle QPushButton:disabled{\n"
+"    background-color:#666;\n"
+"    color:#bbb;\n"
 "}\n"
 "\n"
 "#wdgBreathingCycle QWidget{\n"
 "    background-color: rgb(0, 167, 218);\n"
 "}\n"
 "\n"
-"/*\n"
-"#lblCycle1{\n"
-"    border-top-left-radius:20px;\n"
-"}*/\n"
-"\n"
 "#lblCycle5{\n"
 "    border-bottom-left-radius:20px;\n"
 "}\n"
-"\n"
-"/*\n"
-"#wdgCheckCycle1{\n"
-"    border-top-right-radius:20px;\n"
-"}\n"
-"*/\n"
 "\n"
 "#wdgCheckCycle5{\n"
 "    border-bottom-right-radius:20px;\n"
@@ -932,7 +922,6 @@ class Ui_MainWindow(object):
 "#btnAutoRecord:checked{\n"
 "    color:rgb(0, 255, 0)\n"
 "}\n"
-"\n"
 "")
         self.wdgBreathingCycle.setObjectName("wdgBreathingCycle")
         self.gridLayout_35 = QtWidgets.QGridLayout(self.wdgBreathingCycle)
@@ -1084,6 +1073,7 @@ class Ui_MainWindow(object):
         self.lblAutoRecord.setObjectName("lblAutoRecord")
         self.horizontalLayout_27.addWidget(self.lblAutoRecord)
         self.btnAutoRecord = QtWidgets.QPushButton(self.wdgBreathingCycle)
+        self.btnAutoRecord.setEnabled(True)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1098,6 +1088,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_27.addItem(spacerItem23)
         self.gridLayout_35.addLayout(self.horizontalLayout_27, 0, 0, 1, 2)
         self.btnRecord = QtWidgets.QPushButton(self.wdgBreathingCycle)
+        self.btnRecord.setEnabled(True)
         self.btnRecord.setObjectName("btnRecord")
         self.gridLayout_35.addWidget(self.btnRecord, 7, 0, 1, 2)
         self.gridLayout_36.addWidget(self.wdgBreathingCycle, 1, 1, 1, 1)

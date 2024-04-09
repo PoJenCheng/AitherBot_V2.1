@@ -1953,28 +1953,18 @@ QPushButton{
 	color: rgb(255, 255, 0);
 }
 
-QPushButton:disabled{
-	background-color:#666
+#wdgBreathingCycle QPushButton:disabled{
+	background-color:#666;
+	color:#bbb;
 }
 
 #wdgBreathingCycle QWidget{
 	background-color: rgb(0, 167, 218);
 }
 
-/*
-#lblCycle1{
-	border-top-left-radius:20px;
-}*/
-
 #lblCycle5{
 	border-bottom-left-radius:20px;
 }
-
-/*
-#wdgCheckCycle1{
-	border-top-right-radius:20px;
-}
-*/
 
 #wdgCheckCycle5{
 	border-bottom-right-radius:20px;
@@ -1999,7 +1989,6 @@ QLabel#lblAutoRecord{
 #btnAutoRecord:checked{
 	color:rgb(0, 255, 0)
 }
-
 </string>
               </property>
               <layout class="QGridLayout" name="gridLayout_35">
@@ -2342,6 +2331,9 @@ QSpinBox::down-button{
                  </item>
                  <item>
                   <widget class="QPushButton" name="btnAutoRecord">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -2385,6 +2377,9 @@ QSpinBox::down-button{
                </item>
                <item row="7" column="0" colspan="2">
                 <widget class="QPushButton" name="btnRecord">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
                  <property name="text">
                   <string>Record</string>
                  </property>
