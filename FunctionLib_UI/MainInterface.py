@@ -1829,7 +1829,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 紀錄目前已經完成的階段
         self.indexDoneStage = max(self.indexCurrentStage, index)
         
-        self.SetStageButtonStyle(self.indexDoneStage)
+        # self.SetStageButtonStyle(self.indexDoneStage)
+        self.SetStageButtonStyle(index)
         self.indexCurrentStage = index
         # if self.stkScene.currentWidget() == self.pgImageView:
         #     self.wdgNaviBar.hide()
@@ -1869,7 +1870,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         index = 0
         if stage == STAGE_ROBOT:
             self.bFinishRobot = False
-            self.btnSceneRobot.setEnabled(False)
+            self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(False)
             self.btnSceneView.setEnabled(False)
             if bToStage:
@@ -1881,20 +1882,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.bFinishRobot = True
             self.bFinishLaser = False
             self.btnSceneRobot.setEnabled(True)
-            self.btnSceneLaser.setEnabled(False)
+            self.btnSceneLaser.setEnabled(True)
             self.btnSceneView.setEnabled(False)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgLaser)
                 index = self.stkScene.indexOf(self.pgLaser)
                 self.stkScene.setCurrentIndex(index)
                 self.Laser_SetBreathingCycleUI()
+                self.bLaserShowProfile = False
+                self.bLaserRecording = False
+                self.bLaserTracking = False
+                self.pgbInhale.setValue(0)
+                self.pgbExhale.setValue(0)
+                
         elif stage == STAGE_DICOM:
             # self.bFinishRobot = True
             # self.bFinishLaser = True
             self.bFinishDicom = False
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
-            self.btnSceneView.setEnabled(False)
+            self.btnSceneView.setEnabled(True)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgImportDicom)
                 index = self.stkScene.indexOf(self.pgImportDicom)
@@ -1914,9 +1921,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.indexCurrentStage = index
                 
     def CheckStage(self, index:int):
-        if self.IsStage(index, STAGE_LASER):
+        if self.IsStage(index, STAGE_ROBOT):
+            self.btnSceneRobot.setEnabled(True)
+        elif self.IsStage(index, STAGE_LASER):
             self.bFinishRobot = True
             self.btnSceneRobot.setEnabled(True)
+            self.btnSceneLaser.setEnabled(True)
         elif self.IsStage(index, STAGE_DICOM):
             self.bFinishLaser = True
             self.btnSceneLaser.setEnabled(True)
@@ -2197,9 +2207,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             print('get candidate ball error / SetRegistration_L() error')
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
-            self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
-            self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            self.ui_CS.show()
+            # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
+            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            # self.ui_CS.show()
             ############################################################################################
             # self.Button_ShowRegistration_L.setEnabled(True)
             return False
