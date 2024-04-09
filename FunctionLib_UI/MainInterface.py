@@ -61,6 +61,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalModelBuildingPass = pyqtSignal(bool)
     signalModelBuildingUI = pyqtSignal(bool)
     signalModelCycle = pyqtSignal(tuple, int)
+    signalResetLaserUI = pyqtSignal()
     
     player = QMediaPlayer()
     robot = None
@@ -1744,6 +1745,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
         else:
@@ -1752,7 +1754,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice()
+            # self.enableDevice(DEVICE_LASER)
             self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
@@ -1893,12 +1895,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.stkScene.setCurrentWidget(self.pgLaser)
                 index = self.stkScene.indexOf(self.pgLaser)
                 self.stkScene.setCurrentIndex(index)
-                self.Laser_SetBreathingCycleUI()
+                self.pgbInhale.setValue(0)
+                self.pgbExhale.setValue(0)
                 self.bLaserShowProfile = False
                 self.bLaserRecording = False
                 self.bLaserTracking = False
-                self.pgbInhale.setValue(0)
-                self.pgbExhale.setValue(0)
                 
         elif stage == STAGE_DICOM:
             # self.bFinishRobot = True
@@ -2488,6 +2489,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if bEnabled is None:
                 self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
                 self.btnAutoRecord.setEnabled(True)
+                self.lblCounter.setText('')
         else:
             strLabelName = 'lblCycle' + str(nID)
             if hasattr(self, strLabelName):
@@ -2625,12 +2627,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             msgbox.setWindowTitle('Model Building Succeed')
             msgbox.setIcon(QMessageBox.Information)
             msgbox.exec_()
-            
-            
         else:
             QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
             # self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
-            self.Laser_SetBreathingCycleUI()
+            # self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
            
     def Laser_OnSignalInhale(self, bInhale:bool, percentage:float):
@@ -3022,6 +3022,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             self.dicDataCycle[nCycle] = {}
                         
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
+        self.signalResetLaserUI.emit()
         
     def Laser_OnTracking(self):
         if self.Laser is None:
