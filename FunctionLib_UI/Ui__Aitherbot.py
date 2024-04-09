@@ -1938,52 +1938,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_12.addItem(spacerItem42)
         self.gridLayout_12.addLayout(self.horizontalLayout_12, 3, 0, 1, 3)
         self.stkScene.addWidget(self.pgDicomList)
-        self.pgRegistration = QtWidgets.QWidget()
-        self.pgRegistration.setObjectName("pgRegistration")
-        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.pgRegistration)
-        self.verticalLayout_5.setObjectName("verticalLayout_5")
-        self.wdgRegistration = QtWidgets.QWidget(self.pgRegistration)
-        self.wdgRegistration.setMinimumSize(QtCore.QSize(0, 0))
-        self.wdgRegistration.setStyleSheet("image:url(image/Registration01.png);")
-        self.wdgRegistration.setObjectName("wdgRegistration")
-        self.verticalLayout_5.addWidget(self.wdgRegistration)
-        self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_18.setObjectName("horizontalLayout_18")
-        self.btnRegistrationOK = QtWidgets.QPushButton(self.pgRegistration)
-        self.btnRegistrationOK.setMinimumSize(QtCore.QSize(300, 80))
-        self.btnRegistrationOK.setMaximumSize(QtCore.QSize(300, 16777215))
-        self.btnRegistrationOK.setStyleSheet("\n"
-"\n"
-"QPushButton{\n"
-"font: 48pt \"Arial\";\n"
-"color:#666666;\n"
-"border-radius:10px;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
-"padding: 0px 20px;\n"
-"margin-bottom:5px;\n"
-"margin-right:3px;\n"
-"image:url(image/checkbox.png);\n"
-"image-position:left;\n"
-"font: 24pt \"Arial\";\n"
-"}\n"
-"\n"
-"QPushButton:hover{\n"
-"color:#aa3333;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
-"}\n"
-"\n"
-"QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
-"}")
-        self.btnRegistrationOK.setLocale(QtCore.QLocale(QtCore.QLocale.Armenian, QtCore.QLocale.Armenia))
-        self.btnRegistrationOK.setObjectName("btnRegistrationOK")
-        self.horizontalLayout_18.addWidget(self.btnRegistrationOK)
-        self.verticalLayout_5.addLayout(self.horizontalLayout_18)
-        self.verticalLayout_5.setStretch(0, 1)
-        self.stkScene.addWidget(self.pgRegistration)
         self.pgImageView = QtWidgets.QWidget()
         self.pgImageView.setObjectName("pgImageView")
         self.gridLayout_5 = QtWidgets.QGridLayout(self.pgImageView)
@@ -2234,11 +2188,24 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 144, 239))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 300, 318))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_18.setObjectName("horizontalLayout_18")
+        self.label_25 = QtWidgets.QLabel(self.pgImage)
+        self.label_25.setObjectName("label_25")
+        self.horizontalLayout_18.addWidget(self.label_25)
+        self.btnReloadDicom = QtWidgets.QPushButton(self.pgImage)
+        self.btnReloadDicom.setMinimumSize(QtCore.QSize(48, 48))
+        self.btnReloadDicom.setMaximumSize(QtCore.QSize(48, 48))
+        self.btnReloadDicom.setStyleSheet("image:url(image/load.png)")
+        self.btnReloadDicom.setText("")
+        self.btnReloadDicom.setObjectName("btnReloadDicom")
+        self.horizontalLayout_18.addWidget(self.btnReloadDicom)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_18)
         self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_17.setSpacing(0)
         self.horizontalLayout_17.setObjectName("horizontalLayout_17")
@@ -2276,7 +2243,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addItem(spacerItem43)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 206, 181))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 318))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -2765,7 +2732,7 @@ class Ui_MainWindow(object):
         self.gridLayout_4.addWidget(self.stkMain, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1928, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1924, 25))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -2774,11 +2741,11 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(6)
+        self.stkScene.setCurrentIndex(13)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
         self.stkSignalLight.setCurrentIndex(1)
         self.stkJoint1.setCurrentIndex(1)
@@ -2797,7 +2764,6 @@ class Ui_MainWindow(object):
         self.btnImport.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm_2.clicked.connect(MainWindow.NextScene) # type: ignore
-        self.btnRegistrationOK.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnNext_scanCT_2.clicked.connect(MainWindow.NextScene) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -2889,7 +2855,6 @@ class Ui_MainWindow(object):
         self.label_title_6.setText(_translate("MainWindow", "Import CT"))
         self.btnCancel.setText(_translate("MainWindow", "Cancel"))
         self.btnImport.setText(_translate("MainWindow", "Confirm"))
-        self.btnRegistrationOK.setText(_translate("MainWindow", "Confirm"))
         self.cbxLeftTop.setItemText(0, _translate("MainWindow", "3D View"))
         self.cbxLeftTop.setItemText(1, _translate("MainWindow", "Axial View"))
         self.cbxLeftTop.setItemText(2, _translate("MainWindow", "Sagittal View"))
@@ -2906,6 +2871,7 @@ class Ui_MainWindow(object):
         self.cbxRightBottom.setItemText(1, _translate("MainWindow", "Axial View"))
         self.cbxRightBottom.setItemText(2, _translate("MainWindow", "Sagittal View"))
         self.cbxRightBottom.setItemText(3, _translate("MainWindow", "Coronal View"))
+        self.label_25.setText(_translate("MainWindow", "Reload Dicom"))
         self.btnDicomLow.setText(_translate("MainWindow", "Low"))
         self.btnDicomHigh.setText(_translate("MainWindow", "High"))
         self.label_16.setText(_translate("MainWindow", "Window Level"))

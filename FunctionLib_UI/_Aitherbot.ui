@@ -1120,7 +1120,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>13</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -4087,77 +4087,6 @@ QPushButton:disabled{
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="pgRegistration">
-           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,0">
-            <item>
-             <widget class="QWidget" name="wdgRegistration" native="true">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">image:url(image/Registration01.png);</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_18">
-              <item>
-               <widget class="QPushButton" name="btnRegistrationOK">
-                <property name="minimumSize">
-                 <size>
-                  <width>300</width>
-                  <height>80</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>300</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">
-
-QPushButton{
-font: 48pt &quot;Arial&quot;;
-color:#666666;
-border-radius:10px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-image:url(image/checkbox.png);
-image-position:left;
-font: 24pt &quot;Arial&quot;;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}</string>
-                </property>
-                <property name="locale">
-                 <locale language="Armenian" country="Armenia"/>
-                </property>
-                <property name="text">
-                 <string>Confirm</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
           <widget class="QWidget" name="pgImageView">
            <layout class="QGridLayout" name="gridLayout_5">
             <property name="leftMargin">
@@ -4484,7 +4413,7 @@ QTabBar::tab:selected{
 </string>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tabPlanning">
                <attribute name="title">
@@ -4562,8 +4491,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>144</width>
-                     <height>239</height>
+                     <width>300</width>
+                     <height>318</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4576,6 +4505,39 @@ QToolBox QPushButton:disabled{
                     <string>Image</string>
                    </attribute>
                    <layout class="QVBoxLayout" name="verticalLayout_2">
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_18">
+                      <item>
+                       <widget class="QLabel" name="label_25">
+                        <property name="text">
+                         <string>Reload Dicom</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnReloadDicom">
+                        <property name="minimumSize">
+                         <size>
+                          <width>48</width>
+                          <height>48</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>48</width>
+                          <height>48</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/load.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
                     <item>
                      <layout class="QHBoxLayout" name="horizontalLayout_17">
                       <property name="spacing">
@@ -4672,8 +4634,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>206</width>
-                     <height>181</height>
+                     <width>300</width>
+                     <height>318</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -5723,8 +5685,8 @@ margin-right:0px;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1928</width>
-     <height>21</height>
+     <width>1924</width>
+     <height>25</height>
     </rect>
    </property>
   </widget>
@@ -5957,22 +5919,6 @@ margin-right:0px;
    </hints>
   </connection>
   <connection>
-   <sender>btnRegistrationOK</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>NextScene()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>511</x>
-     <y>123</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1145</x>
-     <y>1028</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>btnNext_scanCT_2</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -5994,7 +5940,7 @@ margin-right:0px;
   <slot>BackScene()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btgDicom"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="btgDicom"/>
  </buttongroups>
 </ui>

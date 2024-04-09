@@ -699,6 +699,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
         self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
         
+        self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -1216,6 +1218,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.stkScene.setCurrentWidget(self.pgDicomList)
         # self.ChangeCurrentDicom(self.btnDicomHigh.objectName())
         pass
+    
+    def OnClicked_btnReloadDicom(self):
+        self.stkScene.setCurrentWidget(self.pgImportDicom)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.01
@@ -1747,7 +1752,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_LASER)
+            self.enableDevice()
             # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
