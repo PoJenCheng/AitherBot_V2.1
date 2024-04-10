@@ -247,7 +247,7 @@ class Indicator(QWidget):
             painter.setBrush(QColor(255, 255, 255))  
             painter.drawPolygon(pointer)        
         
-class messageBox(QMessageBox):
+class MessageBox(QMessageBox):
     
     def __init__(self, icon:int, text:str):
         super().__init__()
@@ -349,9 +349,23 @@ class messageBox(QMessageBox):
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):
         # if len(args) == 0 and len(kwargs) == 0:
         #     QMessageBox.warning(None, 'messagebox error', 'at least one button ')
-        msgbox = messageBox(icon, msg)
+        msgbox = MessageBox(icon, msg)
         if len(args) == 0 and len(kwargs) == 0:
-            msgbox.addButtons('Got it')
+            msgbox.addButtons('OK')
         else:
             msgbox.addButtons(*args, **kwargs)
-        msgbox.exec_()
+        return msgbox.exec_()
+    
+    def ShowCritical(msg:str, *buttons, **kwButtons):
+        return MessageBox.showMsg(msg, QMessageBox.Critical, *buttons, **kwButtons)
+    
+    def ShowInformation(msg:str, *buttons, **kwButtons):
+        return MessageBox.showMsg(msg, QMessageBox.Information, *buttons, **kwButtons)
+    
+    def ShowWarning(msg:str, *buttons, **kwButtons):
+        return MessageBox.showMsg(msg, QMessageBox.Warning, *buttons, **kwButtons)
+    
+    def ShowQuestion(msg:str, *buttons, **kwButtons):
+        return MessageBox.showMsg(msg, QMessageBox.Question, *buttons, **kwButtons)
+    
+    

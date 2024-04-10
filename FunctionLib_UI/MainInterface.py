@@ -314,7 +314,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     spacingZ = dicSeries.get('spacingZ')
                     strSpacing = ''
                     if spacingXY is None:
-                        QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        # QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        MessageBox.ShowCritical('dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
                         strSpacing = 'NONE'
                     else:
                         spacing = spacingXY[:]
@@ -772,7 +773,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.imageL = self.reader.arrImage
         
         if self.vtkImageLow is None:
-            QMessageBox.critical(None, 'ERROR', 'image error')
+            # QMessageBox.critical(None, 'ERROR', 'image error')
+            MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
@@ -780,7 +782,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, 'LOW')
         
         if not dicomTag:
-            QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
         
         self.currentTag['spacing'] = spacing
@@ -808,7 +811,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #         return False
             
         if not self.SetRegistration_L():
-            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            MessageBox.ShowCritical('ERROR', 'Registration Failed')
             return False
         
             
@@ -836,7 +840,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.imageH = self.reader.arrImage
         
         if self.vtkImageHigh is None:
-            QMessageBox.critical(None, 'ERROR', 'image error')
+            # QMessageBox.critical(None, 'ERROR', 'image error')
+            MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
@@ -844,14 +849,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH')
         
         if not dicomTag:
-            QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
+            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
+            MessageBox.ShowCritical('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         self.currentTag['spacing'] = spacing
         self.currentTag['series'] = listSeries
         
         if not self.SetRegistration_H():
-            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            MessageBox.ShowCritical('ERROR', 'Registration Failed')
             return False
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
@@ -1370,7 +1377,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         if currentDicom is not None:
                             view.SetViewPort(viewName, currentDicom.rendererList[viewName])
                         else:
-                            QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
+                            # QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
+                            MessageBox.ShowCritical('DICOM ERROR', 'missing current dicom')
                         
                         iStyle = MyInteractorStyle(self, viewName)
                         # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
@@ -1573,7 +1581,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if button == self.btnImport:
                 self.bDicomChanged = True
                 if not self.selectedSeries:
-                    QMessageBox.critical(None, 'ERROR', 'please select at least one series')
+                    # QMessageBox.critical(None, 'ERROR', 'please select at least one series')
+                    MessageBox.ShowCritical('ERROR', 'please select at least one series')
                     return
                 
                 if not self.ImportDicom_L():
@@ -1631,7 +1640,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def ChangeCurrentDicom(self, dicomName:str):
         tag = self.dicDicom.get(dicomName)
         if not tag:
-            QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
+            # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
+            MessageBox.ShowCritical('dicom error', 'dicom name not exists')
             return False
         
         self.currentTag = tag
@@ -2084,9 +2094,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def onSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
         if len(msg) > 0:
             if not bIsError:
-                QMessageBox.information(None, title, msg)
+                MessageBox.ShowInformation(msg)
             else:
-                QMessageBox.critical(None, title, msg)
+                MessageBox.ShowCritical(msg)
             
             
     def sti_LaserOutput(self):
@@ -2191,9 +2201,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.currentTag.get("regBall") != None or self.currentTag.get("candidateBall") != None:
             # self.ui_SP.close()
-            reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
-            if reply == QMessageBox.Yes:
+            # if reply == QMessageBox.Yes:
+            if reply == 0:
                 # self.dcmTagLow.update({"selectedBall": []})
                 self.currentTag.update({"regBall": []})
                 self.currentTag.update({"flagSelectedBall": False})
@@ -2234,7 +2246,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         except Exception as e:
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
-            QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            MessageBox.ShowCritical("error", "get candidate ball error / SetRegistration_L() error")
             print('get candidate ball error / SetRegistration_L() error')
             print(e)
             return False
@@ -2258,7 +2271,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error')
-            QMessageBox.critical(self, "error", "get candidate ball error")
+            
+            # QMessageBox.critical(self, "error", "get candidate ball error")
+            MessageBox.ShowCritical("error", "get candidate ball error")
             print('get candidate ball error / SetRegistration_L() error')
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
@@ -2290,7 +2305,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         selectedBallKey = list(candidateBallVTK.keys())[-1]
         # selectedBallKey = self.currentTag.get("selectedBallKey")
         if selectedBallKey is None or selectedBallKey == []:
-            QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            # QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            MessageBox.ShowCritical("error", "please redo registration, select the ball")
             print("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
@@ -2343,20 +2359,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             msg = 'laser connection error'
             
         self.errDevice |= errDevice
-        if not hasattr(self, 'msgbox'):
-            msgbox = messageBox(QMessageBox.Question, msg + '\nRetry again?')
-            msgbox.addButtons('Retry', 'Shutdown')
-            # msgbox.setIcon(QMessageBox.Question)
-            # msgbox.setText(msg + '\nRetry again?')
-            # msgbox.addButton('Retry', 3)
-            # msgbox.addButton('Shutdown', 3)
+        # if not hasattr(self, 'msgbox'):
+        #     msgbox = MessageBox(QMessageBox.Question, msg + '\nRetry again?')
+        #     msgbox.addButtons('Retry', 'Shutdown')
             
-            self.msgbox = msgbox
-            ret = msgbox.exec_()
-            
+        #     self.msgbox = msgbox
+        #     ret = msgbox.exec_()
+        if not hasattr(self, 'showError'):
+            self.showError = True
+            ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
             if ret == 0:
-                del self.msgbox
-                
+                del self.showError
                 
                 if (self.errDevice & DEVICE_ROBOT) != 0:
                     self.errDevice &= ~DEVICE_ROBOT
@@ -2459,7 +2472,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.RobotRun()
                 
     def Robot_Stop(self):
-        QMessageBox.information(None, 'Info', 'Robot Stop')
+        # QMessageBox.information(None, 'Info', 'Robot Stop')
+        MessageBox.ShowInformation('Info', 'Robot Stop')
         
     def RobotRun(self):
         if self.homeStatus is True:
@@ -2471,7 +2485,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.breathingCompensation()
         else:
             print("Please execute home processing first.")
-            QMessageBox.information(self, "information", "Please execute home processing first.")
+            # QMessageBox.information(self, "information", "Please execute home processing first.")
+            MessageBox.ShowInformation("information", "Please execute home processing first.")
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
@@ -2671,13 +2686,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if bPass:
             # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
             
-            msgbox = QMessageBox(text = 'Model Base Checking done!')
+            # msgbox = QMessageBox(text = 'Model Base Checking done!')
+            msgbox = MessageBox(QMessageBox.Information, 'Model Base Checking done!')
             QTimer.singleShot(2000, lambda: self.Laser_autoNextPage(msgbox))
-            msgbox.setWindowTitle('Model Building Succeed')
-            msgbox.setIcon(QMessageBox.Information)
+            # msgbox.setWindowTitle('Model Building Succeed')
+            # msgbox.setIcon(QMessageBox.Information)
             msgbox.exec_()
         else:
-            QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            # QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            MessageBox.ShowCritical('Model Building Failed', 'Please try to build chest model again.')
             # self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
             # self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
@@ -2737,23 +2754,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnSignalShowCounter(self, ms:int):
         ms = int(ms * 0.001)
         self.lblCounter.setText(str(ms))
-        
-    def Laser_OnSignalShowMessage(self, msg:str):
-        msgbox = messageBox()
-        msgbox.setIcon(QMessageBox.Question)
-        msgbox.setWindowTitle('CONNECTION ERROR')
-        msgbox.setText(msg + '\nRetry again?')
-        # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        # msgbox.addButton('Retry', 3)
-        # msgbox.addButton('Shutdown', 3)
-        msgbox.addButtons('Retry', 'Shutdown')
-        ret = msgbox.exec_()
-        
-        if ret == 0:
-            self.tLaser = threading.Thread(target = self.Laser.Initialize)
-            self.tLaser.start()
-        elif ret == 1:
-            self.close()
     
     def Laser_OnSignalUpdateCycle(self, tupPercent:tuple, nCycle:int):
         # strLabelName = 'lblCycle' + str(nCycle)
@@ -3664,12 +3664,14 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
                 # self.ui_CS.show()
             else:
-                QMessageBox.critical(self, "error", "get candidate ball error")
+                # QMessageBox.critical(self, "error", "get candidate ball error")
+                MessageBox.ShowCritical("error", "get candidate ball error")
                 print('get candidate ball error / SetRegistration_L() error')
                 
             return
         else:
-            QMessageBox.information(self, "information", "need to set 3 balls")
+            # QMessageBox.information(self, "information", "need to set 3 balls")
+            MessageBox.ShowInformation("information", "need to set 3 balls")
             return
         ############################################################################################
     def Cancel(self):
@@ -3706,7 +3708,8 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         ## 儲存點 ############################################################################################
         if picker.GetCellId() != -1:
             if np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
-                QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+                # QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+                MessageBox.ShowCritical(setPointWindow, "error", "there are already selected 3 balls")
                 return
             elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 0:
                 self.setPointWindow.dcmTag.update({"candidateBall":np.array([np.array(pick_point)])})
