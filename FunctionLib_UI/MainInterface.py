@@ -93,6 +93,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     errDevice = 0
     idEnabledDevice = 0
+    
+    dicStageFinished = {STAGE_ROBOT:False, STAGE_LASER:False, STAGE_DICOM:False, STAGE_IMAGE:False}
     #robot parameter
     bTrackingBreathing = False
     
@@ -1716,6 +1718,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
@@ -1823,15 +1826,43 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.CheckStage(index)
         
-        if self.IsStage(index, STAGE_IMAGE):
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_DICOM) and \
-            self.bFinishLaser and self.bFinishRobot and self.bFinishDicom:
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_LASER) and self.bFinishLaser:
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_ROBOT) and self.bFinishRobot:
-            self.SetStage(STAGE_LASER)
+        # if self.IsStage(index, STAGE_IMAGE):
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_DICOM) and \
+        #     self.bFinishLaser and self.bFinishRobot and self.bFinishDicom:
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_LASER) and self.bFinishLaser:
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_ROBOT) and self.bFinishRobot:
+        #     self.SetStage(STAGE_LASER)
+        stage = self.GetStage(index)
+        if stage is not None:
+            bFoundStage = False
+            # iterItem = iter(self.dicStageFinished.items())
+            # try:
+            #     # if now stage is finished, find next stage not finished
+            #     while True:
+            #         key, bFinish = iterItem.__next__()
+            #         if bFoundStage and bFinish == False:
+            #             self.SetStage(key)
+            #             break
+                        
+            #         if key == stage and bFinish:
+            #             bFoundStage = True
+            # except StopIteration:
+            #     pass
+            
+            # if now stage is finished, find next stage not finished
+            for key, bFinish in self.dicStageFinished.items():
+                if bFoundStage and bFinish == False:
+                    self.SetStage(key)
+                    break
+                    
+                if key == stage and bFinish:
+                    bFoundStage = True
+            
+                        
+            
             
         # 紀錄目前已經完成的階段
         self.indexDoneStage = max(self.indexCurrentStage, index)
@@ -1871,10 +1902,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 return True
             
         return False
+    
+    def GetStage(self, index:int):
+        for stage in self.dicStageFinished.keys():
+            if self.IsStage(index, stage):
+                return stage
+        return None
             
     def SetStage(self, stage:str, bToStage:bool = True):
         
         index = 0
+        self.dicStageFinished[stage] = False
         if stage == STAGE_ROBOT:
             self.bFinishRobot = False
             self.btnSceneRobot.setEnabled(True)
@@ -1883,18 +1921,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
                 index = self.stkScene.indexOf(self.pgHomingCheckStep1)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
                 
         elif stage == STAGE_LASER:
             # self.bFinishRobot = True
             self.bFinishLaser = False
+            # self.dicStageFinished[STAGE_LASER] = False
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
             self.btnSceneView.setEnabled(False)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgLaser)
                 index = self.stkScene.indexOf(self.pgLaser)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
                 self.pgbInhale.setValue(0)
                 self.pgbExhale.setValue(0)
                 self.bLaserShowProfile = False
@@ -1905,13 +1948,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.bFinishRobot = True
             # self.bFinishLaser = True
             self.bFinishDicom = False
+            # self.dicStageFinished[STAGE_DICOM] = False
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
             self.btnSceneView.setEnabled(True)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgImportDicom)
                 index = self.stkScene.indexOf(self.pgImportDicom)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
         elif stage == STAGE_IMAGE:
             # self.bFinishRobot = True
             # self.bFinishLaser = True
@@ -1931,12 +1977,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneRobot.setEnabled(True)
         elif self.IsStage(index, STAGE_LASER):
             self.bFinishRobot = True
+            self.dicStageFinished[STAGE_ROBOT] = True
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
         elif self.IsStage(index, STAGE_DICOM):
             self.bFinishLaser = True
+            self.dicStageFinished[STAGE_LASER] = True
             self.btnSceneLaser.setEnabled(True)
         elif self.IsStage(index, STAGE_IMAGE):
+            self.dicStageFinished[STAGE_DICOM] = True
             self.bFinishDicom = True
             
     def GetRobotPosition(self):
@@ -2380,7 +2429,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not self.robot:
             return
         
-        self.robot.signalProgress.disconnect(self.Robot_OnLoading)
+        # self.robot.signalProgress.disconnect(self.Robot_OnLoading)
         
         self.uiHoming = HomingWidget(self)
         self.uiHoming.finished.connect(lambda:self.NextScene())
