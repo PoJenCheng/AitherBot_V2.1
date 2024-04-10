@@ -67,6 +67,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalDemoRobotInit = pyqtSignal(int)
     signalDemoInhale = pyqtSignal(bool, float)
     signalDemoExhale = pyqtSignal(bool, float)
+    signalDemoHoming = pyqtSignal(float)
     
     player = QMediaPlayer()
     robot = None
@@ -1701,8 +1702,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.idEnabledDevice = nDevice
         if nDevice == DEVICE_DEMO:
-            self.stkScene.setCurrentWidget(self.pgLaser)
-            
             self.signalDemoRobotInit.connect(self.Demo_OnRobotLoading)
             tRobot = threading.Thread(target = self.Demo_InitRobot)
             tRobot.start()
@@ -2362,6 +2361,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         percentage = np.random.rand() * 3 - 6
         percentage = self.percentExhale + percentage
         self.signalDemoExhale.emit(True, percentage)
+        
+    def Demo_OnThreadHomingProcess(self):
+        for i in range(1, 1001):
+            sleep(0.01)
+            percent = i * 0.001
+            print(percent)
+            self.signalDemoHoming.emit(percent)
                 
     def RobotSystem_OnFailed(self, errDevice:int):
         if errDevice == DEVICE_ROBOT:
@@ -2453,15 +2459,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             QCoreApplication.installTranslator(translator)
 
         self.player.stop()
-        if not self.robot:
-            return
+        # if not self.robot:
+        #     return
         
-        self.robot.signalProgress.disconnect(self.Robot_OnLoading)
+        # self.robot.signalProgress.disconnect(self.Robot_OnLoading)
         
         self.uiHoming = HomingWidget(self)
         self.uiHoming.finished.connect(lambda:self.NextScene())
         self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
-        self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
+        # self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
+        self.signalDemoHoming.connect(self.uiHoming.OnSignal_Percent)
         
         self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.uiHoming.setModal(False)
@@ -2470,10 +2477,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.NextScene()
         
     def Robot_HomingProcess(self):
-        if self.robot is None:
-            return
+        # if self.robot is None:
+        #     return
         
-        tHoming = threading.Thread(target = self.Robot_OnThreadHomingProcess)
+        # tHoming = threading.Thread(target = self.Robot_OnThreadHomingProcess)
+        tHoming = threading.Thread(target = self.Demo_OnThreadHomingProcess)
         tHoming.start()
         
                 
