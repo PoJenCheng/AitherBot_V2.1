@@ -1230,7 +1230,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pass
     
     def OnClicked_btnReloadDicom(self):
-        self.stkScene.setCurrentWidget(self.pgImportDicom)
+        self.SetStage(STAGE_DICOM)
+        # self.stkScene.setCurrentWidget(self.pgImportDicom)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.01
@@ -1768,7 +1769,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.enableDevice(DEVICE_LASER)
-            self.enableDevice(DEVICE_ALL)
+            self.enableDevice()
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
