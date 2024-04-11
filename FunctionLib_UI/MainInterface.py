@@ -1769,7 +1769,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.enableDevice(DEVICE_LASER)
-            self.enableDevice()
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1821,19 +1821,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.importDicom('C:\\Leon\\dicom_test')
             
         elif currentWidget == self.pgRobotRegSphere:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
             self.playVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
             
         elif currentWidget == self.pgRobotSupportArm:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
             self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
         elif currentWidget == self.pgSterileStep1:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
             self.playVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         else:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
         
         self.CheckStage(index)
         
@@ -2030,6 +2034,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
+        
+    def StopVedio(self):
+        self.player.stop()
+        self.player.setVideoOutput(None)
         
     def thread_LoadLaser(self):
         # QThread.msleep(1000)
@@ -2439,7 +2447,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             translator.load('FunctionLib_UI/Ui_homing_tw.qm')
             QCoreApplication.installTranslator(translator)
 
-        self.player.stop()
+        # self.player.stop()
+        self.StopVedio()
         if not self.robot:
             return
         
