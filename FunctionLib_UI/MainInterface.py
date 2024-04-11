@@ -91,6 +91,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     bToggleInhale = True
     bRegistration = False
     
+    videoWidget = None
+    
     errDevice = 0
     idEnabledDevice = 0
     
@@ -2028,6 +2030,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             videoWidget.brightnessChanged.connect(self.OnBrightnessChanged)
             videoWidget.contrastChanged.connect(self.OnConstrastChanged)
+            
+            self.videoWidget = videoWidget
         else:
             videoWidget = layout.itemAt(0).widget()
             self.player.setVideoOutput(videoWidget)
@@ -2036,8 +2040,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
     def StopVedio(self):
-        self.player.stop()
-        self.player.setVideoOutput(None)
+        if self.videoWidget is not None:
+            parentWidget = self.videoWidget.parentWidget()
+            print(parentWidget.objectName())
+            parentWidget.layout().removeWidget(self.videoWidget)
+            self.videoWidget = None
+        # self.player.stop()
+        # self.player.setVideoOutput(None)
         
     def thread_LoadLaser(self):
         # QThread.msleep(1000)

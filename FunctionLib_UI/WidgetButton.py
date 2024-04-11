@@ -344,7 +344,6 @@ class MessageBox(QMessageBox):
                 
                 miniWidth = 200
                 for button in lstButton:
-                    button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
                     
                     font = QFont()
                     font.setFamily('Arial')
@@ -354,9 +353,9 @@ class MessageBox(QMessageBox):
                     fontRect = fontMetrics.boundingRect(button.text())
                     
                     miniWidth += fontRect.width()
-                    button.setMinimumWidth(fontRect.width())
-                    
-                item.setMinimumWidth(miniWidth)
+                
+                if item.width() < miniWidth:
+                    item.setMinimumWidth(miniWidth)
                 
                 if len(lstButton) > 1:
                     lstButton[0].setStyleSheet("""
