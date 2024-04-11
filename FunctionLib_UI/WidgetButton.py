@@ -259,6 +259,7 @@ class MessageBox(QMessageBox):
             self.setIcon(icon)
             
         self.setText(text)
+        self.context = text
         
         layout = self.layout()
         widget = QWidget()
@@ -271,7 +272,10 @@ class MessageBox(QMessageBox):
         subLayout = QGridLayout(widget)
         col = 0
         
-        self.hLayout = QHBoxLayout()
+        self.subWidget = QWidget()
+        self.subWidget.setObjectName('subWidget')
+        
+        self.hLayout = QGridLayout(self.subWidget)
         self.hLayout.setContentsMargins(0, 0, 0, 0)
         self.hLayout.setSpacing(0)
         for item in self.children():
@@ -283,7 +287,8 @@ class MessageBox(QMessageBox):
             # if isinstance(item, QDialogButtonBox):
             #     self.hLayout.addWidget(item)
                 
-        subLayout.addLayout(self.hLayout, 1, 0, 1, 2)
+        # subLayout.addLayout(self.hLayout, 1, 0, 1, 2)
+        subLayout.addWidget(self.subWidget, 1, 0, 1, 2, Qt.AlignLeft)
         widget.setStyleSheet("""
                              
                                 #msgWidget{
@@ -304,6 +309,7 @@ class MessageBox(QMessageBox):
                                     border-right:2px solid #444;
                                     padding:10px;
                                     min-width:200px;
+                                    font:16pt "Arial";
                                 }
                                 
                                 QPushButton:pressed{
@@ -313,7 +319,12 @@ class MessageBox(QMessageBox):
                                     border-right:1px solid #ddd;
                                 }
                                 
+                                QDialogButtonBox{
+                                    alignment:left;
+                                }
+                                
                              """)
+        
         
         
     def addButtons(self, *buttonName, **kwButtonName):
@@ -324,16 +335,28 @@ class MessageBox(QMessageBox):
         
         for name, action in kwButtonName.items():
             self.addButton(name, action)
-        
-        # for button in buttonName:
-        #     self.hLayout.addWidget(QPushButton(button))
             
         for item in self.children():
             if isinstance(item, QDialogButtonBox):
-                # item.layout().setSpacing(0)
-                self.hLayout.addWidget(item)
+                self.hLayout.addWidget(item, 0, 0, alignment = Qt.AlignLeft)
                 
                 lstButton = [button for button in item.children() if isinstance(button, QPushButton)]
+                
+                miniWidth = 200
+                for button in lstButton:
+                    button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+                    
+                    font = QFont()
+                    font.setFamily('Arial')
+                    font.setPointSize(16)
+                    
+                    fontMetrics = QFontMetrics(font)
+                    fontRect = fontMetrics.boundingRect(button.text())
+                    
+                    miniWidth += fontRect.width()
+                    button.setMinimumWidth(fontRect.width())
+                    
+                item.setMinimumWidth(miniWidth)
                 
                 if len(lstButton) > 1:
                     lstButton[0].setStyleSheet("""
@@ -345,6 +368,8 @@ class MessageBox(QMessageBox):
                                                 border-top-right-radius:20px;
                                                 border-bottom-right-radius:20px;
                                                 """)
+                    
+                item.setCenterButtons(True)
         
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):
         # if len(args) == 0 and len(kwargs) == 0:
