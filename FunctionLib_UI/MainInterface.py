@@ -569,7 +569,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkMain.setCurrentIndex(0)
         self.stkScene.setCurrentIndex(0)
         
-        
         self.treeDicom.setStyleSheet("""
             QHeaderView::section {
                 background-color: #3498db;  
@@ -583,8 +582,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             }
             """)
         
-        
-        
         self.wdgPlanning.clicked.connect(self.onClick_Planning)
         self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
         self.stkScene.currentChanged.connect(self.SceneChanged)
@@ -594,14 +591,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalShowMessage.connect(self.onSignal_ShowMessage)
         self.signalModelBuildingUI.connect(self.onSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
-        
-        # self.btnBack_scanCT.clicked.connect(self.BackScene)
-        # self.btnBack_settingLaser.clicked.connect(self.BackScene)
-        # self.btnBack_settingRobot.clicked.connect(self.BackScene)
-        
-        # self.btnNext_scanCT.clicked.connect(self.NextScene)
-        # self.btnNext_settingLaser.clicked.connect(self.NextScene)
-        # self.btnNext_settingRobot.clicked.connect(self.NextScene)
         
         self.signalSetCheck.connect(self.onSignal_SetCheck)
         
@@ -1770,8 +1759,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice(DEVICE_LASER)
-            self.enableDevice(DEVICE_ALL)
+            self.enableDevice(DEVICE_LASER)
+            # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2707,6 +2696,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             # msgbox = QMessageBox(text = 'Model Base Checking done!')
             msgbox = MessageBox(QMessageBox.Information, 'Model Base Checking done!')
+            msgbox.addButtons('OK')
             QTimer.singleShot(2000, lambda: self.Laser_autoNextPage(msgbox))
             # msgbox.setWindowTitle('Model Building Succeed')
             # msgbox.setIcon(QMessageBox.Information)
