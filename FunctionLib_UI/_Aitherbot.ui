@@ -51,21 +51,21 @@
 }</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="pgHome">
        <layout class="QGridLayout" name="gridLayout_33">
         <property name="leftMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="topMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="rightMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="bottomMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="spacing">
          <number>0</number>
@@ -528,6 +528,20 @@ font: 14pt &quot;Arial&quot;;</string>
            </size>
           </property>
          </spacer>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLabel" name="lblVersion">
+          <property name="styleSheet">
+           <string notr="true">font:24pt &quot;Arial&quot;;
+color: rgba(255, 255, 255, 100);</string>
+          </property>
+          <property name="text">
+           <string>Ver 2.2</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -4492,8 +4506,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>318</height>
+                     <width>222</width>
+                     <height>312</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4635,8 +4649,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>318</height>
+                     <width>243</width>
+                     <height>189</height>
                     </rect>
                    </property>
                    <attribute name="label">
