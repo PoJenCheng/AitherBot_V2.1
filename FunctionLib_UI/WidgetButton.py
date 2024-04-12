@@ -10,6 +10,7 @@ from datetime import datetime
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
+TYPE_ROBOTARM = 2
 
 class WidgetButton(QWidget):
     clicked = pyqtSignal()
@@ -178,6 +179,7 @@ class Indicator(QWidget):
             # 繪製背景矩形
             rect_width = self.width() - self.pointer_width
             rect_height = self.height() - self.pointer_height
+            
             rectXRed = self.pointer_width * 0.5
             rectWidthRed = rect_width * 0.8
             rect = QRectF(rectXRed, 0, rectWidthRed, rect_height)
@@ -214,6 +216,7 @@ class Indicator(QWidget):
             # 繪製背景矩形
             rect_width = self.width() - self.pointer_width
             rect_height = self.height() - self.pointer_height
+            
             rectXRed = self.pointer_width * 0.5
             rectWidthRed = rect_width * 0.2
             rect = QRectF(rectXRed, 0, rectWidthRed, rect_height)
@@ -245,8 +248,63 @@ class Indicator(QWidget):
             ])
 
             painter.setBrush(QColor(255, 255, 255))  
-            painter.drawPolygon(pointer)        
-        
+            painter.drawPolygon(pointer)  
+        elif type == TYPE_ROBOTARM:     
+            # 繪製背景矩形
+            rect_width = self.width() - self.pointer_width
+            rect_height = self.height() - self.pointer_height
+            
+            # 計算左側紅區範圍
+            rtRedZoneLeft_x = self.pointer_width * 0.5
+            rtRedZoneLeft_Width = rect_width * 0.45
+            rect = QRectF(rtRedZoneLeft_x, 0, rtRedZoneLeft_Width, rect_height)
+            
+            # 設定左側紅區漸層色
+            linearLeft = QLinearGradient(rtRedZoneLeft_x, 0, rtRedZoneLeft_x + rtRedZoneLeft_Width, 0)
+            linearLeft.setColorAt(0, QColor(255, 0, 0))
+            linearLeft.setColorAt(1, QColor(0, 255, 0))
+            
+            # 繪製左側紅區
+            painter.setBrush(linearLeft)
+            painter.drawRect(rect)
+            
+            # 計算中間綠區範圍
+            rtGreenZone_x = rtRedZoneLeft_x + rtRedZoneLeft_Width
+            rtGreenZone_Width = rect_width * 0.1
+            rect = QRectF(rtGreenZone_x, 0, rtGreenZone_Width, rect_height)
+            
+            # 設定綠區顏色(單一色:綠色)並綠製
+            painter.setBrush(QColor(0, 255, 0))
+            painter.drawRect(rect)
+            
+            # 計算右側紅區範圍
+            rtRedZoneRight_x = rtGreenZone_x + rtGreenZone_Width
+            rtRedZoneRight_Width = rect_width * 0.45
+            rect = QRectF(rtRedZoneRight_x, 0, rtRedZoneRight_Width, rect_height)
+            
+            # 設定右側紅區漸層色
+            linearRight = QLinearGradient(rtRedZoneRight_x, 0, rtRedZoneRight_x + rtRedZoneRight_Width, 0)
+            linearRight.setColorAt(0, QColor(0, 255, 0))
+            linearRight.setColorAt(1, QColor(255, 0, 0))
+            
+            # 繪製右側紅區
+            painter.setBrush(linearRight)
+            painter.drawRect(rect)
+
+            # 計算指針位置
+            scale = rect_width * 0.01
+            pointer_x = self.value * scale + self.pointer_width * 0.5
+            pointer_y = rect_height
+
+            # 繪製指針三角形
+            pointer = QPolygon([
+                QPoint(int(pointer_x), int(pointer_y)),
+                QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
+                QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
+            ])
+
+            painter.setBrush(QColor(255, 255, 255))  
+            painter.drawPolygon(pointer) 
 class MessageBox(QMessageBox):
     
     def __init__(self, icon:int, text:str):
@@ -350,9 +408,10 @@ class MessageBox(QMessageBox):
                     font.setPointSize(16)
                     
                     fontMetrics = QFontMetrics(font)
-                    fontRect = fontMetrics.boundingRect(button.text())
+                    # fontRect = fontMetrics.boundingRect(button.text())
                     
-                    miniWidth += fontRect.width()
+                    # miniWidth += fontRect.width()
+                    miniWidth += fontMetrics.width(button.text())
                 
                 if item.width() < miniWidth:
                     item.setMinimumWidth(miniWidth)
