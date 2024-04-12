@@ -329,7 +329,7 @@ class MessageBox(QMessageBox):
         # self.addButton('exit', 3)
         
         subLayout = QGridLayout(widget)
-        subLayout.setContentsMargins(0, 0, 0, 0)
+        subLayout.setContentsMargins(10, 10, 10, 10)
         col = 0
         
         self.subWidget = QWidget()
@@ -345,9 +345,6 @@ class MessageBox(QMessageBox):
             if isinstance(item, QLabel):
                 subLayout.addWidget(item, 0, col)
                 col += 1
-                
-            # if isinstance(item, QDialogButtonBox):
-            #     self.hLayout.addWidget(item)
                 
         # subLayout.addLayout(self.hLayout, 1, 0, 1, 2)
         subLayout.addWidget(self.subWidget, 1, 0, 1, 2, Qt.AlignCenter)

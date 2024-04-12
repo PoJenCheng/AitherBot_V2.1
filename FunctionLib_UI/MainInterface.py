@@ -1759,7 +1759,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_LASER)
+            self.enableDevice()
             # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
@@ -3527,6 +3527,8 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         ############################################################################################
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
         
     def UpdateProgress(self, value):
         progress = int(value * 100)
