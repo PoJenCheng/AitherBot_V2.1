@@ -597,7 +597,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.btnNext_confirmHomingStep2.clicked.connect(self.StartHoming)
         self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
         
-        self.laserFigure = Canvas(self, dpi = 200)
+        self.laserFigure = Canvas(self, dpi = 150)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
         
@@ -3221,7 +3221,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=3, height=2.5, dpi=100):
         # plt.rcParams['figure.facecolor'] = 'r'
         # plt.rcParams['axes.facecolor'] = 'b'
         plt.rcParams['axes.prop_cycle'] = cycler(color=['r', 'g'])
@@ -3229,8 +3229,10 @@ class Canvas(FigureCanvasQTAgg):
         
         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
         fig.set_facecolor('#4D84AD')
+        
         self.axes = fig.add_subplot(111)#
         self.axes.set_facecolor('#4D84AD')
+        self.axes.set_ylabel('Lung Volume (mL)')
         
         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
         self.setParent(parent)
@@ -3243,12 +3245,14 @@ class Canvas(FigureCanvasQTAgg):
             # self.line2 = self.axes.plot([], [])
             # self.axes.cla()#清除已绘的图形
             self.axes.set_xlim([1,640])
-            self.axes.set_ylim([-125,-65])
+            self.axes.set_ylim([-125,-75])
+            
             
             # 在設置tick label之前設置ticks，來免除警告
             self.axes.set_yticks(self.axes.get_yticks())
             # 不顯示負號
-            self.axes.set_yticklabels([str(abs(tick)) for tick in self.axes.get_yticks()])
+            self.axes.set_yticklabels([str((tick + 130) * 100) for tick in self.axes.get_yticks()])
+            
         
         
         self.line1.set_data(range(len(receiveData[0])), receiveData[0])
