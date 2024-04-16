@@ -417,18 +417,20 @@ class RobotSupportArm():
         
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
-    bConnected = False
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
-    fHomeProgress = 0.0
-    initProgress = 0
-    bStop = False
+    
     
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
         self.SupportMove = 'GVL.SupportMove'
+        
+        self.bConnected = False
+        self.fHomeProgress = 0.0
+        self.initProgress = 0
+        self.bStop = False
         
     def sti_init(self):
         # for test
@@ -1069,24 +1071,24 @@ class LineLaser(MOTORCONTROL, QObject):
     signalModelPassed = pyqtSignal(bool)
     signalBreathingRatio = pyqtSignal(float)
     signalCycleCounter = pyqtSignal(int)
-    initProgress = 0
-    bStop = False
-    receiveData             = []
-    receiveDataTTemp        = None
-    avgValueList            = []
-    realTimeHeightAvgValue  = []
-    laserDataBase           = {}
-    laserDataBase_filter    = {}
-    percentageBase          = {}
-    ret = None
-    
-    #手動紀錄
-    bManualRecord           = False 
-    lstManualRecordData     = []
-    
     
     def __init__(self):
         QObject.__init__(self)
+        
+        self.initProgress = 0
+        self.bStop = False
+        self.receiveData             = []
+        self.receiveDataTTemp        = None
+        self.avgValueList            = []
+        self.realTimeHeightAvgValue  = []
+        self.laserDataBase           = {}
+        self.laserDataBase_filter    = {}
+        self.percentageBase          = {}
+        self.ret = None
+        
+        #手動紀錄
+        self.bManualRecord           = False 
+        self.lstManualRecordData     = []
         
     def retryFunc(self, func, startTime, *args):
         endTime = time()

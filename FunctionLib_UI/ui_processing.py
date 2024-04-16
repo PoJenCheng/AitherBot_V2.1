@@ -33,12 +33,22 @@ class Ui_Form(object):
 "    background-color:none;\n"
 "    font: 36pt \"Arial\";\n"
 "    color:rgb(255, 255, 255);\n"
+"}\n"
+"\n"
+"#lblContent{\n"
+"    font: 12pt \"Arial\";\n"
 "}")
         self.wdgMain.setObjectName("wdgMain")
         self.gridLayout = QtWidgets.QGridLayout(self.wdgMain)
         self.gridLayout.setObjectName("gridLayout")
         spacerItem = QtWidgets.QSpacerItem(20, 101, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem, 0, 0, 1, 1)
+        self.pgbLoadDIcom = QtWidgets.QProgressBar(self.wdgMain)
+        self.pgbLoadDIcom.setProperty("value", 0)
+        self.pgbLoadDIcom.setObjectName("pgbLoadDIcom")
+        self.gridLayout.addWidget(self.pgbLoadDIcom, 3, 0, 1, 1)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout.addItem(spacerItem1, 4, 0, 1, 1)
         self.label_Processing = QtWidgets.QLabel(self.wdgMain)
         self.label_Processing.setMaximumSize(QtCore.QSize(16777215, 300))
         font = QtGui.QFont()
@@ -52,12 +62,11 @@ class Ui_Form(object):
         self.label_Processing.setAlignment(QtCore.Qt.AlignCenter)
         self.label_Processing.setObjectName("label_Processing")
         self.gridLayout.addWidget(self.label_Processing, 1, 0, 1, 1)
-        self.pgbLoadDIcom = QtWidgets.QProgressBar(self.wdgMain)
-        self.pgbLoadDIcom.setProperty("value", 0)
-        self.pgbLoadDIcom.setObjectName("pgbLoadDIcom")
-        self.gridLayout.addWidget(self.pgbLoadDIcom, 2, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout.addItem(spacerItem1, 3, 0, 1, 1)
+        self.lblContent = QtWidgets.QLabel(self.wdgMain)
+        self.lblContent.setText("")
+        self.lblContent.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.lblContent.setObjectName("lblContent")
+        self.gridLayout.addWidget(self.lblContent, 2, 0, 1, 1)
         self.gridLayout_2.addWidget(self.wdgMain, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
@@ -66,4 +75,4 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label_Processing.setText(_translate("Form", "Loading"))
+        self.label_Processing.setText(_translate("Form", "Dicom Image importing..."))

@@ -18,6 +18,7 @@ class WidgetButton(QWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         
+        
     def copyFrom(self, widget:QWidget):
         meta_widget = widget.metaObject()
         meta_button = self.metaObject()
@@ -323,6 +324,7 @@ class MessageBox(QMessageBox):
         layout.setContentsMargins(0, 0, 0, 0)
         widget = QWidget()
         widget.setObjectName('msgWidget')
+        widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         layout.addWidget(widget)
         
         # self.addButton('Reborn', 3)
@@ -383,6 +385,7 @@ class MessageBox(QMessageBox):
                                 }
                                 
                              """)
+        self.mainWidget = widget
         
         
         
@@ -415,8 +418,8 @@ class MessageBox(QMessageBox):
                     # miniWidth += fontRect.width()
                     miniWidth += fontMetrics.width(button.text())
                 
-                if item.width() - 200 < miniWidth:
-                    item.setMinimumWidth(miniWidth)
+                # if item.width() - 200 < miniWidth:
+                #     item.setMinimumWidth(miniWidth)
                 
                 if len(lstButton) > 1:
                     lstButton[0].setStyleSheet("""
@@ -433,7 +436,6 @@ class MessageBox(QMessageBox):
                 if layout:
                     tempWidget = QWidget()
                     tempWidget.setLayout(layout)
-                    print(f'layout = {item.layout()}')
                     
                     gridLayout = QGridLayout()
                     gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -444,7 +446,14 @@ class MessageBox(QMessageBox):
                     item.setLayout(gridLayout)
                     
                 # item.setCenterButtons(True)
-        self.adjustSize()
+        font = QFont()
+        font.setFamily('Arial')
+        font.setPointSize(24)
+        
+        fontMetrics = QFontMetrics(font)
+        widthWidget = fontMetrics.width(self.context) + 100
+        # widthWidget = max(widthWidget, miniWidth + 200)
+        self.mainWidget.setMinimumWidth(widthWidget)
         
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):
         # if len(args) == 0 and len(kwargs) == 0:

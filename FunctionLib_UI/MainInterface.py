@@ -1,5 +1,5 @@
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -22,9 +22,11 @@ import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
 from FunctionLib_UI.Ui__Aitherbot import *
+import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
+from FunctionLib_UI.Ui_step import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -220,6 +222,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.addWidget(self.canvasExhale)
         layout.setContentsMargins(0, 0, 0, 0)
         
+        wdgStep = WidgetStep(4)
+        wdgStep.SetStepNames('Change instrument', 'release robot arm', 'sterile and drop robot', 'reposition robot arm')
+        layout:QGridLayout = self.pgDriveRobotGuide.layout()
+        layout.replaceWidget(self.wdgGuideLine, wdgStep)
+        self.wdgStep = wdgStep
+        
+        
         
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
@@ -229,6 +238,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.SetUIEnable_Trajectory(False)
         self.init_ui()
+        
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(False)
@@ -695,6 +705,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
         
         self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
+        
+        self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1223,6 +1235,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnClicked_btnReloadDicom(self):
         self.SetStage(STAGE_DICOM)
         # self.stkScene.setCurrentWidget(self.pgImportDicom)
+        
+    def OnClicked_btnDriveConfirm(self):
+        nStep = self.wdgStep.Next()
+        
+        
+        if nStep == 2:
+            self.StopVedio()
+            layout = self.wdgPicture.layout()
+            layout.removeWidget(self.tmpWidget)
+            self.tmpWidget = None
+            self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
+        elif nStep == 3:
+            self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
+        elif nStep == 4:
+            self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
+        elif nStep is None:
+            self.stkScene.setCurrentWidget(self.pgImageView)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.01
@@ -1755,12 +1784,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgImportDicom)
+            self.stkScene.setCurrentWidget(self.pgImageView)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice()
-            # self.enableDevice(DEVICE_ALL)
+            # self.enableDevice()
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1813,6 +1843,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         elif currentWidget == self.pgRobotRegSphere:
             # self.player.stop()
+            
             self.StopVedio()
             self.playVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
             
@@ -1820,6 +1851,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.player.stop()
             self.StopVedio()
             self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+        elif currentWidget == self.pgDriveRobotGuide:
+            self.wdgStep.GotoStep(1)
+            self.StopVedio()
+            
+            tmpWidget = QWidget()
+            tmpWidget.setMinimumSize(800, 600)
+            tmpWidget.setMaximumSize(800, 600)
+            
+            layout = self.wdgPicture.layout()
+            if layout is None:
+                layout = QHBoxLayout(self.wdgPicture)
+                layout.setContentsMargins(0, 0, 0, 0)
+            layout.addWidget(tmpWidget)
+            self.tmpWidget = tmpWidget
+            self.playVedio(self.tmpWidget, 'video/InstallHolder.mp4')
         elif currentWidget == self.pgSterileStep1:
             # self.player.stop()
             self.StopVedio()
@@ -2031,7 +2077,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def StopVedio(self):
         if self.videoWidget is not None:
             parentWidget = self.videoWidget.parentWidget()
-            print(parentWidget.objectName())
             parentWidget.layout().removeWidget(self.videoWidget)
             self.videoWidget = None
         # self.player.stop()
@@ -2200,7 +2245,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # QApplication.processEvents()
         self.ui_SP = SystemProcessing()
         self.ui_SP.setWindowTitle('Registration')
-        self.ui_SP.label_Processing.setText('Registing...')
+        self.ui_SP.label_Processing.setText('Registing Robot Position...')
         self.ui_SP.show()
         QApplication.processEvents()
         self.regFn.signalProgress.connect(self.ui_SP.UpdateProgress)
@@ -2254,7 +2299,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            MessageBox.ShowCritical("error", "get candidate ball error / SetRegistration_L() error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
             print('get candidate ball error / SetRegistration_L() error')
             print(e)
             return False
@@ -2280,7 +2325,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.logUI.warning('get candidate ball error')
             
             # QMessageBox.critical(self, "error", "get candidate ball error")
-            MessageBox.ShowCritical("error", "get candidate ball error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
             print('get candidate ball error / SetRegistration_L() error')
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
@@ -2313,7 +2358,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # selectedBallKey = self.currentTag.get("selectedBallKey")
         if selectedBallKey is None or selectedBallKey == []:
             # QMessageBox.critical(self, "error", "please redo registration, select the ball")
-            MessageBox.ShowCritical("error", "please redo registration, select the ball")
+            MessageBox.ShowCritical("please redo registration, select the ball")
             print("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
@@ -2481,7 +2526,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
-        MessageBox.ShowInformation('Info', 'Robot Stop')
+        MessageBox.ShowInformation('Robot Stop')
         
     def RobotRun(self):
         if self.homeStatus is True:
@@ -3530,12 +3575,132 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
-    def UpdateProgress(self, value):
+    def UpdateProgress(self, value:float, content:str):
         progress = int(value * 100)
         self.pgbLoadDIcom.setValue(progress)
+        content = content.replace('\\', '/')
+        self.lblContent.setText('from ' + content)
         if progress >= 100:
             self.close()
             
+class WidgetArrow(QWidget):
+    styleBlack = 'image:url(image/arrow-black.png)'
+    styleGolden = 'image:url(image/arrow-golden.png)'
+    styleTextGolden = 'color:#ecec76;font-size:24pt;'
+    styleTextWhite = 'color:white;font-size:16pt;'
+    
+    
+    def __init__(self, num:int = 3):
+        super().__init__()
+        
+        # itemName = 'wdgArrow'
+        # while True:
+        #     item = itemName + str(self.nArrow)
+        #     if not hasattr(self, item):
+        #         break
+        #     self.lstArrow.append(eval('self.' + item))
+        #     self.nArrow += 1
+        # self.nArrow = 0
+        
+        self.setStyleSheet("""
+                           QLabel{
+                               font:16pt 'Arial';
+                               color:#fff;
+                           }
+                           """)
+        
+        self.idArrow = 0
+        self.timer = QTimer()
+        self.lstArrow = []
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        for _ in range(num):
+            arrow = QWidget()
+            arrow.setMinimumSize(32, 32)
+            arrow.setMaximumSize(32, 32)
+            arrow.setStyleSheet(self.styleBlack)
+            self.lstArrow.append(arrow)
+            layout.addWidget(arrow)
+            
+        self.lblStepName = QLabel()
+        self.lblStepName.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # self.lblStepName.setMinimumWidth(100)
+        layout.addWidget(self.lblStepName)
+        
+        self.timer.timeout.connect(self.runArrow)
+        # self.timer.start(200)
+        
+    def runArrow(self):
+        arrowGold = self.lstArrow[self.idArrow]
+        for arrow in self.lstArrow:
+            if arrow == arrowGold:
+                arrow.setStyleSheet(self.styleGolden)
+            else:
+                arrow.setStyleSheet(self.styleBlack)
+        self.idArrow = (self.idArrow + 1) % len(self.lstArrow)
+        
+    def Active(self):
+        self.timer.start(200)
+        self.lblStepName.setStyleSheet(self.styleTextGolden)
+        
+    def Stop(self):
+        self.timer.stop()
+        self.lblStepName.setStyleSheet(self.styleTextWhite)
+        for arrow in self.lstArrow:
+            arrow.setStyleSheet(self.styleBlack)
+        
+    def SetStepName(self, name:str):
+        self.lblStepName.setText(name)
+        
+class WidgetStep(QWidget):
+    def __init__(self, nStep:int, arrowNum:int = 3, *stepName):
+        super().__init__()
+        
+        self.nCurrentStep = 1
+        self.lstWidgetStep = []
+        
+        layout = QHBoxLayout(self)
+        for _ in range(nStep):
+            wdgArrow = WidgetArrow(arrowNum)
+            layout.addWidget(wdgArrow)
+            self.lstWidgetStep.append(wdgArrow)
+            
+        layout.addItem(QSpacerItem(20, 0, QSizePolicy.Expanding))
+                
+        self.SetStepNames(*stepName)
+            
+    def SetStepNames(self, *stepNames):
+        if len(self.lstWidgetStep) == len(stepNames):
+            for item, name in zip(self.lstWidgetStep, stepNames):
+                item.SetStepName(name)
+        
+        # self.lstWidgetStep[0].StopArrow()
+        
+    def GotoStep(self, nStep:int):
+        if nStep <= len(self.lstWidgetStep) and nStep > 0:
+            for i, item in enumerate(self.lstWidgetStep):
+                if i == nStep - 1:
+                    item.Active()
+                else:
+                    item.Stop()
+            self.nCurrentStep = nStep
+            
+    def Next(self):
+        if self.nCurrentStep == len(self.lstWidgetStep):
+            return None
+        
+        self.nCurrentStep += 1
+        self.GotoStep(self.nCurrentStep)
+        return self.nCurrentStep
+        
+    def Back(self):
+        if self.nCurrentStep == 1:
+            return None
+        self.nCurrentStep -= 1
+        self.GotoStep(self.nCurrentStep)
+        return self.nCurrentStep
 class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
     def __init__(self, dcmTag, dicom, answer):
         super(CoordinateSystemManual, self).__init__()
