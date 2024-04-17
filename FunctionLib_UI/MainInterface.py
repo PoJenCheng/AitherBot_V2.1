@@ -1789,8 +1789,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice()
-            self.enableDevice(DEVICE_ALL)
+            self.enableDevice(DEVICE_LASER)
+            # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
