@@ -107,16 +107,18 @@ class QSignalObject(QObject):
 
 "DICOM function"
 class DICOM(QObject):
-    signalProcess = pyqtSignal(float)
-    dicPatient = None
-    windowWidth = None
-    windowLevel = None
-    rescaleSlope = None
-    rescaleIntercept = None
-    currentSeries = []
+    signalProcess = pyqtSignal(float, str)
     
     def __init__(self):
         super().__init__()
+        
+        
+        self.dicPatient = None
+        self.windowWidth = None
+        self.windowLevel = None
+        self.rescaleSlope = None
+        self.rescaleIntercept = None
+        self.currentSeries = []
         
     def GetTotalFiles(self, path:str):
         files = os.listdir(path)
@@ -175,7 +177,7 @@ class DICOM(QObject):
                 # metadataStudy.append(fileData.StudyInstanceUID)
                 metadataFileList.append(s)
                 count += 1
-                self.signalProcess.emit(np.round(count / totalFiles, 2))
+                self.signalProcess.emit(np.round(count / totalFiles, 2), s)
             except:
                 continue
         studyNumber = np.unique(metadataStudy)
@@ -240,7 +242,7 @@ class DICOM(QObject):
             # dicPatient[pID][studyID][seriesID].append(fileData)
             dicSeries['data'].append(fileData)
             count += 1
-            self.signalProcess.emit(np.round(count / totalFiles, 2))
+            self.signalProcess.emit(np.round(count / totalFiles, 2), fileData.filename)
         self.dicPatient = dicPatient
         print(f'skip {skipCount} files')
         print(f'found {skipRepeatCount} files repeated and skip')
@@ -360,7 +362,7 @@ class DICOM(QObject):
                                 series['acquisitionDate'] = 'NONE'
         
                                 
-        self.signalProcess.emit(1.0)
+        self.signalProcess.emit(1.0, '')
                         
                         # print(f'imagePosition = {slice.ImagePositionPatient}')
                     # for slice in slices:
@@ -796,12 +798,11 @@ class DICOM(QObject):
     
 "registration function"
 class REGISTRATION(QObject):
-    signalProgress = pyqtSignal(float)
+    signalProgress = pyqtSignal(float, str)
     
     def __init__(self):
         super().__init__()
         self.PlanningPath = []
-        return
     
     def TransformationMatrix(self, ballCenterMm):
         """calculate registration transformation matrix
@@ -1471,7 +1472,7 @@ class REGISTRATION(QObject):
         else:
             pass
         
-        self.signalProgress.emit(0.05)
+        self.signalProgress.emit(0.05, 'registrator identifying...')
         
         imageHuMm_tmp_xyz = numpy.array(imageHuMm_tmp_xyz)
         imageHuMm_tmp = []
@@ -1498,21 +1499,21 @@ class REGISTRATION(QObject):
             imageHuMm = imageHuMm_tmp_xyz
             imageHuMm = numpy.array(imageHuMm)
             
-        self.signalProgress.emit(0.1)
+        self.signalProgress.emit(0.1, 'registrator identifying...')
         ############################################################################################
         ## 取得候選人球心 ############################################################################################
         resultCentroid_xy = self.__FindBallXY(imageHuMm)
-        self.signalProgress.emit(0.17)
+        self.signalProgress.emit(0.17, 'registrator Classifying...')
         dictionaryPoint = self.__ClassifyPointXY(resultCentroid_xy)
-        self.signalProgress.emit(0.34)
+        self.signalProgress.emit(0.34, 'registrator identifying...')
         resultCentroid_yz = self.__FindBallYZ(imageHuMm)
-        self.signalProgress.emit(0.51)
+        self.signalProgress.emit(0.51, 'registrator Classifying...')
         dictionaryPoint = self.__ClassifyPointYZ(resultCentroid_yz, dictionaryPoint)
-        self.signalProgress.emit(0.68)
+        self.signalProgress.emit(0.68, 'registrator identifying...')
         resultCentroid_xz = self.__FindBallXZ(imageHuMm)
-        self.signalProgress.emit(0.85)
+        self.signalProgress.emit(0.85, 'registrator Classifying...')
         dictionaryPoint = self.__ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
-        self.signalProgress.emit(0.99)
+        self.signalProgress.emit(0.99, 'registrator identify completed')
         
         pointMatrixSorted_xy = numpy.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
         pointMatrixSorted_yz = numpy.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
@@ -1528,7 +1529,7 @@ class REGISTRATION(QObject):
             count = 1
         nStep = 1 / count
         nProgress = 0
-        self.signalProgress.emit(0)
+        self.signalProgress.emit(0, 'calculating registrator position...')
         for p in averagePoint:
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
@@ -1546,14 +1547,14 @@ class REGISTRATION(QObject):
                 resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 
                 nProgress = min(nProgress + nStep, 0.9)
-                self.signalProgress.emit(nProgress)
+                self.signalProgress.emit(nProgress, 'calculating registrator position...')
             except:
                 pass
-        self.signalProgress.emit(0.9)
+        self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
         try:
             ball = self.IdentifyPoint(numpy.array(resultPoint))
-            self.signalProgress.emit(1)
+            self.signalProgress.emit(1, 'registration completed')
         except:
             ball = []
         # print("-------------------------------------------------------------------")
@@ -2319,19 +2320,22 @@ class InteractorStylePlaneWidget(vtk.vtkInteractorStyleTrackballCamera):
 
     
 class InteractorStyleImageAlgorithm(vtk.vtkInteractorStyleImage):
-    iren        = None
-    renderer    = None
-    picker      = None
-    actor       = None
-    callback    = None
-    imageAlgorithm = None
-    originalStyle = None
-    bLeftButtonPress = False
-    statusRange = [False, False]
+    
     signalObj = QSignalObject()
     
     def __init__(self, renderer = None):
         super().__init__()
+        
+        self.iren        = None
+        self.renderer    = None
+        self.picker      = None
+        self.actor       = None
+        self.callback    = None
+        self.imageAlgorithm = None
+        self.originalStyle = None
+        self.bLeftButtonPress = False
+        self.statusRange = [False, False]
+    
         self.AddObserver('LeftButtonPressEvent', self.onLeftButtonPress)
         self.AddObserver('LeftButtonReleaseEvent', self.onLeftButtonRelease)
         self.AddObserver('MouseMoveEvent', self.onMouseMove)
@@ -2438,17 +2442,16 @@ class InteractorStyleImageAlgorithm(vtk.vtkInteractorStyleImage):
             self.iren.Start()
         
 class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
-    actorLine   = None
-    drawPlane   = None
     
     MODE_CUT_IN  = 0
     MODE_CUT_OUT = 1
-    
-    # 0:cut inside 1:cut outside
-    mode        = 0 
     def __init__(self, renderer = None):
         super().__init__(renderer) 
-    
+
+        self.actorLine   = None
+        self.drawPlane   = None
+        # 0:cut inside 1:cut outside
+        self.mode = 0
     # mode 0 : cut inside
     # mode 1 : cut outside
     def SetMode(self, mode):
@@ -2673,18 +2676,17 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
     
 class InteractorStyleVolume(vtk.vtkInteractorStyleRubberBandPick):
     
-    bEnable          = True
-    bLeftButtonPress = False
-    renderer         = None
-    iren             = None
-    vtkPts           = vtk.vtkPoints()
-    vtkPtsFar        = vtk.vtkPoints()
-    pts              = []
-    
-    picker = vtk.vtkWorldPointPicker()
-    
     def __init__(self):
         super().__init__()
+        
+        self.bEnable          = True
+        self.bLeftButtonPress = False
+        self.renderer         = None
+        self.iren             = None
+        self.vtkPts           = vtk.vtkPoints()
+        self.vtkPtsFar        = vtk.vtkPoints()
+        self.pts              = []
+        self.picker = vtk.vtkWorldPointPicker()
         
         self.AddObserver('LeftButtonPressEvent', self.OnLeftButtonPress)
         self.AddObserver('LeftButtonReleaseEvent', self.OnLeftButtonRelease)
@@ -3313,27 +3315,29 @@ class ContourWidget(vtk.vtkContourWidget):
     
 class RendererObj(vtkRenderer):
     # signalUpdateView = pyqtSignal()
-    viewPort = None
-    actorTargetScale = []
-    actorTargetCenter = []
-    threshold = None
-    connectivityFilter = None
-    imageOrigin = None
-    image = None
-    imagePosition = None
-    border = None
-    bSelected = False
-    bFocusMode = True
-    bTargetVisible = True
-    textActor = None
+    # target為全實例共享，故設置為類屬性
+    target = [0, 0, 0]
     
     def __init__(self):
         super(RendererObj, self).__init__()
+        
+        self.viewPort = None
+        self.actorTargetScale = []
+        self.actorTargetCenter = []
+        self.threshold = None
+        self.connectivityFilter = None
+        self.imageOrigin = None
+        self.image = None
+        self.imagePosition = None
+        self.border = None
+        self.bSelected = False
+        self.bFocusMode = True
+        self.bTargetVisible = True
+        self.textActor = None
             
         self.targetObj = TargetObj(self)
         
         self.actorTarget = [vtkActor2D() for _ in range(2)]
-        self.target = [0, 0, 0]
         self.isInitialize = False
         self.imageOutputPort = None
         self.actorImage = vtkImageActor()
@@ -4482,14 +4486,14 @@ class RendererCrossSectionObj(RendererObj):
         self.SetFocusMode(self.bFocusMode)
                 
 class TargetObj():
-    actorLineCenter = None
-    position = None
-    lines = []
-    linesPoint = []
-    bHide = False
-    
     def __init__(self, renderer:RendererObj):
         self.renderer = renderer
+        
+        self.actorLineCenter = None
+        self.position = None
+        self.lines = []
+        self.linesPoint = []
+        self.bHide = False
         
     def InitObj(self, pos:np.ndarray):
         if isinstance(pos, tuple) or isinstance(pos, list):
@@ -4733,15 +4737,18 @@ class TargetObj():
 class DISPLAY(QObject):
     
     # signalUpdateView = pyqtSignal()
-    targetPoint = np.zeros(3)
-    entryPoint = np.zeros(3)
+    
     signalProgress = pyqtSignal(float)
     signalUpdateWW = pyqtSignal(int)
     signalUpdateWL = pyqtSignal(int)
-    imageOrigin = None
+    
     
     def __init__(self):
         super().__init__()
+        self.targetPoint = np.zeros(3)
+        self.entryPoint = np.zeros(3)
+        self.imageOrigin = None
+        
         self.irenList = {}
         self.target = np.zeros(3)
         self.pcoord = np.zeros(3) #image voxel to image index的補正值，0~1

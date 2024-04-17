@@ -417,18 +417,20 @@ class RobotSupportArm():
         
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
-    bConnected = False
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
-    fHomeProgress = 0.0
-    initProgress = 0
-    bStop = False
+    
     
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
         self.SupportMove = 'GVL.SupportMove'
+        
+        self.bConnected = False
+        self.fHomeProgress = 0.0
+        self.initProgress = 0
+        self.bStop = False
         
     def sti_init(self):
         # for test
@@ -1069,24 +1071,20 @@ class LineLaser(MOTORCONTROL, QObject):
     signalModelPassed = pyqtSignal(bool)
     signalBreathingRatio = pyqtSignal(float)
     signalCycleCounter = pyqtSignal(int)
-    initProgress = 0
-    bStop = False
-    receiveData             = []
-    receiveDataTTemp        = None
-    avgValueList            = []
-    realTimeHeightAvgValue  = []
-    laserDataBase           = {}
-    laserDataBase_filter    = {}
-    percentageBase          = {}
-    ret = None
-    
-    #手動紀錄
-    bManualRecord           = False 
-    lstManualRecordData     = []
-    
     
     def __init__(self):
         QObject.__init__(self)
+        
+        self.initProgress = 0
+        self.bStop = False
+        self.receiveData             = []
+        self.receiveDataTemp         = None
+        self.avgValueList            = []
+        self.realTimeHeightAvgValue  = []
+        self.laserDataBase           = {}
+        self.laserDataBase_filter    = {}
+        self.percentageBase          = {}
+        self.ret = None
         
     def retryFunc(self, func, startTime, *args):
         endTime = time()
@@ -1655,14 +1653,7 @@ class LineLaser(MOTORCONTROL, QObject):
                     listInhaleTemp = []
                 avgMean = avg
         
-        if len(self.lstManualRecordData) >= 2:
-            valInhale, valExhale = self.lstManualRecordData
-            self.lstManualRecordData = []
-            
-            if valExhale < valInhale:
-                valExhale, valInhale = valInhale, valExhale
-            return (valInhale, valExhale)
-        elif len(listInhale) >= 2:
+        if len(listInhale) >= 2:
             
             if listInhale[0][0] > listInhale[1][0]:
                 valInhale = min(listInhale[1])
@@ -1739,47 +1730,47 @@ class LineLaser(MOTORCONTROL, QObject):
             self.receiveDataTemp = self.GetLaserData()
             if self.receiveDataTemp is None:
                 return 0
-        else:
-            self.receiveData = self.receiveDataTemp[laserStartPoint : laserEndPoint + 1]
-            self.receiveDataTemp = None
-            # Rearrange data
-            # self.DataRearrange(self.receiveData)
-            self.CalculateRealTimeHeightAvg()
-            # print(self.realTimeHeightAvgValue)
-            
-            realTimeAvgValue = self.realTimeHeightAvgValue[0]
-            # 燈號控制
-            self.avgValueList = []
-            # for item in self.percentageBase.items():
-            for item in self.percentageBase.values():
-                # self.avgValueList.append(list(item)[1][0])
-                self.avgValueList.append(item)
-            # minValue = min(self.avgValueList)
-            # maxValue = max(self.avgValueList)
-            self.avgValueList = sorted(self.avgValueList, reverse=True)
-            
-            meanPercentage = self.PercentagePrediction(realTimeAvgValue)
-            # try:
-            #     if meanPercentage >= yellowLightCriteria and  meanPercentage < greenLightCriteria:
-            #         # self.RobotSystem.TrackYellow()
-            #         print("黃燈")
-            #         print(meanPercentage)
-            #     elif meanPercentage > greenLightCriteria:
-            #         # self.RobotSystem.TrackGreen()
-            #         print("綠燈")
-            #         print(meanPercentage)
-            #     else:
-            #         # self.RobotSystem.TrackRed()
-            #         # self.ser.write(b'red\n')
-            #         pass
-            
-            sleep(0.01)
-            self.signalBreathingRatio.emit(meanPercentage)
-            return meanPercentage
-            
-            # except:
-            #     # self.RobotSystem.DisplayError()
-            #     print("Realtime track error")
+        
+        self.receiveData = self.receiveDataTemp[laserStartPoint : laserEndPoint + 1]
+        self.receiveDataTemp = None
+        # Rearrange data
+        # self.DataRearrange(self.receiveData)
+        self.CalculateRealTimeHeightAvg()
+        # print(self.realTimeHeightAvgValue)
+        
+        realTimeAvgValue = self.realTimeHeightAvgValue[0]
+        # 燈號控制
+        self.avgValueList = []
+        # for item in self.percentageBase.items():
+        for item in self.percentageBase.values():
+            # self.avgValueList.append(list(item)[1][0])
+            self.avgValueList.append(item)
+        # minValue = min(self.avgValueList)
+        # maxValue = max(self.avgValueList)
+        self.avgValueList = sorted(self.avgValueList, reverse=True)
+        
+        meanPercentage = self.PercentagePrediction(realTimeAvgValue)
+        # try:
+        #     if meanPercentage >= yellowLightCriteria and  meanPercentage < greenLightCriteria:
+        #         # self.RobotSystem.TrackYellow()
+        #         print("黃燈")
+        #         print(meanPercentage)
+        #     elif meanPercentage > greenLightCriteria:
+        #         # self.RobotSystem.TrackGreen()
+        #         print("綠燈")
+        #         print(meanPercentage)
+        #     else:
+        #         # self.RobotSystem.TrackRed()
+        #         # self.ser.write(b'red\n')
+        #         pass
+        
+        sleep(0.01)
+        self.signalBreathingRatio.emit(meanPercentage)
+        return meanPercentage
+        
+        # except:
+        #     # self.RobotSystem.DisplayError()
+        #     print("Realtime track error")
             
                     
     def PercentagePrediction(self,realTimeAvgValue):

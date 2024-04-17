@@ -1,5 +1,5 @@
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -22,9 +22,11 @@ import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
 from FunctionLib_UI.Ui__Aitherbot import *
+import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
+from FunctionLib_UI.Ui_step import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -97,8 +99,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     bToggleInhale = True
     bRegistration = False
     
+    videoWidget = None
+    
     errDevice = 0
     idEnabledDevice = 0
+    
+    dicStageFinished = {STAGE_ROBOT:False, STAGE_LASER:False, STAGE_DICOM:False, STAGE_IMAGE:False}
     #robot parameter
     bTrackingBreathing = False
     
@@ -222,6 +228,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.addWidget(self.canvasExhale)
         layout.setContentsMargins(0, 0, 0, 0)
         
+        wdgStep = WidgetStep(4)
+        wdgStep.SetStepNames('Change instrument', 'release robot arm', 'sterile and drop robot', 'reposition robot arm')
+        layout:QGridLayout = self.pgDriveRobotGuide.layout()
+        layout.replaceWidget(self.wdgGuideLine, wdgStep)
+        self.wdgStep = wdgStep
+        
+        
         
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
@@ -231,6 +244,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.SetUIEnable_Trajectory(False)
         self.init_ui()
+        
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(False)
@@ -318,7 +332,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     spacingZ = dicSeries.get('spacingZ')
                     strSpacing = ''
                     if spacingXY is None:
-                        QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        # QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        MessageBox.ShowCritical('dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
                         strSpacing = 'NONE'
                     else:
                         spacing = spacingXY[:]
@@ -570,7 +585,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkMain.setCurrentIndex(0)
         self.stkScene.setCurrentIndex(0)
         
-        
         self.treeDicom.setStyleSheet("""
             QHeaderView::section {
                 background-color: #3498db;  
@@ -584,8 +598,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             }
             """)
         
-        
-        
         self.wdgPlanning.clicked.connect(self.onClick_Planning)
         self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
         self.stkScene.currentChanged.connect(self.SceneChanged)
@@ -596,20 +608,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalModelBuildingUI.connect(self.onSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
         
-        # self.btnBack_scanCT.clicked.connect(self.BackScene)
-        # self.btnBack_settingLaser.clicked.connect(self.BackScene)
-        # self.btnBack_settingRobot.clicked.connect(self.BackScene)
-        
-        # self.btnNext_scanCT.clicked.connect(self.NextScene)
-        # self.btnNext_settingLaser.clicked.connect(self.NextScene)
-        # self.btnNext_settingRobot.clicked.connect(self.NextScene)
-        
         self.signalSetCheck.connect(self.onSignal_SetCheck)
         
         # self.btnNext_confirmHomingStep2.clicked.connect(self.StartHoming)
         self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
         
-        self.laserFigure = Canvas(self, dpi = 200)
+        self.laserFigure = Canvas(self, dpi = 150)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
         
@@ -708,6 +712,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
         
+        self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
+        
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
@@ -776,7 +782,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.imageL = self.reader.arrImage
         
         if self.vtkImageLow is None:
-            QMessageBox.critical(None, 'ERROR', 'image error')
+            # QMessageBox.critical(None, 'ERROR', 'image error')
+            MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
@@ -784,7 +791,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, 'LOW')
         
         if not dicomTag:
-            QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
         
         self.currentTag['spacing'] = spacing
@@ -812,7 +820,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #         return False
             
         if not self.SetRegistration_L():
-            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            MessageBox.ShowCritical('ERROR', 'Registration Failed')
             return False
         
             
@@ -840,7 +849,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.imageH = self.reader.arrImage
         
         if self.vtkImageHigh is None:
-            QMessageBox.critical(None, 'ERROR', 'image error')
+            # QMessageBox.critical(None, 'ERROR', 'image error')
+            MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
@@ -848,14 +858,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH')
         
         if not dicomTag:
-            QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
+            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
+            MessageBox.ShowCritical('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         self.currentTag['spacing'] = spacing
         self.currentTag['series'] = listSeries
         
         if not self.SetRegistration_H():
-            QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+            MessageBox.ShowCritical('ERROR', 'Registration Failed')
             return False
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
@@ -1227,7 +1239,27 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pass
     
     def OnClicked_btnReloadDicom(self):
-        self.stkScene.setCurrentWidget(self.pgImportDicom)
+        ret = MessageBox.ShowWarning('This action will be import and replace existed dicom.\nconfirm that to press YES', 'YES', 'NO')
+        if ret == 0:
+            self.SetStage(STAGE_DICOM)
+        # self.stkScene.setCurrentWidget(self.pgImportDicom)
+        
+    def OnClicked_btnDriveConfirm(self):
+        nStep = self.wdgStep.Next()
+        
+        
+        if nStep == 2:
+            self.StopVedio()
+            layout = self.wdgPicture.layout()
+            layout.removeWidget(self.tmpWidget)
+            self.tmpWidget = None
+            self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
+        elif nStep == 3:
+            self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
+        elif nStep == 4:
+            self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
+        elif nStep is None:
+            self.stkScene.setCurrentWidget(self.pgImageView)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.01
@@ -1374,7 +1406,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         if currentDicom is not None:
                             view.SetViewPort(viewName, currentDicom.rendererList[viewName])
                         else:
-                            QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
+                            # QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
+                            MessageBox.ShowCritical('DICOM ERROR', 'missing current dicom')
                         
                         iStyle = MyInteractorStyle(self, viewName)
                         # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
@@ -1577,7 +1610,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if button == self.btnImport:
                 self.bDicomChanged = True
                 if not self.selectedSeries:
-                    QMessageBox.critical(None, 'ERROR', 'please select at least one series')
+                    # QMessageBox.critical(None, 'ERROR', 'please select at least one series')
+                    MessageBox.ShowCritical('ERROR', 'please select at least one series')
                     return
                 
                 if not self.ImportDicom_L():
@@ -1635,7 +1669,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def ChangeCurrentDicom(self, dicomName:str):
         tag = self.dicDicom.get(dicomName)
         if not tag:
-            QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
+            # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
+            MessageBox.ShowCritical('dicom error', 'dicom name not exists')
             return False
         
         self.currentTag = tag
@@ -1730,6 +1765,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
@@ -1765,6 +1801,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgImageView)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
@@ -1821,31 +1858,79 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.importDicom('C:\\Leon\\dicom_test')
             
         elif currentWidget == self.pgRobotRegSphere:
-            self.player.stop()
+            # self.player.stop()
+            
+            self.StopVedio()
             self.playVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
             
         elif currentWidget == self.pgRobotSupportArm:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
             self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+        elif currentWidget == self.pgDriveRobotGuide:
+            self.wdgStep.GotoStep(1)
+            self.StopVedio()
+            
+            tmpWidget = QWidget()
+            tmpWidget.setMinimumSize(800, 600)
+            tmpWidget.setMaximumSize(800, 600)
+            
+            layout = self.wdgPicture.layout()
+            if layout is None:
+                layout = QHBoxLayout(self.wdgPicture)
+                layout.setContentsMargins(0, 0, 0, 0)
+            layout.addWidget(tmpWidget)
+            self.tmpWidget = tmpWidget
+            self.playVedio(self.tmpWidget, 'video/InstallHolder.mp4')
         elif currentWidget == self.pgSterileStep1:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
             self.playVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         else:
-            self.player.stop()
+            # self.player.stop()
+            self.StopVedio()
         
         self.CheckStage(index)
         
-        if self.IsStage(index, STAGE_IMAGE):
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_DICOM) and \
-            self.bFinishLaser and self.bFinishRobot and self.bFinishDicom:
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_LASER) and self.bFinishLaser:
-            self.SetStage(STAGE_IMAGE)
-        elif self.IsStage(index, STAGE_ROBOT) and self.bFinishRobot:
-            self.SetStage(STAGE_LASER)
+        # if self.IsStage(index, STAGE_IMAGE):
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_DICOM) and \
+        #     self.bFinishLaser and self.bFinishRobot and self.bFinishDicom:
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_LASER) and self.bFinishLaser:
+        #     self.SetStage(STAGE_IMAGE)
+        # elif self.IsStage(index, STAGE_ROBOT) and self.bFinishRobot:
+        #     self.SetStage(STAGE_LASER)
+        stage = self.GetStage(index)
+        if stage is not None:
+            bFoundStage = False
+            # iterItem = iter(self.dicStageFinished.items())
+            # try:
+            #     # if now stage is finished, find next stage not finished
+            #     while True:
+            #         key, bFinish = iterItem.__next__()
+            #         if bFoundStage and bFinish == False:
+            #             self.SetStage(key)
+            #             break
+                        
+            #         if key == stage and bFinish:
+            #             bFoundStage = True
+            # except StopIteration:
+            #     pass
+            
+            # if now stage is finished, find next stage not finished
+            for key, bFinish in self.dicStageFinished.items():
+                if bFoundStage and bFinish == False:
+                    self.SetStage(key)
+                    break
+                    
+                if key == stage and bFinish:
+                    bFoundStage = True
+            
+                        
+            
             
         # 紀錄目前已經完成的階段
         self.indexDoneStage = max(self.indexCurrentStage, index)
@@ -1885,10 +1970,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 return True
             
         return False
+    
+    def GetStage(self, index:int):
+        for stage in self.dicStageFinished.keys():
+            if self.IsStage(index, stage):
+                return stage
+        return None
             
     def SetStage(self, stage:str, bToStage:bool = True):
         
         index = 0
+        self.dicStageFinished[stage] = False
         if stage == STAGE_ROBOT:
             self.bFinishRobot = False
             self.btnSceneRobot.setEnabled(True)
@@ -1897,18 +1989,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgHomingCheckStep1)
                 index = self.stkScene.indexOf(self.pgHomingCheckStep1)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
                 
         elif stage == STAGE_LASER:
             # self.bFinishRobot = True
             self.bFinishLaser = False
+            # self.dicStageFinished[STAGE_LASER] = False
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
             self.btnSceneView.setEnabled(False)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgLaser)
                 index = self.stkScene.indexOf(self.pgLaser)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
                 self.pgbInhale.setValue(0)
                 self.pgbExhale.setValue(0)
                 self.bLaserShowProfile = False
@@ -1919,13 +2016,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.bFinishRobot = True
             # self.bFinishLaser = True
             self.bFinishDicom = False
+            # self.dicStageFinished[STAGE_DICOM] = False
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
             self.btnSceneView.setEnabled(True)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgImportDicom)
                 index = self.stkScene.indexOf(self.pgImportDicom)
+                # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
+                # self.stkScene.blockSignals(False)
         elif stage == STAGE_IMAGE:
             # self.bFinishRobot = True
             # self.bFinishLaser = True
@@ -1945,12 +2045,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneRobot.setEnabled(True)
         elif self.IsStage(index, STAGE_LASER):
             self.bFinishRobot = True
+            self.dicStageFinished[STAGE_ROBOT] = True
             self.btnSceneRobot.setEnabled(True)
             self.btnSceneLaser.setEnabled(True)
         elif self.IsStage(index, STAGE_DICOM):
             self.bFinishLaser = True
+            self.dicStageFinished[STAGE_LASER] = True
             self.btnSceneLaser.setEnabled(True)
         elif self.IsStage(index, STAGE_IMAGE):
+            self.dicStageFinished[STAGE_DICOM] = True
             self.bFinishDicom = True
             
     def GetRobotPosition(self):
@@ -1978,12 +2081,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             videoWidget.brightnessChanged.connect(self.OnBrightnessChanged)
             videoWidget.contrastChanged.connect(self.OnConstrastChanged)
+            
+            self.videoWidget = videoWidget
         else:
             videoWidget = layout.itemAt(0).widget()
             self.player.setVideoOutput(videoWidget)
         
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
+        
+    def StopVedio(self):
+        if self.videoWidget is not None:
+            parentWidget = self.videoWidget.parentWidget()
+            parentWidget.layout().removeWidget(self.videoWidget)
+            self.videoWidget = None
+        # self.player.stop()
+        # self.player.setVideoOutput(None)
         
     def thread_LoadLaser(self):
         # QThread.msleep(1000)
@@ -2049,9 +2162,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def onSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
         if len(msg) > 0:
             if not bIsError:
-                QMessageBox.information(None, title, msg)
+                MessageBox.ShowInformation(msg)
             else:
-                QMessageBox.critical(None, title, msg)
+                MessageBox.ShowCritical(msg)
             
             
     def sti_LaserOutput(self):
@@ -2148,7 +2261,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # QApplication.processEvents()
         self.ui_SP = SystemProcessing()
         self.ui_SP.setWindowTitle('Registration')
-        self.ui_SP.label_Processing.setText('Registing...')
+        self.ui_SP.label_Processing.setText('Registing Robot Position...')
         self.ui_SP.show()
         QApplication.processEvents()
         self.regFn.signalProgress.connect(self.ui_SP.UpdateProgress)
@@ -2156,9 +2269,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.currentTag.get("regBall") != None or self.currentTag.get("candidateBall") != None:
             # self.ui_SP.close()
-            reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
-            if reply == QMessageBox.Yes:
+            # if reply == QMessageBox.Yes:
+            if reply == 0:
                 # self.dcmTagLow.update({"selectedBall": []})
                 self.currentTag.update({"regBall": []})
                 self.currentTag.update({"flagSelectedBall": False})
@@ -2199,7 +2314,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         except Exception as e:
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
-            QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
             print('get candidate ball error / SetRegistration_L() error')
             print(e)
             return False
@@ -2223,7 +2339,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error')
-            QMessageBox.critical(self, "error", "get candidate ball error")
+            
+            # QMessageBox.critical(self, "error", "get candidate ball error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
             print('get candidate ball error / SetRegistration_L() error')
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
@@ -2255,7 +2373,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         selectedBallKey = list(candidateBallVTK.keys())[-1]
         # selectedBallKey = self.currentTag.get("selectedBallKey")
         if selectedBallKey is None or selectedBallKey == []:
-            QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            # QMessageBox.critical(self, "error", "please redo registration, select the ball")
+            MessageBox.ShowCritical("please redo registration, select the ball")
             print("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
@@ -2376,20 +2495,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             msg = 'laser connection error'
             
         self.errDevice |= errDevice
-        if not hasattr(self, 'msgbox'):
-            msgbox = messageBox(QMessageBox.Question, msg + '\nRetry again?')
-            msgbox.addButtons('Retry', 'Shutdown')
-            # msgbox.setIcon(QMessageBox.Question)
-            # msgbox.setText(msg + '\nRetry again?')
-            # msgbox.addButton('Retry', 3)
-            # msgbox.addButton('Shutdown', 3)
+        # if not hasattr(self, 'msgbox'):
+        #     msgbox = MessageBox(QMessageBox.Question, msg + '\nRetry again?')
+        #     msgbox.addButtons('Retry', 'Shutdown')
             
-            self.msgbox = msgbox
-            ret = msgbox.exec_()
-            
+        #     self.msgbox = msgbox
+        #     ret = msgbox.exec_()
+        if not hasattr(self, 'showError'):
+            self.showError = True
+            ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
             if ret == 0:
-                del self.msgbox
-                
+                del self.showError
                 
                 if (self.errDevice & DEVICE_ROBOT) != 0:
                     self.errDevice &= ~DEVICE_ROBOT
@@ -2494,7 +2610,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.RobotRun()
                 
     def Robot_Stop(self):
-        QMessageBox.information(None, 'Info', 'Robot Stop')
+        # QMessageBox.information(None, 'Info', 'Robot Stop')
+        MessageBox.ShowInformation('Robot Stop')
         
     def RobotRun(self):
         if self.homeStatus is True:
@@ -2506,7 +2623,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.breathingCompensation()
         else:
             print("Please execute home processing first.")
-            QMessageBox.information(self, "information", "Please execute home processing first.")
+            # QMessageBox.information(self, "information", "Please execute home processing first.")
+            MessageBox.ShowInformation("information", "Please execute home processing first.")
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
@@ -2706,13 +2824,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if bPass:
             # QMessageBox.information(None, 'Model Building Succeed', 'Model Base Checking done!')
             
-            msgbox = QMessageBox(text = 'Model Base Checking done!')
+            # msgbox = QMessageBox(text = 'Model Base Checking done!')
+            msgbox = MessageBox(QMessageBox.Information, 'Model Base Checking done!')
+            msgbox.addButtons('OK')
             QTimer.singleShot(2000, lambda: self.Laser_autoNextPage(msgbox))
-            msgbox.setWindowTitle('Model Building Succeed')
-            msgbox.setIcon(QMessageBox.Information)
+            # msgbox.setWindowTitle('Model Building Succeed')
+            # msgbox.setIcon(QMessageBox.Information)
             msgbox.exec_()
         else:
-            QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            # QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
+            MessageBox.ShowCritical('Model Building Failed', 'Please try to build chest model again.')
             # self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
             # self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
@@ -2772,23 +2893,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Laser_OnSignalShowCounter(self, ms:int):
         ms = int(ms * 0.001)
         self.lblCounter.setText(str(ms))
-        
-    def Laser_OnSignalShowMessage(self, msg:str):
-        msgbox = messageBox()
-        msgbox.setIcon(QMessageBox.Question)
-        msgbox.setWindowTitle('CONNECTION ERROR')
-        msgbox.setText(msg + '\nRetry again?')
-        # msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        # msgbox.addButton('Retry', 3)
-        # msgbox.addButton('Shutdown', 3)
-        msgbox.addButtons('Retry', 'Shutdown')
-        ret = msgbox.exec_()
-        
-        if ret == 0:
-            self.tLaser = threading.Thread(target = self.Laser.Initialize)
-            self.tLaser.start()
-        elif ret == 1:
-            self.close()
     
     def Laser_OnSignalUpdateCycle(self, tupPercent:tuple, nCycle:int):
         # strLabelName = 'lblCycle' + str(nCycle)
@@ -3263,7 +3367,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=3, height=2.5, dpi=100):
         # plt.rcParams['figure.facecolor'] = 'r'
         # plt.rcParams['axes.facecolor'] = 'b'
         plt.rcParams['axes.prop_cycle'] = cycler(color=['r', 'g'])
@@ -3271,8 +3375,10 @@ class Canvas(FigureCanvasQTAgg):
         
         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
         fig.set_facecolor('#4D84AD')
+        
         self.axes = fig.add_subplot(111)#
         self.axes.set_facecolor('#4D84AD')
+        self.axes.set_ylabel('Lung Volume (mL)')
         
         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
         self.setParent(parent)
@@ -3285,12 +3391,14 @@ class Canvas(FigureCanvasQTAgg):
             # self.line2 = self.axes.plot([], [])
             # self.axes.cla()#清除已绘的图形
             self.axes.set_xlim([1,640])
-            self.axes.set_ylim([-125,-65])
+            self.axes.set_ylim([-125,-75])
+            
             
             # 在設置tick label之前設置ticks，來免除警告
             self.axes.set_yticks(self.axes.get_yticks())
             # 不顯示負號
-            self.axes.set_yticklabels([str(abs(tick)) for tick in self.axes.get_yticks()])
+            self.axes.set_yticklabels([str((tick + 130) * 100) for tick in self.axes.get_yticks()])
+            
         
         
         self.line1.set_data(range(len(receiveData[0])), receiveData[0])
@@ -3565,13 +3673,135 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         ############################################################################################
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
         
-    def UpdateProgress(self, value):
+    def UpdateProgress(self, value:float, content:str):
         progress = int(value * 100)
         self.pgbLoadDIcom.setValue(progress)
+        content = content.replace('\\', '/')
+        self.lblContent.setText('from ' + content)
         if progress >= 100:
             self.close()
             
+class WidgetArrow(QWidget):
+    styleBlack = 'image:url(image/arrow-black.png)'
+    styleGolden = 'image:url(image/arrow-golden.png)'
+    styleTextGolden = 'color:#ecec76;font-size:24pt;'
+    styleTextWhite = 'color:white;font-size:16pt;'
+    
+    
+    def __init__(self, num:int = 3):
+        super().__init__()
+        
+        # itemName = 'wdgArrow'
+        # while True:
+        #     item = itemName + str(self.nArrow)
+        #     if not hasattr(self, item):
+        #         break
+        #     self.lstArrow.append(eval('self.' + item))
+        #     self.nArrow += 1
+        # self.nArrow = 0
+        
+        self.setStyleSheet("""
+                           QLabel{
+                               font:16pt 'Arial';
+                               color:#fff;
+                           }
+                           """)
+        
+        self.idArrow = 0
+        self.timer = QTimer()
+        self.lstArrow = []
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        for _ in range(num):
+            arrow = QWidget()
+            arrow.setMinimumSize(32, 32)
+            arrow.setMaximumSize(32, 32)
+            arrow.setStyleSheet(self.styleBlack)
+            self.lstArrow.append(arrow)
+            layout.addWidget(arrow)
+            
+        self.lblStepName = QLabel()
+        self.lblStepName.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # self.lblStepName.setMinimumWidth(100)
+        layout.addWidget(self.lblStepName)
+        
+        self.timer.timeout.connect(self.runArrow)
+        # self.timer.start(200)
+        
+    def runArrow(self):
+        arrowGold = self.lstArrow[self.idArrow]
+        for arrow in self.lstArrow:
+            if arrow == arrowGold:
+                arrow.setStyleSheet(self.styleGolden)
+            else:
+                arrow.setStyleSheet(self.styleBlack)
+        self.idArrow = (self.idArrow + 1) % len(self.lstArrow)
+        
+    def Active(self):
+        self.timer.start(200)
+        self.lblStepName.setStyleSheet(self.styleTextGolden)
+        
+    def Stop(self):
+        self.timer.stop()
+        self.lblStepName.setStyleSheet(self.styleTextWhite)
+        for arrow in self.lstArrow:
+            arrow.setStyleSheet(self.styleBlack)
+        
+    def SetStepName(self, name:str):
+        self.lblStepName.setText(name)
+        
+class WidgetStep(QWidget):
+    def __init__(self, nStep:int, arrowNum:int = 3, *stepName):
+        super().__init__()
+        
+        self.nCurrentStep = 1
+        self.lstWidgetStep = []
+        
+        layout = QHBoxLayout(self)
+        for _ in range(nStep):
+            wdgArrow = WidgetArrow(arrowNum)
+            layout.addWidget(wdgArrow)
+            self.lstWidgetStep.append(wdgArrow)
+            
+        layout.addItem(QSpacerItem(20, 0, QSizePolicy.Expanding))
+                
+        self.SetStepNames(*stepName)
+            
+    def SetStepNames(self, *stepNames):
+        if len(self.lstWidgetStep) == len(stepNames):
+            for item, name in zip(self.lstWidgetStep, stepNames):
+                item.SetStepName(name)
+        
+        # self.lstWidgetStep[0].StopArrow()
+        
+    def GotoStep(self, nStep:int):
+        if nStep <= len(self.lstWidgetStep) and nStep > 0:
+            for i, item in enumerate(self.lstWidgetStep):
+                if i == nStep - 1:
+                    item.Active()
+                else:
+                    item.Stop()
+            self.nCurrentStep = nStep
+            
+    def Next(self):
+        if self.nCurrentStep == len(self.lstWidgetStep):
+            return None
+        
+        self.nCurrentStep += 1
+        self.GotoStep(self.nCurrentStep)
+        return self.nCurrentStep
+        
+    def Back(self):
+        if self.nCurrentStep == 1:
+            return None
+        self.nCurrentStep -= 1
+        self.GotoStep(self.nCurrentStep)
+        return self.nCurrentStep
 class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
     def __init__(self, dcmTag, dicom, answer):
         super(CoordinateSystemManual, self).__init__()
@@ -3715,12 +3945,14 @@ class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual
                 # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
                 # self.ui_CS.show()
             else:
-                QMessageBox.critical(self, "error", "get candidate ball error")
+                # QMessageBox.critical(self, "error", "get candidate ball error")
+                MessageBox.ShowCritical("error", "get candidate ball error")
                 print('get candidate ball error / SetRegistration_L() error')
                 
             return
         else:
-            QMessageBox.information(self, "information", "need to set 3 balls")
+            # QMessageBox.information(self, "information", "need to set 3 balls")
+            MessageBox.ShowInformation("information", "need to set 3 balls")
             return
         ############################################################################################
     def Cancel(self):
@@ -3757,7 +3989,8 @@ class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
         ## 儲存點 ############################################################################################
         if picker.GetCellId() != -1:
             if np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
-                QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+                # QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+                MessageBox.ShowCritical(setPointWindow, "error", "there are already selected 3 balls")
                 return
             elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 0:
                 self.setPointWindow.dcmTag.update({"candidateBall":np.array([np.array(pick_point)])})

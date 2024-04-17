@@ -56,16 +56,16 @@
       <widget class="QWidget" name="pgHome">
        <layout class="QGridLayout" name="gridLayout_33">
         <property name="leftMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="topMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="rightMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="bottomMargin">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="spacing">
          <number>0</number>
@@ -528,6 +528,20 @@ font: 14pt &quot;Arial&quot;;</string>
            </size>
           </property>
          </spacer>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLabel" name="lblVersion">
+          <property name="styleSheet">
+           <string notr="true">font:24pt &quot;Arial&quot;;
+color: rgba(255, 255, 255, 100);</string>
+          </property>
+          <property name="text">
+           <string>Ver 2.2</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -1120,7 +1134,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>14</number>
           </property>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
@@ -4797,52 +4811,20 @@ font: 12px Arial;</string>
                 <string>Guidance</string>
                </attribute>
                <layout class="QGridLayout" name="gridLayout_32">
-                <item row="0" column="0" colspan="2">
-                 <layout class="QHBoxLayout" name="horizontalLayout_15">
-                  <item>
-                   <widget class="QPushButton" name="pushButton_6">
-                    <property name="minimumSize">
-                     <size>
-                      <width>256</width>
-                      <height>256</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>256</width>
-                      <height>256</height>
-                     </size>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">QPushButton{
-background-image:url(image/stop-sign.png);
-background-color: rgb(93, 161, 209);
-border-left:1px solid #ccc;
-border-top:1px solid #ccc;
-border-right:2px solid #555;
-border-bottom:2px solid #555;
-}
-
-QPushButton:pressed{
-/*margin-top:2px;
-margin-left:1px;*/
-border-left:2px solid #555;
-border-top:2px solid #555;
-border-right:1px solid #ccc;
-border-bottom:1px solid #ccc;
-}</string>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="btnDriveTo">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Drive To Entry Point</string>
+                  </property>
+                 </widget>
                 </item>
-                <item row="1" column="0" colspan="2">
+                <item row="0" column="0" colspan="2">
                  <layout class="QHBoxLayout" name="horizontalLayout_23">
                   <item>
                    <widget class="QStackedWidget" name="stkSignalLight">
@@ -4931,32 +4913,6 @@ border-bottom:1px solid #ccc;
                  </layout>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QPushButton" name="btnDriveTo">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>50</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Drive To Trajectory</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QPushButton" name="pushButton_8">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>50</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Return</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
                  <spacer name="verticalSpacer_10">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
@@ -4972,6 +4928,72 @@ border-bottom:1px solid #ccc;
                </layout>
               </widget>
              </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="pgDriveRobotGuide">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(77, 140, 187);</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_37" rowstretch="0,1,0">
+            <item row="0" column="0">
+             <widget class="QWidget" name="wdgGuideLine" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>50</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QWidget" name="wdgPicture" native="true"/>
+            </item>
+            <item row="2" column="0">
+             <layout class="QHBoxLayout" name="horizontalLayout_15">
+              <item>
+               <widget class="QPushButton" name="btnDriveConfirm">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>324</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}</string>
+                </property>
+                <property name="text">
+                 <string>Confirm</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>

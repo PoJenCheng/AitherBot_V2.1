@@ -36,7 +36,7 @@ class Ui_MainWindow(object):
         self.pgHome = QtWidgets.QWidget()
         self.pgHome.setObjectName("pgHome")
         self.gridLayout_33 = QtWidgets.QGridLayout(self.pgHome)
-        self.gridLayout_33.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_33.setContentsMargins(10, 10, 10, 10)
         self.gridLayout_33.setSpacing(0)
         self.gridLayout_33.setObjectName("gridLayout_33")
         self.gridLayout_3 = QtWidgets.QGridLayout()
@@ -215,6 +215,12 @@ class Ui_MainWindow(object):
         self.gridLayout_33.addItem(spacerItem11, 2, 2, 1, 1)
         spacerItem12 = QtWidgets.QSpacerItem(20, 203, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_33.addItem(spacerItem12, 3, 1, 1, 1)
+        self.lblVersion = QtWidgets.QLabel(self.pgHome)
+        self.lblVersion.setStyleSheet("font:24pt \"Arial\";\n"
+"color: rgba(255, 255, 255, 100);")
+        self.lblVersion.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTop|QtCore.Qt.AlignTrailing)
+        self.lblVersion.setObjectName("lblVersion")
+        self.gridLayout_33.addWidget(self.lblVersion, 0, 2, 1, 1)
         self.stkMain.addWidget(self.pgHome)
         self.page_loading = QtWidgets.QWidget()
         self.page_loading.setObjectName("page_loading")
@@ -2303,33 +2309,10 @@ class Ui_MainWindow(object):
         self.tabGuidance.setObjectName("tabGuidance")
         self.gridLayout_32 = QtWidgets.QGridLayout(self.tabGuidance)
         self.gridLayout_32.setObjectName("gridLayout_32")
-        self.horizontalLayout_15 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_15.setObjectName("horizontalLayout_15")
-        self.pushButton_6 = QtWidgets.QPushButton(self.tabGuidance)
-        self.pushButton_6.setMinimumSize(QtCore.QSize(256, 256))
-        self.pushButton_6.setMaximumSize(QtCore.QSize(256, 256))
-        self.pushButton_6.setAutoFillBackground(False)
-        self.pushButton_6.setStyleSheet("QPushButton{\n"
-"background-image:url(image/stop-sign.png);\n"
-"background-color: rgb(93, 161, 209);\n"
-"border-left:1px solid #ccc;\n"
-"border-top:1px solid #ccc;\n"
-"border-right:2px solid #555;\n"
-"border-bottom:2px solid #555;\n"
-"}\n"
-"\n"
-"QPushButton:pressed{\n"
-"/*margin-top:2px;\n"
-"margin-left:1px;*/\n"
-"border-left:2px solid #555;\n"
-"border-top:2px solid #555;\n"
-"border-right:1px solid #ccc;\n"
-"border-bottom:1px solid #ccc;\n"
-"}")
-        self.pushButton_6.setText("")
-        self.pushButton_6.setObjectName("pushButton_6")
-        self.horizontalLayout_15.addWidget(self.pushButton_6)
-        self.gridLayout_32.addLayout(self.horizontalLayout_15, 0, 0, 1, 2)
+        self.btnDriveTo = QtWidgets.QPushButton(self.tabGuidance)
+        self.btnDriveTo.setMinimumSize(QtCore.QSize(0, 50))
+        self.btnDriveTo.setObjectName("btnDriveTo")
+        self.gridLayout_32.addWidget(self.btnDriveTo, 1, 0, 1, 1)
         self.horizontalLayout_23 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_23.setObjectName("horizontalLayout_23")
         self.stkSignalLight = QtWidgets.QStackedWidget(self.tabGuidance)
@@ -2375,20 +2358,59 @@ class Ui_MainWindow(object):
         self.lcdBreathingRatio.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
         self.lcdBreathingRatio.setObjectName("lcdBreathingRatio")
         self.horizontalLayout_23.addWidget(self.lcdBreathingRatio)
-        self.gridLayout_32.addLayout(self.horizontalLayout_23, 1, 0, 1, 2)
-        self.btnDriveTo = QtWidgets.QPushButton(self.tabGuidance)
-        self.btnDriveTo.setMinimumSize(QtCore.QSize(0, 50))
-        self.btnDriveTo.setObjectName("btnDriveTo")
-        self.gridLayout_32.addWidget(self.btnDriveTo, 2, 0, 1, 1)
-        self.pushButton_8 = QtWidgets.QPushButton(self.tabGuidance)
-        self.pushButton_8.setMinimumSize(QtCore.QSize(0, 50))
-        self.pushButton_8.setObjectName("pushButton_8")
-        self.gridLayout_32.addWidget(self.pushButton_8, 2, 1, 1, 1)
+        self.gridLayout_32.addLayout(self.horizontalLayout_23, 0, 0, 1, 2)
         spacerItem46 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_32.addItem(spacerItem46, 3, 0, 1, 1)
+        self.gridLayout_32.addItem(spacerItem46, 2, 0, 1, 1)
         self.tabWidget.addTab(self.tabGuidance, "")
         self.gridLayout_5.addWidget(self.tabWidget, 0, 1, 1, 1)
         self.stkScene.addWidget(self.pgImageView)
+        self.pgDriveRobotGuide = QtWidgets.QWidget()
+        self.pgDriveRobotGuide.setStyleSheet("background-color: rgb(77, 140, 187);")
+        self.pgDriveRobotGuide.setObjectName("pgDriveRobotGuide")
+        self.gridLayout_37 = QtWidgets.QGridLayout(self.pgDriveRobotGuide)
+        self.gridLayout_37.setObjectName("gridLayout_37")
+        self.wdgGuideLine = QtWidgets.QWidget(self.pgDriveRobotGuide)
+        self.wdgGuideLine.setMinimumSize(QtCore.QSize(0, 50))
+        self.wdgGuideLine.setObjectName("wdgGuideLine")
+        self.gridLayout_37.addWidget(self.wdgGuideLine, 0, 0, 1, 1)
+        self.wdgPicture = QtWidgets.QWidget(self.pgDriveRobotGuide)
+        self.wdgPicture.setObjectName("wdgPicture")
+        self.gridLayout_37.addWidget(self.wdgPicture, 1, 0, 1, 1)
+        self.horizontalLayout_15 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_15.setObjectName("horizontalLayout_15")
+        self.btnDriveConfirm = QtWidgets.QPushButton(self.pgDriveRobotGuide)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnDriveConfirm.sizePolicy().hasHeightForWidth())
+        self.btnDriveConfirm.setSizePolicy(sizePolicy)
+        self.btnDriveConfirm.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnDriveConfirm.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}")
+        self.btnDriveConfirm.setObjectName("btnDriveConfirm")
+        self.horizontalLayout_15.addWidget(self.btnDriveConfirm)
+        self.gridLayout_37.addLayout(self.horizontalLayout_15, 2, 0, 1, 1)
+        self.gridLayout_37.setRowStretch(1, 1)
+        self.stkScene.addWidget(self.pgDriveRobotGuide)
         self.pgSterileStep1 = QtWidgets.QWidget()
         self.pgSterileStep1.setStyleSheet("background-color:rgb(77, 140, 187);")
         self.pgSterileStep1.setObjectName("pgSterileStep1")
@@ -2738,7 +2760,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(6)
+        self.stkScene.setCurrentIndex(14)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -2775,6 +2797,7 @@ class Ui_MainWindow(object):
         self.label_21.setText(_translate("MainWindow", "pre-operative"))
         self.label_22.setText(_translate("MainWindow", "Planning"))
         self.label_subtitle_3.setText(_translate("MainWindow", "Lung Surgical Robotic"))
+        self.lblVersion.setText(_translate("MainWindow", "Ver 2.2"))
         self.label_title.setText(_translate("MainWindow", "AitherBot"))
         self.label_2.setText(_translate("MainWindow", "Motion Tracker"))
         self.label.setText(_translate("MainWindow", "Robot System"))
@@ -2882,9 +2905,9 @@ class Ui_MainWindow(object):
         self.label_24.setText(_translate("MainWindow", "Distance to target："))
         self.toolBox.setItemText(self.toolBox.indexOf(self.pgTrajectory), _translate("MainWindow", "Trajectory"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPlanning), _translate("MainWindow", "Planning"))
-        self.btnDriveTo.setText(_translate("MainWindow", "Drive To Trajectory"))
-        self.pushButton_8.setText(_translate("MainWindow", "Return"))
+        self.btnDriveTo.setText(_translate("MainWindow", "Drive To Entry Point"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabGuidance), _translate("MainWindow", "Guidance"))
+        self.btnDriveConfirm.setText(_translate("MainWindow", "Confirm"))
         self.label_3.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Remove locator and install holder</span><span style=\" font-size:24pt;\"> at the end-effector of AitherBot.</span></p></body></html>"))
         self.btnConfirm.setText(_translate("MainWindow", "Confirm"))
         self.label_4.setText(_translate("MainWindow", "Start sterile and Drape robot arm"))

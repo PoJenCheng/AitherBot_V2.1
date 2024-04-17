@@ -42,16 +42,16 @@ class ViewPortUnit(QObject):
     signalUpdateSlice   = pyqtSignal(np.ndarray)
     signalFocus         = pyqtSignal(np.ndarray)
     signalSetSliceValue = pyqtSignal(np.ndarray)
-    bUpdateOtherView = True
-    bSelected = False
-    bFocusMode = True
-    renderer   = None
-    position = None
-    imagePosition = None
     
     def __init__(self, mainWidget, dicom:DISPLAY, vtkWidget:QVTKRenderWindowInteractor, orientation:str, uiScrollSlice:QScrollBar, uiCbxOrientation:QComboBox):
         
         super().__init__()
+        
+        self.bUpdateOtherView = True
+        self.bSelected = False
+        self.bFocusMode = True
+        self.renderer   = None
+    
         self.parentWidget       = mainWidget
         self.dicom              = dicom
         self.uiCbxOrientation   = uiCbxOrientation
