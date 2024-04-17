@@ -2573,8 +2573,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             translator = QTranslator()
             translator.load('FunctionLib_UI/Ui_homing_tw.qm')
             QCoreApplication.installTranslator(translator)
-
-        self.player.stop()
+            
+        self.StopVedio()
         # if not self.robot:
         #     return
         
