@@ -321,7 +321,7 @@ class MessageBox(QMessageBox):
         self.context = text
         
         layout = self.layout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
         widget = QWidget()
         widget.setObjectName('msgWidget')
         widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -337,6 +337,7 @@ class MessageBox(QMessageBox):
         self.subWidget = QWidget()
         self.subWidget.setObjectName('subWidget')
         self.subWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # self.subWidget.setMinimumSize(200, 100)
         
         self.hLayout = QGridLayout(self.subWidget)
         # self.hLayout = QGridLayout()
@@ -349,12 +350,12 @@ class MessageBox(QMessageBox):
                 col += 1
                 
         # subLayout.addLayout(self.hLayout, 1, 0, 1, 2)
-        subLayout.addWidget(self.subWidget, 1, 0, 1, 2, Qt.AlignCenter)
+        subLayout.addWidget(self.subWidget, 1, 0, 1, 2)
         widget.setStyleSheet("""
                              
                                 #msgWidget{
                                     background-color:rgba(93, 161, 209, 180);
-                                    border-radius:10px;
+                                    border-radius:20px;
                                 }
                                 
                                 QWidget{
@@ -384,9 +385,9 @@ class MessageBox(QMessageBox):
                                     alignment:left;
                                 }
                                 
+                                
                              """)
         self.mainWidget = widget
-        
         
         
     def addButtons(self, *buttonName, **kwButtonName):
@@ -401,7 +402,7 @@ class MessageBox(QMessageBox):
         for item in self.children():
             if isinstance(item, QDialogButtonBox):
                 self.hLayout.addWidget(item, 0, 0, alignment = Qt.AlignCenter)
-                item.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                # item.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
                 
                 lstButton = [button for button in item.children() if isinstance(button, QPushButton)]
                 
@@ -439,11 +440,12 @@ class MessageBox(QMessageBox):
                     
                     gridLayout = QGridLayout()
                     gridLayout.setContentsMargins(0, 0, 0, 0)
-                    gridLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Expanding))
-                    for i, button in enumerate(lstButton, 1):
+                    # gridLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Expanding))
+                    for i, button in enumerate(lstButton):
                         gridLayout.addWidget(button, 0, i, Qt.AlignCenter)
-                    gridLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Expanding), 0, i + 1)
+                    gridLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Expanding), 0, len(lstButton) + 1)
                     item.setLayout(gridLayout)
+                    
                     
                 # item.setCenterButtons(True)
         font = QFont()
@@ -451,8 +453,7 @@ class MessageBox(QMessageBox):
         font.setPointSize(24)
         
         fontMetrics = QFontMetrics(font)
-        widthWidget = fontMetrics.width(self.context) + 100
-        # widthWidget = max(widthWidget, miniWidth + 200)
+        widthWidget = min(fontMetrics.width(self.context), 900)
         self.mainWidget.setMinimumWidth(widthWidget)
         
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):
@@ -463,7 +464,9 @@ class MessageBox(QMessageBox):
             msgbox.addButtons('OK')
         else:
             msgbox.addButtons(*args, **kwargs)
-        return msgbox.exec_()
+            
+        ret = msgbox.exec_()  
+        return ret
     
     def ShowCritical(msg:str, *buttons, **kwButtons):
         return MessageBox.showMsg(msg, QMessageBox.Critical, *buttons, **kwButtons)

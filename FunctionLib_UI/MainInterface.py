@@ -1233,7 +1233,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pass
     
     def OnClicked_btnReloadDicom(self):
-        self.SetStage(STAGE_DICOM)
+        ret = MessageBox.ShowWarning('This action will be import and replace existed dicom.\nconfirm that to press YES', 'YES', 'NO')
+        if ret == 0:
+            self.SetStage(STAGE_DICOM)
         # self.stkScene.setCurrentWidget(self.pgImportDicom)
         
     def OnClicked_btnDriveConfirm(self):
@@ -1784,12 +1786,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            self.stkScene.setCurrentWidget(self.pgImageView)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgImageView)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_LASER)
+            self.enableDevice()
             # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
