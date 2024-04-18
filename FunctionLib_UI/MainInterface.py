@@ -1696,11 +1696,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # QMessageBox.critical(None, 'ERROR', 'please select at least one series')
                     MessageBox.ShowCritical('ERROR', 'please select at least one series')
                     return
-                
+                self.btnImport.setEnabled(False)
                 if not self.ImportDicom_L():
                     return
                 self.ImportDicom_H()
-                print('dicom changed')
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
                 print('stopped Adjust laser')
@@ -1921,6 +1920,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgStartExhaleCT:
             self.Laser_CheckExhale()
         elif currentWidget == self.pgDicomList:
+            self.btnImport.setEnabled(True)
+            
             self.dlgHint = DlgHint()
             # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)

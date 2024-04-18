@@ -1134,8 +1134,158 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>14</number>
+           <number>0</number>
           </property>
+          <widget class="QWidget" name="pgUnlockRobot">
+           <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0">
+            <item row="0" column="0">
+             <widget class="QWidget" name="wdgUnlockPicture" native="true">
+              <property name="styleSheet">
+               <string notr="true">image:url(image/pedal_unlock.png);</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="lblUnlockRobot">
+              <property name="styleSheet">
+               <string notr="true">font: 24pt &quot;Arial&quot;;
+color: rgb(255, 255, 255);</string>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;Press pedal to &lt;/span&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;unlock robot&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; and position robot arm&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="2">
+             <layout class="QHBoxLayout" name="horizontalLayout_28">
+              <item>
+               <spacer name="horizontalSpacer_36">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnUnlockRobot">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>324</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
+}</string>
+                </property>
+                <property name="text">
+                 <string>Unlock</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnUnlockConfirm">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>324</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
+}</string>
+                </property>
+                <property name="text">
+                 <string>Confirm</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_37">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="pgHomingCheckStep1">
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="0" column="0">
@@ -4506,8 +4656,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>318</height>
+                     <width>200</width>
+                     <height>296</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4649,8 +4799,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>318</height>
+                     <width>206</width>
+                     <height>181</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -5724,8 +5874,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>535</x>
-     <y>194</y>
+     <x>1217</x>
+     <y>906</y>
     </hint>
     <hint type="destinationlabel">
      <x>870</x>
@@ -5740,8 +5890,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>535</x>
-     <y>194</y>
+     <x>1217</x>
+     <y>906</y>
     </hint>
     <hint type="destinationlabel">
      <x>1094</x>
@@ -5788,8 +5938,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1217</x>
-     <y>977</y>
+     <x>535</x>
+     <y>201</y>
     </hint>
     <hint type="destinationlabel">
      <x>1100</x>
@@ -5804,8 +5954,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1383</x>
-     <y>857</y>
+     <x>576</x>
+     <y>197</y>
     </hint>
     <hint type="destinationlabel">
      <x>1142</x>
@@ -5820,8 +5970,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1217</x>
-     <y>971</y>
+     <x>535</x>
+     <y>200</y>
     </hint>
     <hint type="destinationlabel">
      <x>1039</x>
@@ -5836,8 +5986,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1218</x>
-     <y>847</y>
+     <x>542</x>
+     <y>197</y>
     </hint>
     <hint type="destinationlabel">
      <x>957</x>
@@ -5868,8 +6018,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1393</x>
-     <y>717</y>
+     <x>552</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
      <x>250</x>
@@ -5884,8 +6034,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1018</x>
-     <y>717</y>
+     <x>518</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
      <x>280</x>
@@ -5948,12 +6098,28 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1060</x>
-     <y>859</y>
+     <x>535</x>
+     <y>201</y>
     </hint>
     <hint type="destinationlabel">
      <x>800</x>
      <y>-12</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnUnlockConfirm</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>NextScene()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1157</x>
+     <y>861</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>942</x>
+     <y>-9</y>
     </hint>
    </hints>
   </connection>
