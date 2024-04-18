@@ -394,14 +394,15 @@ class TreeViewDelegate(QStyledItemDelegate):
         if option.state & QStyle.State_Selected:
             selData = index.data(Qt.UserRole + 4)
             
-            color = QColor()
-            if selData == 1:
-                color = QColor(100, 0, 0)
-            elif selData == 2:
-                color = QColor(0, 100, 0)
-                
-            painter.fillRect(option.rect, color)
-            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
+            if selData is not None:
+                color = QColor()
+                if selData == 1:
+                    color = QColor(100, 0, 0)
+                elif selData == 2:
+                    color = QColor(0, 100, 0)
+                    
+                painter.fillRect(option.rect, color)
+                option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         super().paint(painter, option, index)
         
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):

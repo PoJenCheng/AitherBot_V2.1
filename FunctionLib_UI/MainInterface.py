@@ -70,7 +70,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     vtkImageLow = None
     vtkImageHigh = None
-    selectedSeries = []
+    dicSelectedSeries = {}
     listSubDialog = []
     indexDoneStage = 0
     indexCurrentStage = 0
@@ -199,26 +199,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.cbxLanguage.setCurrentIndex(self.language)
         
         # Figure in Inhale
-        self.fig = Figure(figsize=(5,5))
-        self.axInhale = self.fig.add_subplot(111)
+        fig = Figure(figsize=(5,5))
+        self.axInhale = fig.add_subplot(111)
         self.axInhale.axis('off')
-        self.fig.set_facecolor('#640000')
-        self.fig.subplots_adjust(0, 0.05, 1, 0.95)
+        self.axInhale.set_facecolor('#640000')
+        fig.set_facecolor('#640000')
+        fig.subplots_adjust(0, 0.05, 1, 0.95)
         
         layout = QVBoxLayout(self.wdgInhale)
-        self.canvasInhale = FigureCanvasQTAgg(self.fig)
+        self.canvasInhale = FigureCanvasQTAgg(fig)
         layout.addWidget(self.canvasInhale)
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Figure in Exhale
-        self.fig = Figure(figsize=(5,5))
-        self.axExhale = self.fig.add_subplot(111)
+        fig = Figure(figsize=(5,5))
+        self.axExhale = fig.add_subplot(111)
+        self.axExhale.set_facecolor('#006400')
         self.axExhale.axis('off')
-        self.fig.set_facecolor('#006400')
-        self.fig.subplots_adjust(0, 0.05, 1, 0.95)
+        fig.set_facecolor('#006400')
+        fig.subplots_adjust(0, 0.05, 1, 0.95)
         
         layout = QVBoxLayout(self.wdgExhale)
-        self.canvasExhale = FigureCanvasQTAgg(self.fig)
+        self.canvasExhale = FigureCanvasQTAgg(fig)
         layout.addWidget(self.canvasExhale)
         layout.setContentsMargins(0, 0, 0, 0)
         
@@ -431,7 +433,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
         # header = self.treeDicomFilter.header()
         # header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.selectedSeries = [[], []]
+        self.dicSelectedSeries = {0:{'selected':[]}, 
+                                  1:{'selected':[]}
+                                  }
         
         
     def eventFilter(self, obj, event):
@@ -573,6 +577,29 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if checkState == Qt.Unchecked:
         for row in range(item.rowCount()):
             item.child(row, 0).setCheckState(checkState)
+            
+    def setTreeDicomUserRole(self, data, nRow:int = None, modelIndex = None):
+        
+        model:QStandardItemModel = self.treeDicom.model()
+        column_count = model.columnCount()
+        
+        if nRow is not None:
+            for col in range(column_count):
+                item = model.item(nRow, col)
+                item.setData(data, Qt.UserRole + 4)
+                
+        elif modelIndex is not None:
+            if isinstance(modelIndex, QModelIndex):
+                row = modelIndex.row()
+                for col in range(column_count):
+                    item = model.item(row, col)
+                    item.setData(data, Qt.UserRole + 4)
+                    
+            elif isinstance(modelIndex, list):
+                for index in modelIndex:
+                    if not model.setItemData(index, {Qt.UserRole + 4: data}):
+                        print('error occurred in set UserRole data')
+                
             
         
     def init_ui(self):
@@ -1441,13 +1468,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             index = int(not self.bToggleInhale) # bToggleInhale == True, index = 0, else index = 1
             image = self.reader.GetSlice(selectedSeries[0], selectedSeries[1], selectedSeries[2], index, int(dimZ / 2))
             if index == 0:
-                if len(self.selectedSeries[0]) < 4:
+                # if len(self.selectedSeries[0]) < 4:
+                if len(self.dicSelectedSeries[0]['selected']) < 4:
                     self.lblInfoInhale.setText(strText)
                     if image is not None:
                         self.axInhale.imshow(image, cmap = plt.cm.gray)
                         self.canvasInhale.draw()
             else:
-                if len(self.selectedSeries[1]) < 4:
+                # if len(self.selectedSeries[1]) < 4:
+                if len(self.dicSelectedSeries[1]['selected']) < 4:
                     self.lblInfoExhale.setText(strText)
                     if image is not None:
                         self.axExhale.imshow(image, cmap = plt.cm.gray)
@@ -1455,28 +1484,59 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
         
+        
         selectionModel = self.treeDicom.selectionModel()
         indexes:list = selectionModel.selectedRows()
-        
         model:QStandardItemModel = self.treeDicom.model()
         column_count = model.columnCount()
         
         index = int(not self.bToggleInhale)
+        # 將拖曳的複選取消
+        if self.treeDicom.state() == QAbstractItemView.DragSelectingState:
+            rows = []
+            if len(selected.indexes()) > 0: 
+                rows = selected.indexes()
+                
+                for index in rows:
+                    selectedIndex = model.itemData(index).get(Qt.UserRole + 4)
+                    if selectedIndex is None:
+                        deselection = QItemSelection()
+                        deselection.select(index, index)
+                        
+                        selectionModel.blockSignals(True)
+                        selectionModel.select(deselection, QItemSelectionModel.Deselect)
+                        selectionModel.blockSignals(False)
+            elif len(deselected.indexes()) > 0:
+                rows = deselected.indexes()
+                
+                for index in rows:
+                    selectedIndex = model.itemData(index).get(Qt.UserRole + 4)
+                    if selectedIndex is not None:
+                        deselection = QItemSelection()
+                        deselection.select(index, index)
+                        
+                        selectionModel.blockSignals(True)
+                        selectionModel.select(deselection, QItemSelectionModel.Select)
+                        selectionModel.blockSignals(False)
+            return
+        
         if selected.count() > 0:
+            # get first column of selected.indexes() as currentIndex 
             currentIndex = selected.indexes()[0]
             selectedRow = self.getSeriesFromModelIndex(currentIndex)
                 
             self.reader.SelectDataFromID(selectedRow[0], selectedRow[1], selectedRow[2], index)
-            # when click once, auto switch to Exhale selection
             
-            for col in range(column_count):
-                item = model.item(currentIndex.row(), col)
-                item.setData(index + 1, Qt.UserRole + 4)
+            # when click once, auto switch to Exhale selection
+            self.setTreeDicomUserRole(index + 1, modelIndex = selected.indexes())
                 
-            if len(self.selectedSeries[index]) == 4:
-                oldRow = self.selectedSeries[index][3]
+            lstSelected = self.dicSelectedSeries[index].get('selected')
+            if lstSelected is not None and len(lstSelected) == 4:
+                oldRow = lstSelected[3]
                 deselection = QItemSelection()
                 deselection.select(model.index(oldRow, 0), model.index(oldRow, column_count - 1))
+                
+                self.setTreeDicomUserRole(None, oldRow)
                 
                 selectionModel.blockSignals(True)
                 selectionModel.select(deselection, QItemSelectionModel.Deselect)
@@ -1487,7 +1547,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             seriesID  = selectedRow[2]
             strText, dimZ = self.getInfoFromModelIndex(currentIndex)
             image = self.reader.GetSlice(patientID, studyID, seriesID, index, int(dimZ / 2))
-            self.selectedSeries[index] = selectedRow
+            self.dicSelectedSeries[index]['selected'] = selectedRow
             
             if index == 0:
                 self.lblInfoInhale.setText(strText)
@@ -1505,18 +1565,47 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.btnExhale.setChecked(True)
                 else:
                     self.btnInhale.setChecked(True)
-            
                 
         elif deselected.count() > 0:
-            if self.bToggleInhale:
-                self.selectedSeries[0] = []
-            else:
-                self.selectedSeries[1] = []
             
-        if len(indexes) < 2:
+            itemDeselected = deselected.indexes()[0]
+            itemIndex = model.itemData(itemDeselected).get(Qt.UserRole + 4)
+            
+            if itemIndex is not None:
+                itemIndex -= 1
+                # 欲取消選取的item必須同樣是inhale或是exhale才有效
+                # 例如要取消選取的是inhale，但該item已經是exhale就無效
+                if itemIndex == index:
+                    self.reader.ClearSelectedSeries(itemIndex)
+                    if itemIndex == 0:
+                        self.axInhale.cla()
+                        self.axInhale.axis('off')
+                        self.canvasInhale.draw()
+                    else:
+                        self.axExhale.cla()
+                        self.axExhale.axis('off')
+                        self.canvasExhale.draw()
+                        
+                    self.setTreeDicomUserRole(None, modelIndex = deselected.indexes())
+                    
+                    if self.bToggleInhale:
+                        self.dicSelectedSeries[0]['selected'] = []
+                    else:
+                        self.dicSelectedSeries[1]['selected'] = []
+                else:
+                    # 取消到不同type的item 將取消的item選取回來
+                    lstDeselected = deselected.indexes()
+                    deselection = QItemSelection()
+                    deselection.select(lstDeselected[0], lstDeselected[-1])
+                    
+                    selectionModel.blockSignals(True)
+                    selectionModel.select(deselection, QItemSelectionModel.Select)
+                    selectionModel.blockSignals(False)
+            
+        # if len(indexes) < 2:
+        if self.reader.GetNumOfSelectedSeries() < 2:
             
             self.btnImport.setEnabled(False)
-            # todo: 設定btnImport的disabled狀態的styleSheet
         else:
             self.btnImport.setEnabled(True)
             

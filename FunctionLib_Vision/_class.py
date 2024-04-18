@@ -118,7 +118,7 @@ class DICOM(QObject):
         self.windowLevel = None
         self.rescaleSlope = None
         self.rescaleIntercept = None
-        self.currentSeries = []
+        self.currentSeries = {}
         
     def GetTotalFiles(self, path:str):
         files = os.listdir(path)
@@ -139,6 +139,10 @@ class DICOM(QObject):
             print('directory already exists')
         except Exception as e:
             print(f'create directory error:{e}')
+            
+    def ClearSelectedSeries(self, index:int):
+        if self.currentSeries.get(index):
+            del self.currentSeries[index]
         
     def LoadPath(self, folderPath):
         """identify whether DICOM or not
@@ -418,10 +422,11 @@ class DICOM(QObject):
             return None
         
         index = max(0, min(index, 1))
-        if index >= len(self.currentSeries):
-            self.currentSeries.append(series)
-        else:
-            self.currentSeries[index] = series
+        # if index >= len(self.currentSeries):
+        #     self.currentSeries.append(series)
+        # else:
+        #     self.currentSeries[index] = series
+        self.currentSeries[index] = series
         
     def GetDataFromID(self, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
         self.SelectDataFromID(idPatient, idStuy, idSeries, index)
@@ -488,14 +493,19 @@ class DICOM(QObject):
                 
             slice = np.array(slice).astype(np.int16)
         return slice
+    
+    def GetNumOfSelectedSeries(self):
+        return len(self.currentSeries)
         
     def GetData(self, series = None, index:int = 0):
         if self.currentSeries is None and series is None:
             return None
         elif series is None:
-            if index >= len(self.currentSeries):
+            # if index >= len(self.currentSeries):
+            #     return None
+            series = self.currentSeries.get(index)
+            if series is None:
                 return None
-            series = self.currentSeries[index]
             
         listSeries:list = series['data']
         
