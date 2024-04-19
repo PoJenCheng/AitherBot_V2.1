@@ -700,7 +700,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.treeDicom.setSelectionMode(QAbstractItemView.MultiSelection)
         
         header = self.treeDicom.header()
-        # header.setMinimumSectionSize(120)
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
         header.setDefaultAlignment(Qt.AlignHCenter)
         
@@ -711,13 +710,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         header = self.treeDicomFilter.header()
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
         
-        # self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
         self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
         self.treeDicom.entered.connect(self.OnEntered_treeDicom)
         self.treeDicom.installEventFilter(self)
         self.treeDicom.setItemDelegate(TreeViewDelegate())
         
-        # self.importDicom(self.dicomData)
         self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
         
         self.btnRobotRelease.clicked.connect(self.Robot_ReleaseArm)
@@ -725,7 +722,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
         
-        # self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
         self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
@@ -734,6 +730,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
         
         self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
+        
+        self.btnUnlockRobot.clicked.connect(self.Robot_ReleaseArm)
+        
+        self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1268,15 +1268,27 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnClicked_btnDriveConfirm(self):
         nStep = self.wdgStep.Next()
         
-        
         if nStep == 2:
             self.StopVedio()
             layout = self.wdgPicture.layout()
             layout.removeWidget(self.tmpWidget)
             self.tmpWidget = None
             self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
+            self.btnUnlockRobot_2.setEnabled(True)
+            # self.btnDriveConfirm.setEnabled(False)
+            
+            self.lblDescription.setText("""
+                                        <div style='color:#FFFFD0'>
+                                        <p>1. Press <span style='color:#f00'>Unlock button</span> to release robot arm</p>
+                                        <p>2. Press <span style='color:#f00'>foot pedal</span> and move robot arm <span style='color:#f00'>by hand</span></p>
+                                        <p>3. Make sure the position is <span style='color:#f00'>convenient for draping robot arm</span></p>
+                                        <p>4. Press Confirm to fix robot arm</p>
+                                        </div>
+                                        """)
         elif nStep == 3:
+            self.btnUnlockRobot_2.setEnabled(False)
             self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
+            self.Robot_FixArm()
         elif nStep == 4:
             self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
         elif nStep is None:
@@ -1728,13 +1740,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
                     # if self.bDicomChanged:
-                    print(f'dicom dir = {filePath}')
                     self.importDicom(filePath)
                     
                 else:
                     return
             elif button == self.btnFromCD:
                 return
+            elif button == self.btnDriveConfirm:
+                pass
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -1874,8 +1887,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgImageView)
+            # self.stkScene.setCurrentWidget(self.pgImportDicom)
+            self.stkScene.setCurrentWidget(self.pgImageView)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
