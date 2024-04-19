@@ -637,8 +637,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.signalSetCheck.connect(self.onSignal_SetCheck)
         
-        # self.btnNext_confirmHomingStep2.clicked.connect(self.StartHoming)
-        self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
+        self.btnNext_confirmHomingStep2.clicked.connect(self.Robot_StartHoming)
+        # self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
         
         self.laserFigure = Canvas(self, dpi = 150)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
@@ -740,6 +740,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnUnlockRobot.clicked.connect(self.Robot_ReleaseArm)
         
         self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
+        
+        self.btnRobotRelease_2.clicked.connect(self.Robot_ReleaseArm)
+        self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -2736,6 +2739,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnUnlockRobot_2.setEnabled(True)
         self.btnUnlockConfirm.setEnabled(True)
         self.btnDriveConfirm.setEnabled(True)
+        self.btnRobotRelease_2.setEnabled(False)
+        self.btnRobotTarget.setEnabled(True)
+        
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
     
@@ -2757,6 +2763,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def Robot_SettingTarget(self):
         self.btnRobotSetTarget.setEnabled(False)
+        self.btnRobotTarget.setEnabled(False)
+        self.btnTargetRobotConfirm.setEnabled(True)
         if self.settingTarget:
             self.btnRobotBackTarget.setEnabled(True)
         else:
@@ -2764,6 +2772,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
         print('setting robot target')
+        
+    def Robot_FixAndTarget(self):
+        self.Robot_FixArm()
+        sleep(0.5)
+        self.Robot_SettingTarget()
         
     def Robot_BackToTarget(self):
         self.btnRobotRelease.setEnabled(False)
