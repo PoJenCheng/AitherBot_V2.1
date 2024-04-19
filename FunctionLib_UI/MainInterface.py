@@ -1283,9 +1283,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.removeWidget(self.tmpWidget)
             self.tmpWidget = None
             self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
-            
-        elif nStep == 3:
-            # self.btnUnlockRobot_2.setEnabled(False)
             self.btnUnlockRobot_2.setEnabled(True)
             self.btnDriveConfirm.setEnabled(False)
             
@@ -1297,9 +1294,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                         <p>4. Press Confirm to fix robot arm</p>
                                         </div>
                                         """)
+        elif nStep == 3:
+            # self.btnUnlockRobot_2.setEnabled(False)
+            
+            self.lblDescription.setText('')
+            self.Robot_FixArm()
             self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
         elif nStep == 4:
-            self.Robot_FixArm()
             self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
         elif nStep is None:
             self.stkScene.setCurrentWidget(self.pgImageView)
