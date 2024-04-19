@@ -65,12 +65,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalModelCycle = pyqtSignal(tuple, int)
     signalResetLaserUI = pyqtSignal()
     
-    signalDemoLaserInit = pyqtSignal(int)
-    signalDemoRobotInit = pyqtSignal(int)
-    signalDemoInhale = pyqtSignal(bool, float)
-    signalDemoExhale = pyqtSignal(bool, float)
-    signalDemoHoming = pyqtSignal(float)
-    
     player = QMediaPlayer()
     robot = None
     
@@ -3153,23 +3147,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.Button_StopLaserDisplay.setChecked(False)
         
     def Laser_StartRecordBreathingBase(self):
-        # if self.Laser is None:
-        #     return
+        if self.Laser is None:
+            return
         
         self.btnStartBuildModel_2.setEnabled(False)
         self.btnAutoRecord.setEnabled(False)
         self.recordBreathingBase = False
         self.bLaserRecording = True
-        # self.lytLaserModel.addWidget(self.laserFigure)
         self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
-        # t = threading.Thread(target = self.Laser_RecordBreathing)
-        # t = threading.Thread(target = self.Laser_RecordBreathingCycle)
-        tLaser = threading.Thread(target = self.sti_RunLaser)
-        tLaser.start()
-        
-        self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
-        self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
-        t = threading.Thread(target = self.Demo_RecordBreathingCycle)
+        t = threading.Thread(target = self.Laser_RecordBreathingCycle)
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
@@ -3370,14 +3356,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.addWidget(self.indicatorInhale)
             layout.setContentsMargins(0, 0, 0, 0)
         
-        self.signalDemoInhale.connect(self.Laser_OnSignalInhale)
         
-        self.percentInhale = 90
         
         self.tCheckInhale = QTimer()
-        # self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
-        self.tCheckInhale.timeout.connect(self.Demo_CheckInhale)
-        self.tCheckInhale.start(50)
+        self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
+        self.tCheckInhale.start(10)
         
     def Laser_CheckExhale(self):
         layout = self.wdgIndicatorExhale.layout()
@@ -3387,14 +3370,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.addWidget(self.indicatorExhale)
             layout.setContentsMargins(0, 0, 0, 0)
         
-        self.signalDemoExhale.connect(self.Laser_OnSignalExhale)
-        
-        self.percentExhale = 10
-        
         self.tCheckExhale = QTimer()
-        # self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
-        self.tCheckExhale.timeout.connect(self.Demo_CheckExhale)
-        self.tCheckExhale.start(50)
+        self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
+        self.tCheckExhale.start(10)
         
         
     def Laser_GetAverageRatio(self, ratio):
