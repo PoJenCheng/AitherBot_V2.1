@@ -1710,10 +1710,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(button, QPushButton):
             if button == self.btnImport:
                 self.bDicomChanged = True
-                if not self.selectedSeries:
-                    # QMessageBox.critical(None, 'ERROR', 'please select at least one series')
-                    MessageBox.ShowCritical('ERROR', 'please select at least one series')
-                    return
                 self.btnImport.setEnabled(False)
                 if not self.ImportDicom_L():
                     return
@@ -1898,7 +1894,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.enableDevice()
-            self.enableDevice(DEVICE_LASER)
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
