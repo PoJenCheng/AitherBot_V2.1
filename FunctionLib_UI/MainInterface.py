@@ -1283,6 +1283,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.removeWidget(self.tmpWidget)
             self.tmpWidget = None
             self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
+            
+        elif nStep == 3:
+            # self.btnUnlockRobot_2.setEnabled(False)
             self.btnUnlockRobot_2.setEnabled(True)
             self.btnDriveConfirm.setEnabled(False)
             
@@ -1294,11 +1297,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                         <p>4. Press Confirm to fix robot arm</p>
                                         </div>
                                         """)
-        elif nStep == 3:
-            self.btnUnlockRobot_2.setEnabled(False)
             self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
-            self.Robot_FixArm()
         elif nStep == 4:
+            self.Robot_FixArm()
             self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
         elif nStep is None:
             self.stkScene.setCurrentWidget(self.pgImageView)
@@ -1963,6 +1964,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
             self.StopVedio()
+            self.btnDriveConfirm.setEnabled(True)
+            self.btnUnlockRobot_2.setEnabled(False)
             
             tmpWidget = QWidget()
             tmpWidget.setMinimumSize(800, 600)
@@ -2753,7 +2756,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnUnlockRobot.setEnabled(True)
         self.btnUnlockRobot_2.setEnabled(True)
         self.btnUnlockConfirm.setEnabled(False)
-        self.btnDriveConfirm.setEnabled(False)
+        # self.btnDriveConfirm.setEnabled(False)
         self.btnRobotRelease_2.setEnabled(True)
         self.btnRobotTarget.setEnabled(False)
         
@@ -2768,6 +2771,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotTarget.setEnabled(False)
         self.btnTargetRobotConfirm.setEnabled(True)
+        
         if self.settingTarget:
             self.btnRobotBackTarget.setEnabled(True)
         else:
