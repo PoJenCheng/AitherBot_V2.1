@@ -237,17 +237,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
         
         self.btnNext_endBuildModel.setEnabled(True)
-        
         self.SetUIEnable_Trajectory(False)
-        self.init_ui()
-        
+        self.spinBox.lineEdit().setHidden(True)
+        #Robot =================================================
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         self.settingTarget = False
         
-        self.spinBox.lineEdit().setHidden(True)
+        
+        self.init_ui()
         
     def addCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1275,7 +1275,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tmpWidget = None
             self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
             self.btnUnlockRobot_2.setEnabled(True)
-            # self.btnDriveConfirm.setEnabled(False)
+            self.btnDriveConfirm.setEnabled(False)
             
             self.lblDescription.setText("""
                                         <div style='color:#FFFFD0'>
@@ -1746,8 +1746,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     return
             elif button == self.btnFromCD:
                 return
-            elif button == self.btnDriveConfirm:
-                pass
+            elif button == self.btnUnlockConfirm:
+                self.Robot_FixArm()
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -1892,8 +1892,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice()
-            # self.enableDevice(DEVICE_ALL)
+            # self.enableDevice()
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2657,6 +2657,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.setEnabled(True)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
+        
+        self.btnUnlockRobot.setEnabled(True)
+        self.btnUnlockRobot_2.setEnabled(True)
+        self.btnUnlockConfirm.setEnabled(True)
+        self.btnDriveConfirm.setEnabled(True)
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
     
@@ -2664,6 +2669,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(True)
+        
+        self.btnUnlockRobot.setEnabled(True)
+        self.btnUnlockRobot_2.setEnabled(True)
+        self.btnUnlockConfirm.setEnabled(False)
+        self.btnDriveConfirm.setEnabled(False)
         if self.settingTarget == True:
             self.btnRobotBackTarget.setEnabled(True)
         else:
