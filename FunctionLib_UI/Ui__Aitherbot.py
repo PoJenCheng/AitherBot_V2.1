@@ -2423,7 +2423,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 312))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 200, 296))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -2478,7 +2478,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addItem(spacerItem47)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 189))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 206, 181))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -2601,6 +2601,10 @@ class Ui_MainWindow(object):
         self.pgDriveRobotGuide.setObjectName("pgDriveRobotGuide")
         self.gridLayout_37 = QtWidgets.QGridLayout(self.pgDriveRobotGuide)
         self.gridLayout_37.setObjectName("gridLayout_37")
+        self.wdgGuideLine = QtWidgets.QWidget(self.pgDriveRobotGuide)
+        self.wdgGuideLine.setMinimumSize(QtCore.QSize(0, 50))
+        self.wdgGuideLine.setObjectName("wdgGuideLine")
+        self.gridLayout_37.addWidget(self.wdgGuideLine, 0, 0, 1, 2)
         self.wdgPicture = QtWidgets.QWidget(self.pgDriveRobotGuide)
         self.wdgPicture.setObjectName("wdgPicture")
         self.gridLayout_37.addWidget(self.wdgPicture, 1, 0, 1, 1)
@@ -2651,6 +2655,41 @@ class Ui_MainWindow(object):
 "}")
         self.btnUnlockRobot_2.setObjectName("btnUnlockRobot_2")
         self.horizontalLayout_15.addWidget(self.btnUnlockRobot_2)
+        self.btnRobotResume = QtWidgets.QPushButton(self.pgDriveRobotGuide)
+        self.btnRobotResume.setEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnRobotResume.sizePolicy().hasHeightForWidth())
+        self.btnRobotResume.setSizePolicy(sizePolicy)
+        self.btnRobotResume.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnRobotResume.setStyleSheet("QPushButton{\n"
+"font: 36pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnRobotResume.setObjectName("btnRobotResume")
+        self.horizontalLayout_15.addWidget(self.btnRobotResume)
         self.btnDriveConfirm = QtWidgets.QPushButton(self.pgDriveRobotGuide)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -2688,10 +2727,6 @@ class Ui_MainWindow(object):
         spacerItem52 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_15.addItem(spacerItem52)
         self.gridLayout_37.addLayout(self.horizontalLayout_15, 2, 0, 1, 2)
-        self.wdgGuideLine = QtWidgets.QWidget(self.pgDriveRobotGuide)
-        self.wdgGuideLine.setMinimumSize(QtCore.QSize(0, 50))
-        self.wdgGuideLine.setObjectName("wdgGuideLine")
-        self.gridLayout_37.addWidget(self.wdgGuideLine, 0, 0, 1, 2)
         self.gridLayout_37.setColumnStretch(0, 4)
         self.gridLayout_37.setColumnStretch(1, 3)
         self.gridLayout_37.setRowStretch(1, 1)
@@ -3045,7 +3080,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(12)
+        self.stkScene.setCurrentIndex(16)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -3206,6 +3241,8 @@ class Ui_MainWindow(object):
         self.btnDriveTo.setText(_translate("MainWindow", "Drive To Entry Point"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabGuidance), _translate("MainWindow", "Guidance"))
         self.btnUnlockRobot_2.setText(_translate("MainWindow", "Unlock"))
+        self.btnRobotResume.setText(_translate("MainWindow", "Resume\n"
+"Target"))
         self.btnDriveConfirm.setText(_translate("MainWindow", "Confirm"))
         self.label_3.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Remove locator and install holder</span><span style=\" font-size:24pt;\"> at the end-effector of AitherBot.</span></p></body></html>"))
         self.btnConfirm.setText(_translate("MainWindow", "Confirm"))

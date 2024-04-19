@@ -743,6 +743,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.btnRobotRelease_2.clicked.connect(self.Robot_ReleaseArm)
         self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
+        self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -2745,6 +2746,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnDriveConfirm.setEnabled(True)
         self.btnRobotRelease_2.setEnabled(False)
         self.btnRobotTarget.setEnabled(True)
+        self.btnRobotResume.setEnabled(False)
         
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
@@ -2763,8 +2765,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.settingTarget == True:
             self.btnRobotBackTarget.setEnabled(True)
+            self.btnRobotResume.setEnabled(True)
         else:
             self.btnRobotBackTarget.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
+            
         self.FixArmStatus = True
         print('fix arm')
         
@@ -2775,8 +2780,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.settingTarget:
             self.btnRobotBackTarget.setEnabled(True)
+            self.btnRobotResume.setEnabled(True)
         else:
             self.btnRobotBackTarget.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
         self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
         print('setting robot target')
@@ -2791,6 +2798,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.setEnabled(True)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
+        self.btnRobotResume.setEnabled(False)
         self.RobotSupportArm.BackToTargetPos()
         print('Back to target')
         
