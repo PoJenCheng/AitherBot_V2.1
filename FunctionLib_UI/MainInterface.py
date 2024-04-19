@@ -1893,7 +1893,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice()
+            # self.enableDevice(DEVICE_LASER)
             self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
@@ -2564,7 +2564,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Demo_CheckInhale(self):
         if not hasattr(self, 'demoInhaleRage'):
             self.demoInhaleRage = 0
-        percentage = np.sin(self.demoInhaleRage)
+        percentage = np.sin(self.demoInhaleRage) * 3
         percentage = self.percentInhale + percentage
         self.signalDemoInhale.emit(True, percentage)
         self.demoInhaleRage += np.deg2rad(5)
@@ -2572,7 +2572,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Demo_CheckExhale(self):
         if not hasattr(self, 'demoExhaleRage'):
             self.demoExhaleRage = 0
-        percentage = np.sin(self.demoExhaleRage)
+        percentage = np.sin(self.demoExhaleRage) * 3
         percentage = self.percentExhale + percentage
         self.signalDemoExhale.emit(True, percentage)
         self.demoExhaleRage += np.deg2rad(5)
