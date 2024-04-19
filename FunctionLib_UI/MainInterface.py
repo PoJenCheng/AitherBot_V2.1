@@ -2754,6 +2754,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnUnlockRobot_2.setEnabled(True)
         self.btnUnlockConfirm.setEnabled(False)
         self.btnDriveConfirm.setEnabled(False)
+        self.btnRobotRelease_2.setEnabled(True)
+        self.btnRobotTarget.setEnabled(False)
+        
         if self.settingTarget == True:
             self.btnRobotBackTarget.setEnabled(True)
         else:
