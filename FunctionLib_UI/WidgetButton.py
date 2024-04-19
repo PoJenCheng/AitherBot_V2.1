@@ -453,7 +453,7 @@ class MessageBox(QMessageBox):
         font.setPointSize(24)
         
         fontMetrics = QFontMetrics(font)
-        widthWidget = min(fontMetrics.width(self.context), 900)
+        widthWidget = min(fontMetrics.width(self.context) + 50, 900)
         self.mainWidget.setMinimumWidth(widthWidget)
         
     def showMsg(msg:str, icon:int = 0, *args, **kwargs):

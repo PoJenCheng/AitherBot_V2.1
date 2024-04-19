@@ -65,6 +65,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalModelCycle = pyqtSignal(tuple, int)
     signalResetLaserUI = pyqtSignal()
     
+    signalDemoLaserInit = pyqtSignal(int)
+    signalDemoRobotInit = pyqtSignal(int)
+    signalDemoInhale = pyqtSignal(bool, float)
+    signalDemoExhale = pyqtSignal(bool, float)
+    signalDemoHoming = pyqtSignal(float)
+    
     player = QMediaPlayer()
     robot = None
     
@@ -1831,7 +1837,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def enableDevice(self, nDevice:int = 0):
         
         self.idEnabledDevice = nDevice
-        
         if nDevice == (DEVICE_ALL):
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
@@ -1893,7 +1898,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
             # self.enableDevice()
-            self.enableDevice(DEVICE_ALL)
+            self.enableDevice(DEVICE_LASER)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2509,6 +2514,80 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         for view in self.dicView.values():
                 view.close()
                 
+    def Demo_InitLaser(self):
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(20)
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(40)
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(60)
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(80)
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(80)
+        sleep(0.2)
+        self.signalDemoLaserInit.emit(100)
+        
+    def Demo_InitRobot(self):
+        sleep(0.2)
+        self.signalDemoRobotInit.emit(25)
+        sleep(0.2)
+        self.signalDemoRobotInit.emit(50)
+        sleep(0.2)
+        self.signalDemoRobotInit.emit(75)
+        sleep(0.2)
+        self.signalDemoRobotInit.emit(100)
+                
+    def Demo_OnRobotLoading(self, progress:int):
+        self.loadingRobot = progress
+        self.signalSetProgress.emit(self.pgbRobot, progress)
+        
+        if hasattr(self, 'loadingLaser'):
+            if self.loadingLaser >= 100 and self.loadingRobot >= 100:
+                if self.stkMain.currentIndex() < 2:
+                    self.signalLoadingReady.emit()
+                
+    def Demo_OnLaserLoading(self, progress:int):
+        self.loadingLaser = progress
+        self.signalSetProgress.emit(self.pgbLaser, progress)
+        
+        sleep(1)
+        if hasattr(self, 'loadingRobot'):
+            if self.loadingLaser >= 100 and self.loadingRobot >= 100:
+                if self.stkMain.currentIndex() < 2:
+                    self.signalLoadingReady.emit()
+                    self.stkMain.setCurrentWidget(self.pgScene)
+                    
+    def Demo_RecordBreathingCycle(self):
+        for i in range(1, 6):
+            sleep(1)
+            self.signalModelCycle.emit((100, 0), i)
+            
+        self.signalModelBuildingPass.emit(True)
+        
+    def Demo_CheckInhale(self):
+        if not hasattr(self, 'demoInhaleRage'):
+            self.demoInhaleRage = 0
+        percentage = np.sin(self.demoInhaleRage)
+        percentage = self.percentInhale + percentage
+        self.signalDemoInhale.emit(True, percentage)
+        self.demoInhaleRage += np.deg2rad(5)
+        
+    def Demo_CheckExhale(self):
+        if not hasattr(self, 'demoExhaleRage'):
+            self.demoExhaleRage = 0
+        percentage = np.sin(self.demoExhaleRage)
+        percentage = self.percentExhale + percentage
+        self.signalDemoExhale.emit(True, percentage)
+        self.demoExhaleRage += np.deg2rad(5)
+        
+    def Demo_OnThreadHomingProcess(self):
+        for i in range(1, 1001):
+            sleep(0.01)
+            percent = i * 0.001
+            print(percent)
+            self.signalDemoHoming.emit(percent)
+                
     def RobotSystem_OnFailed(self, errDevice:int):
         if errDevice == DEVICE_ROBOT:
             msg = 'robot connection error'
@@ -2594,8 +2673,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             translator = QTranslator()
             translator.load('FunctionLib_UI/Ui_homing_tw.qm')
             QCoreApplication.installTranslator(translator)
-
-        # self.player.stop()
+            
         self.StopVedio()
         if not self.robot:
             return
@@ -2964,6 +3042,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.signalShowPlot.connect(self.Laser_OnShowPlot)
         t = threading.Thread(target = self.Laser_Adjustment)
+        # t = threading.Thread(target = self.sti_RunLaser)
         t.start()
         
     def Laser_OnShowPlot(self, cycle):
@@ -3078,8 +3157,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.Button_StopLaserDisplay.setChecked(False)
         
     def Laser_StartRecordBreathingBase(self):
-        if self.Laser is None:
-            return
+        # if self.Laser is None:
+        #     return
         
         self.btnStartBuildModel_2.setEnabled(False)
         self.btnAutoRecord.setEnabled(False)
@@ -3088,7 +3167,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.lytLaserModel.addWidget(self.laserFigure)
         self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
         # t = threading.Thread(target = self.Laser_RecordBreathing)
-        t = threading.Thread(target = self.Laser_RecordBreathingCycle)
+        # t = threading.Thread(target = self.Laser_RecordBreathingCycle)
+        tLaser = threading.Thread(target = self.sti_RunLaser)
+        tLaser.start()
+        
+        self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
+        self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+        t = threading.Thread(target = self.Demo_RecordBreathingCycle)
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
@@ -3289,10 +3374,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.addWidget(self.indicatorInhale)
             layout.setContentsMargins(0, 0, 0, 0)
         
+        self.signalDemoInhale.connect(self.Laser_OnSignalInhale)
+        
+        self.percentInhale = 90
         
         self.tCheckInhale = QTimer()
-        self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
-        self.tCheckInhale.start(10)
+        # self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
+        self.tCheckInhale.timeout.connect(self.Demo_CheckInhale)
+        self.tCheckInhale.start(50)
         
     def Laser_CheckExhale(self):
         layout = self.wdgIndicatorExhale.layout()
@@ -3301,10 +3390,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout = QVBoxLayout(self.wdgIndicatorExhale)
             layout.addWidget(self.indicatorExhale)
             layout.setContentsMargins(0, 0, 0, 0)
-            
+        
+        self.signalDemoExhale.connect(self.Laser_OnSignalExhale)
+        
+        self.percentExhale = 10
+        
         self.tCheckExhale = QTimer()
-        self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
-        self.tCheckExhale.start(10)
+        # self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
+        self.tCheckExhale.timeout.connect(self.Demo_CheckExhale)
+        self.tCheckExhale.start(50)
         
         
     def Laser_GetAverageRatio(self, ratio):
