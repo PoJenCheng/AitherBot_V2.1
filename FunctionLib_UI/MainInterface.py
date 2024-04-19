@@ -1968,6 +1968,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.StopVedio()
             self.btnDriveConfirm.setEnabled(True)
             self.btnUnlockRobot_2.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
             
             tmpWidget = QWidget()
             tmpWidget.setMinimumSize(800, 600)
