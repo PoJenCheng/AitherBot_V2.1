@@ -21,12 +21,14 @@ import threading
 import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
+import FunctionLib_UI.Ui_FootPedal
 from FunctionLib_UI.Ui__Aitherbot import *
 import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
+from FunctionLib_UI.Ui_FootPedal import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -251,6 +253,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         self.settingTarget = False
+        
+        self.dlgFootPedal = None
         
         
         self.init_ui()
@@ -1850,6 +1854,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
+            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.OperationLight = Robot.OperationLight()
             
             self.Laser = Robot.LineLaser()
@@ -2714,6 +2719,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.homeStatus = True
                 # self.RobotRun()
                 
+    def Robot_OnSignalFootPedal(self, bPress:bool):
+        print(f'foot pedal press:{bPress}')
+        if self.dlgFootPedal is not None and bPress == True:
+            self.dlgFootPedal.close()
+            self.dlgFootPedal = None
+                
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
         MessageBox.ShowInformation('Robot Stop')
@@ -2750,6 +2761,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotRelease_2.setEnabled(False)
         self.btnRobotTarget.setEnabled(True)
         self.btnRobotResume.setEnabled(False)
+        
+        self.dlgFootPedal = DlgFootPedal()
+        self.dlgFootPedal.show()
         
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
@@ -2951,7 +2965,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(msgbox, QMessageBox):
             msgbox.accept()
         # self.NextScene()
-        self.stkScene.setCurrentWidget(self.pgStartInhaleCT)
+        self.stkScene.setCurrentWidget(self.pgRobotRegSphere)
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -3819,6 +3833,27 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.lblContent.setText('from ' + content)
         if progress >= 100:
             self.close()
+            
+class DlgFootPedal(QWidget, FunctionLib_UI.Ui_FootPedal.Ui_Form):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        ############################################################################################
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.alpha = 255
+        self.increment = -20
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.runContentText)
+        self.timer.start(50)
+    
+    def runContentText(self):
+        self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
+        self.alpha += self.increment
+        self.alpha = min(255, max(self.alpha, 0))
+        
+        if self.alpha == 255 or self.alpha == 0:
+            self.increment *= -1
+        
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
