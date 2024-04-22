@@ -1286,6 +1286,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
             self.btnUnlockRobot_2.setEnabled(True)
             self.btnDriveConfirm.setEnabled(False)
+            self.btnUnlockRobot_2.setEnabled(True)
             
             self.lblDescription.setText("""
                                         <div style='color:#FFFFD0'>
@@ -1969,6 +1970,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnDriveConfirm.setEnabled(True)
             self.btnUnlockRobot_2.setEnabled(False)
             self.btnRobotResume.setEnabled(False)
+            self.btnUnlockRobot_2.setEnabled(False)
             
             tmpWidget = QWidget()
             tmpWidget.setMinimumSize(800, 600)
@@ -2742,7 +2744,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotBackTarget.setEnabled(False)
         
         self.btnUnlockRobot.setEnabled(True)
-        self.btnUnlockRobot_2.setEnabled(True)
+        self.btnUnlockRobot_2.setEnabled(False)
         self.btnUnlockConfirm.setEnabled(True)
         self.btnDriveConfirm.setEnabled(True)
         self.btnRobotRelease_2.setEnabled(False)
@@ -2758,7 +2760,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(True)
         
         self.btnUnlockRobot.setEnabled(True)
-        self.btnUnlockRobot_2.setEnabled(True)
+        # self.btnUnlockRobot_2.setEnabled(True)
         self.btnUnlockConfirm.setEnabled(False)
         # self.btnDriveConfirm.setEnabled(False)
         self.btnRobotRelease_2.setEnabled(True)

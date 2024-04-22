@@ -362,7 +362,7 @@ class RobotSupportArm():
         self.SupportMove = 'GVL.SupportMove'
         self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
         self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
-        self.Tolerance = 500
+        self.Tolerance = 1000
         self.frequency = 1000
         self.duration = 1000
         
@@ -412,8 +412,8 @@ class RobotSupportArm():
                     winsound.Beep(self.frequency, self.duration)
                 
     def BackToTargetPos(self):
-        self.CaliEncoder2()
         self.CaliEncoder1()
+        self.CaliEncoder2()
         
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
