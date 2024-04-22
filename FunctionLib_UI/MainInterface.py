@@ -238,6 +238,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
         self.showError = None
         self.nLaserErrorCount = 0
+        self.lblThreshold.setText('0.004')
         
         self.btnNext_endBuildModel.setEnabled(True)
         self.SetUIEnable_Trajectory(False)
@@ -1298,7 +1299,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkScene.setCurrentWidget(self.pgImageView)
     
     def OnValueChanged_spin(self, value:int):
-        fValue = value * 0.01
+        fValue = value * 0.001
         gVars['toleranceLaserData'] = fValue
         self.lblThreshold.setText(str(fValue))
     
