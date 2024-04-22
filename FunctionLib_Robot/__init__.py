@@ -65,7 +65,7 @@ laserEndPoint = 550 # measure laser point to the end point
 gVars = {}
 gVars['toleranceLaserData'] = 0.01
 
-TIMEOVER = 20
+TIMEOVER = 3
 DEVICE_ROBOT = 1
 DEVICE_LASER = 2
 DEVICE_ALL = 3

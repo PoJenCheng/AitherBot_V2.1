@@ -232,9 +232,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
         
+        
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
+        self.showError = None
+        self.nLaserErrorCount = 0
         
         self.btnNext_endBuildModel.setEnabled(True)
         self.SetUIEnable_Trajectory(False)
@@ -1887,8 +1890,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice(DEVICE_LASER)
-            self.enableDevice(DEVICE_ALL)
+            self.enableDevice(DEVICE_LASER)
+            # self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2591,24 +2594,39 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         #     self.msgbox = msgbox
         #     ret = msgbox.exec_()
-        if not hasattr(self, 'showError'):
+        if self.showError is None:
             self.showError = True
-            ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
-            if ret == 0:
-                del self.showError
-                
-                if (self.errDevice & DEVICE_ROBOT) != 0:
-                    self.errDevice &= ~DEVICE_ROBOT
-                    self.tRobot = threading.Thread(target = self.robot.Initialize)
-                    self.tRobot.start()
+            
+           
+            if ((self.errDevice & DEVICE_LASER) != 0 and self.nLaserErrorCount == 0):
+                # 第一次Laser連線失敗直接重試
+                self.errDevice &= ~DEVICE_LASER
+                self.nLaserErrorCount += 1
+                self.Laser.CloseLaser()
+                sleep(0.5)
+                print('Laser device suffered connection error in first switch on, re-connecting...')
+                self.tLaser= threading.Thread(target = self.Laser.Initialize)
+                self.tLaser.start()
+            else:
+                ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
+            
+                if ret == 0:
+                    del self.showError
                     
-                if (self.errDevice & DEVICE_LASER) != 0:
-                    self.errDevice &= ~DEVICE_LASER
-                    self.tLaser= threading.Thread(target = self.Laser.Initialize)
-                    self.tLaser.start()
-                
-            elif ret == 1:
-                self.close()
+                    if (self.errDevice & DEVICE_ROBOT) != 0:
+                        self.errDevice &= ~DEVICE_ROBOT
+                        self.tRobot = threading.Thread(target = self.robot.Initialize)
+                        self.tRobot.start()
+                        
+                    if (self.errDevice & DEVICE_LASER) != 0:
+                        self.errDevice &= ~DEVICE_LASER
+                        self.Laser.CloseLaser()
+                        sleep(0.5)
+                        self.tLaser= threading.Thread(target = self.Laser.Initialize)
+                        self.tLaser.start()
+                    
+                elif ret == 1:
+                    self.close()
                 
     def Robot_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
