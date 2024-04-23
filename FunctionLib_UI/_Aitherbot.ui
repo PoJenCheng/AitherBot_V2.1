@@ -1134,7 +1134,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>7</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
            <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0">
@@ -2309,7 +2309,7 @@ QLabel#lblAutoRecord{
                <item row="1" column="3">
                 <widget class="QLabel" name="lblThreshold">
                  <property name="text">
-                  <string>0.01</string>
+                  <string>0.004</string>
                  </property>
                 </widget>
                </item>
@@ -2471,7 +2471,7 @@ QSpinBox::down-button{
                   <number>1</number>
                  </property>
                  <property name="value">
-                  <number>1</number>
+                  <number>4</number>
                  </property>
                  <property name="displayIntegerBase">
                   <number>10</number>
@@ -6226,7 +6226,7 @@ margin-right:0px;
   <slot>BackScene()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="btgDicom"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

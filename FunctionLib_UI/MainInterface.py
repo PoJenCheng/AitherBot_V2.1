@@ -2097,6 +2097,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if self.tCheckExhale is not None:
                     self.tCheckExhale.stop()
                     
+                self.dicDataCycleManual = {}
+                    
                 index = self.stkScene.indexOf(self.pgLaser)
                 # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
@@ -3329,6 +3331,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                 else:
                                     self.recordBreathingBase = True
                                     self.signalModelBuildingPass.emit(True)
+                                    
+                                # save data
+                                try:
+                                    with open('dataCycle.txt', mode = 'w') as f:
+                                        for nCycleNum, (t, lstData) in self.dicDataCycle.items():
+                                            for data in lstData:
+                                                f.write(f'{nCycleNum}, {t}, {data}\n')
+                                except Exception as msg:
+                                    print(msg)
                                 
                             self.dicDataCycle[nCycle] = {}
                         
