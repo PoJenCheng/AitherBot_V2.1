@@ -490,7 +490,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
     def retryFunc(self, func, startTime, motorName:str):
         endTime = time()
         ret = None
-        while endTime - startTime < TIMEOVER:
+        while endTime - startTime < TIMEOVER_ROBOT:
             try:
                 ret = func()
                 
@@ -1098,7 +1098,7 @@ class LineLaser(MOTORCONTROL, QObject):
         retryTimes = 0
         ret = func(*args)
         if ret < 1:
-            while (endTime - startTime) < TIMEOVER:
+            while (endTime - startTime) < TIMEOVER_LASER:
                 sleep(3)
                 ret = func(*args)
                 if ret > 1:

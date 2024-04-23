@@ -1902,8 +1902,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.enableDevice(DEVICE_LASER)
-            # self.enableDevice(DEVICE_ALL)
+            # self.enableDevice(DEVICE_LASER)
+            self.enableDevice(DEVICE_ALL)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2112,6 +2112,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.tCheckExhale.stop()
                     
                 self.dicDataCycleManual = {}
+                self.lstRecordAvg = []
+                self.nCycle = 1
                     
                 index = self.stkScene.indexOf(self.pgLaser)
                 # self.stkScene.blockSignals(True)
