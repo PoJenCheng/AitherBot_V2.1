@@ -21,12 +21,14 @@ import threading
 import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
+import FunctionLib_UI.Ui_FootPedal
 from FunctionLib_UI.Ui__Aitherbot import *
 import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
+from FunctionLib_UI.Ui_FootPedal import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -249,6 +251,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         self.settingTarget = False
+        
+        self.dlgFootPedal = None
         
         
         self.init_ui()
@@ -635,8 +639,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.signalSetCheck.connect(self.onSignal_SetCheck)
         
-        # self.btnNext_confirmHomingStep2.clicked.connect(self.StartHoming)
-        self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
+        self.btnNext_confirmHomingStep2.clicked.connect(self.Robot_StartHoming)
+        # self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
         
         self.laserFigure = Canvas(self, dpi = 150)
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
@@ -738,6 +742,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnUnlockRobot.clicked.connect(self.Robot_ReleaseArm)
         
         self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
+        
+        self.btnRobotRelease_2.clicked.connect(self.Robot_ReleaseArm)
+        self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
+        self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1290,9 +1298,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                         </div>
                                         """)
         elif nStep == 3:
-            self.btnUnlockRobot_2.setEnabled(False)
-            self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
+            # self.btnUnlockRobot_2.setEnabled(False)
+            
+            self.lblDescription.setText('')
             self.Robot_FixArm()
+            self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
         elif nStep == 4:
             self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
         elif nStep is None:
@@ -1841,6 +1851,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
+            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.OperationLight = Robot.OperationLight()
             
             self.Laser = Robot.LineLaser()
@@ -1958,6 +1969,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
             self.StopVedio()
+            self.btnDriveConfirm.setEnabled(True)
+            self.btnUnlockRobot_2.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
             
             tmpWidget = QWidget()
             tmpWidget.setMinimumSize(800, 600)
@@ -2725,6 +2739,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.homeStatus = True
                 # self.RobotRun()
                 
+    def Robot_OnSignalFootPedal(self, bPress:bool):
+        print(f'foot pedal press:{bPress}')
+        if self.dlgFootPedal is not None and bPress == True:
+            self.dlgFootPedal.close()
+            self.dlgFootPedal = None
+                
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
         MessageBox.ShowInformation('Robot Stop')
@@ -2755,9 +2775,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotBackTarget.setEnabled(False)
         
         self.btnUnlockRobot.setEnabled(True)
-        self.btnUnlockRobot_2.setEnabled(True)
+        self.btnUnlockRobot_2.setEnabled(False)
         self.btnUnlockConfirm.setEnabled(True)
         self.btnDriveConfirm.setEnabled(True)
+        self.btnRobotRelease_2.setEnabled(False)
+        self.btnRobotTarget.setEnabled(True)
+        self.btnRobotResume.setEnabled(False)
+        
+        self.dlgFootPedal = DlgFootPedal()
+        self.dlgFootPedal.show()
+        
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
     
@@ -2767,31 +2794,48 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(True)
         
         self.btnUnlockRobot.setEnabled(True)
-        self.btnUnlockRobot_2.setEnabled(True)
+        # self.btnUnlockRobot_2.setEnabled(True)
         self.btnUnlockConfirm.setEnabled(False)
-        self.btnDriveConfirm.setEnabled(False)
+        # self.btnDriveConfirm.setEnabled(False)
+        self.btnRobotRelease_2.setEnabled(True)
+        self.btnRobotTarget.setEnabled(False)
+        
         if self.settingTarget == True:
             self.btnRobotBackTarget.setEnabled(True)
+            self.btnRobotResume.setEnabled(True)
         else:
             self.btnRobotBackTarget.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
+            
         self.FixArmStatus = True
         print('fix arm')
         
     def Robot_SettingTarget(self):
         self.btnRobotSetTarget.setEnabled(False)
+        self.btnRobotTarget.setEnabled(False)
+        self.btnTargetRobotConfirm.setEnabled(True)
+        
         if self.settingTarget:
             self.btnRobotBackTarget.setEnabled(True)
+            self.btnRobotResume.setEnabled(True)
         else:
             self.btnRobotBackTarget.setEnabled(False)
+            self.btnRobotResume.setEnabled(False)
         self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
         print('setting robot target')
+        
+    def Robot_FixAndTarget(self):
+        self.Robot_FixArm()
+        sleep(0.5)
+        self.Robot_SettingTarget()
         
     def Robot_BackToTarget(self):
         self.btnRobotRelease.setEnabled(False)
         self.btnRobotFix.setEnabled(True)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
+        self.btnRobotResume.setEnabled(False)
         self.RobotSupportArm.BackToTargetPos()
         print('Back to target')
         
@@ -2941,7 +2985,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(msgbox, QMessageBox):
             msgbox.accept()
         # self.NextScene()
-        self.stkScene.setCurrentWidget(self.pgStartInhaleCT)
+        self.stkScene.setCurrentWidget(self.pgRobotRegSphere)
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -3802,6 +3846,27 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.lblContent.setText('from ' + content)
         if progress >= 100:
             self.close()
+            
+class DlgFootPedal(QWidget, FunctionLib_UI.Ui_FootPedal.Ui_Form):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        ############################################################################################
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.alpha = 255
+        self.increment = -20
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.runContentText)
+        self.timer.start(50)
+    
+    def runContentText(self):
+        self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
+        self.alpha += self.increment
+        self.alpha = min(255, max(self.alpha, 0))
+        
+        if self.alpha == 255 or self.alpha == 0:
+            self.increment *= -1
+        
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'

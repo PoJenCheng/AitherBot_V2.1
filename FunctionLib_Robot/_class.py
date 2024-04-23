@@ -348,8 +348,11 @@ class OperationLight():
         self.plc.write_by_name(self.DynamicCompensationLight,False)
     
 
-class RobotSupportArm():
+class RobotSupportArm(QObject):
+    signalPedalPress = pyqtSignal(bool)
+    
     def __init__(self):
+        super().__init__()
         try:
             self.plc = pyads.Connection('5.97.65.198.1.1', 851)
             self.plc.open()
@@ -362,7 +365,7 @@ class RobotSupportArm():
         self.SupportMove = 'GVL.SupportMove'
         self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
         self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
-        self.Tolerance = 500
+        self.Tolerance = 1000
         self.frequency = 1000
         self.duration = 1000
         
@@ -380,6 +383,7 @@ class RobotSupportArm():
             self.plc.write_by_name(self.EnableSupportEn1,True) 
             self.plc.write_by_name(self.EnableSupportEn2,True)
             Release = self.plc.read_by_name(self.SupportMove)
+            self.signalPedalPress.emit(Release)
                             
         self.plc.write_by_name(self.EnableSupportEn1,False) 
         self.plc.write_by_name(self.EnableSupportEn2,False)
@@ -392,6 +396,7 @@ class RobotSupportArm():
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
+            self.signalPedalPress.emit(footController)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn1,True) #將軸一enable
                 if abs(RealTimePos[0]-self.TargetEn1) <= self.Tolerance:
@@ -404,6 +409,7 @@ class RobotSupportArm():
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
+            self.signalPedalPress.emit(footController)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn2,True) #將軸二enable
                 if abs(RealTimePos[1]-self.TargetEn2) <= self.Tolerance:
@@ -412,8 +418,8 @@ class RobotSupportArm():
                     winsound.Beep(self.frequency, self.duration)
                 
     def BackToTargetPos(self):
-        self.CaliEncoder2()
         self.CaliEncoder1()
+        self.CaliEncoder2()
         
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
