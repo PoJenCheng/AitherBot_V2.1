@@ -2090,6 +2090,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneView.setEnabled(False)
             if bToStage:
                 # self.stkScene.setCurrentWidget(self.pgLaser)
+                # self.Laser_SetBreathingCycleUI()
+                if self.tCheckInhale is not None:
+                    self.tCheckInhale.stop()
+                    
+                if self.tCheckExhale is not None:
+                    self.tCheckExhale.stop()
+                    
                 index = self.stkScene.indexOf(self.pgLaser)
                 # self.stkScene.blockSignals(True)
                 self.stkScene.setCurrentIndex(index)
