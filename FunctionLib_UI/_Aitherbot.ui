@@ -51,7 +51,7 @@
 }</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="pgHome">
        <layout class="QGridLayout" name="gridLayout_33">
@@ -193,17 +193,32 @@
 	background-image:url(image/background.png);
 }
 
-QPushButton{
-font: 36pt &quot;Arial&quot;;
+#wdgGuidance, #wdgPlanning{
 background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));
 border:0px;
 border-radius:40px;
-margin:10px;
-padding:10px;
+padding:0px;
 }
 
-QPushButton:hover{
+#wdgGuidance:hover, #wdgPlanning:hover{
 	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));
+}
+
+#wdgGuidance:disabled, #wdgPlanning:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(160, 160, 160, 0), stop:0.1 rgba(160, 160, 160, 100), stop:0.3 rgba(160, 160, 160, 255), stop:0.6 rgba(160, 160, 160, 230), stop:1 rgba(160, 160, 160, 50));
+}
+
+
+QLabel{
+	font: 32pt &quot;Arial&quot;;
+	margin-left:10px;
+	margin-top:0px;
+	margin-bottom:0px;
+	padding:0px;
+}
+
+#wdgGuidance:disabled, #wdgPlanning:disabled QLabel{
+	color:rgb(167, 167, 167);
 }</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_23">
@@ -250,31 +265,13 @@ QPushButton:hover{
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
              <property name="styleSheet">
-              <string notr="true">QWidget{
-font: 32pt &quot;Arial&quot;;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));
-border:0px;
-border-radius:40px;
-padding:0px;
-margin:10px;
-}
-
-QWidget:hover{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));
-}
-
-QLabel{
-	margin-top:0px;
-	margin-bottom:0px;
-	padding:0px;
-}</string>
+              <string notr="true"/>
              </property>
              <layout class="QGridLayout" name="gridLayout_24">
               <item row="2" column="0">
                <widget class="QLabel" name="label_19">
                 <property name="styleSheet">
-                 <string notr="true">background:none;
-font: 14pt &quot;Arial&quot;;</string>
+                 <string notr="true">font: 14pt &quot;Arial&quot;;</string>
                 </property>
                 <property name="text">
                  <string>intra-operative</string>
@@ -287,7 +284,7 @@ font: 14pt &quot;Arial&quot;;</string>
               <item row="1" column="0">
                <widget class="QLabel" name="label_20">
                 <property name="styleSheet">
-                 <string notr="true">background:none;</string>
+                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string>Guidance</string>
@@ -398,30 +395,7 @@ font: 14pt &quot;Arial&quot;;</string>
               <enum>Qt::ClickFocus</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">QWidget{
-font: 32pt &quot;Arial&quot;;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));
-border:0px;
-border-radius:40px;
-padding:0px;
-margin:10px;
-}
-
-QWidget:hover{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));
-}
-
-QWidget:disabled{
-	color:rgb(167, 167, 167);
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(160, 160, 160, 0), stop:0.1 rgba(160, 160, 160, 100), stop:0.3 rgba(160, 160, 160, 255), stop:0.6 rgba(160, 160, 160, 230), stop:1 rgba(160, 160, 160, 50));
-}
-
-
-QLabel{
-	margin-top:0px;
-	margin-bottom:0px;
-	padding:0px;
-}</string>
+              <string notr="true"/>
              </property>
              <layout class="QGridLayout" name="gridLayout_25">
               <item row="2" column="0">
