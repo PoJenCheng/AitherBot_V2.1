@@ -100,7 +100,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgGuidance.sizePolicy().hasHeightForWidth())
         self.wdgGuidance.setSizePolicy(sizePolicy)
-        self.wdgGuidance.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgGuidance.setMinimumSize(QtCore.QSize(290, 200))
         self.wdgGuidance.setMaximumSize(QtCore.QSize(16777215, 200))
         self.wdgGuidance.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.wdgGuidance.setStyleSheet("QWidget{\n"
@@ -158,7 +158,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgPlanning.sizePolicy().hasHeightForWidth())
         self.wdgPlanning.setSizePolicy(sizePolicy)
-        self.wdgPlanning.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgPlanning.setMinimumSize(QtCore.QSize(290, 200))
         self.wdgPlanning.setMaximumSize(QtCore.QSize(16777215, 200))
         self.wdgPlanning.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.wdgPlanning.setMouseTracking(False)
@@ -174,6 +174,11 @@ class Ui_MainWindow(object):
 "\n"
 "QWidget:hover{\n"
 "    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));\n"
+"}\n"
+"\n"
+"QWidget:disabled{\n"
+"    color:rgb(167, 167, 167);\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(160, 160, 160, 0), stop:0.1 rgba(160, 160, 160, 100), stop:0.3 rgba(160, 160, 160, 255), stop:0.6 rgba(160, 160, 160, 230), stop:1 rgba(160, 160, 160, 50));\n"
 "}\n"
 "\n"
 "\n"
@@ -1894,10 +1899,15 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnFromUSB.setObjectName("btnFromUSB")
         self.horizontalLayout_11.addWidget(self.btnFromUSB)
         self.btnFromCD = QtWidgets.QPushButton(self.pgImportDicom)
+        self.btnFromCD.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1924,6 +1934,10 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnFromCD.setObjectName("btnFromCD")
         self.horizontalLayout_11.addWidget(self.btnFromCD)
@@ -3083,7 +3097,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(7)
+        self.stkScene.setCurrentIndex(13)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
