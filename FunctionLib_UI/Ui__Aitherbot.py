@@ -75,17 +75,32 @@ class Ui_MainWindow(object):
 "    background-image:url(image/background.png);\n"
 "}\n"
 "\n"
-"QPushButton{\n"
-"font: 36pt \"Arial\";\n"
+"#wdgGuidance, #wdgPlanning{\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));\n"
 "border:0px;\n"
 "border-radius:40px;\n"
-"margin:10px;\n"
-"padding:10px;\n"
+"padding:0px;\n"
 "}\n"
 "\n"
-"QPushButton:hover{\n"
+"#wdgGuidance:hover, #wdgPlanning:hover{\n"
 "    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));\n"
+"}\n"
+"\n"
+"#wdgGuidance:disabled, #wdgPlanning:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(160, 160, 160, 0), stop:0.1 rgba(160, 160, 160, 100), stop:0.3 rgba(160, 160, 160, 255), stop:0.6 rgba(160, 160, 160, 230), stop:1 rgba(160, 160, 160, 50));\n"
+"}\n"
+"\n"
+"\n"
+"QLabel{\n"
+"    font: 32pt \"Arial\";\n"
+"    margin-left:10px;\n"
+"    margin-top:0px;\n"
+"    margin-bottom:0px;\n"
+"    padding:0px;\n"
+"}\n"
+"\n"
+"#wdgGuidance:disabled, #wdgPlanning:disabled QLabel{\n"
+"    color:rgb(167, 167, 167);\n"
 "}")
         self.wdgModeSelection.setObjectName("wdgModeSelection")
         self.gridLayout_23 = QtWidgets.QGridLayout(self.wdgModeSelection)
@@ -100,38 +115,20 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgGuidance.sizePolicy().hasHeightForWidth())
         self.wdgGuidance.setSizePolicy(sizePolicy)
-        self.wdgGuidance.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgGuidance.setMinimumSize(QtCore.QSize(290, 200))
         self.wdgGuidance.setMaximumSize(QtCore.QSize(16777215, 200))
         self.wdgGuidance.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.wdgGuidance.setStyleSheet("QWidget{\n"
-"font: 32pt \"Arial\";\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));\n"
-"border:0px;\n"
-"border-radius:40px;\n"
-"padding:0px;\n"
-"margin:10px;\n"
-"}\n"
-"\n"
-"QWidget:hover{\n"
-"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));\n"
-"}\n"
-"\n"
-"QLabel{\n"
-"    margin-top:0px;\n"
-"    margin-bottom:0px;\n"
-"    padding:0px;\n"
-"}")
+        self.wdgGuidance.setStyleSheet("")
         self.wdgGuidance.setObjectName("wdgGuidance")
         self.gridLayout_24 = QtWidgets.QGridLayout(self.wdgGuidance)
         self.gridLayout_24.setObjectName("gridLayout_24")
         self.label_19 = QtWidgets.QLabel(self.wdgGuidance)
-        self.label_19.setStyleSheet("background:none;\n"
-"font: 14pt \"Arial\";")
+        self.label_19.setStyleSheet("font: 14pt \"Arial\";")
         self.label_19.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_19.setObjectName("label_19")
         self.gridLayout_24.addWidget(self.label_19, 2, 0, 1, 1)
         self.label_20 = QtWidgets.QLabel(self.wdgGuidance)
-        self.label_20.setStyleSheet("background:none;")
+        self.label_20.setStyleSheet("")
         self.label_20.setObjectName("label_20")
         self.gridLayout_24.addWidget(self.label_20, 1, 0, 1, 1)
         spacerItem5 = QtWidgets.QSpacerItem(10, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -153,35 +150,18 @@ class Ui_MainWindow(object):
         spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_23.addItem(spacerItem7, 5, 0, 1, 1)
         self.wdgPlanning = WidgetButton(self.wdgModeSelection)
+        self.wdgPlanning.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgPlanning.sizePolicy().hasHeightForWidth())
         self.wdgPlanning.setSizePolicy(sizePolicy)
-        self.wdgPlanning.setMinimumSize(QtCore.QSize(0, 200))
+        self.wdgPlanning.setMinimumSize(QtCore.QSize(290, 200))
         self.wdgPlanning.setMaximumSize(QtCore.QSize(16777215, 200))
         self.wdgPlanning.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.wdgPlanning.setMouseTracking(False)
         self.wdgPlanning.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.wdgPlanning.setStyleSheet("QWidget{\n"
-"font: 32pt \"Arial\";\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0), stop:0.1 rgba(255, 255, 255, 100), stop:0.3 rgba(255, 255, 255, 255), stop:0.6 rgba(255, 255, 255, 230), stop:1 rgba(255, 255, 255, 50));\n"
-"border:0px;\n"
-"border-radius:40px;\n"
-"padding:0px;\n"
-"margin:10px;\n"
-"}\n"
-"\n"
-"QWidget:hover{\n"
-"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(88, 238, 255, 0), stop:0.1 rgba(88, 238, 255, 100), stop:0.3 rgba(88, 238, 255, 255), stop:0.6 rgba(88, 238, 255, 230), stop:1 rgba(88, 238, 255, 50));\n"
-"}\n"
-"\n"
-"\n"
-"QLabel{\n"
-"    margin-top:0px;\n"
-"    margin-bottom:0px;\n"
-"    padding:0px;\n"
-"}")
+        self.wdgPlanning.setStyleSheet("")
         self.wdgPlanning.setObjectName("wdgPlanning")
         self.gridLayout_25 = QtWidgets.QGridLayout(self.wdgPlanning)
         self.gridLayout_25.setObjectName("gridLayout_25")
@@ -1894,10 +1874,15 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnFromUSB.setObjectName("btnFromUSB")
         self.horizontalLayout_11.addWidget(self.btnFromUSB)
         self.btnFromCD = QtWidgets.QPushButton(self.pgImportDicom)
+        self.btnFromCD.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1924,6 +1909,10 @@ class Ui_MainWindow(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnFromCD.setObjectName("btnFromCD")
         self.horizontalLayout_11.addWidget(self.btnFromCD)
@@ -3082,8 +3071,8 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(7)
+        self.stkMain.setCurrentIndex(0)
+        self.stkScene.setCurrentIndex(13)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
