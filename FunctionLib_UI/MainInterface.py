@@ -3988,291 +3988,291 @@ class WidgetStep(QWidget):
         self.nCurrentStep -= 1
         self.GotoStep(self.nCurrentStep)
         return self.nCurrentStep
-class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
-    def __init__(self, dcmTag, dicom, answer):
-        super(CoordinateSystemManual, self).__init__()
-        self.setupUi(self)
-        self.SetWindow2Center()
+# class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
+#     def __init__(self, dcmTag, dicom, answer):
+#         super(CoordinateSystemManual, self).__init__()
+#         self.setupUi(self)
+#         self.SetWindow2Center()
         
-        "create VTK"
-        ## 建立 VTK 物件 ############################################################################################
-        self.reader = vtkDICOMImageReader()
+#         "create VTK"
+#         ## 建立 VTK 物件 ############################################################################################
+#         self.reader = vtkDICOMImageReader()
         
-        self.actorAxial = vtkImageActor()
+#         self.actorAxial = vtkImageActor()
         
-        self.windowLevelLookup = vtkWindowLevelLookupTable()
-        self.mapColors = vtkImageMapToColors()
-        self.cameraAxial = vtkCamera()
+#         self.windowLevelLookup = vtkWindowLevelLookupTable()
+#         self.mapColors = vtkImageMapToColors()
+#         self.cameraAxial = vtkCamera()
         
-        self.renderer = vtkRenderer()
+#         self.renderer = vtkRenderer()
         
-        self.actorBallRed = vtkActor()
-        self.actorBallGreen = vtkActor()
-        self.actorBallBlue = vtkActor()
-        ############################################################################################
-        "hint: self.dicomLow = dicomLow = dicom"
-        "hint: self.dcmTagLow = dcmTagLow = dcmTag"
-        self.dcmTag = dcmTag
-        self.dicom = dicom
-        self.answer = answer
+#         self.actorBallRed = vtkActor()
+#         self.actorBallGreen = vtkActor()
+#         self.actorBallBlue = vtkActor()
+#         ############################################################################################
+#         "hint: self.dicomLow = dicomLow = dicom"
+#         "hint: self.dcmTagLow = dcmTagLow = dcmTag"
+#         self.dcmTag = dcmTag
+#         self.dicom = dicom
+#         self.answer = answer
         
-        self.Display()
+#         self.Display()
         
-        return
+#         return
         
-    def Display(self):
-        ## 顯示 ############################################################################################
-        "folderPath"
-        folderDir = self.dcmTag.get("folderDir")
-        "vtk"
-        self.reader.SetDirectoryName(folderDir)
-        self.reader.Update()
+#     def Display(self):
+#         ## 顯示 ############################################################################################
+#         "folderPath"
+#         folderDir = self.dcmTag.get("folderDir")
+#         "vtk"
+#         self.reader.SetDirectoryName(folderDir)
+#         self.reader.Update()
         
-        self.iren = self.qvtkWidget_registrtion.GetRenderWindow().GetInteractor()
+#         self.iren = self.qvtkWidget_registrtion.GetRenderWindow().GetInteractor()
         
-        self.vtkImage = self.reader.GetOutput()
-        self.vtkImage.SetOrigin(0, 0, 0)
-        self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
-        self.dicomBoundsRange = self.vtkImage.GetBounds()
-        self.imageDimensions = self.vtkImage.GetDimensions()
-        self.pixel2Mm = self.vtkImage.GetSpacing()
+#         self.vtkImage = self.reader.GetOutput()
+#         self.vtkImage.SetOrigin(0, 0, 0)
+#         self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
+#         self.dicomBoundsRange = self.vtkImage.GetBounds()
+#         self.imageDimensions = self.vtkImage.GetDimensions()
+#         self.pixel2Mm = self.vtkImage.GetSpacing()
         
-        "ui"
-        self.ScrollBar.setMinimum(1)
-        self.ScrollBar.setMaximum(self.imageDimensions[2]-1)
-        self.ScrollBar.setValue(int((self.imageDimensions[2])/2))
+#         "ui"
+#         self.ScrollBar.setMinimum(1)
+#         self.ScrollBar.setMaximum(self.imageDimensions[2]-1)
+#         self.ScrollBar.setValue(int((self.imageDimensions[2])/2))
         
-        "vtk"
+#         "vtk"
         
-        self.windowLevelLookup.Build()
-        thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
-        self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
-        self.windowLevelLookup.SetLevel(thresholdValue)
+#         self.windowLevelLookup.Build()
+#         thresholdValue = int(((self.dicomGrayscaleRange[1] - self.dicomGrayscaleRange[0]) / 6) + self.dicomGrayscaleRange[0])
+#         self.windowLevelLookup.SetWindow(abs(thresholdValue*2))
+#         self.windowLevelLookup.SetLevel(thresholdValue)
         
-        self.mapColors.SetInputConnection(self.reader.GetOutputPort())
-        self.mapColors.SetLookupTable(self.windowLevelLookup)
-        self.mapColors.Update()
+#         self.mapColors.SetInputConnection(self.reader.GetOutputPort())
+#         self.mapColors.SetLookupTable(self.windowLevelLookup)
+#         self.mapColors.Update()
         
-        self.cameraAxial.SetViewUp(0, 1, 0)
-        self.cameraAxial.SetPosition(0, 0, 1)
-        self.cameraAxial.SetFocalPoint(0, 0, 0)
-        self.cameraAxial.ComputeViewPlaneNormal()
-        self.cameraAxial.ParallelProjectionOn()
+#         self.cameraAxial.SetViewUp(0, 1, 0)
+#         self.cameraAxial.SetPosition(0, 0, 1)
+#         self.cameraAxial.SetFocalPoint(0, 0, 0)
+#         self.cameraAxial.ComputeViewPlaneNormal()
+#         self.cameraAxial.ParallelProjectionOn()
         
-        self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
-        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], self.ScrollBar.value(), self.ScrollBar.value())
+#         self.actorAxial.GetMapper().SetInputConnection(self.mapColors.GetOutputPort())
+#         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], self.ScrollBar.value(), self.ScrollBar.value())
         
-        self.renderer.SetBackground(0, 0, 0)
-        self.renderer.SetBackground(.2, .3, .4)
-        self.renderer.AddActor(self.actorAxial)
-        self.renderer.SetActiveCamera(self.cameraAxial)
-        self.renderer.ResetCamera(self.dicomBoundsRange)
+#         self.renderer.SetBackground(0, 0, 0)
+#         self.renderer.SetBackground(.2, .3, .4)
+#         self.renderer.AddActor(self.actorAxial)
+#         self.renderer.SetActiveCamera(self.cameraAxial)
+#         self.renderer.ResetCamera(self.dicomBoundsRange)
         
-        "show"
-        self.qvtkWidget_registrtion.GetRenderWindow().AddRenderer(self.renderer)
-        self.istyle = CoordinateSystemManualInteractorStyle(self)
-        self.pick_point = self.iren.SetInteractorStyle(self.istyle)
+#         "show"
+#         self.qvtkWidget_registrtion.GetRenderWindow().AddRenderer(self.renderer)
+#         self.istyle = CoordinateSystemManualInteractorStyle(self)
+#         self.pick_point = self.iren.SetInteractorStyle(self.istyle)
         
-        self.iren.Initialize()
-        self.iren.Start()
-        ############################################################################################
-        return
+#         self.iren.Initialize()
+#         self.iren.Start()
+#         ############################################################################################
+#         return
         
-    def SetWindow2Center(self):
-        ## 視窗置中 ############################################################################################
-        "screen size"
-        screen = QDesktopWidget().screenGeometry()
-        "window size"
-        size = self.geometry()
-        x = (screen.width() - size.width()) // 2
-        y = (screen.height() - size.height()) // 2
-        self.move(x, y)
-        ############################################################################################
-        return
+#     def SetWindow2Center(self):
+#         ## 視窗置中 ############################################################################################
+#         "screen size"
+#         screen = QDesktopWidget().screenGeometry()
+#         "window size"
+#         size = self.geometry()
+#         x = (screen.width() - size.width()) // 2
+#         y = (screen.height() - size.height()) // 2
+#         self.move(x, y)
+#         ############################################################################################
+#         return
     
-    def ScrollBarChange(self):
-        ## 調整顯示切面 ############################################################################################
-        self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
-            ## 調整是否顯示點 ############################################################################################
-        try:
-            ballRed = self.dcmTag.get("candidateBall")[0]
-            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
-                self.renderer.AddActor(self.actorBallRed)
-            else:
-                self.renderer.RemoveActor(self.actorBallRed)
-            ballGreen = self.dcmTag.get("candidateBall")[0]
-            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballGreen[2]) < self.dicom.radius:
-                self.renderer.AddActor(self.actorBallGreen)
-            else:
-                self.renderer.RemoveActor(self.actorBallGreen)
-            ballBlue = self.dcmTag.get("candidateBall")[0]
-            if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballBlue[2]) < self.dicom.radius:
-                self.renderer.AddActor(self.actorBallBlue)
-            else:
-                self.renderer.RemoveActor(self.actorBallBlue)
-        except:
-            pass
-            ############################################################################################
-        self.iren.Initialize()
-        self.iren.Start()
-        ############################################################################################
-        return
+#     def ScrollBarChange(self):
+#         ## 調整顯示切面 ############################################################################################
+#         self.actorAxial.SetDisplayExtent(0, self.imageDimensions[0]-1, 0, self.imageDimensions[1]-1, self.ScrollBar.value(), self.ScrollBar.value())
+#             ## 調整是否顯示點 ############################################################################################
+#         try:
+#             ballRed = self.dcmTag.get("candidateBall")[0]
+#             if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballRed[2]) < self.dicom.radius:
+#                 self.renderer.AddActor(self.actorBallRed)
+#             else:
+#                 self.renderer.RemoveActor(self.actorBallRed)
+#             ballGreen = self.dcmTag.get("candidateBall")[0]
+#             if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballGreen[2]) < self.dicom.radius:
+#                 self.renderer.AddActor(self.actorBallGreen)
+#             else:
+#                 self.renderer.RemoveActor(self.actorBallGreen)
+#             ballBlue = self.dcmTag.get("candidateBall")[0]
+#             if abs(self.ScrollBar.value()*self.dcmTag.get("pixel2Mm")[2]-ballBlue[2]) < self.dicom.radius:
+#                 self.renderer.AddActor(self.actorBallBlue)
+#             else:
+#                 self.renderer.RemoveActor(self.actorBallBlue)
+#         except:
+#             pass
+#             ############################################################################################
+#         self.iren.Initialize()
+#         self.iren.Start()
+#         ############################################################################################
+#         return
 
-    def okAndClose(self):
-        ## 確認後儲存定位球資料 ############################################################################################
-        if np.array(self.dcmTag.get("candidateBall")).shape[0] >= 3:
-            flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
-            if flage == True:
-                self.dcmTag.update({"candidateBallVTK": answer})
-                self.close()
+#     def okAndClose(self):
+#         ## 確認後儲存定位球資料 ############################################################################################
+#         if np.array(self.dcmTag.get("candidateBall")).shape[0] >= 3:
+#             flage, answer = self.GetBallManual(self.dcmTag.get("candidateBall"), self.dcmTag.get("pixel2Mm"), self.answer, self.dcmTag.get("imageTag"))
+#             if flage == True:
+#                 self.dcmTag.update({"candidateBallVTK": answer})
+#                 self.close()
                 
-                "open another ui window to check registration result"
-                # self.ui_CS = CoordinateSystem(self.dcmTag, self.dicom)
-                # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-                # self.ui_CS.show()
-            else:
-                # QMessageBox.critical(self, "error", "get candidate ball error")
-                MessageBox.ShowCritical("error", "get candidate ball error")
-                print('get candidate ball error / SetRegistration_L() error')
+#                 "open another ui window to check registration result"
+#                 # self.ui_CS = CoordinateSystem(self.dcmTag, self.dicom)
+#                 # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+#                 # self.ui_CS.show()
+#             else:
+#                 # QMessageBox.critical(self, "error", "get candidate ball error")
+#                 MessageBox.ShowCritical("error", "get candidate ball error")
+#                 print('get candidate ball error / SetRegistration_L() error')
                 
-            return
-        else:
-            # QMessageBox.information(self, "information", "need to set 3 balls")
-            MessageBox.ShowInformation("information", "need to set 3 balls")
-            return
-        ############################################################################################
-    def Cancel(self):
-        ## 關閉視窗 ############################################################################################
-        self.close()
-        ############################################################################################
+#             return
+#         else:
+#             # QMessageBox.information(self, "information", "need to set 3 balls")
+#             MessageBox.ShowInformation("information", "need to set 3 balls")
+#             return
+#         ############################################################################################
+#     def Cancel(self):
+#         ## 關閉視窗 ############################################################################################
+#         self.close()
+#         ############################################################################################
 
-class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
-    def __init__(self, setPointWindow):
-        self.setPointWindow = setPointWindow
+# class CoordinateSystemManualInteractorStyle(vtkInteractorStyleTrackballCamera):
+#     def __init__(self, setPointWindow):
+#         self.setPointWindow = setPointWindow
         
-        self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
+#         self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
         
-        self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
+#         self.AddObserver('RightButtonPressEvent', self.right_button_press_event)
         
-        return
+#         return
     
-    def right_button_press_event(self, obj, event):
-        """turn off right button"""
-        ## 關閉右鍵功能 ############################################################################################
-        pass
-        ############################################################################################
-        return
+#     def right_button_press_event(self, obj, event):
+#         """turn off right button"""
+#         ## 關閉右鍵功能 ############################################################################################
+#         pass
+#         ############################################################################################
+#         return
     
     
-    def left_button_press_event(self, obj, event):
-        """Get the location of the click (in window coordinates)"""
-        ## 左鍵點選點 ############################################################################################
-        points = self.GetInteractor().GetEventPosition()
-        picker = vtkCellPicker()
-        picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
-        pick_point = picker.GetPickPosition()
-        ############################################################################################
-        ## 儲存點 ############################################################################################
-        if picker.GetCellId() != -1:
-            if np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
-                # QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
-                MessageBox.ShowCritical(setPointWindow, "error", "there are already selected 3 balls")
-                return
-            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 0:
-                self.setPointWindow.dcmTag.update({"candidateBall":np.array([np.array(pick_point)])})
-                flage = 1
-                print("pick_point - ",flage," : ", pick_point)
-            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 1:
-                tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 1, pick_point, 0)
-                self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
-                flage = 2
-                print("pick_point - ",flage," : ", pick_point)
-            elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 2:
-                tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 2, pick_point, 0)
-                self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
-                self.setPointWindow.dcmTag.update({"flagecandidateBall": True})
-                flage = 3
-                print("pick_point - ",flage," : ", pick_point)
-            else:
-                print("GetClickedPosition error / Set candidateBall System error / else")
-                return
-            self.DrawPoint(pick_point, flage)
-        else:
-            print("picker.GetCellId() = -1")
-        ############################################################################################
-        return
+#     def left_button_press_event(self, obj, event):
+#         """Get the location of the click (in window coordinates)"""
+#         ## 左鍵點選點 ############################################################################################
+#         points = self.GetInteractor().GetEventPosition()
+#         picker = vtkCellPicker()
+#         picker.Pick(points[0], points[1], 0, self.GetInteractor().FindPokedRenderer(points[0], points[1]))
+#         pick_point = picker.GetPickPosition()
+#         ############################################################################################
+#         ## 儲存點 ############################################################################################
+#         if picker.GetCellId() != -1:
+#             if np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] >= 3:
+#                 # QMessageBox.critical(self.setPointWindow, "error", "there are already selected 3 balls")
+#                 MessageBox.ShowCritical(setPointWindow, "error", "there are already selected 3 balls")
+#                 return
+#             elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 0:
+#                 self.setPointWindow.dcmTag.update({"candidateBall":np.array([np.array(pick_point)])})
+#                 flage = 1
+#                 print("pick_point - ",flage," : ", pick_point)
+#             elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 1:
+#                 tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 1, pick_point, 0)
+#                 self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
+#                 flage = 2
+#                 print("pick_point - ",flage," : ", pick_point)
+#             elif np.array(self.setPointWindow.dcmTag.get("candidateBall")).shape[0] == 2:
+#                 tmpPoint = np.insert(self.setPointWindow.dcmTag.get("candidateBall"), 2, pick_point, 0)
+#                 self.setPointWindow.dcmTag.update({"candidateBall": tmpPoint})
+#                 self.setPointWindow.dcmTag.update({"flagecandidateBall": True})
+#                 flage = 3
+#                 print("pick_point - ",flage," : ", pick_point)
+#             else:
+#                 print("GetClickedPosition error / Set candidateBall System error / else")
+#                 return
+#             self.DrawPoint(pick_point, flage)
+#         else:
+#             print("picker.GetCellId() = -1")
+#         ############################################################################################
+#         return
     
-    def DrawPoint(self, pick_point, flage):
-        """draw point"""
-        ## 畫點 ############################################################################################
-        radius = 3.5
-        if flage == 1:
-            "red"
-            self.CreateBallRed(pick_point, radius)
-        elif flage == 2:
-            "green"
-            self.CreateBallGreen(pick_point, radius)
-        elif flage == 3:
-            "blue"
-            self.CreateBallBlue(pick_point, radius)
-        ############################################################################################
-        return
+#     def DrawPoint(self, pick_point, flage):
+#         """draw point"""
+#         ## 畫點 ############################################################################################
+#         radius = 3.5
+#         if flage == 1:
+#             "red"
+#             self.CreateBallRed(pick_point, radius)
+#         elif flage == 2:
+#             "green"
+#             self.CreateBallGreen(pick_point, radius)
+#         elif flage == 3:
+#             "blue"
+#             self.CreateBallBlue(pick_point, radius)
+#         ############################################################################################
+#         return
     
-    def CreateBallGreen(self, pick_point, radius):
-        ## 建立綠球 ############################################################################################
-        sphereSource = vtkSphereSource()
-        sphereSource.SetCenter(pick_point)
-        sphereSource.SetRadius(radius)
-        sphereSource.SetPhiResolution(100)
-        sphereSource.SetThetaResolution(100)
+#     def CreateBallGreen(self, pick_point, radius):
+#         ## 建立綠球 ############################################################################################
+#         sphereSource = vtkSphereSource()
+#         sphereSource.SetCenter(pick_point)
+#         sphereSource.SetRadius(radius)
+#         sphereSource.SetPhiResolution(100)
+#         sphereSource.SetThetaResolution(100)
         
-        mapper = vtkPolyDataMapper()
-        mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.setPointWindow.actorBallGreen.SetMapper(mapper)
-        self.setPointWindow.actorBallGreen.GetProperty().SetColor(0, 1, 0)
+#         mapper = vtkPolyDataMapper()
+#         mapper.SetInputConnection(sphereSource.GetOutputPort())
+#         self.setPointWindow.actorBallGreen.SetMapper(mapper)
+#         self.setPointWindow.actorBallGreen.GetProperty().SetColor(0, 1, 0)
         
-        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallGreen)
-        self.setPointWindow.iren.Initialize()
-        self.setPointWindow.iren.Start()
-        ############################################################################################
-        return
+#         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallGreen)
+#         self.setPointWindow.iren.Initialize()
+#         self.setPointWindow.iren.Start()
+#         ############################################################################################
+#         return
     
-    def CreateBallRed(self, pick_point, radius):
-        ## 建立紅球 ############################################################################################
-        sphereSource = vtkSphereSource()
-        sphereSource.SetCenter(pick_point)
-        sphereSource.SetRadius(radius)
-        sphereSource.SetPhiResolution(100)
-        sphereSource.SetThetaResolution(100)
+#     def CreateBallRed(self, pick_point, radius):
+#         ## 建立紅球 ############################################################################################
+#         sphereSource = vtkSphereSource()
+#         sphereSource.SetCenter(pick_point)
+#         sphereSource.SetRadius(radius)
+#         sphereSource.SetPhiResolution(100)
+#         sphereSource.SetThetaResolution(100)
         
-        mapper = vtkPolyDataMapper()
-        mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.setPointWindow.actorBallRed.SetMapper(mapper)
-        self.setPointWindow.actorBallRed.GetProperty().SetColor(1, 0, 0)
+#         mapper = vtkPolyDataMapper()
+#         mapper.SetInputConnection(sphereSource.GetOutputPort())
+#         self.setPointWindow.actorBallRed.SetMapper(mapper)
+#         self.setPointWindow.actorBallRed.GetProperty().SetColor(1, 0, 0)
         
-        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallRed)
-        self.setPointWindow.iren.Initialize()
-        self.setPointWindow.iren.Start()
-        ############################################################################################
-        return
+#         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallRed)
+#         self.setPointWindow.iren.Initialize()
+#         self.setPointWindow.iren.Start()
+#         ############################################################################################
+#         return
     
-    def CreateBallBlue(self, pick_point, radius):
-        ## 建立藍球 ############################################################################################
-        sphereSource = vtkSphereSource()
-        sphereSource.SetCenter(pick_point)
-        sphereSource.SetRadius(radius)
-        sphereSource.SetPhiResolution(100)
-        sphereSource.SetThetaResolution(100)
+#     def CreateBallBlue(self, pick_point, radius):
+#         ## 建立藍球 ############################################################################################
+#         sphereSource = vtkSphereSource()
+#         sphereSource.SetCenter(pick_point)
+#         sphereSource.SetRadius(radius)
+#         sphereSource.SetPhiResolution(100)
+#         sphereSource.SetThetaResolution(100)
         
-        mapper = vtkPolyDataMapper()
-        mapper.SetInputConnection(sphereSource.GetOutputPort())
-        self.setPointWindow.actorBallBlue.SetMapper(mapper)
-        self.setPointWindow.actorBallBlue.GetProperty().SetColor(0, 0, 1)
+#         mapper = vtkPolyDataMapper()
+#         mapper.SetInputConnection(sphereSource.GetOutputPort())
+#         self.setPointWindow.actorBallBlue.SetMapper(mapper)
+#         self.setPointWindow.actorBallBlue.GetProperty().SetColor(0, 0, 1)
         
-        self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallBlue)
-        self.setPointWindow.iren.Initialize()
-        self.setPointWindow.iren.Start()
-        ############################################################################################
-        return
+#         self.setPointWindow.renderer.AddActor(self.setPointWindow.actorBallBlue)
+#         self.setPointWindow.iren.Initialize()
+#         self.setPointWindow.iren.Start()
+#         ############################################################################################
+#         return
     
     

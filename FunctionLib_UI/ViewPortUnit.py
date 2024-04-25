@@ -23,8 +23,8 @@ import copy
 # import threading
 # import os
 # import FunctionLib_UI.ui_coordinate_system
-from FunctionLib_UI.ui_coordinate_system import *
-import FunctionLib_UI.ui_coordinate_system_manual
+# from FunctionLib_UI.ui_coordinate_system import *
+# import FunctionLib_UI.ui_coordinate_system_manual
 # import FunctionLib_UI.ui_set_point_system
 import FunctionLib_UI.ui_processing
 # import FunctionLib_UI.ui_matplotlib_pyqt
@@ -32,6 +32,7 @@ import FunctionLib_UI.ui_processing
 from FunctionLib_Vision._class import *
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingCore import vtkCellPicker
+from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # from vtkmodules.all import vtkCallbackCommand
 
 class ViewPortUnit(QObject):
