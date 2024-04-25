@@ -21,6 +21,7 @@ import threading
 import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
+import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_FootPedal
 from FunctionLib_UI.Ui__Aitherbot import *
 import FunctionLib_UI.Ui_step
@@ -28,7 +29,7 @@ from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
-from FunctionLib_UI.Ui_FootPedal import *
+from FunctionLib_UI.Ui_DlgFootPedal import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -746,6 +747,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotRelease_2.clicked.connect(self.Robot_ReleaseArm)
         self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
         self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
+        
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -2720,7 +2722,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
         
         self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.uiHoming.setModal(False)
+        self.uiHoming.setModal(True)
         self.uiHoming.exec_()
         self.listSubDialog.append(self.uiHoming)
         # self.NextScene()
@@ -2744,8 +2746,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Robot_OnSignalFootPedal(self, bPress:bool):
         print(f'foot pedal press:{bPress}')
         if self.dlgFootPedal is not None and bPress == True:
+            bNext = self.dlgFootPedal.IsToNextScene()
             self.dlgFootPedal.close()
             self.dlgFootPedal = None
+            if bNext:
+                self.NextScene()
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
@@ -2785,7 +2790,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotResume.setEnabled(False)
         
         self.dlgFootPedal = DlgFootPedal()
-        self.dlgFootPedal.show()
+        self.dlgFootPedal.exec_()
         
         self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
         self.tReleaseArm.start()
@@ -3849,17 +3854,22 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         if progress >= 100:
             self.close()
             
-class DlgFootPedal(QWidget, FunctionLib_UI.Ui_FootPedal.Ui_Form):
-    def __init__(self):
+class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
+    def __init__(self, bToNextScene = False):
         super().__init__()
         self.setupUi(self)
         ############################################################################################
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        size = self.size()
+        self.setFixedSize(size)
+        
+        self.bToNextScene = bToNextScene
         self.alpha = 255
         self.increment = -20
         self.timer = QTimer()
         self.timer.timeout.connect(self.runContentText)
         self.timer.start(50)
+        
     
     def runContentText(self):
         self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
@@ -3868,6 +3878,9 @@ class DlgFootPedal(QWidget, FunctionLib_UI.Ui_FootPedal.Ui_Form):
         
         if self.alpha == 255 or self.alpha == 0:
             self.increment *= -1
+            
+    def IsToNextScene(self):
+        return self.bToNextScene
         
             
 class WidgetArrow(QWidget):

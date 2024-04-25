@@ -1,42 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>DlgFootPedal</class>
+ <widget class="QDialog" name="DlgFootPedal">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
-    <height>700</height>
+    <width>847</width>
+    <height>736</height>
    </rect>
   </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>900</width>
-    <height>700</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>16777215</height>
-   </size>
-  </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Dialog</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(77, 140, 187);
+   <string notr="true">QDialog{
+background-color: rgb(77, 140, 187);
+border-image:url(image/aitherbot_background_s50.png);
+border-top:80;
+border-left:900;
+margin-left:10px;
+margin-top:10px;
+}
+
+QWidget{
 font: 36pt &quot;Arial&quot;;
-color: rgb(255, 255, 0);</string>
+color: rgb(255, 255, 0);
+}</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout" rowstretch="1,0">
+   <property name="topMargin">
+    <number>80</number>
+   </property>
    <item row="0" column="0">
     <widget class="QWidget" name="wdgPicture" native="true">
      <property name="sizePolicy">
@@ -47,8 +48,8 @@ color: rgb(255, 255, 0);</string>
      </property>
      <property name="minimumSize">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>825</width>
+       <height>563</height>
       </size>
      </property>
      <property name="styleSheet">
