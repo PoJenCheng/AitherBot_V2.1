@@ -1847,10 +1847,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
-            # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
             self.OperationLight = Robot.OperationLight()
             
             self.Laser = Robot.LineLaser()
@@ -1876,11 +1876,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
-            # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
-            
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
             self.OperationLight = Robot.OperationLight()
         elif nDevice == DEVICE_LASER:
             self.stkScene.setCurrentWidget(self.pgLaser)
@@ -2758,6 +2757,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.dlgFootPedal.accept()
             
         self.OnClicked_btnDriveConfirm()
+        
+    def Robot_OnSignalAxisValue(self, nAxisIndex:int, diffValue:float):
+        print(f'axis {nAxisIndex}, value = {diffValue}')
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
@@ -3940,6 +3942,13 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
     def OnClick_btnConfirm(self):
         self.signalClose.emit()
         self.close()
+        
+class DlgResumeSupportArm(DlgFootPedal):
+    def __init__(self):
+        super().__init__()
+        
+        self.btnConfirm.setHidden(True)
+        
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
