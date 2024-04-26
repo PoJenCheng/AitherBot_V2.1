@@ -401,9 +401,9 @@ class RobotSupportArm(QObject):
             self.signalPedalPress.emit(footController)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn1,True) #將軸一enable
-                diffValue = abs(RealTimePos[0]-self.TargetEn1)
-                self.signalAxisDiff(1, diffValue)
-                if diffValue <= self.Tolerance:
+                diffValue = RealTimePos[0]-self.TargetEn1
+                self.signalAxisDiff.emit(1, diffValue)
+                if abs(diffValue) <= self.Tolerance:
                     self.plc.write_by_name(self.EnableSupportEn1,False)
                     caliStatus = True
                     winsound.Beep(self.frequency, self.duration)
@@ -416,9 +416,9 @@ class RobotSupportArm(QObject):
             self.signalPedalPress.emit(footController)
             if footController == True:
                 self.plc.write_by_name(self.EnableSupportEn2,True) #將軸二enable
-                diffValue = abs(RealTimePos[1]-self.TargetEn2)
+                diffValue = RealTimePos[1]-self.TargetEn2
                 self.signalAxisDiff.emit(2, diffValue)
-                if diffValue <= self.Tolerance:
+                if abs(diffValue) <= self.Tolerance:
                     self.plc.write_by_name(self.EnableSupportEn2,False)
                     caliStatus = True
                     winsound.Beep(self.frequency, self.duration)

@@ -2759,7 +2759,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.OnClicked_btnDriveConfirm()
         
     def Robot_OnSignalAxisValue(self, nAxisIndex:int, diffValue:float):
-        print(f'axis {nAxisIndex}, value = {diffValue}')
+        # 將數值-5000 ~ 5000轉換成 0 ~ 100
+        diffValue = (diffValue + 5000) * 0.01
+        if self.dlgFootPedal is not None:
+            self.dlgFootPedal.SetValue(nAxisIndex, diffValue)
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
@@ -2871,7 +2874,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         tBackToTarget = threading.Thread(target = self.RobotSupportArm.BackToTargetPos)
         tBackToTarget.start()
         
-        self.dlgFootPedal = DlgFootPedal()
+        self.dlgFootPedal = DlgResumeSupportArm()
         self.dlgFootPedal.exec_()
         
     
@@ -3474,8 +3477,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout.addWidget(self.indicatorInhale)
             layout.setContentsMargins(0, 0, 0, 0)
         
-        
-        
         self.tCheckInhale = QTimer()
         self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
         self.tCheckInhale.start(10)
@@ -3949,6 +3950,34 @@ class DlgResumeSupportArm(DlgFootPedal):
         
         self.btnConfirm.setHidden(True)
         
+        self.wdgAxis = QWidget()
+        layout = QVBoxLayout(self.wdgAxis)
+        
+        self.indicatorAxis1 = Indicator(TYPE_ROBOTARM)
+        self.indicatorAxis2 = Indicator(TYPE_ROBOTARM)
+        
+        layout.addWidget(self.indicatorAxis1)
+        layout.addWidget(self.indicatorAxis2)
+        
+    def SetPress(self, bPress:bool):
+        layout = self.wdgPicture.parentWidget().layout()
+        if bPress:
+            self.lblContent.setText('...Unlocked, move robot arm by hand...')
+            layout.replaceWidget(self.wdgPicture, self.wdgAxis)
+            self.btnConfirm.setEnabled(False)
+        else:
+            self.lblContent.setText('...Please press foot pedal...')
+            layout.replaceWidget(self.wdgAxis, self.wdgPicture)
+            self.btnConfirm.setEnabled(True)
+            
+        self.bPress = bPress
+        
+    def SetValue(self, nAxisIndex:int, value):
+        if nAxisIndex == 1:
+            self.indicatorAxis1.setValue(value)
+        elif nAxisIndex == 2:
+            self.indicatorAxis2.setValue(value)
+            
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
