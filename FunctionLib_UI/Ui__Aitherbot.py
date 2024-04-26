@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\Leon\AitherBot_V2.1\FunctionLib_UI\_Aitherbot.ui'
+# Form implementation generated from reading ui file 'c:\Leon\AitherBot\AitherBot_V3.2\FunctionLib_UI\_Aitherbot.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -110,7 +110,7 @@ class Ui_MainWindow(object):
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_23.addItem(spacerItem4, 5, 3, 1, 1)
         self.wdgGuidance = WidgetButton(self.wdgModeSelection)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgGuidance.sizePolicy().hasHeightForWidth())
@@ -151,7 +151,7 @@ class Ui_MainWindow(object):
         self.gridLayout_23.addItem(spacerItem7, 5, 0, 1, 1)
         self.wdgPlanning = WidgetButton(self.wdgModeSelection)
         self.wdgPlanning.setEnabled(False)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.wdgPlanning.sizePolicy().hasHeightForWidth())
@@ -502,41 +502,6 @@ class Ui_MainWindow(object):
 "}")
         self.btnUnlockRobot.setObjectName("btnUnlockRobot")
         self.horizontalLayout_28.addWidget(self.btnUnlockRobot)
-        self.btnUnlockConfirm = QtWidgets.QPushButton(self.pgUnlockRobot)
-        self.btnUnlockConfirm.setEnabled(False)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btnUnlockConfirm.sizePolicy().hasHeightForWidth())
-        self.btnUnlockConfirm.setSizePolicy(sizePolicy)
-        self.btnUnlockConfirm.setMinimumSize(QtCore.QSize(324, 150))
-        self.btnUnlockConfirm.setStyleSheet("QPushButton{\n"
-"font: 48pt \"Arial\";\n"
-"color:#666666;\n"
-"border-radius:24px;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
-"padding: 0px 20px;\n"
-"margin-bottom:5px;\n"
-"margin-right:3px;\n"
-"}\n"
-"\n"
-"QPushButton:hover{\n"
-"color:#aa3333;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
-"}\n"
-"\n"
-"QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
-"}\n"
-"\n"
-"QPushButton:disabled{\n"
-"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
-"}")
-        self.btnUnlockConfirm.setObjectName("btnUnlockConfirm")
-        self.horizontalLayout_28.addWidget(self.btnUnlockConfirm)
         spacerItem18 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_28.addItem(spacerItem18)
         self.gridLayout_38.addLayout(self.horizontalLayout_28, 1, 0, 1, 2)
@@ -1409,57 +1374,11 @@ class Ui_MainWindow(object):
         self.label_title_15.setAlignment(QtCore.Qt.AlignCenter)
         self.label_title_15.setObjectName("label_title_15")
         self.gridLayout_39.addWidget(self.label_title_15, 0, 0, 1, 2)
-        self.wdgPositionRobotPicture = QtWidgets.QWidget(self.pgPositionRobot)
-        self.wdgPositionRobotPicture.setStyleSheet("image:url(image/pedal_unlock.png)")
-        self.wdgPositionRobotPicture.setObjectName("wdgPositionRobotPicture")
-        self.gridLayout_39.addWidget(self.wdgPositionRobotPicture, 1, 0, 1, 1)
-        self.lblPositionRobot = QtWidgets.QLabel(self.pgPositionRobot)
-        self.lblPositionRobot.setStyleSheet("color:rgb(255, 255, 255);\n"
-"font: 24pt \"Arial\";")
-        self.lblPositionRobot.setTextFormat(QtCore.Qt.RichText)
-        self.lblPositionRobot.setWordWrap(True)
-        self.lblPositionRobot.setObjectName("lblPositionRobot")
-        self.gridLayout_39.addWidget(self.lblPositionRobot, 1, 1, 1, 1)
         self.horizontalLayout_29 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_29.setObjectName("horizontalLayout_29")
         spacerItem33 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_29.addItem(spacerItem33)
-        self.btnRobotRelease_2 = QtWidgets.QPushButton(self.pgPositionRobot)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btnRobotRelease_2.sizePolicy().hasHeightForWidth())
-        self.btnRobotRelease_2.setSizePolicy(sizePolicy)
-        self.btnRobotRelease_2.setMinimumSize(QtCore.QSize(324, 150))
-        self.btnRobotRelease_2.setStyleSheet("QPushButton{\n"
-"font: 36pt \"Arial\";\n"
-"color:#666666;\n"
-"border-radius:24px;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
-"padding: 0px 20px;\n"
-"margin-bottom:5px;\n"
-"margin-right:3px;\n"
-"}\n"
-"\n"
-"QPushButton:hover{\n"
-"color:#aa3333;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
-"}\n"
-"\n"
-"QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
-"}\n"
-"\n"
-"QPushButton:disabled{\n"
-"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
-"}")
-        self.btnRobotRelease_2.setObjectName("btnRobotRelease_2")
-        self.horizontalLayout_29.addWidget(self.btnRobotRelease_2)
         self.btnRobotTarget = QtWidgets.QPushButton(self.pgPositionRobot)
-        self.btnRobotTarget.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1493,44 +1412,13 @@ class Ui_MainWindow(object):
 "}")
         self.btnRobotTarget.setObjectName("btnRobotTarget")
         self.horizontalLayout_29.addWidget(self.btnRobotTarget)
-        self.btnTargetRobotConfirm = QtWidgets.QPushButton(self.pgPositionRobot)
-        self.btnTargetRobotConfirm.setEnabled(False)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btnTargetRobotConfirm.sizePolicy().hasHeightForWidth())
-        self.btnTargetRobotConfirm.setSizePolicy(sizePolicy)
-        self.btnTargetRobotConfirm.setMinimumSize(QtCore.QSize(324, 150))
-        self.btnTargetRobotConfirm.setStyleSheet("QPushButton{\n"
-"font: 48pt \"Arial\";\n"
-"color:#666666;\n"
-"border-radius:24px;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
-"padding: 0px 20px;\n"
-"margin-bottom:5px;\n"
-"margin-right:3px;\n"
-"}\n"
-"\n"
-"QPushButton:hover{\n"
-"color:#aa3333;\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
-"}\n"
-"\n"
-"QPushButton:pressed{\n"
-"margin-top:5px;\n"
-"margin-bottom:0px;\n"
-"margin-left:3px;\n"
-"margin-right:0px;\n"
-"}\n"
-"\n"
-"QPushButton:disabled{\n"
-"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
-"}")
-        self.btnTargetRobotConfirm.setObjectName("btnTargetRobotConfirm")
-        self.horizontalLayout_29.addWidget(self.btnTargetRobotConfirm)
         spacerItem34 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_29.addItem(spacerItem34)
         self.gridLayout_39.addLayout(self.horizontalLayout_29, 2, 0, 1, 2)
+        self.wdgPositionRobotPicture = QtWidgets.QWidget(self.pgPositionRobot)
+        self.wdgPositionRobotPicture.setStyleSheet("image:url(image/foot_pedal_and_mark_entry.png)")
+        self.wdgPositionRobotPicture.setObjectName("wdgPositionRobotPicture")
+        self.gridLayout_39.addWidget(self.wdgPositionRobotPicture, 1, 0, 1, 2)
         self.gridLayout_39.setColumnStretch(0, 4)
         self.gridLayout_39.setColumnStretch(1, 3)
         self.gridLayout_39.setRowStretch(1, 1)
@@ -3071,8 +2959,8 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.stkMain.setCurrentIndex(0)
-        self.stkScene.setCurrentIndex(13)
+        self.stkMain.setCurrentIndex(2)
+        self.stkScene.setCurrentIndex(9)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -3095,9 +2983,7 @@ class Ui_MainWindow(object):
         self.btnConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm_2.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnNext_scanCT_2.clicked.connect(MainWindow.NextScene) # type: ignore
-        self.btnUnlockConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnNext_settingRobot.clicked.connect(MainWindow.NextScene) # type: ignore
-        self.btnTargetRobotConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -3125,7 +3011,6 @@ class Ui_MainWindow(object):
         self.btnRobotBackTarget.setText(_translate("MainWindow", "Back To Target"))
         self.lblUnlockRobot.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">Press pedal to </span><span style=\" font-size:24pt; color:#ff0000;\">unlock robot</span><span style=\" font-size:24pt;\"> and position robot arm</span></p></body></html>"))
         self.btnUnlockRobot.setText(_translate("MainWindow", "Unlock"))
-        self.btnUnlockConfirm.setText(_translate("MainWindow", "Confirm"))
         self.lblDirections.setText(_translate("MainWindow", "Please put the AitherBot on homing platform first."))
         self.btnNext_confirmHomingStep1.setText(_translate("MainWindow", "Confirm"))
         self.label_7.setText(_translate("MainWindow", "Making sure there is clear around the AitherBot"))
@@ -3159,12 +3044,8 @@ class Ui_MainWindow(object):
         self.btnNext_settingRobot.setText(_translate("MainWindow", "Confirm"))
         self.label_8.setText(_translate("MainWindow", "Please put the locator at the end-effector of AitherBot."))
         self.label_title_15.setText(_translate("MainWindow", "Position robot"))
-        self.lblPositionRobot.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">1. release robot arm</span></p><p><span style=\" font-size:24pt;\">2. set to target position</span></p><p><span style=\" font-size:24pt;\">3. confirm to fix robot and continue</span></p></body></html>"))
-        self.btnRobotRelease_2.setText(_translate("MainWindow", "robot\n"
-" Release"))
         self.btnRobotTarget.setText(_translate("MainWindow", "robot\n"
 " Targeting"))
-        self.btnTargetRobotConfirm.setText(_translate("MainWindow", "Confirm"))
         self.label_title_10.setText(_translate("MainWindow", "Inhale CT Scan"))
         self.tbsCTScan.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>847</width>
-    <height>736</height>
+    <height>865</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,17 +27,83 @@ margin-top:10px;
 }
 
 QWidget{
-font: 36pt &quot;Arial&quot;;
-color: rgb(255, 255, 0);
+font: 24pt &quot;Arial&quot;;
+}
+
+QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
+}
+
+#lblDescription{
+	color:rgb(255, 255, 255);
+	font: 24pt &quot;Arial&quot;;
 }</string>
   </property>
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0">
+  <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0,0,0">
    <property name="topMargin">
     <number>80</number>
    </property>
+   <property name="verticalSpacing">
+    <number>7</number>
+   </property>
+   <item row="3" column="0">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="btnConfirm">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>150</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Position Confirm</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="lblContent">
+     <property name="text">
+      <string>...Please press foot pedal...</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QWidget" name="wdgPicture" native="true">
      <property name="sizePolicy">
@@ -58,12 +124,9 @@ color: rgb(255, 255, 0);
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QLabel" name="lblContent">
+    <widget class="QLabel" name="lblDescription">
      <property name="text">
-      <string>...Please press foot pedal...</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <string/>
      </property>
     </widget>
    </item>

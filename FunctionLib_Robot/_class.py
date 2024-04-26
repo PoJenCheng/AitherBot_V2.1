@@ -350,6 +350,7 @@ class OperationLight():
 
 class RobotSupportArm(QObject):
     signalPedalPress = pyqtSignal(bool)
+    signalTargetArrived = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -420,7 +421,7 @@ class RobotSupportArm(QObject):
     def BackToTargetPos(self):
         self.CaliEncoder1()
         self.CaliEncoder2()
-        
+        self.signalTargetArrived.emit()
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
     signalInitFailed = pyqtSignal(int)
