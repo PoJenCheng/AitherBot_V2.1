@@ -249,6 +249,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotBackTarget.setEnabled(False)
         self.settingTarget = False
         
+        # 當有設定過target會變成True, 進入drive robot觸發調整support arm流程後False, 第二次以後就不再觸發
+        # 直到下次target再次被設定過
+        self.bTargetSetSwitch = False 
+        
         self.dlgFootPedal = None
         
         self.init_ui()
@@ -1274,6 +1278,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.stkScene.setCurrentWidget(self.pgImportDicom)
         
     def OnClicked_btnDriveConfirm(self):
+        
         nStep = self.wdgStep.Next()
         
         if nStep == 2:
@@ -1299,7 +1304,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.lblDescription.setText('')
             self.Robot_FixArm()
             self.wdgPicture.setStyleSheet('image:url(image/robot_back_target.png);')
+            self.btnUnlockRobot_2.setHidden(True)
             self.btnDriveConfirm.setHidden(True)
+            self.btnRobotResume.setHidden(False)
         elif nStep == 4:
             # self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
             self.stkScene.setCurrentWidget(self.pgImageView)
@@ -1669,7 +1676,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
-            self.NextScene()
+            if self.bTargetSetSwitch == True:
+                self.bTargetSetSwitch = False
+                self.btnUnlockRobot_2.setHidden(False)
+                self.btnDriveConfirm.setHidden(False)
+                self.btnRobotResume.setHidden(True)
+                self.btnUnlockRobot_2.setEnabled(False)
+                self.NextScene()
         
     def OnSelection(self):
         tbsObj:QTextBrowser = self.sender()
@@ -1866,7 +1879,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
             
-            # self.stkScene.setCurrentWidget(self.pgLaser)
+            self.stkScene.setCurrentWidget(self.pgLaser)
         elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -2857,6 +2870,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnRobotResume.setEnabled(False)
         self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
+        self.bTargetSetSwitch = True
         print('setting robot target')
         
     def Robot_FixAndTarget(self):
@@ -3951,6 +3965,7 @@ class DlgResumeSupportArm(DlgFootPedal):
         self.btnConfirm.setHidden(True)
         
         self.wdgAxis = QWidget()
+        self.wdgAxis.setMaximumHeight(200)
         layout = QVBoxLayout(self.wdgAxis)
         
         self.indicatorAxis1 = Indicator(TYPE_ROBOTARM)
@@ -3964,10 +3979,14 @@ class DlgResumeSupportArm(DlgFootPedal):
         if bPress:
             self.lblContent.setText('...Unlocked, move robot arm by hand...')
             layout.replaceWidget(self.wdgPicture, self.wdgAxis)
+            self.wdgPicture.setHidden(True)
+            self.wdgAxis.setHidden(False)
             self.btnConfirm.setEnabled(False)
         else:
             self.lblContent.setText('...Please press foot pedal...')
             layout.replaceWidget(self.wdgAxis, self.wdgPicture)
+            self.wdgPicture.setHidden(False)
+            self.wdgAxis.setHidden(True)
             self.btnConfirm.setEnabled(True)
             
         self.bPress = bPress

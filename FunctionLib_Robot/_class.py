@@ -367,7 +367,7 @@ class RobotSupportArm(QObject):
         self.SupportMove = 'GVL.SupportMove'
         self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
         self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
-        self.Tolerance = 1000
+        self.Tolerance = 100
         self.frequency = 1000
         self.duration = 1000
         
