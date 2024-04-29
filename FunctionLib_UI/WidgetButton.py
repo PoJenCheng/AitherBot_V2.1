@@ -144,12 +144,33 @@ class Indicator(QWidget):
         
         self.value = 0  
         self.uidType = indicatorType
+        self.greenZoneColor = QColor(0, 255, 0)
+        self.greenZoneWidth = 0.01
         self.setStyleSheet('border:none')
 
     def setValue(self, value):
         # 設定值，更新畫面
         self.value = value
         self.update()
+        
+    # 輸入原始數值而不是輸入百分比，計算綠區的寬度
+    # 最大值 / 最小值為 5000 ~ -5000, 超過範圍 greenZoneWidth = 0.01
+    def setRawValue(self, value):
+            
+        absValue = abs(value)
+        if absValue < 5000:
+            self.greenZoneWidth = 100 / (absValue * 2)
+            
+            if absValue <= 500:
+                self.greenZoneWidth = 0.1
+                self.value = (value + 500) * 0.1
+                return
+            
+        # 此計算出的數值不是 0 就是 100
+        self.value = (((value / absValue) + 1) // 2) * 100
+        
+    def setGreenZone(self, color:QColor):
+        self.greenZoneColor = color
         
     def move(self, value):
         self.value = max(0, min(self.value + value, 100))
@@ -167,13 +188,13 @@ class Indicator(QWidget):
             
             # 計算左側紅區範圍
             rtRedZoneLeft_x = self.pointer_width * 0.5
-            rtRedZoneLeft_Width = rect_width * 0.495
+            rtRedZoneLeft_Width = rect_width * (0.5 - self.greenZoneWidth * 0.5)
             rect = QRectF(rtRedZoneLeft_x, 0, rtRedZoneLeft_Width, rect_height)
             
             # 設定左側紅區漸層色
             linearLeft = QLinearGradient(rtRedZoneLeft_x, 0, rtRedZoneLeft_x + rtRedZoneLeft_Width, 0)
             linearLeft.setColorAt(0, QColor(255, 0, 0))
-            linearLeft.setColorAt(1, QColor(0, 255, 0))
+            linearLeft.setColorAt(1, self.greenZoneColor)
             
             # 繪製左側紅區
             painter.setBrush(linearLeft)
@@ -181,21 +202,21 @@ class Indicator(QWidget):
             
             # 計算中間綠區範圍
             rtGreenZone_x = rtRedZoneLeft_x + rtRedZoneLeft_Width
-            rtGreenZone_Width = rect_width * 0.01
+            rtGreenZone_Width = rect_width * self.greenZoneWidth
             rect = QRectF(rtGreenZone_x, 0, rtGreenZone_Width, rect_height)
             
             # 設定綠區顏色(單一色:綠色)並綠製
-            painter.setBrush(QColor(0, 255, 0))
+            painter.setBrush(self.greenZoneColor)
             painter.drawRect(rect)
             
             # 計算右側紅區範圍
             rtRedZoneRight_x = rtGreenZone_x + rtGreenZone_Width
-            rtRedZoneRight_Width = rect_width * 0.495
+            rtRedZoneRight_Width = rect_width * (0.5 - self.greenZoneWidth * 0.5)
             rect = QRectF(rtRedZoneRight_x, 0, rtRedZoneRight_Width, rect_height)
             
             # 設定右側紅區漸層色
             linearRight = QLinearGradient(rtRedZoneRight_x, 0, rtRedZoneRight_x + rtRedZoneRight_Width, 0)
-            linearRight.setColorAt(0, QColor(0, 255, 0))
+            linearRight.setColorAt(0, self.greenZoneColor)
             linearRight.setColorAt(1, QColor(255, 0, 0))
             
             # 繪製右側紅區

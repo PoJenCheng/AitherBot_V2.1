@@ -2772,10 +2772,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.OnClicked_btnDriveConfirm()
         
     def Robot_OnSignalAxisValue(self, nAxisIndex:int, diffValue:float):
+        greenZoneColor = QColor(0, 255, 0)
+        if abs(diffValue) > 5000:        
+            num = 52
+            colorRed = np.linspace(0, 255, num, dtype = int)
+            colorGreen = np.linspace(255, 0, num, dtype = int)
+            index = (abs(diffValue) - 5000) // 500 + 1
+            index = min(num - 1, index)
+        
+            greenZoneColor = QColor(colorRed[index], colorGreen[index], 0)
         # 將數值-5000 ~ 5000轉換成 0 ~ 100
-        diffValue = (diffValue + 5000) * 0.01
+        # diffValue = (diffValue + 5000) * 0.01
         if self.dlgFootPedal is not None:
-            self.dlgFootPedal.SetValue(nAxisIndex, diffValue)
+            self.dlgFootPedal.SetValue(nAxisIndex, diffValue, greenZoneColor)
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
@@ -3912,7 +3921,6 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
         size.setHeight(size.height() + 80)
         self.setFixedSize(size)
         
-        self.imagePress = 'image:url(image/foot_pedal_press.png)'
         self.alpha = 255
         self.bPress = False
         self.increment = -20
@@ -3938,21 +3946,20 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
     def SetPress(self, bPress:bool):
         if bPress:
             self.lblContent.setText('...Unlocked, move robot arm by hand...')
-            self.wdgPicture.setStyleSheet(self.imagePress)
+            self.wdgPicture.setCurrentWidget(self.pgPedalPress)
             self.btnConfirm.setEnabled(False)
         else:
             self.lblContent.setText('...Please press foot pedal...')
-            self.wdgPicture.setStyleSheet('image:url(image/foot_pedal.png)')
+            self.wdgPicture.setCurrentWidget(self.pgPedal)
             self.btnConfirm.setEnabled(True)
             
         self.bPress = bPress
         
     def SetPressImage(self, strImageName:str):
-        self.imagePress = f'image:url(image/{strImageName})'
+        self.pgPedalPress.setStyleSheet(f'image:url(image/{strImageName})')
         
     def SetText(self, text:str):
         self.lblDescription.setText(text)
-        
         
     def OnClick_btnConfirm(self):
         self.signalClose.emit()
@@ -3962,41 +3969,76 @@ class DlgResumeSupportArm(DlgFootPedal):
     def __init__(self):
         super().__init__()
         
+        self.lastValue = None
+        
         self.btnConfirm.setHidden(True)
         
-        self.wdgAxis = QWidget()
-        self.wdgAxis.setMaximumHeight(200)
-        layout = QVBoxLayout(self.wdgAxis)
+        layoutAxis1 = QVBoxLayout(self.wdgIndicatorAxis1)
+        layoutAxis1.setContentsMargins(0, 0, 0, 0)
+        
+        layoutAxis2 = QVBoxLayout(self.wdgIndicatorAxis2)
+        layoutAxis2.setContentsMargins(0, 0, 0, 0)
         
         self.indicatorAxis1 = Indicator(TYPE_ROBOTARM)
         self.indicatorAxis2 = Indicator(TYPE_ROBOTARM)
         
-        layout.addWidget(self.indicatorAxis1)
-        layout.addWidget(self.indicatorAxis2)
+        layoutAxis1.addWidget(self.indicatorAxis1)
+        layoutAxis2.addWidget(self.indicatorAxis2)
         
     def SetPress(self, bPress:bool):
-        layout = self.wdgPicture.parentWidget().layout()
+        # layout = self.wdgPicture.parentWidget().layout()
+        # if bPress:
+        #     self.lblContent.setText('...Unlocked, move robot arm by hand...')
+        #     layout.replaceWidget(self.wdgPicture, self.wdgAxis)
+        #     self.wdgPicture.setHidden(True)
+        #     self.wdgAxis.setHidden(False)
+        #     self.btnConfirm.setEnabled(False)
+        # else:
+        #     self.lblContent.setText('...Please press foot pedal...')
+        #     layout.replaceWidget(self.wdgAxis, self.wdgPicture)
+        #     self.wdgPicture.setHidden(False)
+        #     self.wdgAxis.setHidden(True)
+        #     self.btnConfirm.setEnabled(True)
+        
         if bPress:
             self.lblContent.setText('...Unlocked, move robot arm by hand...')
-            layout.replaceWidget(self.wdgPicture, self.wdgAxis)
-            self.wdgPicture.setHidden(True)
-            self.wdgAxis.setHidden(False)
+            self.wdgPicture.setCurrentWidget(self.pgSupportArm)
             self.btnConfirm.setEnabled(False)
         else:
             self.lblContent.setText('...Please press foot pedal...')
-            layout.replaceWidget(self.wdgAxis, self.wdgPicture)
-            self.wdgPicture.setHidden(False)
-            self.wdgAxis.setHidden(True)
+            self.wdgPicture.setCurrentWidget(self.pgPedal)
             self.btnConfirm.setEnabled(True)
             
         self.bPress = bPress
         
-    def SetValue(self, nAxisIndex:int, value):
+    def SetValue(self, nAxisIndex:int, value, color):
         if nAxisIndex == 1:
-            self.indicatorAxis1.setValue(value)
-        elif nAxisIndex == 2:
-            self.indicatorAxis2.setValue(value)
+            self.indicatorAxis1.setRawValue(value)
+            self.indicatorAxis1.setGreenZone(color)
             
+            if self.lastValue is not None:
+                diff = value - self.lastValue
+                
+                # support arm 旋轉方向偏離中心
+                if value * diff > 0:
+                    self.lblHintAxis1.setText('turn support arm to another direction')
+                else:
+                    self.lblHintAxis1.setText('')
+                    
+                    
+        elif nAxisIndex == 2:
+            self.indicatorAxis2.setRawValue(value)
+            self.indicatorAxis2.setGreenZone(color)
+            
+            if self.lastValue is not None:
+                diff = value - self.lastValue
+                # support arm 旋轉方向偏離中心
+                if value * diff > 0:
+                    self.lblHintAxis2.setText('turn support arm to another direction')
+                else:
+                    self.lblHintAxis2.setText('')
+        
+        self.lastValue = value
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
