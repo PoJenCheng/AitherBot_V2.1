@@ -370,6 +370,10 @@ class RobotSupportArm(QObject):
         self.Tolerance = 100
         self.frequency = 1000
         self.duration = 1000
+        self.TargetEn1 = None
+        self.TargetEn2 = None
+        # 是否偏離target
+        self.bRobotMoveFromTarget = True
         
         self.plc.write_by_name(self.EnableSupportEn1,False) 
         self.plc.write_by_name(self.EnableSupportEn2,False)
@@ -377,7 +381,19 @@ class RobotSupportArm(QObject):
     def ReadEncoder(self):
         En1 = self.plc.read_by_name(self.RobotArmEn1)
         En2 = self.plc.read_by_name(self.RobotArmEn2)
+        if self.TargetEn1 is not None and self.TargetEn2 is not None:
+            diff1 = En1 - self.TargetEn1
+            diff2 = En2 - self.TargetEn2
+            if abs(diff1) < self.Tolerance + 500 and abs(diff2) < self.Tolerance + 500:
+                self.bRobotMoveFromTarget = False
+            else:
+                self.bRobotMoveFromTarget = True
         return En1, En2
+    
+    def ReadPedal(self):
+        bPress = self.plc.read_by_name(self.SupportMove)
+        self.signalPedalPress.emit(bPress)
+        
     
     def ReleaseAllEncoder(self):
         Release = self.plc.read_by_name(self.SupportMove)
@@ -386,12 +402,15 @@ class RobotSupportArm(QObject):
             self.plc.write_by_name(self.EnableSupportEn2,True)
             Release = self.plc.read_by_name(self.SupportMove)
             self.signalPedalPress.emit(Release)
-                            
+        
         self.plc.write_by_name(self.EnableSupportEn1,False) 
         self.plc.write_by_name(self.EnableSupportEn2,False)
+        return self.ReadEncoder()
     
     def SetTargetPos(self):
         self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
+        self.bRobotMoveFromTarget = False
+        return self.TargetEn1, self.TargetEn2
     
     def CaliEncoder1(self):
         caliStatus  = False
@@ -426,7 +445,11 @@ class RobotSupportArm(QObject):
     def BackToTargetPos(self):
         self.CaliEncoder1()
         self.CaliEncoder2()
+        sleep(0.5)
         self.signalTargetArrived.emit()
+        
+    def IsMove(self):
+        return self.bRobotMoveFromTarget
 
 class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
     signalInitFailed = pyqtSignal(int)
@@ -1756,7 +1779,9 @@ class LineLaser(MOTORCONTROL, QObject):
         # for item in self.percentageBase.items():
         for item in self.percentageBase.values():
             # self.avgValueList.append(list(item)[1][0])
-            self.avgValueList.append(item)
+            avg, _ = item
+            # self.avgValueList.append(item)
+            self.avgValueList.append(avg)
         # minValue = min(self.avgValueList)
         # maxValue = max(self.avgValueList)
         self.avgValueList = sorted(self.avgValueList, reverse=True)
@@ -1777,7 +1802,8 @@ class LineLaser(MOTORCONTROL, QObject):
         #         pass
         
         sleep(0.01)
-        self.signalBreathingRatio.emit(meanPercentage)
+        if meanPercentage is not None:
+            self.signalBreathingRatio.emit(meanPercentage)
         return meanPercentage
         
         # except:

@@ -95,7 +95,7 @@ class Ui_DlgFootPedal(object):
         self.wdgPicture.setStyleSheet("background-color: rgb(77, 140, 187);")
         self.wdgPicture.setObjectName("wdgPicture")
         self.pgPedal = QtWidgets.QWidget()
-        self.pgPedal.setStyleSheet("image:url(image/foot_pedal.png)")
+        self.pgPedal.setStyleSheet("image:url(image/foot_pedal_and_drag.png)")
         self.pgPedal.setObjectName("pgPedal")
         self.wdgPicture.addWidget(self.pgPedal)
         self.pgPedalPress = QtWidgets.QWidget()

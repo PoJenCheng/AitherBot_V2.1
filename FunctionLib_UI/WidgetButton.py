@@ -155,19 +155,25 @@ class Indicator(QWidget):
         
     # 輸入原始數值而不是輸入百分比，計算綠區的寬度
     # 最大值 / 最小值為 5000 ~ -5000, 超過範圍 greenZoneWidth = 0.01
+    # support arm tolerence +-100, total width = 200
     def setRawValue(self, value):
             
         absValue = abs(value)
         if absValue < 5000:
-            self.greenZoneWidth = 100 / (absValue * 2)
-            
-            if absValue <= 500:
-                self.greenZoneWidth = 0.1
-                self.value = (value + 500) * 0.1
+            if absValue <= 1000:
+                self.greenZoneWidth = 0.2
+                self.value = (value + 1000) * 0.05
+                self.update()
                 return
+            else:
+                self.greenZoneWidth = 200 / (absValue * 2)
             
         # 此計算出的數值不是 0 就是 100
-        self.value = (((value / absValue) + 1) // 2) * 100
+        if absValue == 0:
+            self.value = 0
+        else:
+            self.value = (((value / absValue) + 1) // 2) * 100
+        self.update()
         
     def setGreenZone(self, color:QColor):
         self.greenZoneColor = color
@@ -328,6 +334,68 @@ class Indicator(QWidget):
 
             painter.setBrush(QColor(255, 255, 255))  
             painter.drawPolygon(pointer)  
+        
+class AnimationWidget(QWidget):
+    timePool = []
+    signalIdle = pyqtSignal()
+    def __init__(self, imagePath:str, parent = None):
+        super().__init__(parent)
+        
+        self.image = QImage(imagePath)
+        self.opacity = 0
+        self.opacityStep = 1
+        
+        self.setMinimumHeight(150)
+        
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.startAnimation)
+        self.timePool.append(self.timer)
+        # self.timer.start(50)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setOpacity(self.opacity * 0.1)
+        
+        width = self.width()
+        rcImage = self.image.rect()
+        shift = int((width - rcImage.width()) * 0.5)
+        rcImage.moveLeft(shift)
+        painter.drawImage(QRectF(rcImage), self.image)
+        super().paintEvent(event)
+        
+    def startAnimation(self):
+        self.opacity = max(0, min(10, self.opacity + self.opacityStep))
+        if self.opacity == 0 or self.opacity == 10:
+            self.opacityStep *= -1
+            
+        self.update()
+        self.signalIdle.emit()
+        
+    def IsActive(self):
+        return self.timer.isActive()
+        
+    def Start(self):
+        for timer in self.timePool:
+            if timer.isActive():
+                timer.stop()
+                
+        for item in self.children():
+            if isinstance(item, QWidget):
+                item.setHidden(True)
+                
+        self.timer.start(50)
+        
+    def Stop(self):
+        self.timer.stop()
+        for item in self.children():
+            if isinstance(item, QWidget):
+                item.setHidden(False)
+                
+        self.opacity = 0
+        self.opacityStep = 1
+        
+        
+    
         
 class MessageBox(QMessageBox):
     

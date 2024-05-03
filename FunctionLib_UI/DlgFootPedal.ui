@@ -136,7 +136,7 @@ QPushButton:disabled{
      </property>
      <widget class="QWidget" name="pgPedal">
       <property name="styleSheet">
-       <string notr="true">image:url(image/foot_pedal.png)</string>
+       <string notr="true">image:url(image/foot_pedal_and_drag.png)</string>
       </property>
      </widget>
      <widget class="QWidget" name="pgPedalPress">
