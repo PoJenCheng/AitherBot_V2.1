@@ -51,7 +51,7 @@
 }</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="pgHome">
        <layout class="QGridLayout" name="gridLayout_33">
@@ -1116,10 +1116,10 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>13</number>
+           <number>9</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
-           <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0">
+           <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0" columnstretch="2,1">
             <item row="0" column="0">
              <widget class="QWidget" name="wdgUnlockPicture" native="true">
               <property name="styleSheet">
@@ -1142,129 +1142,14 @@ color: rgb(255, 255, 255);</string>
              </widget>
             </item>
             <item row="1" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_28">
-              <item>
-               <spacer name="horizontalSpacer_36">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnUnlockRobot">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
-font: 48pt &quot;Arial&quot;;
-color:#666666;
-border-radius:24px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}
-
-QPushButton:disabled{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
-}</string>
-                </property>
-                <property name="text">
-                 <string>Unlock</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnUnlockConfirm">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
-font: 48pt &quot;Arial&quot;;
-color:#666666;
-border-radius:24px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}
-
-QPushButton:disabled{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
-}</string>
-                </property>
-                <property name="text">
-                 <string>Confirm</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_37">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+             <widget class="QWidget" name="wdgBottomUnlockRobot" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>150</height>
+               </size>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -2956,8 +2841,8 @@ color: rgb(255, 255, 208);</string>
            </layout>
           </widget>
           <widget class="QWidget" name="pgPositionRobot">
-           <layout class="QGridLayout" name="gridLayout_39" rowstretch="0,1,0" columnstretch="4,3">
-            <item row="0" column="0" colspan="2">
+           <layout class="QGridLayout" name="gridLayout_39" rowstretch="0,1,0">
+            <item row="0" column="0">
              <widget class="QLabel" name="label_title_15">
               <property name="minimumSize">
                <size>
@@ -2988,202 +2873,19 @@ color: rgb(255, 255, 208);</string>
             <item row="1" column="0">
              <widget class="QWidget" name="wdgPositionRobotPicture" native="true">
               <property name="styleSheet">
-               <string notr="true">image:url(image/pedal_unlock.png)</string>
+               <string notr="true">image:url(image/foot_pedal_and_mark_entry.png)</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="lblPositionRobot">
-              <property name="styleSheet">
-               <string notr="true">color:rgb(255, 255, 255);
-font: 24pt &quot;Arial&quot;;</string>
-              </property>
-              <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;1. release robot arm&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;2. set to target position&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;3. confirm to fix robot and continue&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="textFormat">
-               <enum>Qt::RichText</enum>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
+            <item row="2" column="0">
+             <widget class="QWidget" name="wdgBottomPositionRobot" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>150</height>
+               </size>
               </property>
              </widget>
-            </item>
-            <item row="2" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_29">
-              <item>
-               <spacer name="horizontalSpacer_40">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnRobotRelease_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
-font: 36pt &quot;Arial&quot;;
-color:#666666;
-border-radius:24px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}
-
-QPushButton:disabled{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
-}</string>
-                </property>
-                <property name="text">
-                 <string>robot
- Release</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnRobotTarget">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
-font: 36pt &quot;Arial&quot;;
-color:#666666;
-border-radius:24px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}
-
-QPushButton:disabled{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
-}</string>
-                </property>
-                <property name="text">
-                 <string>robot
- Targeting</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnTargetRobotConfirm">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
-font: 48pt &quot;Arial&quot;;
-color:#666666;
-border-radius:24px;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
-margin-bottom:5px;
-margin-right:3px;
-}
-
-QPushButton:hover{
-color:#aa3333;
-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
-}
-
-QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
-}
-
-QPushButton:disabled{
-	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
-}</string>
-                </property>
-                <property name="text">
-                 <string>Confirm</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_41">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
             </item>
            </layout>
           </widget>
@@ -5311,7 +5013,7 @@ font: 12px Arial;</string>
            <property name="styleSheet">
             <string notr="true">background-color: rgb(77, 140, 187);</string>
            </property>
-           <layout class="QGridLayout" name="gridLayout_37" rowstretch="0,1,0" columnstretch="4,3">
+           <layout class="QGridLayout" name="gridLayout_37" rowstretch="0,1,0" columnstretch="2,1">
             <item row="0" column="0" colspan="2">
              <widget class="QWidget" name="wdgGuideLine" native="true">
               <property name="minimumSize">
@@ -5343,39 +5045,52 @@ font: 16pt &quot;Arial&quot;;</string>
              </widget>
             </item>
             <item row="2" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_15">
-              <item>
-               <spacer name="horizontalSpacer_38">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnUnlockRobot_2">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
+             <widget class="QWidget" name="wdgBottom" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout_15">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <spacer name="horizontalSpacer_38">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnUnlockRobot_2">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>324</width>
+                   <height>150</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton{
 font: 48pt &quot;Arial&quot;;
 color:#666666;
 border-radius:24px;
@@ -5400,31 +5115,31 @@ margin-right:0px;
 QPushButton:disabled{
 	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
 }</string>
-                </property>
-                <property name="text">
-                 <string>Unlock</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnRobotResume">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
+                 </property>
+                 <property name="text">
+                  <string>Unlock</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnRobotResume">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>324</width>
+                   <height>150</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton{
 font: 36pt &quot;Arial&quot;;
 color:#666666;
 border-radius:24px;
@@ -5449,29 +5164,29 @@ margin-right:0px;
 QPushButton:disabled{
 	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
 }</string>
-                </property>
-                <property name="text">
-                 <string>Resume
+                 </property>
+                 <property name="text">
+                  <string>Resume
 Target</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnDriveConfirm">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>324</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton{
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnDriveConfirm">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>324</width>
+                   <height>150</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton{
 font: 48pt &quot;Arial&quot;;
 color:#666666;
 border-radius:24px;
@@ -5496,26 +5211,27 @@ margin-right:0px;
 QPushButton:disabled{
 	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
 }</string>
-                </property>
-                <property name="text">
-                 <string>Confirm</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_39">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+                 </property>
+                 <property name="text">
+                  <string>Confirm</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_39">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -6464,22 +6180,6 @@ margin-right:0px;
    </hints>
   </connection>
   <connection>
-   <sender>btnUnlockConfirm</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>NextScene()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1157</x>
-     <y>861</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>942</x>
-     <y>-9</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>btnNext_settingRobot</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -6492,22 +6192,6 @@ margin-right:0px;
     <hint type="destinationlabel">
      <x>592</x>
      <y>-7</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>btnTargetRobotConfirm</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>NextScene()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1326</x>
-     <y>907</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1199</x>
-     <y>1035</y>
     </hint>
    </hints>
   </connection>

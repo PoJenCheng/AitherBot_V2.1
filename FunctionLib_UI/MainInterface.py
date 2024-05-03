@@ -21,14 +21,14 @@ import threading
 import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
-import FunctionLib_UI.Ui_FootPedal
+import FunctionLib_UI.Ui_DlgFootPedal
 from FunctionLib_UI.Ui__Aitherbot import *
 import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
-from FunctionLib_UI.Ui_FootPedal import *
+from FunctionLib_UI.Ui_DlgFootPedal import *
 from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
@@ -69,6 +69,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     player = QMediaPlayer()
     robot = None
+    RobotSupportArm = None
     
     vtkImageLow = None
     vtkImageHigh = None
@@ -99,6 +100,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     errDevice = 0
     idEnabledDevice = 0
+    bSterile = False
     
     dicStageFinished = {STAGE_ROBOT:False, STAGE_LASER:False, STAGE_DICOM:False, STAGE_IMAGE:False}
     #robot parameter
@@ -232,8 +234,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.replaceWidget(self.wdgGuideLine, wdgStep)
         self.wdgStep = wdgStep
         
+        self.wdgAnimateUnlock = AnimationWidget('image/foot_pedal_press_hint.png')
+        layout = QHBoxLayout(self.wdgBottomUnlockRobot)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.wdgAnimateUnlock)
         
-        
+        self.wdgAnimatePositionRobot = AnimationWidget('image/foot_pedal_press_hint.png')
+        layout = QHBoxLayout(self.wdgBottomPositionRobot)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.wdgAnimatePositionRobot)
         
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
@@ -250,12 +259,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
+        self.homeStatus = False
         self.settingTarget = False
-        
         self.dlgFootPedal = None
-        
+        self.dlgResumeSupportArm = None
         
         self.init_ui()
+        
         
     def addCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -739,13 +749,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
         
-        self.btnUnlockRobot.clicked.connect(self.Robot_ReleaseArm)
-        
         self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
-        
-        self.btnRobotRelease_2.clicked.connect(self.Robot_ReleaseArm)
-        self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
+        # self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
         self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
+        
+        self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
+        
+        layout = self.wdgBottom.parentWidget().layout()
+        layout.replaceWidget(self.wdgBottom, self.wdgAnimate)
+        
+        layoutAnimate = QVBoxLayout(self.wdgAnimate)
+        layoutAnimate.setContentsMargins(0, 0, 0, 0)
+        layoutAnimate.addWidget(self.wdgBottom)
+        
+        self.wdgAnimateUnlock.signalIdle.connect(self.Robot_GetPedal)
+        self.wdgAnimatePositionRobot.signalIdle.connect(self.Robot_GetPedal)
+        self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
+        
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1144,27 +1164,35 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkMain.setCurrentWidget(self.page_loading)
         
     def OnClicked_btnDriveTo(self):
-        if self.language == LAN_CN:
-            translator = QTranslator()
-            translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
-            QCoreApplication.installTranslator(translator)
+        if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
+                self.btnUnlockRobot_2.setHidden(True)
+                self.btnDriveConfirm.setHidden(False)
+                self.btnRobotResume.setHidden(True)
+                self.btnUnlockRobot_2.setEnabled(False)
+                self.NextScene()
+                
+        else:
+            if self.language == LAN_CN:
+                translator = QTranslator()
+                translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
+                QCoreApplication.installTranslator(translator)
+                
+            self.Laser_OnTracking()
             
-        self.Laser_OnTracking()
-        
-        dlgDriveTo = DlgInstallAdaptor()
-        dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
-        dlgDriveTo.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        dlgDriveTo.setModal(True)
-        dlgDriveTo.exec_()
-        # self.listSubDialog.append(dlgDriveTo)
-        
-        # dlgRobotMoving = DlgRobotMoving()
-        # dlgRobotMoving.signalStop.connect(self.Robot_Stop)
-        # dlgRobotMoving.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        # dlgRobotMoving.setModal(True)
-        # dlgRobotMoving.exec_()
-        
-        self.stkSignalLight.setCurrentWidget(self.pgGreenLight)
+            dlgDriveTo = DlgInstallAdaptor()
+            dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+            dlgDriveTo.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            dlgDriveTo.setModal(True)
+            dlgDriveTo.exec_()
+            # self.listSubDialog.append(dlgDriveTo)
+            
+            # dlgRobotMoving = DlgRobotMoving()
+            # dlgRobotMoving.signalStop.connect(self.Robot_Stop)
+            # dlgRobotMoving.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            # dlgRobotMoving.setModal(True)
+            # dlgRobotMoving.exec_()
+            
+            self.stkSignalLight.setCurrentWidget(self.pgGreenLight)
         
     def OnClicked_btnCancel(self):
         self.stkScene.setCurrentIndex(self.indexPrePage)
@@ -1278,6 +1306,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.stkScene.setCurrentWidget(self.pgImportDicom)
         
     def OnClicked_btnDriveConfirm(self):
+        
         nStep = self.wdgStep.Next()
         
         if nStep == 2:
@@ -1285,26 +1314,42 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout = self.wdgPicture.layout()
             layout.removeWidget(self.tmpWidget)
             self.tmpWidget = None
-            self.wdgPicture.setStyleSheet('image:url(image/pedal_unlock.png);')
+            
+            if self.bSterile == True:
+                self.OnClicked_btnDriveConfirm()
+                return
+            
+            self.wdgPicture.setStyleSheet('image:url(image/foot_pedal_and_drapping.png);')
+            self.btnUnlockRobot_2.setHidden(True)
             self.btnUnlockRobot_2.setEnabled(True)
-            self.btnDriveConfirm.setEnabled(False)
+            self.btnDriveConfirm.setHidden(True)
             
             self.lblDescription.setText("""
                                         <div style='color:#FFFFD0'>
                                         <p>1. Press <span style='color:#f00'>Unlock button</span> to release robot arm</p>
                                         <p>2. Press <span style='color:#f00'>foot pedal</span> and move robot arm <span style='color:#f00'>by hand</span></p>
                                         <p>3. Make sure the position is <span style='color:#f00'>convenient for draping robot arm</span></p>
-                                        <p>4. Press Confirm to fix robot arm</p>
                                         </div>
                                         """)
+            self.wdgAnimate.Start()
         elif nStep == 3:
             # self.btnUnlockRobot_2.setEnabled(False)
-            
             self.lblDescription.setText('')
             self.Robot_FixArm()
-            self.wdgPicture.setStyleSheet('image:url(image/draping-rob-surgical.jpg);')
+            self.wdgPicture.setStyleSheet('image:url(image/robot_back_target.png);')
+            self.btnUnlockRobot_2.setText('Unlock')
+            # self.btnUnlockRobot_2.setEnabled(True)
+            self.btnUnlockRobot_2.setHidden(False)
+            self.btnUnlockRobot_2.setHidden(True)
+            self.btnDriveConfirm.setHidden(True)
+            self.btnRobotResume.setHidden(False)
+            # self.btnRobotResume.setHidden(True)
+            self.wdgAnimate.Start()
+            
         elif nStep == 4:
-            self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
+            # self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
+            self.stkScene.setCurrentWidget(self.pgImageView)
+            self.bSterile = True
         elif nStep is None:
             self.stkScene.setCurrentWidget(self.pgImageView)
     
@@ -1658,6 +1703,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     item = model.itemFromIndex(index)
         #     if item:
         #         print(f'item text = {item.text()}')
+    
     def OnToggled_buttonGroup(self, button:QAbstractButton, bChecked:bool):
         if bChecked:
             self.ChangeCurrentDicom(button.objectName())
@@ -1671,7 +1717,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
-            self.NextScene()
+            # if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
+            #     self.bTargetSetSwitch = False
+            #     self.btnUnlockRobot_2.setHidden(False)
+            #     self.btnDriveConfirm.setHidden(False)
+            #     self.btnRobotResume.setHidden(True)
+            #     self.btnUnlockRobot_2.setEnabled(False)
+            #     self.NextScene()
+            pass
         
     def OnSelection(self):
         tbsObj:QTextBrowser = self.sender()
@@ -1742,8 +1795,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnFromUSB:
                 ## 開啟視窗選取資料夾 ############################################################################################
                 # self.logUI.info('Import Dicom inhale/_Low')
+                currentPath = os.path.join(os.getcwd(), 'database')
+                
                 dlg = QFileDialog()
-                dlg.setDirectory('C:\\Leon\\CT')
+                dlg.setDirectory(currentPath)
                 dlg.setFileMode(QFileDialog.Directory)
                 dlg.setFilter(QDir.Files)
 
@@ -1756,8 +1811,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     return
             elif button == self.btnFromCD:
                 return
-            elif button == self.btnUnlockConfirm:
-                self.Robot_FixArm()
+            # elif button == self.btnUnlockConfirm:
+            #     self.Robot_FixArm()
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -1849,10 +1904,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
-            # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
+            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
             self.OperationLight = Robot.OperationLight()
+            
+            # self.dlgFootPedal = DlgFootPedal()
+            # self.dlgFootPedal.signalClose.connect(self.Robot_OnConfirmPosition)
             
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
@@ -1867,6 +1926,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
             
+            # self.stkScene.setCurrentWidget(self.pgLaser)
         elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -1876,8 +1936,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tRobot = threading.Thread(target = self.robot.Initialize)
             self.tRobot.start()
             
-            # self.RobotSupportArm = 100
             self.RobotSupportArm = Robot.RobotSupportArm()
+            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
+            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
             self.OperationLight = Robot.OperationLight()
         elif nDevice == DEVICE_LASER:
             self.stkScene.setCurrentWidget(self.pgLaser)
@@ -1924,17 +1986,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneView.setStyleSheet('')
             
     def SceneChanged(self, index):
-        
+        self.StopVedio()
         self.indexPrePage = self.indexCurrentPage
         self.indexCurrentPage = index
         currentWidget = self.stkScene.currentWidget()
-        if currentWidget == self.pgLaserAdjust:
-            # self.Laser = Robot.LineLaser()
-            # self.Laser.TriggerSetting(self)
+        if currentWidget == self.pgUnlockRobot:
+            self.wdgAnimateUnlock.Start()
+        elif currentWidget == self.pgLaserAdjust:
             self.Laser_ShowLaserProfile()
-        # elif currentWidget == self.pgModelBuilding:
-        #     self.btnStartBuildModel.setEnabled(True)
-        #     self.btnNext_startBuildModel.setEnabled(False)
         elif currentWidget == self.pgModelBuilding1:
             self.btnStartBuildModel_2.setEnabled(True)
             self.btnNext_startBuildModel_2.setEnabled(False)
@@ -1946,29 +2005,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnImport.setEnabled(True)
             
             self.dlgHint = DlgHint()
-            # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
             self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
             self.dlgHint.setWindowFlags(self.dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
-            # self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
             self.dlgHint.show()
             self.listSubDialog.append(self.dlgHint)
-            # if self.bDicomChanged:
-            #     self.importDicom('C:\\Leon\\CT')
-                # self.importDicom('C:\\Leon\\dicom_test')
             
         elif currentWidget == self.pgRobotRegSphere:
-            # self.player.stop()
-            
-            self.StopVedio()
             self.playVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
-            
+        elif currentWidget == self.pgPositionRobot:
+            self.wdgAnimatePositionRobot.Start()
         elif currentWidget == self.pgRobotSupportArm:
-            # self.player.stop()
-            self.StopVedio()
             self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
-            self.StopVedio()
             self.btnDriveConfirm.setEnabled(True)
             self.btnUnlockRobot_2.setEnabled(False)
             self.btnRobotResume.setEnabled(False)
@@ -1977,6 +2026,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tmpWidget.setMinimumSize(800, 600)
             tmpWidget.setMaximumSize(800, 600)
             
+            self.wdgPicture.setStyleSheet('')
             layout = self.wdgPicture.layout()
             if layout is None:
                 layout = QHBoxLayout(self.wdgPicture)
@@ -1985,14 +2035,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tmpWidget = tmpWidget
             self.playVedio(self.tmpWidget, 'video/InstallHolder.mp4')
         elif currentWidget == self.pgSterileStep1:
-            # self.player.stop()
-            self.StopVedio()
             self.playVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
-        else:
-            # self.player.stop()
-            self.StopVedio()
         
         self.CheckStage(index)
         
@@ -2249,6 +2294,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def onSignal_LoadingReady(self):
         index = self.stkMain.currentIndex()
         self.stkMain.setCurrentIndex(index + 1)
+        if self.stkScene.currentWidget() == self.pgUnlockRobot:
+            self.wdgAnimateUnlock.Start()
         
     def onSignal_ModelBuilding(self, bValid):
         if bValid:
@@ -2720,7 +2767,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
         
         self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.uiHoming.setModal(False)
+        self.uiHoming.setModal(True)
         self.uiHoming.exec_()
         self.listSubDialog.append(self.uiHoming)
         # self.NextScene()
@@ -2742,10 +2789,57 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.RobotRun()
                 
     def Robot_OnSignalFootPedal(self, bPress:bool):
-        print(f'foot pedal press:{bPress}')
-        if self.dlgFootPedal is not None and bPress == True:
-            self.dlgFootPedal.close()
-            self.dlgFootPedal = None
+        if bPress:
+            currentWidget = self.stkScene.currentWidget()
+            if self.wdgAnimateUnlock.IsActive():
+                self.wdgAnimateUnlock.Stop()
+                self.Robot_ReleaseArm()
+            elif self.wdgAnimatePositionRobot.IsActive():
+                self.wdgAnimatePositionRobot.Stop()
+                self.Robot_ReleaseArm()
+            elif self.wdgStep.GetStep() == 2 and self.wdgAnimate.IsActive():
+                self.wdgAnimate.Stop()
+                # self.tmPedal.stop()
+                self.Robot_ReleaseArm()
+            elif self.wdgStep.GetStep() == 3 and self.wdgAnimate.IsActive():
+                self.wdgAnimate.Stop()
+                # self.tmPedal.stop()
+                self.Robot_BackToTarget()
+        
+        if self.dlgFootPedal is not None:
+            self.dlgFootPedal.SetPress(bPress)
+            # bNext = self.dlgFootPedal.IsToNextScene()
+            # self.dlgFootPedal.close()
+            # self.dlgFootPedal = None
+            # if bNext:
+            #     self.NextScene()
+            
+        if self.dlgResumeSupportArm is not None:
+            self.dlgResumeSupportArm.SetPress(bPress)
+            
+    def Robot_OnSignalTargetArrived(self):
+        if self.dlgResumeSupportArm is not None:
+            self.dlgResumeSupportArm.accept()
+            
+        self.OnClicked_btnDriveConfirm()
+        
+    def Robot_OnSignalAxisValue(self, nAxisIndex:int, diffValue:float):
+        greenZoneColor = QColor(0, 255, 0)
+        if abs(diffValue) > 5000:        
+            try:
+                num = 52
+                colorRed = np.linspace(0, 255, num, dtype = int)
+                colorGreen = np.linspace(255, 0, num, dtype = int)
+                index = (abs(diffValue) - 5000) // 500 + 1
+                index = int(min(num - 1, index))
+            
+                greenZoneColor = QColor(colorRed[index], colorGreen[index], 0)
+            except Exception as msg:
+                print(msg)
+        # 將數值-5000 ~ 5000轉換成 0 ~ 100
+        # diffValue = (diffValue + 5000) * 0.01
+        if self.dlgResumeSupportArm is not None:
+            self.dlgResumeSupportArm.SetValue(nAxisIndex, diffValue, greenZoneColor)
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
@@ -2762,13 +2856,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             print("Please execute home processing first.")
             # QMessageBox.information(self, "information", "Please execute home processing first.")
-            MessageBox.ShowInformation("information", "Please execute home processing first.")
+            MessageBox.ShowInformation("Please execute home processing first.")
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
         while self.FixArmStatus == False:
             self.RobotSupportArm.ReleaseAllEncoder()
-            print('robot release')
+            # print('robot release')
         
     def Robot_ReleaseArm(self):
         self.btnRobotRelease.setEnabled(False)
@@ -2776,31 +2870,51 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         
-        self.btnUnlockRobot.setEnabled(True)
-        self.btnUnlockRobot_2.setEnabled(False)
-        self.btnUnlockConfirm.setEnabled(True)
+        # self.btnUnlockRobot_2.setEnabled(False)
+        # self.btnUnlockConfirm.setEnabled(True)
         self.btnDriveConfirm.setEnabled(True)
-        self.btnRobotRelease_2.setEnabled(False)
-        self.btnRobotTarget.setEnabled(True)
+        # self.btnRobotTarget.setEnabled(True)
         self.btnRobotResume.setEnabled(False)
         
+        if self.RobotSupportArm:
+            self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
+            self.tReleaseArm.start()
+
         self.dlgFootPedal = DlgFootPedal()
-        self.dlgFootPedal.show()
-        
-        self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
-        self.tReleaseArm.start()
+                
+        if self.stkScene.currentWidget() == self.pgPositionRobot:
+            self.dlgFootPedal.SetAutoClose(False)
+            self.dlgFootPedal.SetPressImage('entry_mark.jpg')
+            self.dlgFootPedal.SetText('Keep pressing pedal and <span style="color:#ff0000">move robot to entry position</span>')
+            
+        self.dlgFootPedal.signalClose.connect(self.Robot_OnConfirmPosition)
+        self.dlgFootPedal.exec_()
     
+    # 當按下確定位置, 上鎖並前往下一步
+    def Robot_OnConfirmPosition(self):
+        self.Robot_FixArm()
+        currentWidget = self.stkScene.currentWidget()
+        if currentWidget == self.pgUnlockRobot:
+            self.NextScene()
+        elif currentWidget == self.pgDriveRobotGuide:
+            if self.wdgStep.GetStep() == 2:
+                self.OnClicked_btnDriveConfirm()
+        elif currentWidget == self.pgPositionRobot:
+            sleep(0.5)
+            self.Robot_SettingTarget()
+            self.NextScene()
+            
+        # self.wdgAnimate.Stop()
+        self.dlgFootPedal = None
+        
     def Robot_FixArm(self):
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotFix.setEnabled(False)
         self.btnRobotSetTarget.setEnabled(True)
-        
-        self.btnUnlockRobot.setEnabled(True)
         # self.btnUnlockRobot_2.setEnabled(True)
-        self.btnUnlockConfirm.setEnabled(False)
+        # self.btnUnlockConfirm.setEnabled(False)
         # self.btnDriveConfirm.setEnabled(False)
-        self.btnRobotRelease_2.setEnabled(True)
-        self.btnRobotTarget.setEnabled(False)
+        # self.btnRobotTarget.setEnabled(False)
         
         if self.settingTarget == True:
             self.btnRobotBackTarget.setEnabled(True)
@@ -2810,12 +2924,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnRobotResume.setEnabled(False)
             
         self.FixArmStatus = True
-        print('fix arm')
         
     def Robot_SettingTarget(self):
+        
         self.btnRobotSetTarget.setEnabled(False)
-        self.btnRobotTarget.setEnabled(False)
-        self.btnTargetRobotConfirm.setEnabled(True)
+        # self.btnRobotTarget.setEnabled(False)
+        # self.btnTargetRobotConfirm.setEnabled(True)
         
         if self.settingTarget:
             self.btnRobotBackTarget.setEnabled(True)
@@ -2823,8 +2937,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             self.btnRobotBackTarget.setEnabled(False)
             self.btnRobotResume.setEnabled(False)
-        self.RobotSupportArm.SetTargetPos()
+            
+        if self.RobotSupportArm:
+            self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
+        
         print('setting robot target')
         
     def Robot_FixAndTarget(self):
@@ -2838,8 +2955,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.setEnabled(False)
         self.btnRobotBackTarget.setEnabled(False)
         self.btnRobotResume.setEnabled(False)
-        self.RobotSupportArm.BackToTargetPos()
-        print('Back to target')
+        
+        if self.RobotSupportArm:
+            tBackToTarget = threading.Thread(target = self.RobotSupportArm.BackToTargetPos)
+            tBackToTarget.start()
+        
+        self.dlgResumeSupportArm = DlgResumeSupportArm()
+        self.dlgResumeSupportArm.exec_()
+        
+        self.Robot_FixArm()
+        
+    def Robot_GetPedal(self):
+        self.RobotSupportArm.ReadPedal()
+    
         
     def Laser_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
@@ -3379,13 +3507,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                     self.signalModelBuildingPass.emit(True)
                                     
                                 # save data
-                                try:
-                                    with open('dataCycle.txt', mode = 'w') as f:
-                                        for nCycleNum, (t, lstData) in self.dicDataCycle.items():
-                                            for data in lstData:
-                                                f.write(f'{nCycleNum}, {t}, {data}\n')
-                                except Exception as msg:
-                                    print(msg)
+                                # try:
+                                #     with open('dataCycle.txt', mode = 'w') as f:
+                                #         for nCycleNum, (t, lstData) in self.dicDataCycle.items():
+                                #             for data in lstData:
+                                #                 f.write(f'{nCycleNum}, {t}, {data}\n')
+                                # except Exception as msg:
+                                #     print(msg)
                                 
                             self.dicDataCycle[nCycle] = {}
                         
@@ -3438,8 +3566,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             layout = QVBoxLayout(self.wdgIndicatorInhale)
             layout.addWidget(self.indicatorInhale)
             layout.setContentsMargins(0, 0, 0, 0)
-        
-        
         
         self.tCheckInhale = QTimer()
         self.tCheckInhale.timeout.connect(self.Laser.CheckInhale)
@@ -3802,8 +3928,8 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
         return super().closeEvent(event)
     
     def OnClicked_btnConfirm(self):
+        QTimer.singleShot(1000, lambda: self.close())
         self.signalRobotStartMoving.emit()
-        self.close()
             
 class DlgRobotMoving(QDialog, FunctionLib_UI.Ui_DlgRobotMoving.Ui_DlgRobotMoving):
     signalStop = pyqtSignal()
@@ -3849,26 +3975,134 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         if progress >= 100:
             self.close()
             
-class DlgFootPedal(QWidget, FunctionLib_UI.Ui_FootPedal.Ui_Form):
+class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
+    signalClose = pyqtSignal()
+    
+    
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         ############################################################################################
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        size = self.size()
+        size.setHeight(size.height() + 80)
+        self.setFixedSize(size)
+        
+        self.bAutoClose = True
         self.alpha = 255
+        self.bPress = False
         self.increment = -20
         self.timer = QTimer()
         self.timer.timeout.connect(self.runContentText)
         self.timer.start(50)
+        
+        self.btnConfirm.clicked.connect(self.OnClick_btnConfirm)
+        self.btnConfirm.setEnabled(False)
     
     def runContentText(self):
-        self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
+        if self.bPress == False:
+            self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
+        else:
+            self.lblContent.setStyleSheet(f'color:rgb(  0, 255, 0)')
         self.alpha += self.increment
         self.alpha = min(255, max(self.alpha, 0))
         
         if self.alpha == 255 or self.alpha == 0:
             self.increment *= -1
+            
+    def SetAutoClose(self, bEnabled:bool = True):
+        self.bAutoClose = bEnabled
+    
+    
+    def SetPress(self, bPress:bool):
+        if self.bAutoClose and bPress == False:
+            self.OnClick_btnConfirm()
+        else:
+            if bPress:
+                self.lblContent.setText('...Unlocked, move robot arm by hand...')
+                self.wdgPicture.setCurrentWidget(self.pgPedalPress)
+                self.btnConfirm.setEnabled(False)
+            else:
+                self.lblContent.setText('...Please press foot pedal...')
+                self.wdgPicture.setCurrentWidget(self.pgPedal)
+                self.btnConfirm.setEnabled(True)
+            
+        self.bPress = bPress
         
+    def SetPressImage(self, strImageName:str):
+        self.pgPedalPress.setStyleSheet(f'image:url(image/{strImageName})')
+        
+    def SetText(self, text:str):
+        self.lblDescription.setText(text)
+        
+    def OnClick_btnConfirm(self):
+        self.signalClose.emit()
+        self.close()
+        
+class DlgResumeSupportArm(DlgFootPedal):
+    def __init__(self):
+        super().__init__()
+        
+        self.lastValue = None
+        
+        self.btnConfirm.setHidden(True)
+        
+        layoutAxis1 = QVBoxLayout(self.wdgIndicatorAxis1)
+        layoutAxis1.setContentsMargins(0, 0, 0, 0)
+        
+        layoutAxis2 = QVBoxLayout(self.wdgIndicatorAxis2)
+        layoutAxis2.setContentsMargins(0, 0, 0, 0)
+        
+        self.indicatorAxis1 = Indicator(TYPE_ROBOTARM)
+        self.indicatorAxis2 = Indicator(TYPE_ROBOTARM)
+        
+        layoutAxis1.addWidget(self.indicatorAxis1)
+        layoutAxis2.addWidget(self.indicatorAxis2)
+        
+    def SetPress(self, bPress:bool):
+        
+        if bPress:
+            self.lblContent.setText('...Unlocked, move robot arm by hand...')
+            self.wdgPicture.setCurrentWidget(self.pgSupportArm)
+            self.btnConfirm.setEnabled(False)
+        else:
+            self.lblContent.setText('...Please press foot pedal...')
+            self.wdgPicture.setCurrentWidget(self.pgPedal)
+            self.btnConfirm.setEnabled(True)
+            
+        self.bPress = bPress
+        
+    def SetValue(self, nAxisIndex:int, value, color:QColor):
+        if nAxisIndex == 1:
+            self.indicatorAxis1.setRawValue(value)
+            self.indicatorAxis1.setGreenZone(color)
+            
+            
+            if self.lastValue is not None:
+                diff = value - self.lastValue
+                # support arm 旋轉方向偏離中心
+                if abs(diff) > 50:
+                    if value * diff > 0:
+                        self.lblHintAxis1.setText('<span style="font-size:48pt">turn another direction</span>')
+                    elif value * diff < 0:
+                        self.lblHintAxis1.setText('')
+                    
+                    
+        elif nAxisIndex == 2:
+            self.indicatorAxis2.setRawValue(value)
+            self.indicatorAxis2.setGreenZone(color)
+            
+            if self.lastValue is not None:
+                
+                diff = value - self.lastValue
+                # support arm 旋轉方向偏離中心
+                if abs(diff) > 50:
+                    if value * diff > 0:
+                        self.lblHintAxis2.setText('<span style="font-size:48pt">turn another direction</font>')
+                    elif value * diff < 0:
+                        self.lblHintAxis2.setText('')
+        
+        self.lastValue = value
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
@@ -3964,6 +4198,9 @@ class WidgetStep(QWidget):
                 item.SetStepName(name)
         
         # self.lstWidgetStep[0].StopArrow()
+        
+    def GetStep(self):
+        return self.nCurrentStep
         
     def GotoStep(self, nStep:int):
         if nStep <= len(self.lstWidgetStep) and nStep > 0:

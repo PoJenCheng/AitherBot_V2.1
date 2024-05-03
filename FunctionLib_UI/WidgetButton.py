@@ -144,12 +144,39 @@ class Indicator(QWidget):
         
         self.value = 0  
         self.uidType = indicatorType
+        self.greenZoneColor = QColor(0, 255, 0)
+        self.greenZoneWidth = 0.01
         self.setStyleSheet('border:none')
 
     def setValue(self, value):
         # 設定值，更新畫面
         self.value = value
         self.update()
+        
+    # 輸入原始數值而不是輸入百分比，計算綠區的寬度
+    # 最大值 / 最小值為 5000 ~ -5000, 超過範圍 greenZoneWidth = 0.01
+    # support arm tolerence +-100, total width = 200
+    def setRawValue(self, value):
+            
+        absValue = abs(value)
+        if absValue < 5000:
+            if absValue <= 1000:
+                self.greenZoneWidth = 0.2
+                self.value = (value + 1000) * 0.05
+                self.update()
+                return
+            else:
+                self.greenZoneWidth = 200 / (absValue * 2)
+            
+        # 此計算出的數值不是 0 就是 100
+        if absValue == 0:
+            self.value = 0
+        else:
+            self.value = (((value / absValue) + 1) // 2) * 100
+        self.update()
+        
+    def setGreenZone(self, color:QColor):
+        self.greenZoneColor = color
         
     def move(self, value):
         self.value = max(0, min(self.value + value, 100))
@@ -159,7 +186,64 @@ class Indicator(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        if self.value > 100 or self.value < 0:
+        if self.uidType == TYPE_ROBOTARM:
+            self.value = min(100, max(self.value, 0))     
+            # 繪製背景矩形
+            rect_width = self.width() - self.pointer_width
+            rect_height = self.height() - self.pointer_height
+            
+            # 計算左側紅區範圍
+            rtRedZoneLeft_x = self.pointer_width * 0.5
+            rtRedZoneLeft_Width = rect_width * (0.5 - self.greenZoneWidth * 0.5)
+            rect = QRectF(rtRedZoneLeft_x, 0, rtRedZoneLeft_Width, rect_height)
+            
+            # 設定左側紅區漸層色
+            linearLeft = QLinearGradient(rtRedZoneLeft_x, 0, rtRedZoneLeft_x + rtRedZoneLeft_Width, 0)
+            linearLeft.setColorAt(0, QColor(255, 0, 0))
+            linearLeft.setColorAt(1, self.greenZoneColor)
+            
+            # 繪製左側紅區
+            painter.setBrush(linearLeft)
+            painter.drawRect(rect)
+            
+            # 計算中間綠區範圍
+            rtGreenZone_x = rtRedZoneLeft_x + rtRedZoneLeft_Width
+            rtGreenZone_Width = rect_width * self.greenZoneWidth
+            rect = QRectF(rtGreenZone_x, 0, rtGreenZone_Width, rect_height)
+            
+            # 設定綠區顏色(單一色:綠色)並綠製
+            painter.setBrush(self.greenZoneColor)
+            painter.drawRect(rect)
+            
+            # 計算右側紅區範圍
+            rtRedZoneRight_x = rtGreenZone_x + rtGreenZone_Width
+            rtRedZoneRight_Width = rect_width * (0.5 - self.greenZoneWidth * 0.5)
+            rect = QRectF(rtRedZoneRight_x, 0, rtRedZoneRight_Width, rect_height)
+            
+            # 設定右側紅區漸層色
+            linearRight = QLinearGradient(rtRedZoneRight_x, 0, rtRedZoneRight_x + rtRedZoneRight_Width, 0)
+            linearRight.setColorAt(0, self.greenZoneColor)
+            linearRight.setColorAt(1, QColor(255, 0, 0))
+            
+            # 繪製右側紅區
+            painter.setBrush(linearRight)
+            painter.drawRect(rect)
+
+            # 計算指針位置
+            scale = rect_width * 0.01
+            pointer_x = self.value * scale + self.pointer_width * 0.5
+            pointer_y = rect_height
+
+            # 繪製指針三角形
+            pointer = QPolygon([
+                QPoint(int(pointer_x), int(pointer_y)),
+                QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
+                QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
+            ])
+
+            painter.setBrush(QColor(255, 255, 255))  
+            painter.drawPolygon(pointer) 
+        elif self.value > 100 or self.value < 0:
             font = painter.font()
             font.setFamily('Arial')
             font.setPointSize(36)
@@ -250,62 +334,69 @@ class Indicator(QWidget):
 
             painter.setBrush(QColor(255, 255, 255))  
             painter.drawPolygon(pointer)  
-        elif self.uidType == TYPE_ROBOTARM:     
-            # 繪製背景矩形
-            rect_width = self.width() - self.pointer_width
-            rect_height = self.height() - self.pointer_height
+        
+class AnimationWidget(QWidget):
+    timePool = []
+    signalIdle = pyqtSignal()
+    def __init__(self, imagePath:str, parent = None):
+        super().__init__(parent)
+        
+        self.image = QImage(imagePath)
+        self.opacity = 0
+        self.opacityStep = 1
+        
+        self.setMinimumHeight(150)
+        
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.startAnimation)
+        self.timePool.append(self.timer)
+        # self.timer.start(50)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setOpacity(self.opacity * 0.1)
+        
+        width = self.width()
+        rcImage = self.image.rect()
+        shift = int((width - rcImage.width()) * 0.5)
+        rcImage.moveLeft(shift)
+        painter.drawImage(QRectF(rcImage), self.image)
+        super().paintEvent(event)
+        
+    def startAnimation(self):
+        self.opacity = max(0, min(10, self.opacity + self.opacityStep))
+        if self.opacity == 0 or self.opacity == 10:
+            self.opacityStep *= -1
             
-            # 計算左側紅區範圍
-            rtRedZoneLeft_x = self.pointer_width * 0.5
-            rtRedZoneLeft_Width = rect_width * 0.45
-            rect = QRectF(rtRedZoneLeft_x, 0, rtRedZoneLeft_Width, rect_height)
-            
-            # 設定左側紅區漸層色
-            linearLeft = QLinearGradient(rtRedZoneLeft_x, 0, rtRedZoneLeft_x + rtRedZoneLeft_Width, 0)
-            linearLeft.setColorAt(0, QColor(255, 0, 0))
-            linearLeft.setColorAt(1, QColor(0, 255, 0))
-            
-            # 繪製左側紅區
-            painter.setBrush(linearLeft)
-            painter.drawRect(rect)
-            
-            # 計算中間綠區範圍
-            rtGreenZone_x = rtRedZoneLeft_x + rtRedZoneLeft_Width
-            rtGreenZone_Width = rect_width * 0.1
-            rect = QRectF(rtGreenZone_x, 0, rtGreenZone_Width, rect_height)
-            
-            # 設定綠區顏色(單一色:綠色)並綠製
-            painter.setBrush(QColor(0, 255, 0))
-            painter.drawRect(rect)
-            
-            # 計算右側紅區範圍
-            rtRedZoneRight_x = rtGreenZone_x + rtGreenZone_Width
-            rtRedZoneRight_Width = rect_width * 0.45
-            rect = QRectF(rtRedZoneRight_x, 0, rtRedZoneRight_Width, rect_height)
-            
-            # 設定右側紅區漸層色
-            linearRight = QLinearGradient(rtRedZoneRight_x, 0, rtRedZoneRight_x + rtRedZoneRight_Width, 0)
-            linearRight.setColorAt(0, QColor(0, 255, 0))
-            linearRight.setColorAt(1, QColor(255, 0, 0))
-            
-            # 繪製右側紅區
-            painter.setBrush(linearRight)
-            painter.drawRect(rect)
-
-            # 計算指針位置
-            scale = rect_width * 0.01
-            pointer_x = self.value * scale + self.pointer_width * 0.5
-            pointer_y = rect_height
-
-            # 繪製指針三角形
-            pointer = QPolygon([
-                QPoint(int(pointer_x), int(pointer_y)),
-                QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
-                QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
-            ])
-
-            painter.setBrush(QColor(255, 255, 255))  
-            painter.drawPolygon(pointer) 
+        self.update()
+        self.signalIdle.emit()
+        
+    def IsActive(self):
+        return self.timer.isActive()
+        
+    def Start(self):
+        for timer in self.timePool:
+            if timer.isActive():
+                timer.stop()
+                
+        for item in self.children():
+            if isinstance(item, QWidget):
+                item.setHidden(True)
+                
+        self.timer.start(50)
+        
+    def Stop(self):
+        self.timer.stop()
+        for item in self.children():
+            if isinstance(item, QWidget):
+                item.setHidden(False)
+                
+        self.opacity = 0
+        self.opacityStep = 1
+        
+        
+    
+        
 class MessageBox(QMessageBox):
     
     def __init__(self, icon:int, text:str):
