@@ -49,7 +49,6 @@ baseShift_Z = -21.4 #15.5
 
 
 "Laser setting parameter"
-nValidCycle = 5
 laserDataRepeatRange = 0.05
 filterTolerance = 1
 toleranceLaserData = 0.01
@@ -57,17 +56,35 @@ yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
-INHALE_AREA = 80
-EXHALE_AREA = 20
+
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
 
 gVars = {}
 gVars['toleranceLaserData'] = 0.004
 
+# model building parameters
+nValidCycle = 10
+MODEL_SCORE = 60
+VALID_CYCLE_NUM = 10
+INHALE_AREA = 80
+EXHALE_AREA = 20
+BreathingCycle_Slope_Threshold = 0.5
+
+# devices retry time
 TIMEOVER_ROBOT = 10
 TIMEOVER_LASER = 3
+
+# enabled device setting, default is DEVICE_ALL
 DEVICE_ROBOT = 1
 DEVICE_LASER = 2
 DEVICE_ALL = 3
-DEVICE_DEMO = 4
+
+DEVICE_ENABLED = DEVICE_ALL
+
+# foot pedal action
+NUM_OF_ACTION = 4
+ACTION_NONE = 0
+ACTION_NEXT_SCENE = 1
+ACTION_DRIVE_CONFIRM = 2
+ACTION_POSITION_ROBOT = 3

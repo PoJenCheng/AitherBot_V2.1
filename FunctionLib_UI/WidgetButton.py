@@ -347,6 +347,7 @@ class AnimationWidget(QWidget):
         
         self.setMinimumHeight(150)
         
+        self.bPause = False
         self.timer = QTimer()
         self.timer.timeout.connect(self.startAnimation)
         self.timePool.append(self.timer)
@@ -393,6 +394,13 @@ class AnimationWidget(QWidget):
                 
         self.opacity = 0
         self.opacityStep = 1
+        
+    def SetPause(self, bPause = True):
+        if self.bPause == True and bPause == False:
+            self.Start()
+        elif bPause == True:
+            self.Stop()
+        self.bPause = bPause
         
         
     

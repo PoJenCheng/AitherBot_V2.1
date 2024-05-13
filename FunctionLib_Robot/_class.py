@@ -372,6 +372,7 @@ class RobotSupportArm(QObject):
         self.duration = 1000
         self.TargetEn1 = None
         self.TargetEn2 = None
+        self.bPedalPressLast = False
         # 是否偏離target
         self.bRobotMoveFromTarget = True
         
@@ -392,7 +393,10 @@ class RobotSupportArm(QObject):
     
     def ReadPedal(self):
         bPress = self.plc.read_by_name(self.SupportMove)
-        self.signalPedalPress.emit(bPress)
+        # 只有狀態改變時才發送訊息
+        if bPress ^ self.bPedalPressLast == True:
+            self.signalPedalPress.emit(bPress)
+        self.bPedalPressLast = bPress
         
     
     def ReleaseAllEncoder(self):
@@ -1307,8 +1311,10 @@ class LineLaser(MOTORCONTROL, QObject):
             # return squareSum/len(nonZeroArray[0])
             nonZeroArray = arr[np.nonzero(arr)] # 取得非0的個數
             if len(nonZeroArray) > 0:
-                sum = np.sum(nonZeroArray ** 2)
-                return np.sqrt(sum) / len(nonZeroArray)
+                # sum = np.sum(nonZeroArray ** 2)
+                mean = np.mean(nonZeroArray ** 2)
+                # return np.sqrt(sum) / len(nonZeroArray)
+                return np.sqrt(mean)
             else:
                 return 0
             
@@ -1440,39 +1446,40 @@ class LineLaser(MOTORCONTROL, QObject):
             
     def GetClosestAvg(self, avg):
         if isinstance(avg, (tuple, list, np.ndarray)):
-            if len(avg) >= 2:
-                # avgInhale = min(avg)
-                # avgExhale = max(avg)
-                avg = np.array(avg)
-                
-                idInhale = np.argmin(avg)
-                idExhale = np.argmax(avg)
-                
-                avgInhale = avg[idInhale]
-                avgExhale = avg[idExhale]
-        
-                avgList = []
-                for keyAvg, _ in self.percentageBase.values():
-                    avgList.append(keyAvg)
-                
-                avgList = np.array(avgList)
-                diffInhale = np.abs(avgList - avgInhale)
-                diffExhale = np.abs(avgList - avgExhale)
-                
-                indexInhale = np.argmin(diffInhale)
-                indexExhale = np.argmin(diffExhale)
-                
-                avgInhale = avgList[indexInhale]
-                avgExhale = avgList[indexExhale]
-                
-                self.filterOutRange((indexInhale, indexExhale))
-                
-                avg[idInhale] = avgInhale
-                avg[idExhale] = avgExhale
-                
-                return avg
-            else:
-                avg = avg[0]
+            try:
+                if len(avg) >= 2:
+                    # avgInhale = min(avg)
+                    # avgExhale = max(avg)
+                    avg = np.array(avg)
+                    
+                    idInhale = np.argmin(avg)
+                    idExhale = np.argmax(avg)
+                    
+                    avgInhale = avg[idInhale]
+                    avgExhale = avg[idExhale]
+            
+                    avgList = []
+                    for keyAvg, _ in self.percentageBase.values():
+                        avgList.append(keyAvg)
+                    
+                    avgList = np.array(avgList)
+                    diffInhale = np.abs(avgList - avgInhale)
+                    diffExhale = np.abs(avgList - avgExhale)
+                    
+                    indexInhale = np.argmin(diffInhale)
+                    indexExhale = np.argmin(diffExhale)
+                    
+                    avgInhale = avgList[indexInhale]
+                    avgExhale = avgList[indexExhale]
+                    
+                    self.filterOutRange((indexInhale, indexExhale))
+                    
+                    avg[idInhale] = avgInhale
+                    avg[idExhale] = avgExhale
+                    
+                    return avg
+            except Exception as msg:
+                print(msg)
         
         avgList = []
         for keyAvg, _ in self.percentageBase.values():
@@ -1486,6 +1493,7 @@ class LineLaser(MOTORCONTROL, QObject):
         return avgClosest
             
     def GetPercentFromAvg(self, avg, bCutInRange = False):
+        avg = np.array(avg).flatten()
         # if bCutInRange and isinstance(avg, tuple) and len(avg) >= 2:
         #     filterFront = []
         #     filterBack = []
@@ -1915,58 +1923,114 @@ class LineLaser(MOTORCONTROL, QObject):
             
             if meanTolerance > laserDataRepeatRange:
                 self.laserDataBase[key] = item
-        
+
         if len(self.laserDataBase) > 5:
             self.DataFilter(yellowLightCriteria)
             return True
         
         return False
         
-    def DataCheckCycle(self, laserData:dict = None):
+    def DataCheckCycle(self, laserData:dict = None, nInitTolerance:int = None):
         # arrMean = []
         if laserData is None:
+            # laserData = self.laserDataBase_filter
             laserData = self.laserDataBase_filter
-
             
         countCycle = 0
-        subData = []
-        slopePre = 0
-        listSlope = []
+        slopeLast = 0
         timeDelta = 0
+        subData = []
+        lstSlope = []
+        lstTime = []
+        lstMax = []
+        lstMin = []
         
-        listKey = []
-        for i, (key, item) in enumerate(laserData.items()):
-            mean = np.mean(item)
+        for i, (tTime, item) in enumerate(laserData.items()):
+            # mean = np.mean(item)
+            mean = self.CalHeightAvg(item)
             if i == 0:
-                timeDelta = key
+                timeDelta = tTime
             else:
-                timeDelta = np.diff(listKey).sum()
+                # 計資料段的時間總和，每一秒鐘(1000ms)為一個偵測斜率變化量的區間
+                timeDelta = np.diff(lstTime).sum()
                 
+                # 初始化階段，要計算斜率變化，至少要有兩筆以上的資料，小於兩筆或一秒鐘以內區間直接加入
                 if timeDelta < 1000 or len(subData) < 2:
                     # subData.append(arrMean[i])
                     subData.append(mean)
-                    listKey.append(key)
+                    lstTime.append(tTime)
                     
                 else:
+                    # 紀錄累積時間至少達到一秒
                     xAxis = np.arange(len(subData))
+                    # 計算多項式逼近的一維參數，分別為斜率和截距
                     slope, intercept = np.polyfit(xAxis, subData, 1)
-                    if slopePre * slope < 0:
-                        countCycle += 1
-                    slopePre = slope
-                    listSlope.append(slope)
+                    # 計算斜率變化量
+                    slopeDiff = slope - slopeLast
                     
-                    listKey.pop(0)
-                    listKey.append(key)
+                    # 當前斜率與上一次斜率發生正負交錯時，代表有峰值或低波谷
+                    if slopeLast * slope < 0:
+                        countCycle += 1
+                        # 當前斜率為負，前一次為正，代表是波峰，因此找最大值；相反為低谷，找最小值
+                        # 並且紀錄當時的斜率變化量，供後面計算過濾
+                        if slope < 0:
+                            # find maximum value
+                            lstMax.append((max(subData), slopeDiff))
+                        else:
+                            lstMin.append((min(subData), slopeDiff))
+                    slopeLast = slope
+                    lstSlope.append(slope)
+                    
+                    # pop掉區間中的最早資料，並加入最新資料，一進一出，並計算當前時間區段是否滿足最少一秒鐘的條件
+                    
+                    lstTime.pop(0)
+                    lstTime.append(tTime)
                     subData.pop(0)
-                    # subData.append(arrMean[i])
                     subData.append(mean)
             
-        self.slopeData = listSlope
+        self.slopeData = lstSlope
+        
+        # 每兩個斜率波形變化(波峰/低谷)，代表一個cycle
         cycle = (countCycle / 2)
         bValid = False
-        if cycle >= nValidCycle:
+        
+        # 初始容許值是否設定：初始容許值用於在還沒完成建模時，初步估算使用
+        # 因建模完成的cycle有可能比原本的少(部分資料被過濾)
+        if nInitTolerance is not None:
+            if cycle >= nInitTolerance:
+                bValid = True
+        elif cycle >= nValidCycle:
             bValid = True
-        return cycle, bValid
+        
+        
+        lengthMax = len(lstMax)
+        lengthMin = len(lstMin)    
+        
+        if lengthMax == 0 or lengthMin == 0:
+            return False, []
+        
+        lstMax = np.array(lstMax)
+        lstMin = np.array(lstMin)
+        
+        # 資料均值的最大 / 最小值數量，必須是成對的，把較多的一邊過濾
+        if lengthMax > lengthMin:
+            lstMax = lstMax[:lengthMin]
+        elif lengthMax < lengthMin:
+            lstMin = lstMin[:lengthMax]
+        
+        # 將最大 / 最小值合併成一個陣列
+        mergeAvg = list(zip(lstMin[:, 0], lstMax[:, 0]))
+        
+        # 分離出對應的斜率變化量為另一個陣列
+        lstSlope = np.array(list(zip(lstMin[:, 1], lstMax[:, 1])))
+        
+        # 當斜率變化量小於threshold時，才視為合法的資料
+        lstAvg = [[x, y] for i, (x, y) in enumerate(mergeAvg) if (np.abs(lstSlope[i, :]) < BreathingCycle_Slope_Threshold).all()]
+        
+        # 平坦化成一維陣列
+        lstAvg = np.array(lstAvg).flatten()
+        
+        return bValid, lstAvg
         
                     
     def DataFilter(self,yellowLightCriteria): #將高頻的數值刪除
@@ -1989,35 +2053,42 @@ class LineLaser(MOTORCONTROL, QObject):
         #     X = np.array(self.laserDataBase_filter[lineNum])
         #     heightAvg[self.CalHeightAvg(X)] = X
         #     # heightAvg.append(getChestProfile.calHeightAvg(X))
-        for item in self.laserDataBase_filter.values():
-            X = np.array(item)
-            avg = self.CalHeightAvg(X)
-            if avg > 0:
-                heightAvg[avg] = X
-            # heightAvg.append(getChestProfile.calHeightAvg(X))
+        try:
+            for item in self.laserDataBase_filter.values():
+                X = np.array(item)
+                avg = self.CalHeightAvg(X)
+                if avg > 0:
+                    heightAvg[avg] = X
+                # heightAvg.append(getChestProfile.calHeightAvg(X))
 
-        maxAvg =  max(list(heightAvg.keys()))
-        minAvg =  min(list(heightAvg.keys()))
-        dis = maxAvg - minAvg
-        self.percentageBase = {}
-        # for item in list(heightAvg.items()):
-        #     avg = list(item)[0]
-        #     percentage = ((maxAvg-avg)/dis)*100
-        #     # if self.percentage >= yellowLightCriteria:
-        #     self.percentageBase[percentage] = item
-        for item in heightAvg.items():
-            avg, _ = item
-            percentage = ((maxAvg-avg)/dis)*100
-            # if self.percentage >= yellowLightCriteria:
-            self.percentageBase[percentage] = item
-        self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
+            maxAvg =  max(list(heightAvg.keys()))
+            minAvg =  min(list(heightAvg.keys()))
+            dis = maxAvg - minAvg
+            self.percentageBase = {}
+            # for item in list(heightAvg.items()):
+            #     avg = list(item)[0]
+            #     percentage = ((maxAvg-avg)/dis)*100
+            #     # if self.percentage >= yellowLightCriteria:
+            #     self.percentageBase[percentage] = item
+            for item in heightAvg.items():
+                avg, _ = item
+                percentage = ((maxAvg-avg)/dis)*100
+                # if self.percentage >= yellowLightCriteria:
+                self.percentageBase[percentage] = item
+            self.percentageBase = dict(sorted(self.percentageBase.items(), key=lambda x:x[0], reverse =True))
         # print(self.percentageBase)
+        except Exception as msg:
+            print(msg)
         
     def CalculateRealTimeHeightAvg(self):
         self.realTimeHeightAvgValue = []
-        # valueTemp = np.array(self.CalHeightAvg(self.receiveData[0]))
         valueTemp = self.CalHeightAvg(self.receiveData)
         self.realTimeHeightAvgValue.append(valueTemp)
+        
+    def FilterDataByAvgRange(self, avgMax, avgMin, yellowLightCriteria = 0):
+        filterData = dict(filter(lambda x:x[1][0] <= avgMax and x[1][0] >= avgMin, self.percentageBase.items()))
+        self.laserDataBase_filter = dict(((avg, value) for _, (avg, value) in filterData.items()))
+        self.CalculateHeightAvg(yellowLightCriteria)
             
     def PlotProfile(self): 
         receiveData = []

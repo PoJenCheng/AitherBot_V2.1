@@ -18,16 +18,33 @@
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog{
-background-color: rgb(77, 140, 187);
-border-image:url(image/aitherbot_background_s50.png);
-border-top:80;
-border-left:900;
-margin-left:10px;
-margin-top:10px;
+background-color: #74d3ff;
 }
-
+</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_6">
+   <property name="leftMargin">
+    <number>5</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
+   <item row="1" column="0">
+    <widget class="QWidget" name="mainWidget" native="true">
+     <property name="styleSheet">
+      <string notr="true">
 QWidget{
-font: 24pt &quot;Arial&quot;;
+	font: 24pt &quot;Arial&quot;;
+	background-color:rgb(77, 140, 187);
 }
 
 QPushButton{
@@ -60,217 +77,241 @@ QPushButton:disabled{
 	color:rgb(255, 255, 255);
 	font: 24pt &quot;Arial&quot;;
 }</string>
-  </property>
-  <property name="modal">
-   <bool>true</bool>
-  </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0,0,0">
-   <property name="topMargin">
-    <number>80</number>
-   </property>
-   <property name="verticalSpacing">
-    <number>7</number>
-   </property>
-   <item row="1" column="0">
-    <widget class="QLabel" name="lblDescription">
-     <property name="text">
-      <string/>
      </property>
+     <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0,0,0">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QStackedWidget" name="wdgPicture">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>825</width>
+          <height>563</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(77, 140, 187);</string>
+        </property>
+        <widget class="QWidget" name="pgPedal">
+         <property name="styleSheet">
+          <string notr="true">image:url(image/foot_pedal_and_drag.png)</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="pgPedalPress">
+         <property name="styleSheet">
+          <string notr="true">image:url(image/foot_pedal_press.png)</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="pgSupportArm">
+         <property name="styleSheet">
+          <string notr="true">color:#ffee88</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="0" column="0">
+           <widget class="QWidget" name="wdgAxis1" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(93, 171, 227);</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1">
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblAxis1">
+               <property name="styleSheet">
+                <string notr="true">color:#ff00aa</string>
+               </property>
+               <property name="text">
+                <string>Axis 1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QWidget" name="wdgIndicatorAxis1" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>60</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>60</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lblHintAxis1">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color:rgb(255, 0, 0)</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QWidget" name="wdgAxis2" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(93, 171, 227);</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,1">
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblAxis2">
+               <property name="styleSheet">
+                <string notr="true">color:#00ff90</string>
+               </property>
+               <property name="text">
+                <string>Axis 2</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QWidget" name="wdgIndicatorAxis2" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>60</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>60</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lblHintAxis2">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color:rgb(255, 0, 0)</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblContent">
+        <property name="text">
+         <string>...Please press foot pedal...</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblDescription">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="btnConfirm">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Position Confirm</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="lblContent">
-     <property name="text">
-      <string>...Please press foot pedal...</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QPushButton" name="btnConfirm">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>300</width>
-         <height>150</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Position Confirm</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
    <item row="0" column="0">
-    <widget class="QStackedWidget" name="wdgPicture">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
+    <widget class="QWidget" name="wdgTitle" native="true">
      <property name="minimumSize">
       <size>
-       <width>825</width>
-       <height>563</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
+       <width>0</width>
+       <height>80</height>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(77, 140, 187);</string>
+      <string notr="true">border-image:url(image/aitherbot_background_s50.png);
+border-top:80px;
+border-left:900px;</string>
      </property>
-     <widget class="QWidget" name="pgPedal">
-      <property name="styleSheet">
-       <string notr="true">image:url(image/foot_pedal_and_drag.png)</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="pgPedalPress">
-      <property name="styleSheet">
-       <string notr="true">image:url(image/foot_pedal_press.png)</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="pgSupportArm">
-      <property name="styleSheet">
-       <string notr="true">color:#ffee88</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0">
-        <widget class="QWidget" name="wdgAxis1" native="true">
-         <property name="styleSheet">
-          <string notr="true">background-color: rgb(93, 171, 227);</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1">
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblAxis1">
-            <property name="styleSheet">
-             <string notr="true">color:#ff00aa</string>
-            </property>
-            <property name="text">
-             <string>Axis 1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QWidget" name="wdgIndicatorAxis1" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>60</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="lblHintAxis1">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color:rgb(255, 0, 0)</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QWidget" name="wdgAxis2" native="true">
-         <property name="styleSheet">
-          <string notr="true">background-color: rgb(93, 171, 227);</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,1">
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblAxis2">
-            <property name="styleSheet">
-             <string notr="true">color:#00ff90</string>
-            </property>
-            <property name="text">
-             <string>Axis 2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QWidget" name="wdgIndicatorAxis2" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>60</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="lblHintAxis2">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color:rgb(255, 0, 0)</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
   </layout>

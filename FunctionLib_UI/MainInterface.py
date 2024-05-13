@@ -234,15 +234,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.replaceWidget(self.wdgGuideLine, wdgStep)
         self.wdgStep = wdgStep
         
+        self.lstAnimateWidget = []
+        
         self.wdgAnimateUnlock = AnimationWidget('image/foot_pedal_press_hint.png')
         layout = QHBoxLayout(self.wdgBottomUnlockRobot)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.wdgAnimateUnlock)
+        self.lstAnimateWidget.append(self.wdgAnimateUnlock)
         
         self.wdgAnimatePositionRobot = AnimationWidget('image/foot_pedal_press_hint.png')
         layout = QHBoxLayout(self.wdgBottomPositionRobot)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.wdgAnimatePositionRobot)
+        self.lstAnimateWidget.append(self.wdgAnimatePositionRobot)
         
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
@@ -265,7 +269,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgResumeSupportArm = None
         
         self.init_ui()
-        
         
     def addCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -656,6 +659,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
         self.lytLaserAdjust.addWidget(self.laserFigure)
         
+        self.figModel = Canvas(self, dpi = 150, subplot = '121')
+        layout = QVBoxLayout(self.wdgLaser)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.figModel)
+        
         self.btnSceneLaser.setEnabled(False)
         self.btnSceneRobot.setEnabled(False)
         self.btnSceneRobot.clicked.connect(self.ToSceneRobotSetting)
@@ -740,7 +748,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
         self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
         
-        self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
+        # self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
+        self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
         self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
         self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
         self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
@@ -754,6 +763,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
         
         self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
+        self.lstAnimateWidget.append(self.wdgAnimate)
         
         layout = self.wdgBottom.parentWidget().layout()
         layout.replaceWidget(self.wdgBottom, self.wdgAnimate)
@@ -765,6 +775,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.wdgAnimateUnlock.signalIdle.connect(self.Robot_GetPedal)
         self.wdgAnimatePositionRobot.signalIdle.connect(self.Robot_GetPedal)
         self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
+        
+        # lst1 = np.array([(1, 3), (5, 7), (9, 11)])
+        # lst2 = np.array([(2, 4), (6, 8), (10, 12)])
+        # print(list(zip(lst1[:, 0], [])))
+        # lst3 = list(zip(lst1[:, 0], lst2[:, 0]))
+        # lst4 = np.array(list(zip(lst1[:, 1], lst2[:, 1])))
+        # lst = [[x, y] for i, (x, y) in enumerate(lst3) if (lst4[i, :] < 8).any()]
+        # # lst = np.array(lst).flatten()
+        # lst = np.reshape(lst, (-1, 1))
+        # print(lst)        
+        
+        
         
         
     def Focus(self, pos):
@@ -1777,7 +1799,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.ImportDicom_H()
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
-                print('stopped Adjust laser')
+                self.stkScene.setCurrentWidget(self.pgModelBuilding)
+                return
             # elif button == self.btnNext_startBuildModel:
             #     self.Laser_StartRecordBreathingBase()
             #     print('start model building')
@@ -1804,22 +1827,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
 
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
-                    # if self.bDicomChanged:
                     self.importDicom(filePath)
                     
                 else:
                     return
-            elif button == self.btnFromCD:
-                return
-            # elif button == self.btnUnlockConfirm:
-            #     self.Robot_FixArm()
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
         index = min(self.stkScene.count() - 1, index + 1)
         self.stkScene.setCurrentIndex(index)
-        
-        
         
     def BackScene(self):
         index = self.stkScene.currentIndex()
@@ -1894,8 +1910,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.bFull = not self.bFull
         
     def enableDevice(self, nDevice:int = 0):
-        
-        self.idEnabledDevice = nDevice
         if nDevice == (DEVICE_ALL):
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
@@ -1926,7 +1940,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.tLaser= threading.Thread(target = self.Laser.Initialize)
             self.tLaser.start()
             
-            # self.stkScene.setCurrentWidget(self.pgLaser)
+            self.stkScene.setCurrentWidget(self.pgLaser)
         elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -1964,8 +1978,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice(DEVICE_LASER)
-            self.enableDevice(DEVICE_ALL)
+            self.idEnabledDevice = DEVICE_ENABLED
+            self.enableDevice(DEVICE_ENABLED)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -1994,9 +2008,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.wdgAnimateUnlock.Start()
         elif currentWidget == self.pgLaserAdjust:
             self.Laser_ShowLaserProfile()
-        elif currentWidget == self.pgModelBuilding1:
-            self.btnStartBuildModel_2.setEnabled(True)
-            self.btnNext_startBuildModel_2.setEnabled(False)
+        elif currentWidget == self.pgModelBuilding:
+            self.btnStartBuildModel.setEnabled(True)
+            self.btnNext_startBuildModel.setEnabled(False)
+            self.figModel.Clear()
         elif currentWidget == self.pgStartInhaleCT:
             self.Laser_CheckInhale()
         elif currentWidget == self.pgStartExhaleCT:
@@ -2876,16 +2891,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.btnRobotTarget.setEnabled(True)
         self.btnRobotResume.setEnabled(False)
         
+        for animateWidget in self.lstAnimateWidget:
+            if animateWidget.IsActive():
+                animateWidget.SetPause()
+        
         if self.RobotSupportArm:
             self.tReleaseArm = threading.Thread(target = self.ReleaseRobotArm)
             self.tReleaseArm.start()
 
+        sender = self.sender()
         self.dlgFootPedal = DlgFootPedal()
                 
-        if self.stkScene.currentWidget() == self.pgPositionRobot:
-            self.dlgFootPedal.SetAutoClose(False)
-            self.dlgFootPedal.SetPressImage('entry_mark.jpg')
-            self.dlgFootPedal.SetText('Keep pressing pedal and <span style="color:#ff0000">move robot to entry position</span>')
+        # 發送指令不是透過解鎖按鈕
+        if not isinstance(sender, QPushButton):
+            currentWidget = self.stkScene.currentWidget()
+            if currentWidget == self.pgPositionRobot:
+                self.dlgFootPedal.SetAction(ACTION_POSITION_ROBOT)
+            elif currentWidget == self.pgUnlockRobot:
+                self.dlgFootPedal.SetAction(ACTION_NEXT_SCENE)
+            elif currentWidget == self.pgDriveRobotGuide:
+                self.dlgFootPedal.SetAction(ACTION_DRIVE_CONFIRM)
             
         self.dlgFootPedal.signalClose.connect(self.Robot_OnConfirmPosition)
         self.dlgFootPedal.exec_()
@@ -2893,16 +2918,30 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     # 當按下確定位置, 上鎖並前往下一步
     def Robot_OnConfirmPosition(self):
         self.Robot_FixArm()
-        currentWidget = self.stkScene.currentWidget()
-        if currentWidget == self.pgUnlockRobot:
-            self.NextScene()
-        elif currentWidget == self.pgDriveRobotGuide:
-            if self.wdgStep.GetStep() == 2:
-                self.OnClicked_btnDriveConfirm()
-        elif currentWidget == self.pgPositionRobot:
-            sleep(0.5)
-            self.Robot_SettingTarget()
-            self.NextScene()
+        # currentWidget = self.stkScene.currentWidget()
+        # if currentWidget == self.pgUnlockRobot:
+        #     self.NextScene()
+        # elif currentWidget == self.pgDriveRobotGuide:
+        #     if self.wdgStep.GetStep() == 2:
+        #         self.OnClicked_btnDriveConfirm()
+        # elif currentWidget == self.pgPositionRobot:
+        #     sleep(0.5)
+        #     self.Robot_SettingTarget()
+        #     self.NextScene()
+        if self.dlgFootPedal:
+            idAction = self.dlgFootPedal.GetAction()
+            if idAction == ACTION_NEXT_SCENE:
+                self.NextScene()
+            elif idAction == ACTION_DRIVE_CONFIRM:
+                if self.wdgStep.GetStep() == 2:
+                    self.OnClicked_btnDriveConfirm()
+            elif idAction == ACTION_POSITION_ROBOT:
+                sleep(0.5)
+                self.Robot_SettingTarget()
+                self.NextScene()
+            
+        for animateWidget in self.lstAnimateWidget:
+            animateWidget.SetPause(False)
             
         # self.wdgAnimate.Stop()
         self.dlgFootPedal = None
@@ -3115,7 +3154,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(msgbox, QMessageBox):
             msgbox.accept()
         # self.NextScene()
-        self.stkScene.setCurrentWidget(self.pgRobotRegSphere)
+        if self.idEnabledDevice == DEVICE_LASER:
+            self.stkScene.setCurrentWidget(self.pgStartInhaleCT)
+        else:
+            self.stkScene.setCurrentWidget(self.pgRobotRegSphere)
+        
+    def Laser_runCheckData(self, avgData):
+        percent = self.Laser.GetPercentFromAvg(avgData)
+        percent = np.reshape(percent, (-1, 2))
+        
+        indexes, = np.where((percent[:, 0] >= 80) & (percent[:, 1] <= 20))
+        score = len(indexes) / len(percent) * 100
+        
+        strScore = f'score:{score:5.1f}'
+        print('=' * 30)
+        print(f'{strScore:^30}')
+        print('=' * 30)
+        
+        return score, percent
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -3133,7 +3189,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             msgbox.exec_()
         else:
             # QMessageBox.critical(None, 'Model Building Failed', 'Please try to build chest model again.')
-            MessageBox.ShowCritical('Model Building Failed', 'Please try to build chest model again.')
+            MessageBox.ShowCritical('Please try to build chest model again.')
             # self.lytLaserModel.replaceWidget(self.laserFigure, self.lblHintModelBuilding)
             # self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
@@ -3246,32 +3302,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         plt.plot(x, y)
         plt.show()
         
-        # dataTemp = np.array(self.Laser.dataTemp)
-        # xAxis = np.arange(len(dataTemp))
-        # # slope, intercept = np.polyfit(xAxis, dataTemp, 1)
-        # # yFit = xAxis * slope + intercept
-        # diff = np.diff(dataTemp)
-        # # fitDiff = np.array(np.array(dataTemp) - yFit)
-        # mean = np.mean(dataTemp)
-        # std_ev = np.std(dataTemp)
-        # stdDiff = dataTemp - mean
-        # threshold = std_ev * 3
-        # with np.printoptions(formatter={'all':lambda x:f'{x:.3f}'}):
-        #     if not hasattr(self, 'count'):
-                
-        #         print(f'diff = \n{diff}')
-        #         print(f'std value = {std_ev}, diff=\n{stdDiff}')
-        #         # print(f'fitDiff = \n{fitDiff}')
-        #         self.count = 1
-            
-        # plt.plot(xAxis, dataTemp)
-        # plt.show()
-        
     def Laser_Adjustment(self):
         while self.bLaserShowProfile:
             plotData = self.Laser.PlotProfile()
             if plotData is not None:
-                self.laserFigure.update_figure(plotData)
+                # self.laserFigure.update_figure(plotData)
+                self.laserFigure.update_figure(*plotData)
             
             # FPS 30
             sleep(0.033)
@@ -3338,6 +3374,135 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
             return bPass
         return False
+    
+    def Laser_FilterCycles(self, lstAvg, lstPercent):
+        if isinstance(lstAvg, (tuple, list)):
+            lstAvg = np.array(lstAvg)
+            
+        try:
+            if isinstance(lstPercent, (tuple, list, np.ndarray)):
+                lstPercent = np.reshape(lstPercent, (-1, 2))
+        except Exception as msg:
+            print(msg)
+            return False
+        
+        nNum = len(lstPercent)
+                                
+        indexes, = np.where((lstPercent[:, 0] >= 80) & (lstPercent[:, 1] <= 20))
+        numOfIndexes = len(indexes)
+        score = (numOfIndexes / nNum) * 100
+        print(f'first time score:{score}')
+        
+        if score > MODEL_SCORE:
+            return True    
+        else:
+            nRound = 1
+            # try:
+            avgOrigin = np.reshape(lstAvg, (-1, 2))
+            while score < MODEL_SCORE:
+                if len(lstPercent) < VALID_CYCLE_NUM:
+                    print('validated model data is not enough')
+                    return False
+                
+                indexesInhale, = np.where(lstPercent[:, 0] < INHALE_AREA)
+                indexesExhale, = np.where(lstPercent[:, 1] > EXHALE_AREA)
+                
+                if len(indexesInhale) > len(indexesExhale):
+                    sortedAvg = sorted(avgOrigin[:, 0])
+                    # 選擇第二小的值
+                    avgMin = sortedAvg[1]
+                    avgMax = np.max(avgOrigin[:, 1])
+                    print('\ncase 1')
+                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    nRound += 1
+                    
+                    self.Laser.FilterDataByAvgRange(avgMax, avgMin)
+                    
+                    indexes, = np.where(lstPercent[:, 0] < 100)
+                    if len(indexes) > 0:
+                        avgData = avgOrigin[indexes]
+                        score, percent = self.Laser_runCheckData(avgData)
+                        
+                        for i, p, avg in zip(indexes, percent, avgData):
+                            _a, _b = lstPercent[i]
+                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                    
+                        if score > MODEL_SCORE:
+                            return True
+                        
+                        # 迭代
+                        lstPercent = percent
+                        avgOrigin = avgData
+                    else:
+                        print('test data empty')
+                        return False
+                    
+                elif len(indexesInhale) < len(indexesExhale):
+                    avgMin = np.min(avgOrigin[:, 0])
+                    sortedAvg = sorted(avgOrigin[:, 1])
+                    # 找第二大的值
+                    avgMax = sortedAvg[-2]
+                    print('\ncase 2')
+                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    nRound += 1
+                    
+                    self.Laser.FilterDataByAvgRange(avgMax, avgMin)
+                    
+                    indexes, = np.where(lstPercent[:, 1] > 0)
+                    if len(indexes) > 0:
+                        avgData = avgOrigin[indexes]
+                        score, percent = self.Laser_runCheckData(avgData)
+                        
+                        for i, p, avg in zip(indexes, percent, avgData):
+                            _a, _b = lstPercent[i]
+                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                    
+                        if score > MODEL_SCORE:
+                            return True
+                        
+                        # 迭代
+                        lstPercent = percent
+                        avgOrigin = avgData
+                    else:
+                        print('test data empty')
+                elif len(indexesInhale) == len(indexesExhale):
+                    # 選擇第二小的值
+                    sortedAvg = sorted(avgOrigin[:, 0])
+                    avgMin = sortedAvg[1]
+                    
+                    # 找第二大的值
+                    sortedAvg = sorted(avgOrigin[:, 1])
+                    avgMax = sortedAvg[-2]
+                    
+                    print('\ncase 3')
+                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    nRound += 1
+                    
+                    self.Laser.FilterDataByAvgRange(avgMax, avgMin)
+                    
+                    indexes, = np.where((lstPercent[:, 0] < 100) & (lstPercent[:, 1] > 0))
+                    if len(indexes) > 0:
+                        avgData = avgOrigin[indexes]
+                        score, percent = self.Laser_runCheckData(avgData)
+                        
+                        for i, p, avg in zip(indexes, percent, avgData):
+                            _a, _b = lstPercent[i]
+                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                        
+                        if score > MODEL_SCORE:
+                            return True
+                        
+                        # 迭代
+                        lstPercent = percent
+                        avgOrigin = avgData
+                    else:
+                        print('test data empty')
+                        return False
+            # except Exception as msg:
+            #     print(f'error:{msg}')
+            #     return False
+            
+        return False
         
     def Laser_StopLaserProfile(self):
         # if self.Button_StopLaserDisplay.isChecked():
@@ -3352,12 +3517,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.Laser is None:
             return
         
-        self.btnStartBuildModel_2.setEnabled(False)
-        self.btnAutoRecord.setEnabled(False)
+        # self.btnStartBuildModel_2.setEnabled(False)
+        self.btnStartBuildModel.setEnabled(False)
+        # self.btnAutoRecord.setEnabled(False)
         self.recordBreathingBase = False
         self.bLaserRecording = True
-        self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
-        t = threading.Thread(target = self.Laser_RecordBreathingCycle)
+        # self.lytLaserModel.replaceWidget(self.lblHintModelBuilding, self.laserFigure)
+        # layout = self.wdgLaser.layout()
+        # if layout is None:
+        #     layout = QVBoxLayout(self.wdgLaser)
+        #     layout.setContentsMargins(0, 0, 0, 0)
+        # layout.addWidget(self.laserFigure)
+        
+        # t = threading.Thread(target = self.Laser_RecordBreathingCycle)
+        t = threading.Thread(target = self.Laser_RecordBreathing)
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
@@ -3384,46 +3557,57 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         receiveData = {}
         # self.TriggerSetting()
         print("Cheast Breathing Measure Start")
-        startTime = preTime = time.time()
         
+        # 紀錄初始時間戳記
+        startTime = time.time()
+        lastTime = startTime
         while self.bLaserRecording is True:
+            # 取得 laser 資料
             plotData = self.Laser.PlotProfile()
+            
+            # 計算時間變化量
             curTime = time.time()
             deltaTime = int((curTime - startTime) * 1000)
             if plotData is not None:
-                self.laserFigure.update_figure(plotData)
+                # 繪製 laser 資料線圖(plot)
+                self.figModel.update_figure(*plotData, nIndex = 0)
+                
                 rawData = self.Laser.ModelBuilding()
                 if len(rawData) > 0:
+                    # 將資料紀錄成 dictionary，以時間變化為key
                     receiveData[deltaTime] = rawData
-                    if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-                        cycle, bValid = self.Laser.DataCheckCycle()
-                        self.signalModelBuildingUI.emit(bValid)
+                    # 每隔1秒算一次，避免太過頻繁的運算
+                    if curTime - lastTime > 1:
+                        # 分析資料的週期，當週期數達到閾值，資料蒐集完成
+                        bValid, data = self.Laser.DataCheckCycle(receiveData, nValidCycle + 5)
+                        
+                        # 資料繪制於右側子圖，因目前座標軸範圍設定為負值，暫時轉換成負值處理
+                        data = np.array(data) * -1
+                        
+                        # 更新子圖一(右側子圖)
+                        self.figModel.update_figure(data, nIndex = 1)
                         if bValid:
                             self.bLaserRecording = False
+                        lastTime = curTime
                             
                         
         print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
-        # receiveData = receiveDataTemp.copy()
-        # delItems = [receiveData.pop(key, None) for key, item in receiveDataTemp.items() if not item]
-        # print(f'del Items = {delItems}')
-        # receiveData = [subarray for subarray in receiveDataTemp.values() if subarray]
-        # receiveData = [subarray for subarray in receiveDataTemp if subarray]
-        
-        # rearrange receiveData
-        # for item in receiveDataTemp:
-        #     receiveData.append(item[0]) 
-        # self.Laser.DataBaseChecking(receiveData) # make sure no data lost
+        # 完成資料蒐集後，進行資料編排處理、計算百分比等演算法
         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
-            cycle, bValid = self.Laser.DataCheckCycle()
+            # 對編排後的資料再進行一次週期分析，確保週期數目符合設定
+            bValid, lstAvg = self.Laser.DataCheckCycle()
+            
+            # 篩選週期，目前暫定先不篩選，因前面已有就斜率變化進行過濾
+            # lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
+            # bValid &= self.Laser_FilterCycles(lstAvg, lstPercent)
             # self.signalShowPlot.emit(cycle)
+            
+            # 發送是否建模成功的訊號
             if not bValid:
                 self.signalModelBuildingPass.emit(False)
             else:
                 self.recordBreathingBase = True
                 self.signalModelBuildingPass.emit(True)
-                # self.signalShowMessage.emit('Model building Succeed', 'Success', False)
-                # print(f'parcentage = \n{self.Laser.percentageBase}')
-                
     def Laser_RecordBreathingCycle(self):
         if self.Laser is None:
             return
@@ -3658,7 +3842,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
 class Canvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=3, height=2.5, dpi=100):
+    def __init__(self, parent=None, width=3, height=2.5, dpi=100, subplot = '111'):
         # plt.rcParams['figure.facecolor'] = 'r'
         # plt.rcParams['axes.facecolor'] = 'b'
         plt.rcParams['axes.prop_cycle'] = cycler(color=['r', 'g'])
@@ -3666,35 +3850,98 @@ class Canvas(FigureCanvasQTAgg):
         
         fig = Figure(figsize=(width, height), dpi=dpi) #创建画布,设置宽高，每英寸像素点数
         fig.set_facecolor('#4D84AD')
+        fig.subplots_adjust(wspace = 0.4, right = 1)
         
-        self.axes = fig.add_subplot(111)#
-        self.axes.set_facecolor('#4D84AD')
-        self.axes.set_ylabel('Lung Volume (mL)')
+        self.subplot = str(subplot)
+        nRow = int(self.subplot[0])
+        nCol = int(self.subplot[1])
+        # self.axes = fig.add_subplot(subplot)#
+        self.line1 = []
+        self.line2 = []
+        self.axes = []
+        
+        nIndex = 1
+        for row in range(nRow):
+            for col in range(nCol):
+                strPlotNum = f'{nRow}{nCol}{nIndex}'
+                axe = fig.add_subplot(int(strPlotNum))
+                axe.set_facecolor('#4D84AD')
+                axe.set_ylabel('Lung Volume (mL)')
+                
+                
+                # self.axes.cla()#清除已绘的图形
+                # if nIndex == 1:
+                line1, line2 = axe.plot([], [], [], [])
+                self.line1.append(line1)
+                self.line2.append(line2)
+                if nIndex == 1:
+                    axe.set_xlim([1,640])
+                else:
+                    axe.set_xlim([1,30])
+                    
+                axe.set_ylim([-125,-75])
+                # else:
+                #     self.pointPlot = axe.scatter([], [])
+                
+                # 在設置tick label之前設置ticks，來免除警告
+                axe.set_yticks(axe.get_yticks())
+                # 不顯示負號
+                axe.set_yticklabels([str((tick + 130) * 100) for tick in axe.get_yticks()])
+                self.axes.append(axe)
+                nIndex += 1
         
         FigureCanvasQTAgg.__init__(self, fig)#调用基类的初始化函数
         self.setParent(parent)
         FigureCanvasQTAgg.updateGeometry(self)
         
-    def update_figure(self,receiveData):
-        if not hasattr(self, 'line1'):
-            # self.line1, self.line2= self.axes.plot(range(len(receiveData[0])), receiveData[0], [], [])
-            self.line1, self.line2 = self.axes.plot([], [], [], [])
-            # self.line2 = self.axes.plot([], [])
-            # self.axes.cla()#清除已绘的图形
-            self.axes.set_xlim([1,640])
-            self.axes.set_ylim([-125,-75])
+    def Clear(self):
+        self.line1 = []
+        self.line2 = []
+        
+        for nIndex, axe in enumerate(self.axes, 1):
+            axe.cla()
+            axe.set_facecolor('#4D84AD')
+            axe.set_ylabel('Lung Volume (mL)')
             
+            
+            # self.axes.cla()#清除已绘的图形
+            # if nIndex == 1:
+            line1, line2 = axe.plot([], [], [], [])
+            self.line1.append(line1)
+            self.line2.append(line2)
+            if nIndex == 1:
+                axe.set_xlim([1,640])
+            else:
+                axe.set_xlim([1,30])
+                
+            axe.set_ylim([-125,-75])
+            # else:
+            #     self.pointPlot = axe.scatter([], [])
             
             # 在設置tick label之前設置ticks，來免除警告
-            self.axes.set_yticks(self.axes.get_yticks())
+            axe.set_yticks(axe.get_yticks())
             # 不顯示負號
-            self.axes.set_yticklabels([str((tick + 130) * 100) for tick in self.axes.get_yticks()])
+            axe.set_yticklabels([str((tick + 130) * 100) for tick in axe.get_yticks()])
             
+            self.draw()
         
+    def update_figure(self, *receiveData, nIndex = 0):
+        # if not hasattr(self, 'line1'):
         
-        self.line1.set_data(range(len(receiveData[0])), receiveData[0])
-        self.line2.set_data(range(len(receiveData[1])), receiveData[1])
-        self.draw()#重新绘制
+        lenOfData = len(receiveData)
+        
+        if lenOfData == 1 and nIndex < len(self.line1):
+            if len(receiveData[0]) > 0:
+                self.line1[nIndex].set_data(range(len(receiveData[0])), receiveData[0])
+            
+        if lenOfData == 2 and nIndex < len(self.line2):
+            if len(receiveData[1]) > 0:
+                self.line2[nIndex].set_data(range(len(receiveData[1])), receiveData[1])
+                
+        if nIndex == 0:
+            self.draw()#重新绘制
+            
+    
         
 class WidgetProcess(QWidget):
     angle = 0
@@ -3988,6 +4235,7 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
         size.setHeight(size.height() + 80)
         self.setFixedSize(size)
         
+        self.action = ACTION_NONE
         self.bAutoClose = True
         self.alpha = 255
         self.bPress = False
@@ -4009,6 +4257,15 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
         
         if self.alpha == 255 or self.alpha == 0:
             self.increment *= -1
+            
+    def SetAction(self, idAction:int):
+        if idAction in range(NUM_OF_ACTION):            
+            self.action = idAction
+            
+            if idAction == ACTION_POSITION_ROBOT:
+                self.SetAutoClose(False)
+                self.SetPressImage('entry_mark.jpg')
+                self.SetText('Keep pressing pedal and <span style="color:#ff0000">move robot to entry position</span>')
             
     def SetAutoClose(self, bEnabled:bool = True):
         self.bAutoClose = bEnabled
@@ -4038,6 +4295,9 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
     def OnClick_btnConfirm(self):
         self.signalClose.emit()
         self.close()
+        
+    def GetAction(self):
+        return self.action
         
 class DlgResumeSupportArm(DlgFootPedal):
     def __init__(self):
