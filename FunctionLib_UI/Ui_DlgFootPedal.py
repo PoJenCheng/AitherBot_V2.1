@@ -15,7 +15,7 @@ class Ui_DlgFootPedal(object):
     def setupUi(self, DlgFootPedal):
         DlgFootPedal.setObjectName("DlgFootPedal")
         DlgFootPedal.setWindowModality(QtCore.Qt.ApplicationModal)
-        DlgFootPedal.resize(847, 918)
+        DlgFootPedal.resize(942, 819)
         DlgFootPedal.setStyleSheet("QDialog{\n"
 "background-color: #74d3ff;\n"
 "}\n"
@@ -57,6 +57,16 @@ class Ui_DlgFootPedal(object):
 "    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}\n"
 "\n"
+"#lblContent{\n"
+"    color:rgb(255, 255, 0);\n"
+"    font: 64px \"Arial\";\n"
+"}\n"
+"\n"
+"#lblContentPress{\n"
+"    color:rgb(255, 200, 255);\n"
+"    font: 48px \"Arial\";\n"
+"}\n"
+"\n"
 "#lblDescription{\n"
 "    color:rgb(255, 255, 255);\n"
 "    font: 24pt \"Arial\";\n"
@@ -66,6 +76,18 @@ class Ui_DlgFootPedal(object):
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_2.setHorizontalSpacing(0)
         self.gridLayout_2.setObjectName("gridLayout_2")
+        self.gridLayout = QtWidgets.QGridLayout()
+        self.gridLayout.setObjectName("gridLayout")
+        self.btnConfirm = QtWidgets.QPushButton(self.mainWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnConfirm.sizePolicy().hasHeightForWidth())
+        self.btnConfirm.setSizePolicy(sizePolicy)
+        self.btnConfirm.setMinimumSize(QtCore.QSize(300, 150))
+        self.btnConfirm.setObjectName("btnConfirm")
+        self.gridLayout.addWidget(self.btnConfirm, 0, 0, 1, 1)
+        self.gridLayout_2.addLayout(self.gridLayout, 1, 0, 1, 1)
         self.wdgPicture = QtWidgets.QStackedWidget(self.mainWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -77,12 +99,45 @@ class Ui_DlgFootPedal(object):
         self.wdgPicture.setStyleSheet("background-color: rgb(77, 140, 187);")
         self.wdgPicture.setObjectName("wdgPicture")
         self.pgPedal = QtWidgets.QWidget()
-        self.pgPedal.setStyleSheet("image:url(image/foot_pedal_and_drag.png)")
+        self.pgPedal.setStyleSheet("")
         self.pgPedal.setObjectName("pgPedal")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.pgPedal)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.lblContent = QtWidgets.QLabel(self.pgPedal)
+        self.lblContent.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblContent.setObjectName("lblContent")
+        self.verticalLayout.addWidget(self.lblContent)
+        self.wdgPedal = QtWidgets.QWidget(self.pgPedal)
+        self.wdgPedal.setMinimumSize(QtCore.QSize(0, 285))
+        self.wdgPedal.setMaximumSize(QtCore.QSize(16777215, 285))
+        self.wdgPedal.setStyleSheet("image:url(image/foot_pedal_and_drag.png)")
+        self.wdgPedal.setObjectName("wdgPedal")
+        self.verticalLayout.addWidget(self.wdgPedal)
+        self.lblDescription = QtWidgets.QLabel(self.pgPedal)
+        self.lblDescription.setText("")
+        self.lblDescription.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblDescription.setObjectName("lblDescription")
+        self.verticalLayout.addWidget(self.lblDescription)
+        self.verticalLayout.setStretch(1, 1)
         self.wdgPicture.addWidget(self.pgPedal)
         self.pgPedalPress = QtWidgets.QWidget()
-        self.pgPedalPress.setStyleSheet("image:url(image/foot_pedal_press.png)")
+        self.pgPedalPress.setStyleSheet("")
         self.pgPedalPress.setObjectName("pgPedalPress")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgPedalPress)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.lblContentPress = QtWidgets.QLabel(self.pgPedalPress)
+        self.lblContentPress.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblContentPress.setObjectName("lblContentPress")
+        self.verticalLayout_2.addWidget(self.lblContentPress)
+        self.wdgPedalPress = QtWidgets.QWidget(self.pgPedalPress)
+        self.wdgPedalPress.setStyleSheet("image:url(image/foot_pedal_press.png)")
+        self.wdgPedalPress.setObjectName("wdgPedalPress")
+        self.verticalLayout_2.addWidget(self.wdgPedalPress)
+        self.verticalLayout_2.setStretch(1, 1)
         self.wdgPicture.addWidget(self.pgPedalPress)
         self.pgSupportArm = QtWidgets.QWidget()
         self.pgSupportArm.setStyleSheet("color:#ffee88")
@@ -147,26 +202,6 @@ class Ui_DlgFootPedal(object):
         self.gridLayout_5.addWidget(self.wdgAxis2, 1, 0, 1, 1)
         self.wdgPicture.addWidget(self.pgSupportArm)
         self.gridLayout_2.addWidget(self.wdgPicture, 0, 0, 1, 1)
-        self.lblContent = QtWidgets.QLabel(self.mainWidget)
-        self.lblContent.setAlignment(QtCore.Qt.AlignCenter)
-        self.lblContent.setObjectName("lblContent")
-        self.gridLayout_2.addWidget(self.lblContent, 1, 0, 1, 1)
-        self.lblDescription = QtWidgets.QLabel(self.mainWidget)
-        self.lblDescription.setText("")
-        self.lblDescription.setObjectName("lblDescription")
-        self.gridLayout_2.addWidget(self.lblDescription, 2, 0, 1, 1)
-        self.gridLayout = QtWidgets.QGridLayout()
-        self.gridLayout.setObjectName("gridLayout")
-        self.btnConfirm = QtWidgets.QPushButton(self.mainWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btnConfirm.sizePolicy().hasHeightForWidth())
-        self.btnConfirm.setSizePolicy(sizePolicy)
-        self.btnConfirm.setMinimumSize(QtCore.QSize(300, 150))
-        self.btnConfirm.setObjectName("btnConfirm")
-        self.gridLayout.addWidget(self.btnConfirm, 0, 0, 1, 1)
-        self.gridLayout_2.addLayout(self.gridLayout, 3, 0, 1, 1)
         self.gridLayout_2.setRowStretch(0, 1)
         self.gridLayout_6.addWidget(self.mainWidget, 1, 0, 1, 1)
         self.wdgTitle = QtWidgets.QWidget(DlgFootPedal)
@@ -183,7 +218,8 @@ class Ui_DlgFootPedal(object):
     def retranslateUi(self, DlgFootPedal):
         _translate = QtCore.QCoreApplication.translate
         DlgFootPedal.setWindowTitle(_translate("DlgFootPedal", "Dialog"))
+        self.btnConfirm.setText(_translate("DlgFootPedal", "Position Confirm"))
+        self.lblContent.setText(_translate("DlgFootPedal", "...Please press foot pedal..."))
+        self.lblContentPress.setText(_translate("DlgFootPedal", "...Unlocked, move robot arm by hand..."))
         self.lblAxis1.setText(_translate("DlgFootPedal", "Axis 1"))
         self.lblAxis2.setText(_translate("DlgFootPedal", "Axis 2"))
-        self.lblContent.setText(_translate("DlgFootPedal", "...Please press foot pedal..."))
-        self.btnConfirm.setText(_translate("DlgFootPedal", "Position Confirm"))

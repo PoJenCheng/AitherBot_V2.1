@@ -1361,17 +1361,18 @@ class REGISTRATION(QObject):
         array = []
         for tmp in interestPoint:
             "remove .5 and integer, get candidate (with centroid)"
-            tmp_str0 = str(tmp)
-            if int(tmp) != tmp and len(tmp_str0)-(tmp_str0.find(".")+1) == 1 and tmp_str0[tmp_str0.find(".")+1] == "5":
-                pass
-            elif int(tmp) == tmp:
-                pass
-            else:
-                    array.append(tmp)
+            fNum = tmp - int(tmp)
+            strNum = str(fNum)
             
-        tmpPoint = np.mean(array,0)
+            if fNum > 0 and strNum != '0.5':
+                array.append(tmp)
+            
+        if len(array) > 0:
+            return np.mean(array,0)
+        else:
+            return 0
         ############################################################################################
-        return tmpPoint
+        # return tmpPoint
 
     def __AveragePoint(self, dictionaryPoint):
         """average points for find ball center

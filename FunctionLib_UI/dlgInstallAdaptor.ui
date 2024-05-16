@@ -19,7 +19,7 @@
   <property name="styleSheet">
    <string notr="true">background-color: #4D8CBB;</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0">
    <item row="0" column="0">
     <widget class="QWidget" name="wdgMedia" native="true">
      <property name="minimumSize">
@@ -52,7 +52,7 @@
 color: rgb(255, 255, 208);</string>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;Remove locator and install holder&lt;/span&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt; at the end-effector of AitherBot.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt;&quot;&gt;Robot will move, please &lt;/span&gt;&lt;span style=&quot; font-size:24pt; color:#ff0000;&quot;&gt;keep breathing rate upper 90&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -61,12 +61,18 @@ color: rgb(255, 255, 208);</string>
    </item>
    <item row="1" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QPushButton" name="btnConfirm">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>200</width>
-         <height>80</height>
+         <width>300</width>
+         <height>120</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -96,10 +102,14 @@ margin-top:5px;
 margin-bottom:0px;
 margin-left:3px;
 margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
 }</string>
        </property>
        <property name="text">
-        <string>OK</string>
+        <string>Confirm</string>
        </property>
       </widget>
      </item>

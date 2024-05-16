@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DlgHintBox</class>
+ <widget class="QDialog" name="DlgHintBox">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>645</width>
+    <height>489</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0,1,0" columnstretch="0,1,0">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QWidget" name="wdgTL" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>129</width>
+       <height>134</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_tl.png)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QWidget" name="wdgT" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>134</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_t.png)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QWidget" name="wdgTR" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>56</width>
+       <height>134</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_tr.png)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="3">
+    <widget class="QWidget" name="wdgMain" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#wdgMain{
+	background-image:url(image/msg_green/msg_center.png);
+}
+
+QWidget{
+	font:24px &quot;Arial&quot;;
+	color:rgb(240, 240, 200);
+}
+
+QPushButton#btnConfirm{
+	font: 24px &quot;Arial&quot;;
+	background-color:#ff00ff;
+	color:rgb(241, 231, 255);
+}
+
+#chbKnown{
+	font:12px &quot;Arial&quot;;
+	color:rgb(240, 240, 0);
+}
+</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0" rowminimumheight="0,0">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblHintText">
+        <property name="styleSheet">
+         <string notr="true">font: 36px &quot;Arial&quot;;
+color:#ffff90;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="7,0,0,3">
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnConfirm">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>OK</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="chbKnown">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>don't show this again</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="wdgBL" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>41</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_bl.png)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QWidget" name="wdgB" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>41</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_b.png)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QWidget" name="wdgBR" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>41</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image:url(image/msg_green/msg_br.png)</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

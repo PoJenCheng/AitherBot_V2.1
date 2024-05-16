@@ -2364,6 +2364,7 @@ class Ui_MainWindow(object):
         self.pgRedLight = QtWidgets.QWidget()
         self.pgRedLight.setObjectName("pgRedLight")
         self.gridLayout_21 = QtWidgets.QGridLayout(self.pgRedLight)
+        self.gridLayout_21.setContentsMargins(11, 11, 11, 11)
         self.gridLayout_21.setObjectName("gridLayout_21")
         self.wdgRedLight = QtWidgets.QWidget(self.pgRedLight)
         self.wdgRedLight.setMinimumSize(QtCore.QSize(48, 48))
@@ -2378,6 +2379,24 @@ class Ui_MainWindow(object):
         self.wdgRedLight.setObjectName("wdgRedLight")
         self.gridLayout_21.addWidget(self.wdgRedLight, 0, 0, 1, 1)
         self.stkSignalLight.addWidget(self.pgRedLight)
+        self.pgOrangeLight = QtWidgets.QWidget()
+        self.pgOrangeLight.setStyleSheet("")
+        self.pgOrangeLight.setObjectName("pgOrangeLight")
+        self.gridLayout_40 = QtWidgets.QGridLayout(self.pgOrangeLight)
+        self.gridLayout_40.setObjectName("gridLayout_40")
+        self.wdgOrangeLight = QtWidgets.QWidget(self.pgOrangeLight)
+        self.wdgOrangeLight.setMinimumSize(QtCore.QSize(48, 48))
+        self.wdgOrangeLight.setMaximumSize(QtCore.QSize(48, 48))
+        self.wdgOrangeLight.setStyleSheet("#wdgOrangeLight{\n"
+"    background-color:qradialgradient(spread:pad, cx:0.2, cy:0.5, radius:0.8, fx:0.3, fy:0.5,\n"
+"    stop:0 rgba(255, 255, 255, 255),\n"
+"    stop:0.4 rgba(255, 153, 29, 255),\n"
+"    stop:1 rgba(255, 153, 29, 255));\n"
+"    border-radius:24px;\n"
+"}")
+        self.wdgOrangeLight.setObjectName("wdgOrangeLight")
+        self.gridLayout_40.addWidget(self.wdgOrangeLight, 0, 0, 1, 1)
+        self.stkSignalLight.addWidget(self.pgOrangeLight)
         self.pgGreenLight = QtWidgets.QWidget()
         self.pgGreenLight.setObjectName("pgGreenLight")
         self.gridLayout_31 = QtWidgets.QGridLayout(self.pgGreenLight)
@@ -2396,10 +2415,6 @@ class Ui_MainWindow(object):
         self.gridLayout_31.addWidget(self.wdgGreenLight, 0, 0, 1, 1)
         self.stkSignalLight.addWidget(self.pgGreenLight)
         self.horizontalLayout_23.addWidget(self.stkSignalLight)
-        self.lcdBreathingRatio = QtWidgets.QLCDNumber(self.tabGuidance)
-        self.lcdBreathingRatio.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
-        self.lcdBreathingRatio.setObjectName("lcdBreathingRatio")
-        self.horizontalLayout_23.addWidget(self.lcdBreathingRatio)
         self.gridLayout_32.addLayout(self.horizontalLayout_23, 0, 0, 1, 2)
         spacerItem45 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_32.addItem(spacerItem45, 2, 0, 1, 1)
@@ -2544,6 +2559,63 @@ class Ui_MainWindow(object):
         self.gridLayout_37.setColumnStretch(1, 1)
         self.gridLayout_37.setRowStretch(1, 1)
         self.stkScene.addWidget(self.pgDriveRobotGuide)
+        self.pgPlaceHolder = QtWidgets.QWidget()
+        self.pgPlaceHolder.setStyleSheet("QWidget{\n"
+"    color:rgb(229, 255, 253);\n"
+"    font: 72px \"Arial\";\n"
+"}")
+        self.pgPlaceHolder.setObjectName("pgPlaceHolder")
+        self.gridLayout_41 = QtWidgets.QGridLayout(self.pgPlaceHolder)
+        self.gridLayout_41.setObjectName("gridLayout_41")
+        self.lblTitle = QtWidgets.QLabel(self.pgPlaceHolder)
+        self.lblTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblTitle.setWordWrap(False)
+        self.lblTitle.setObjectName("lblTitle")
+        self.gridLayout_41.addWidget(self.lblTitle, 0, 0, 1, 1)
+        self.wdgUniversalHolder = QtWidgets.QWidget(self.pgPlaceHolder)
+        self.wdgUniversalHolder.setStyleSheet("image:url(image/universal_holder_place.png)")
+        self.wdgUniversalHolder.setObjectName("wdgUniversalHolder")
+        self.gridLayout_41.addWidget(self.wdgUniversalHolder, 1, 0, 1, 1)
+        self.horizontalLayout_28 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_28.setSpacing(0)
+        self.horizontalLayout_28.setObjectName("horizontalLayout_28")
+        self.btnConfirmUniversal = QtWidgets.QPushButton(self.pgPlaceHolder)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnConfirmUniversal.sizePolicy().hasHeightForWidth())
+        self.btnConfirmUniversal.setSizePolicy(sizePolicy)
+        self.btnConfirmUniversal.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnConfirmUniversal.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnConfirmUniversal.setObjectName("btnConfirmUniversal")
+        self.horizontalLayout_28.addWidget(self.btnConfirmUniversal)
+        self.gridLayout_41.addLayout(self.horizontalLayout_28, 2, 0, 1, 1)
+        self.gridLayout_41.setRowStretch(1, 1)
+        self.stkScene.addWidget(self.pgPlaceHolder)
         self.pgSterileStep1 = QtWidgets.QWidget()
         self.pgSterileStep1.setStyleSheet("background-color:rgb(77, 140, 187);")
         self.pgSterileStep1.setObjectName("pgSterileStep1")
@@ -2893,13 +2965,13 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(7)
+        self.stkScene.setCurrentIndex(17)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.toolBox.setCurrentIndex(0)
-        self.stkSignalLight.setCurrentIndex(1)
+        self.stkSignalLight.setCurrentIndex(0)
         self.stkJoint1.setCurrentIndex(1)
         self.stkJoint2.setCurrentIndex(1)
         self.btnNext_confirmHomingStep1.clicked.connect(MainWindow.NextScene) # type: ignore
@@ -3047,6 +3119,8 @@ class Ui_MainWindow(object):
         self.btnRobotResume.setText(_translate("MainWindow", "Resume\n"
 "Target"))
         self.btnDriveConfirm.setText(_translate("MainWindow", "Confirm"))
+        self.lblTitle.setText(_translate("MainWindow", "Install Universal Holder"))
+        self.btnConfirmUniversal.setText(_translate("MainWindow", "Confirm"))
         self.label_3.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Remove locator and install holder</span><span style=\" font-size:24pt;\"> at the end-effector of AitherBot.</span></p></body></html>"))
         self.btnConfirm.setText(_translate("MainWindow", "Confirm"))
         self.label_4.setText(_translate("MainWindow", "Start sterile and Drape robot arm"))

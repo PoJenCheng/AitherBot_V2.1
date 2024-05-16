@@ -1975,9 +1975,11 @@ class LineLaser(MOTORCONTROL, QObject):
                         # 並且紀錄當時的斜率變化量，供後面計算過濾
                         if slope < 0:
                             # find maximum value
-                            lstMax.append((max(subData), slopeDiff))
+                            timeInMax = lstTime[np.argmax(subData)]
+                            lstMax.append((max(subData), slopeDiff, timeInMax))
                         else:
-                            lstMin.append((min(subData), slopeDiff))
+                            timeInMin = lstTime[np.argmin(subData)]
+                            lstMin.append((min(subData), slopeDiff, timeInMin))
                     slopeLast = slope
                     lstSlope.append(slope)
                     
@@ -2007,7 +2009,7 @@ class LineLaser(MOTORCONTROL, QObject):
         lengthMin = len(lstMin)    
         
         if lengthMax == 0 or lengthMin == 0:
-            return False, []
+            return False, [], []
         
         lstMax = np.array(lstMax)
         lstMin = np.array(lstMin)
@@ -2024,13 +2026,18 @@ class LineLaser(MOTORCONTROL, QObject):
         # 分離出對應的斜率變化量為另一個陣列
         lstSlope = np.array(list(zip(lstMin[:, 1], lstMax[:, 1])))
         
+        lstTime = list(zip(lstMin[:, 2], lstMax[:, 2]))
+        
         # 當斜率變化量小於threshold時，才視為合法的資料
         lstAvg = [[x, y] for i, (x, y) in enumerate(mergeAvg) if (np.abs(lstSlope[i, :]) < BreathingCycle_Slope_Threshold).all()]
+        lstTime = [[x, y] for i, (x, y) in enumerate(lstTime) if (np.abs(lstSlope[i, :]) < BreathingCycle_Slope_Threshold).all()]
         
         # 平坦化成一維陣列
         lstAvg = np.array(lstAvg).flatten()
+        lstTime = np.array(lstTime).flatten() * 0.001
+        lstTime = sorted(lstTime)
         
-        return bValid, lstAvg
+        return bValid, lstAvg, lstTime
         
                     
     def DataFilter(self,yellowLightCriteria): #將高頻的數值刪除

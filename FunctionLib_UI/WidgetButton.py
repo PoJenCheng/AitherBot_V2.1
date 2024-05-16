@@ -186,6 +186,11 @@ class Indicator(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
+        pen = QPen()
+        pen.setWidth(3)
+        pen.setColor(QColor(255, 255, 255))
+        painter.setPen(pen)
+        
         if self.uidType == TYPE_ROBOTARM:
             self.value = min(100, max(self.value, 0))     
             # 繪製背景矩形
@@ -240,8 +245,18 @@ class Indicator(QWidget):
                 QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
                 QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
             ])
+            
+            # 指針色彩
+            linearPointer = QLinearGradient(pointer_x - self.pointer_width * 0.5, 0, pointer_x + self.pointer_width * 0.5, 0)
+            linearPointer.setColorAt(0, QColor(180, 180, 0))
+            linearPointer.setColorAt(0.3, QColor(255, 255, 0))
+            linearPointer.setColorAt(0.4, QColor(255, 255, 255))
+            linearPointer.setColorAt(0.5, QColor(255, 255, 0))
+            linearPointer.setColorAt(1, QColor(180, 180, 0))
 
-            painter.setBrush(QColor(255, 255, 255))  
+            # painter.setBrush(QColor(255, 255, 255))  
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(linearPointer)  
             painter.drawPolygon(pointer) 
         elif self.value > 100 or self.value < 0:
             font = painter.font()
@@ -294,8 +309,17 @@ class Indicator(QWidget):
                 QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
                 QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
             ])
+            # 指針色彩
+            linearPointer = QLinearGradient(pointer_x - self.pointer_width * 0.5, 0, pointer_x + self.pointer_width * 0.5, 0)
+            linearPointer.setColorAt(0, QColor(180, 180, 0))
+            linearPointer.setColorAt(0.3, QColor(255, 255, 0))
+            linearPointer.setColorAt(0.4, QColor(255, 255, 255))
+            linearPointer.setColorAt(0.5, QColor(255, 255, 0))
+            linearPointer.setColorAt(1, QColor(180, 180, 0))
 
-            painter.setBrush(QColor(255, 255, 255))  
+            # painter.setBrush(QColor(255, 255, 255))  
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(linearPointer) 
             painter.drawPolygon(pointer)        
         elif self.uidType == TYPE_EXHALE:
             # 繪製背景矩形
@@ -331,8 +355,17 @@ class Indicator(QWidget):
                 QPoint(int(pointer_x + self.pointer_width * 0.5), self.height()),
                 QPoint(int(pointer_x - self.pointer_width * 0.5), self.height())
             ])
+            # 指針色彩
+            linearPointer = QLinearGradient(pointer_x - self.pointer_width * 0.5, 0, pointer_x + self.pointer_width * 0.5, 0)
+            linearPointer.setColorAt(0, QColor(180, 180, 0))
+            linearPointer.setColorAt(0.3, QColor(255, 255, 0))
+            linearPointer.setColorAt(0.4, QColor(255, 255, 255))
+            linearPointer.setColorAt(0.5, QColor(255, 255, 0))
+            linearPointer.setColorAt(1, QColor(180, 180, 0))
 
-            painter.setBrush(QColor(255, 255, 255))  
+            # painter.setBrush(QColor(255, 255, 255))  
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(linearPointer) 
             painter.drawPolygon(pointer)  
         
 class AnimationWidget(QWidget):

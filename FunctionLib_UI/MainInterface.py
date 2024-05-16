@@ -22,6 +22,7 @@ import time
 import os
 # from FunctionLib_UI.ui_demo_1 import *
 import FunctionLib_UI.Ui_DlgFootPedal
+import FunctionLib_UI.Ui_DlgHintBox
 from FunctionLib_UI.Ui__Aitherbot import *
 import FunctionLib_UI.Ui_step
 from FunctionLib_UI.ViewPortUnit import *
@@ -33,7 +34,7 @@ from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
 
-
+# from skimage import io
 from cycler import cycler
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -144,6 +145,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # super(MainInterface, self).__init__()
         QMainWindow.__init__(self)
         
+        self.dlgShowHint = None
         self.language = lang
         self.setupUi(self)
         self.ui = Ui_MainWindow()
@@ -267,8 +269,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.settingTarget = False
         self.dlgFootPedal = None
         self.dlgResumeSupportArm = None
+        self.dlgRobotDrive = None
         
         self.init_ui()
+        
+        # 消除PNG影像警告用轉檔程式 需要skimage和cv2
+        # path = os.path.join(os.getcwd(), 'image/msg_green/')
+        # outPath = os.path.join(os.getcwd(), 'image/1/')
+        
+        # for dirPath, dirNames, fileNames in os.walk(path):
+        #     for f in fileNames:
+        #         imagePath = os.path.join(path, f)
+        #         outPath = os.path.join(path, '1', f)
+        #         image = io.imread(imagePath)
+        #         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
+        #         cv2.imencode('.png', image)[1].tofile(outPath)
         
     def addCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -762,6 +777,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
         self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
         
+        self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
+        
         self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
         self.lstAnimateWidget.append(self.wdgAnimate)
         
@@ -775,19 +792,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.wdgAnimateUnlock.signalIdle.connect(self.Robot_GetPedal)
         self.wdgAnimatePositionRobot.signalIdle.connect(self.Robot_GetPedal)
         self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
-        
-        # lst1 = np.array([(1, 3), (5, 7), (9, 11)])
-        # lst2 = np.array([(2, 4), (6, 8), (10, 12)])
-        # print(list(zip(lst1[:, 0], [])))
-        # lst3 = list(zip(lst1[:, 0], lst2[:, 0]))
-        # lst4 = np.array(list(zip(lst1[:, 1], lst2[:, 1])))
-        # lst = [[x, y] for i, (x, y) in enumerate(lst3) if (lst4[i, :] < 8).any()]
-        # # lst = np.array(lst).flatten()
-        # lst = np.reshape(lst, (-1, 1))
-        # print(lst)        
-        
-        
-        
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1194,27 +1198,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.NextScene()
                 
         else:
-            if self.language == LAN_CN:
-                translator = QTranslator()
-                translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
-                QCoreApplication.installTranslator(translator)
+            self._Robot_driveTo()
+            
+            # self.stkScene.setCurrentWidget(self.pgPlaceHolder)
+            
+            # if self.language == LAN_CN:
+            #     translator = QTranslator()
+            #     translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
+            #     QCoreApplication.installTranslator(translator)
                 
-            self.Laser_OnTracking()
+            # self.Laser_OnTracking()
             
-            dlgDriveTo = DlgInstallAdaptor()
-            dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
-            dlgDriveTo.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            dlgDriveTo.setModal(True)
-            dlgDriveTo.exec_()
+            # dlgDriveTo = DlgInstallAdaptor()
+            # dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+            # dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
+            # dlgDriveTo.setModal(True)
+            
+            # dlgDriveTo.exec_()
             # self.listSubDialog.append(dlgDriveTo)
-            
-            # dlgRobotMoving = DlgRobotMoving()
-            # dlgRobotMoving.signalStop.connect(self.Robot_Stop)
-            # dlgRobotMoving.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # dlgRobotMoving.setModal(True)
-            # dlgRobotMoving.exec_()
-            
-            self.stkSignalLight.setCurrentWidget(self.pgGreenLight)
         
     def OnClicked_btnCancel(self):
         self.stkScene.setCurrentIndex(self.indexPrePage)
@@ -1370,10 +1371,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         elif nStep == 4:
             # self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
-            self.stkScene.setCurrentWidget(self.pgImageView)
+            self.stkScene.setCurrentWidget(self.pgPlaceHolder)
             self.bSterile = True
         elif nStep is None:
-            self.stkScene.setCurrentWidget(self.pgImageView)
+            self.stkScene.setCurrentWidget(self.pgPlaceHolder)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.001
@@ -1924,13 +1925,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
             self.OperationLight = Robot.OperationLight()
             
-            # self.dlgFootPedal = DlgFootPedal()
-            # self.dlgFootPedal.signalClose.connect(self.Robot_OnConfirmPosition)
-            
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
             self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
@@ -1962,7 +1960,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_GetAverageRatio)
+            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
             self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
@@ -2715,6 +2713,27 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                 elif ret == 1:
                     self.close()
+                    
+    def _Robot_driveTo(self):
+        if self.language == LAN_CN:
+            translator = QTranslator()
+            translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
+            QCoreApplication.installTranslator(translator)
+                
+        self.stkScene.setCurrentWidget(self.pgImageView)
+        
+        self.Laser_OnTracking()
+        
+        dlgDriveTo = DlgInstallAdaptor()
+        dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+        dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
+        dlgDriveTo.setModal(True)
+        self.dlgRobotDrive = dlgDriveTo
+        
+        dlgDriveTo.exec_()
+        self.listSubDialog.append(dlgDriveTo)
+        
+        self.stkScene.setCurrentWidget(self.pgImageView)
                 
     def Robot_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
@@ -3172,6 +3191,41 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         print('=' * 30)
         
         return score, percent
+    
+    def Laser_OnSignalBreathingRatio(self, ratio):
+        # self.avgValueDataTmp = []
+        
+        if self.greenLightCriteria is not None and self.yellowLightCriteria is not None:
+            if ratio >= self.greenLightCriteria:  #綠燈
+                self.stkSignalLight.setCurrentWidget(self.pgGreenLight)
+            elif ratio >= self.yellowLightCriteria and ratio < self.greenLightCriteria: #黃燈
+                self.stkSignalLight.setCurrentWidget(self.pgOrangeLight)
+            else:
+                self.stkSignalLight.setCurrentWidget(self.pgRedLight)
+                    
+            # self.laserFigure.update_figure(self.Laser.PlotProfile())
+            # self.avgValueDataTmp.append(ratio)
+            
+            if isinstance(ratio, float):
+                self.breathingPercentage = ratio     
+                
+                if self.dlgRobotDrive:
+                    if ratio >= self.greenLightCriteria:
+                        self.dlgRobotDrive.SetState(True)
+                        
+                        if self.dlgShowHint is not None:
+                            self.dlgShowHint.close()
+                            self.dlgShowHint = None
+                    else:
+                        self.dlgRobotDrive.SetState(False)
+                        
+                        if self.dlgShowHint is None:
+                            self.dlgShowHint = DlgHintBox()
+                            
+                            pos = self.stkSignalLight.mapToGlobal(self.stkSignalLight.pos())
+                            self.dlgShowHint.SetPosition(pos)
+                            self.dlgShowHint.SetText('Adjust patient\'s breath to reach green light')
+                            self.dlgShowHint.show()
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -3579,13 +3633,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # 每隔1秒算一次，避免太過頻繁的運算
                     if curTime - lastTime > 1:
                         # 分析資料的週期，當週期數達到閾值，資料蒐集完成
-                        bValid, data = self.Laser.DataCheckCycle(receiveData, nValidCycle + 5)
+                        bValid, data, lstTime = self.Laser.DataCheckCycle(receiveData, nValidCycle + 5)
                         
                         # 資料繪制於右側子圖，因目前座標軸範圍設定為負值，暫時轉換成負值處理
                         data = np.array(data) * -1
                         
                         # 更新子圖一(右側子圖)
-                        self.figModel.update_figure(data, nIndex = 1)
+                        # self.figModel.update_figure(data, nIndex = 1)
+                        self.figModel.DrawData(lstTime, data, nIndex = 1)
                         if bValid:
                             self.bLaserRecording = False
                         lastTime = curTime
@@ -3595,7 +3650,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 完成資料蒐集後，進行資料編排處理、計算百分比等演算法
         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
             # 對編排後的資料再進行一次週期分析，確保週期數目符合設定
-            bValid, lstAvg = self.Laser.DataCheckCycle()
+            bValid, lstAvg, *_ = self.Laser.DataCheckCycle()
             
             # 篩選週期，目前暫定先不篩選，因前面已有就斜率變化進行過濾
             # lstPercent = self.Laser.GetPercentFromAvg(lstAvg)
@@ -3724,9 +3779,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         while self.bLaserTracking is True:
             self.Laser.RealTimeHeightAvg() #透過計算出即時的HeightAvg, 顯示燈號
             
-        with open('AVG_data.txt', mode='w') as f:
-            for data in self.avgValueDataTmp:
-                f.write(f'{data},')
+        # with open('AVG_data.txt', mode='w') as f:
+        #     for data in self.avgValueDataTmp:
+        #         f.write(f'{data},')
                 
     def Laser_StopTracking(self):
         # if self.Button_StopLaserTracking.isChecked():
@@ -3767,54 +3822,34 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.tCheckExhale.timeout.connect(self.Laser.CheckExhale)
         self.tCheckExhale.start(10)
         
-        
-    def Laser_GetAverageRatio(self, ratio):
-        self.avgValueDataTmp = []
-        self.lcdBreathingRatio.display(ratio)
-        
-        if self.greenLightCriteria is not None and self.yellowLightCriteria is not None:
-            if ratio >= self.greenLightCriteria:  #綠燈
-                self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: green; background: silver;}")
-            elif ratio >= self.yellowLightCriteria and ratio < self.greenLightCriteria: #黃燈
-                self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: yellow; background: silver;}")
-            else:
-                self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: red; background: silver;}")
-                    
-            # self.laserFigure.update_figure(self.Laser.PlotProfile())
-            self.avgValueDataTmp.append(ratio)
             
-            if type(ratio) is np.float64:
-                self.breathingPercentage = ratio     
-                
+    # def Laser_FuncLaserTracking(self):
+    #     self.avgValueDataTmp = []
         
+    #     while self.bLaserTracking is True:
+    #         breathingPercentageTemp = self.Laser.RealTimeHeightAvg(self.yellowLightCriteria, self.greenLightCriteria) #透過計算出即時的HeightAvg, 顯示燈號
             
-    def Laser_FuncLaserTracking(self):
-        self.avgValueDataTmp = []
-        
-        while self.bLaserTracking is True:
-            breathingPercentageTemp = self.Laser.RealTimeHeightAvg(self.yellowLightCriteria, self.greenLightCriteria) #透過計算出即時的HeightAvg, 顯示燈號
+    #         self.lcdBreathingRatio.display(breathingPercentageTemp)
             
-            self.lcdBreathingRatio.display(breathingPercentageTemp)
-            
-            if breathingPercentageTemp is not None:
-                if self.greenLightCriteria is not None and self.yellowLightCriteria is not None:
-                    if breathingPercentageTemp >= self.greenLightCriteria:  #綠燈
-                        self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: green; background: silver;}")
-                    elif breathingPercentageTemp >= self.yellowLightCriteria and breathingPercentageTemp < self.greenLightCriteria: #黃燈
-                        self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: yellow; background: silver;}")
-                    else:
-                        self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: red; background: silver;}")
+    #         if breathingPercentageTemp is not None:
+    #             if self.greenLightCriteria is not None and self.yellowLightCriteria is not None:
+    #                 if breathingPercentageTemp >= self.greenLightCriteria:  #綠燈
+    #                     self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: green; background: silver;}")
+    #                 elif breathingPercentageTemp >= self.yellowLightCriteria and breathingPercentageTemp < self.greenLightCriteria: #黃燈
+    #                     self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: yellow; background: silver;}")
+    #                 else:
+    #                     self.lcdBreathingRatio.setStyleSheet("#lcdBreathingRatio{border: 2px solid black; color: red; background: silver;}")
                         
-                # self.laserFigure.update_figure(self.Laser.PlotProfile())
+    #             # self.laserFigure.update_figure(self.Laser.PlotProfile())
                 
-                self.avgValueDataTmp.append(breathingPercentageTemp)
+    #             self.avgValueDataTmp.append(breathingPercentageTemp)
                 
-                if type(breathingPercentageTemp) is np.float64:
-                    self.breathingPercentage = breathingPercentageTemp                
-                    print(self.breathingPercentage)
-        with open('AVG_data.txt', mode='w') as f:
-            for data in self.avgValueDataTmp:
-                f.write(f'{data},')
+    #             if type(breathingPercentageTemp) is np.float64:
+    #                 self.breathingPercentage = breathingPercentageTemp                
+    #                 print(self.breathingPercentage)
+    #     with open('AVG_data.txt', mode='w') as f:
+    #         for data in self.avgValueDataTmp:
+    #             f.write(f'{data},')
                 
     def Laser_Close(self):
         if self.tCheckInhale:
@@ -3878,6 +3913,7 @@ class Canvas(FigureCanvasQTAgg):
                     axe.set_xlim([1,640])
                 else:
                     axe.set_xlim([1,30])
+                    axe.set_xlabel('time (second)')
                     
                 axe.set_ylim([-125,-75])
                 # else:
@@ -3902,6 +3938,8 @@ class Canvas(FigureCanvasQTAgg):
             axe.cla()
             axe.set_facecolor('#4D84AD')
             axe.set_ylabel('Lung Volume (mL)')
+            if nIndex == 2:
+                axe.set_xlabel('time (second)')
             
             
             # self.axes.cla()#清除已绘的图形
@@ -3940,6 +3978,16 @@ class Canvas(FigureCanvasQTAgg):
                 
         if nIndex == 0:
             self.draw()#重新绘制
+            
+    def DrawData(self, dataX:list, dataY:list, nIndex:int = 0):
+        if nIndex < len(self.line2):
+            if len(dataX) > 0:
+                maxDataX = max(dataX)
+                if maxDataX > 25:
+                    self.axes[nIndex].set_xlim([0, maxDataX + 5])
+            self.line2[nIndex].set_data(dataX, dataY)
+            print(f'dataX = {len(dataX)}\n{dataX}')
+            print(f'dataY = {len(dataY)}\n{dataY}')
             
     
         
@@ -4140,6 +4188,31 @@ class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
     def OnClicked_btnConfirm(self):
         self.close()
         
+class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
+    signalDontShow = pyqtSignal(bool)
+    
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        self.bDontShow = False
+        
+        self.chbKnown.toggled.connect(self._checkDontShow)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+    def _checkDontShow(self, bChecked:bool):
+        self.signalDontShow.emit(bChecked)
+        self.bDontShow = bChecked
+        
+        
+    def SetText(self, text:str):
+        self.lblHintText.setText(text)
+        
+    def SetPosition(self, pos:QPoint):
+        pos.setX(pos.x() - self.width())
+        self.move(pos)
+        
 class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()
     
@@ -4163,6 +4236,7 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
         # self.player.play()
         
         # self.player.mediaStatusChanged.connect(self.statusChanged)
+        self.btnConfirm.setEnabled(False)
         self.btnConfirm.clicked.connect(self.OnClicked_btnConfirm)
         
     def statusChanged(self, status):
@@ -4175,8 +4249,15 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
         return super().closeEvent(event)
     
     def OnClicked_btnConfirm(self):
+        ret = MessageBox.ShowInformation('This action will move robot, do you sure about that?', 'YES', 'NO')
         QTimer.singleShot(1000, lambda: self.close())
-        self.signalRobotStartMoving.emit()
+        
+        if ret == 0:
+            print('robot move')
+            self.signalRobotStartMoving.emit()
+            
+    def SetState(self, bEnabled:bool):
+        self.btnConfirm.setEnabled(bEnabled)
             
 class DlgRobotMoving(QDialog, FunctionLib_UI.Ui_DlgRobotMoving.Ui_DlgRobotMoving):
     signalStop = pyqtSignal()
@@ -4246,12 +4327,12 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
         
         self.btnConfirm.clicked.connect(self.OnClick_btnConfirm)
         self.btnConfirm.setEnabled(False)
+        
+        self.lblContent.setText('<span style="font-size:64px">...Please press foot pedal...</span>')
     
     def runContentText(self):
         if self.bPress == False:
             self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
-        else:
-            self.lblContent.setStyleSheet(f'color:rgb(  0, 255, 0)')
         self.alpha += self.increment
         self.alpha = min(255, max(self.alpha, 0))
         
@@ -4276,18 +4357,18 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
             self.OnClick_btnConfirm()
         else:
             if bPress:
-                self.lblContent.setText('...Unlocked, move robot arm by hand...')
+                # self.lblContent.setText('<span style="font-size:48px">...Unlocked, move robot arm by hand...</span>')
                 self.wdgPicture.setCurrentWidget(self.pgPedalPress)
                 self.btnConfirm.setEnabled(False)
             else:
-                self.lblContent.setText('...Please press foot pedal...')
+                # self.lblContent.setText('<span style="font-size:64px">...Please press foot pedal...</span>')
                 self.wdgPicture.setCurrentWidget(self.pgPedal)
                 self.btnConfirm.setEnabled(True)
             
         self.bPress = bPress
         
     def SetPressImage(self, strImageName:str):
-        self.pgPedalPress.setStyleSheet(f'image:url(image/{strImageName})')
+        self.wdgPedalPress.setStyleSheet(f'image:url(image/{strImageName})')
         
     def SetText(self, text:str):
         self.lblDescription.setText(text)

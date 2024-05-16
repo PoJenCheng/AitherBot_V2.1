@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\Leon\AitherBot_V2.1\FunctionLib_UI\dlgInstallAdaptor.ui'
+# Form implementation generated from reading ui file 'c:\Leon\AitherBot\AitherBot_V3.2\FunctionLib_UI\dlgInstallAdaptor.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -33,9 +33,11 @@ class Ui_dlgInstallAdaptor(object):
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 1, 1, 1)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.btnConfirm = QtWidgets.QPushButton(dlgInstallAdaptor)
-        self.btnConfirm.setMinimumSize(QtCore.QSize(200, 80))
+        self.btnConfirm.setEnabled(False)
+        self.btnConfirm.setMinimumSize(QtCore.QSize(300, 120))
         self.btnConfirm.setMaximumSize(QtCore.QSize(200, 16777215))
         self.btnConfirm.setStyleSheet("QPushButton{\n"
 "font: 48pt \"Arial\";\n"
@@ -57,10 +59,15 @@ class Ui_dlgInstallAdaptor(object):
 "margin-bottom:0px;\n"
 "margin-left:3px;\n"
 "margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
         self.btnConfirm.setObjectName("btnConfirm")
         self.horizontalLayout.addWidget(self.btnConfirm)
         self.gridLayout.addLayout(self.horizontalLayout, 1, 0, 1, 2)
+        self.gridLayout.setRowStretch(0, 1)
 
         self.retranslateUi(dlgInstallAdaptor)
         QtCore.QMetaObject.connectSlotsByName(dlgInstallAdaptor)
@@ -68,5 +75,5 @@ class Ui_dlgInstallAdaptor(object):
     def retranslateUi(self, dlgInstallAdaptor):
         _translate = QtCore.QCoreApplication.translate
         dlgInstallAdaptor.setWindowTitle(_translate("dlgInstallAdaptor", "Dialog"))
-        self.label.setText(_translate("dlgInstallAdaptor", "<html><head/><body><p><span style=\" font-size:24pt; color:#ff0000;\">Remove locator and install holder</span><span style=\" font-size:24pt;\"> at the end-effector of AitherBot.</span></p></body></html>"))
-        self.btnConfirm.setText(_translate("dlgInstallAdaptor", "OK"))
+        self.label.setText(_translate("dlgInstallAdaptor", "<html><head/><body><p><span style=\" font-size:24pt;\">Robot will move, please </span><span style=\" font-size:24pt; color:#ff0000;\">keep breathing rate upper 90</span></p></body></html>"))
+        self.btnConfirm.setText(_translate("dlgInstallAdaptor", "Confirm"))
