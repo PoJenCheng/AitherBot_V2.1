@@ -406,16 +406,25 @@ class TreeViewDelegate(QStyledItemDelegate):
                 option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         super().paint(painter, option, index)
         
-class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
-    def __init__(self):
-        """show loading window"""
-        ## 顯示 loading 畫面 ############################################################################################
-        super(SystemProcessing, self).__init__()
-        self.setupUi(self)
-        ############################################################################################
+# class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
+#     def __init__(self, nParts = 1):
+#         """show loading window"""
+#         ## 顯示 loading 畫面 ############################################################################################
+#         self.nParts = max(nParts, 1)
+#         super().__init__()
+#         self.setupUi(self)
+#         ############################################################################################
         
-    def UpdateProgress(self, value):
-        self.pgbLoadDIcom.setValue(int(value * 100))
+#     def _AddProgress(self, value):
+#         percent = self.pgbLoadDIcom.value()
+#         self.pgbLoadDIcom.setValue(min(percent + value, 100))
+    
+#     def UpdateProgress(self, value):
+#         if self.nParts == 1:
+#             self.pgbLoadDIcom.setValue(int(value * 100))
+#         else:
+#             value = int(value / self.nParts)
+#             self._AddProgress(value)
     
 
 

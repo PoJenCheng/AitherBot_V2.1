@@ -372,7 +372,7 @@ class RobotSupportArm(QObject):
         self.duration = 1000
         self.TargetEn1 = None
         self.TargetEn2 = None
-        self.bPedalPressLast = False
+        self.bPedalPressLast = None
         # 是否偏離target
         self.bRobotMoveFromTarget = True
         
@@ -394,8 +394,9 @@ class RobotSupportArm(QObject):
     def ReadPedal(self):
         bPress = self.plc.read_by_name(self.SupportMove)
         # 只有狀態改變時才發送訊息
-        if bPress ^ self.bPedalPressLast == True:
-            self.signalPedalPress.emit(bPress)
+        if self.bPedalPressLast is not None:
+            if bPress ^ self.bPedalPressLast == True:
+                self.signalPedalPress.emit(bPress)
         self.bPedalPressLast = bPress
         
     

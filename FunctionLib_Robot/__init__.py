@@ -76,6 +76,7 @@ TIMEOVER_ROBOT = 10
 TIMEOVER_LASER = 3
 
 # enabled device setting, default is DEVICE_ALL
+DEVICE_NONE = 0
 DEVICE_ROBOT = 1
 DEVICE_LASER = 2
 DEVICE_ALL = 3

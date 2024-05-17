@@ -145,9 +145,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # super(MainInterface, self).__init__()
         QMainWindow.__init__(self)
         
-        self.dlgShowHint = None
         self.language = lang
         self.setupUi(self)
+        self.dlgShowHint = None
+        self.dlgSystemProcessing = None
+        
         self.ui = Ui_MainWindow()
     
         self.dicomLow = DISPLAY()
@@ -285,7 +287,216 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
         #         cv2.imencode('.png', image)[1].tofile(outPath)
         
-    def addCrossSectionItemInSelector(self):
+    def init_ui(self):
+        self.stkMain.setCurrentIndex(0)
+        self.stkScene.setCurrentIndex(0)
+        
+        self.treeDicom.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #3498db;  
+                color: white;  
+                text-align: center; 
+                font-size:12pt; 
+            }
+            
+            QTreeView::item{
+                text-align:center;
+            }
+            """)
+        
+        self.wdgPlanning.clicked.connect(self.OnClicked_btnPlanning)
+        self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
+        self.stkScene.currentChanged.connect(self.SceneChanged)
+        self.stkMain.currentChanged.connect(self.MainSceneChanged)
+        self.signalLoadingReady.connect(self.OnSignal_LoadingReady)
+        self.signalSetProgress.connect(self.OnSignal_SetProgress)
+        self.signalShowMessage.connect(self.OnSignal_ShowMessage)
+        self.signalModelBuildingUI.connect(self.OnSignal_ModelBuilding)
+        self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
+        
+        self.signalSetCheck.connect(self.OnSignal_SetCheck)
+        
+        self.btnNext_confirmHomingStep2.clicked.connect(self.Robot_StartHoming)
+        # self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
+        
+        self.laserFigure = Canvas(self, dpi = 150)
+        self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
+        self.lytLaserAdjust.addWidget(self.laserFigure)
+        
+        self.figModel = Canvas(self, dpi = 150, subplot = '121')
+        layout = QVBoxLayout(self.wdgLaser)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.figModel)
+        
+        self.btnSceneLaser.setEnabled(False)
+        self.btnSceneRobot.setEnabled(False)
+        self.btnSceneRobot.clicked.connect(self.ToSceneRobotSetting)
+        self.btnSceneLaser.clicked.connect(self.ToSceneLaser)
+        self.btnSceneView.clicked.connect(self.ToSceneView)
+        
+        self.SetStageButtonStyle(0)
+        
+        self.wdgNaviBar.layout().setAlignment(self.btnSceneRobot, Qt.AlignCenter)
+        self.wdgNaviBar.layout().setAlignment(self.btnSceneLaser, Qt.AlignCenter)
+        self.wdgNaviBar.layout().setAlignment(self.btnSceneView, Qt.AlignCenter)
+        
+        self.sldWindowLevel.valueChanged.connect(self.OnChanged_sldWindowLevel)
+        self.sldWindowWidth.valueChanged.connect(self.OnChanged_sldWindowWidth)
+        self.currentDicom = self.buttonGroup.checkedButton().objectName()
+        
+        self.buttonGroup.buttonToggled.connect(self.OnToggled_buttonGroup)
+        self.btgDicom.buttonToggled.connect(self.OnToggled_btgDIcom)
+        
+        self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
+        
+        self.tbsCTScan.selectionChanged.connect(self.OnSelection)
+        
+        self.tabWidget.currentChanged.connect(self.OnCurrentChange_tabWidget)
+        
+        self.cbxLanguage.currentIndexChanged.connect(self.OnChanged_cbxLanguage)
+        
+        self.btnCancel.clicked.connect(self.OnClicked_btnCancel)
+        self.btnSetEntry.clicked.connect(self.OnClicked_btnSetEntry)
+        self.btnSetTarget.clicked.connect(self.OnClicked_btnSetTarget)
+        
+        self.btnToEntry.clicked.connect(self.OnClicked_btnToEntry)
+        self.btnToTarget.clicked.connect(self.OnClicked_btnToTarget)
+        self.sldTrajectory.valueChanged.connect(self.OnValueChanged_sldTrajectory)
+        
+        self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
+        self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
+        
+        for combobox in self.dicViewSelector_L.values():
+            combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
+            
+        model = QStandardItemModel()
+        stringList = ['patient name', 'patient ID', 'sex', 'Modality', 'dim', 'voxel size','acqusition date', 'path']
+        model.setHorizontalHeaderLabels(stringList)
+        
+        modelFilter = QStandardItemModel()
+        stringList = ['patient name', 'patient ID', 'sex']
+        modelFilter.setHorizontalHeaderLabels(stringList)
+        
+        rowSelectAll = [QStandardItem() for _ in range(3)]
+        rowSelectAll[0].setCheckable(True)
+        rowSelectAll[0].setCheckState(Qt.Checked)
+        
+        modelFilter.appendRow(rowSelectAll)
+        modelFilter.itemChanged.connect(self.OnItemChanged)
+        
+        model.sort(6, Qt.DescendingOrder)
+        model.setHeaderData(0, Qt.Horizontal, QColor(0, 0, 255, 100), role = Qt.BackgroundRole)
+        self.treeDicom.setModel(model)
+        self.treeDicom.setSelectionMode(QAbstractItemView.MultiSelection)
+        
+        header = self.treeDicom.header()
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setDefaultAlignment(Qt.AlignHCenter)
+        
+        modelFilter.sort(1, Qt.AscendingOrder)
+        self.treeDicomFilter.setModel(modelFilter)
+        self.treeDicomFilter.expandAll()
+        
+        header = self.treeDicomFilter.header()
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        
+        self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
+        self.treeDicom.entered.connect(self.OnEntered_treeDicom)
+        self.treeDicom.installEventFilter(self)
+        self.treeDicom.setItemDelegate(TreeViewDelegate())
+        
+        self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
+        
+        self.btnRobotRelease.clicked.connect(self.Robot_ReleaseArm)
+        self.btnRobotFix.clicked.connect(self.Robot_FixArm)
+        self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
+        self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
+        
+        # self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
+        self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
+        self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
+        self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
+        self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
+        
+        self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
+        
+        self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
+        
+        self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
+        # self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
+        self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
+        
+        self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
+        
+        self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
+        self.lstAnimateWidget.append(self.wdgAnimate)
+        
+        # layout = self.wdgBottom.parentWidget().layout()
+        # layout.replaceWidget(self.wdgBottom, self.wdgAnimate)
+        layout = QVBoxLayout(self.wdgPedal)
+        layout.addWidget(self.wdgAnimate)
+        
+        # layoutAnimate = QVBoxLayout(self.wdgAnimate)
+        # layoutAnimate.setContentsMargins(0, 0, 0, 0)
+        # layoutAnimate.addWidget(self.wdgBottom)
+        
+        # self.wdgAnimateUnlock.signalIdle.connect(self.Robot_GetPedal)
+        # self.wdgAnimatePositionRobot.signalIdle.connect(self.Robot_GetPedal)
+        # self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
+        for wdg in self.lstAnimateWidget:
+            wdg.signalIdle.connect(self.Robot_GetPedal)
+        
+    def eventFilter(self, obj, event):
+        if obj == self.treeDicom and event.type() == QEvent.Leave:
+            pass
+            # print("Mouse left QTreeView")
+        return super().eventFilter(obj, event)
+    
+    def keyPressEvent(self, event):
+        currentIndex = self.stkScene.currentIndex()
+        if not hasattr(self, 'bFull'):
+            self.bFull = True
+        if event.key() == Qt.Key_Escape:
+            if self.bFull:
+                self.showNormal()
+            else:
+                self.showFullScreen()
+        
+        self.bFull = not self.bFull
+        
+    def closeEvent(self, event):
+        self.Laser_Close()
+        try:
+            for dlg in self.listSubDialog:
+                dlg.close()
+            ## 移除VTK道具 ############################################################################################
+            # self.irenSagittal_L.RemoveAllViewProps() 
+            # if hasattr(self.dicomLow, 'rendererSagittal'):
+            #     self.dicomLow.rendererSagittal.RemoveAllViewProps()
+                
+            # if hasattr(self.dicomLow, 'rendererCoronal'):
+            #     self.dicomLow.rendererCoronal.RemoveAllViewProps()
+                
+            # if hasattr(self.dicomLow, 'rendererAxial'):
+            #     self.dicomLow.rendererAxial.RemoveAllViewProps()
+                
+            # if hasattr(self.dicomLow, 'renderer3D'):
+            #     self.dicomLow.renderer3D.RemoveAllViewProps()
+                
+            ############################################################################################
+            ## 關閉VTK Widget ############################################################################################
+            self.CloseView()
+            
+            
+            ############################################################################################
+            print("remove dicomLow VTk success")
+            
+            
+        except Exception as e:
+            print(e)
+            print("remove dicomLow VTk error")
+        
+    def _AddCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
         
@@ -299,21 +510,447 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     for combobox in self.listViewSelectorH.values():
         #         if combobox.findText(viewName) == -1:
         #             combobox.addItem(viewName)
+                
+    def _CheckChildAlterParent(self, item:QStandardItem):
+                
+        parent = item.parent()
+        if parent is None:
+            return item.checkState()
+        
+        siblingCount = parent.rowCount()
+        checkCount = 0
+        uncheckedCount = 0
+        for iRow in range(siblingCount):
+            item = parent.child(iRow)
+            state = item.checkState()
+            
+            if state == Qt.Checked:
+                checkCount += 1
+            elif state == Qt.Unchecked:
+                uncheckedCount += 1
+                
+            if checkCount > 0 and uncheckedCount > 0:
+                return Qt.PartiallyChecked
+        if checkCount > 0:
+            return Qt.Checked
+        return Qt.Unchecked
+        
+    def _EnableDevice(self, nDevice:int = 0):
+        if nDevice == (DEVICE_ALL):
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            
+            tRobot = threading.Thread(target = self.robot.Initialize)
+            tRobot.start()
+            
+            self.RobotSupportArm = Robot.RobotSupportArm()
+            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
+            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
+            self.OperationLight = Robot.OperationLight()
+            
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
+            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            tLaser= threading.Thread(target = self.Laser.Initialize)
+            tLaser.start()
+            
+            self.stkScene.setCurrentWidget(self.pgLaser)
+        elif nDevice == DEVICE_ROBOT:
+            self.loadingLaser = 100
+            self.robot = Robot.MOTORSUBFUNCTION()
+            self.robot.signalProgress.connect(self.Robot_OnLoading)
+            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            
+            tRobot = threading.Thread(target = self.robot.Initialize)
+            tRobot.start()
+            
+            self.RobotSupportArm = Robot.RobotSupportArm()
+            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
+            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
+            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
+            self.OperationLight = Robot.OperationLight()
+        elif nDevice == DEVICE_LASER:
+            self.stkScene.setCurrentWidget(self.pgLaser)
+            
+            self.loadingRobot = 100
+            self.Laser = Robot.LineLaser()
+            self.Laser.signalProgress.connect(self.Laser_OnLoading)
+            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
+            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
+            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
+            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
+            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
+            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
+            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
+            tLaser= threading.Thread(target = self.Laser.Initialize)
+            tLaser.start()
+        else:
+            self.stkMain.setCurrentWidget(self.pgScene)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgDriveRobotGuide)
+    
+    def _GetSeriesFromModelIndex(self, index:QModelIndex):
+        model = self.treeDicom.model()
+        index = index.sibling(index.row(), 0)
+        item:QStandardItem = model.itemFromIndex(index)
+        if item:
+            idPatient = item.data(Qt.UserRole + 1)
+            idStudy   = item.data(Qt.UserRole + 2)
+            idSeries  = item.data(Qt.UserRole + 3)
+            # print(f'patient ID = {idPatient}')
+            # print(f'Study ID   = {idStudy}')
+            # print(f'Series ID  = {idSeries}')
+            # print(f'No.{i} : {item.data(Qt.UserRole + 4)}')
+            selectedSeries = [idPatient, idStudy, idSeries, index.row()]
+            # self.selectedSeries.append(selectedSeries)
+            # if len(self.selectedSeries) > 2:
+            #     self.selectedSeries.pop(0)
+            # self.reader.SelectDataFromID(idPatient, idStudy, idSeries, i)
+            return selectedSeries
+        else:
+            return None
+        
+    def _GetInfoFromModelIndex(self, index:QModelIndex):
+        model = self.treeDicom.model()
+        row = index.row()
+        item:QStandardItem = model.item(row, 4)
+        dim = item.text()
+        
+        item:QStandardItem = model.item(row, 5)
+        voxel = item.text()
+        strDim = 'Dim'
+        strVoxel = 'Voxel'
+        strText = f'{strDim:10}{dim}\n{strVoxel:10}{voxel}'
+        dimZ = int(dim.split('x')[-1])
+        
+        return strText, dimZ
+    
+    def _ModifyTrajectory(self, dicom, entry, target):
+        dicom.CreateLine(entry, target)
+        
+        length = np.linalg.norm(np.array(entry) - np.array(target))
+        self.sldTrajectory.setMinimum(0)
+        self.sldTrajectory.setSingleStep(1)
+        self.sldTrajectory.setPageStep(1)
+        self.sldTrajectory.setMaximum(int(length))
+        self.sldTrajectory.setValue(0)
+        
+        self.currentTag['trajectoryLength'] = int(length)
+        # if dicom == self.dicomLow:
+        for view in self.viewport_L.values():
+            if view.orientation == VIEW_CROSS_SECTION:
+                view.uiScrollSlice.setMaximum(length)
+                view.uiScrollSlice.setValue(0)
+        # else:
+        #     for view in self.viewport_H.values():
+        #         length = np.linalg.norm(np.array(entry) - np.array(target))
+        #         if view.orientation == VIEW_CROSS_SECTION:
+        #             view.uiScrollSlice.setMaximum(length)
+        
+    def _PlayVedio(self, widget:QWidget, filePath:str):
+        
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(filePath)))
+        
+        layout = widget.layout()
+        if layout is None:
+        
+            videoWidget = QVideoWidget()
+            videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
+            self.player.setVideoOutput(videoWidget)
+        
+            layout = QVBoxLayout(widget)
+            layout.addWidget(videoWidget)
+            layout.setContentsMargins(0, 0, 0, 0)
+            
+            videoWidget.brightnessChanged.connect(self.OnBrightnessChanged)
+            videoWidget.contrastChanged.connect(self.OnConstrastChanged)
+            
+            self.videoWidget = videoWidget
+        else:
+            videoWidget = layout.itemAt(0).widget()
+            self.player.setVideoOutput(videoWidget)
+        
+        self.player.play()
+        self.player.mediaStatusChanged.connect(self.OnStatusChanged)
+        
+    def _Registration(self, image, spacing, series):
+        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
+        """
+        # self.ui_SP = SystemProcessing()
+        # self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # self.ui_SP.show()
+        # QApplication.processEvents()
+        if self.dlgSystemProcessing is None:
+            self.dlgSystemProcessing = SystemProcessing(2)
+            self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+            
+        self.dlgSystemProcessing.setWindowTitle('Registration')
+        self.dlgSystemProcessing.label_Processing.setText('Registing Robot Position...')
+        self.dlgSystemProcessing.show()
+        QApplication.processEvents()
+        self.regFn.signalProgress.connect(self.dlgSystemProcessing.UpdateProgress)
         
         
-    def importDicom(self, path):
-        self.ui_SP = SystemProcessing()
-        self.ui_SP.show()
+        if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
+            # self.ui_SP.close()
+            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
+            ## 重新設定儲存的資料 ############################################################################################
+            # if reply == QMessageBox.Yes:
+            if reply == 0:
+                # self.dcmTagLow.update({"selectedBall": []})
+                self.currentTag.update({"regBall": []})
+                self.currentTag.update({"flagSelectedBall": False})
+                
+                self.currentTag.update({"candidateBall": []})
+                self.currentTag.update({"selectedBallKey": []})
+                self.currentTag.update({"regMatrix": []})
+                # self.dcmTagLow.update({"sectionTag": []})
+                self.currentTag.update({"selectedPoint": []})
+                self.currentTag.update({"flagSelectedPoint": False})
+                
+                "UI"
+                # self.label_Error_L.setText('Registration difference: mm')
+                # self.Button_ShowRegistration_L.setEnabled(False)
+                # self.comboBox_L.setEnabled(False)
+                # self.Button_SetPoint_L.setEnabled(False)
+                # self.Button_ShowPoint_L.setEnabled(False)
+                
+                "VTK"
+                # try:
+                #     self.dicomLow.RemovePoint()
+                # except:
+                #     pass
+                
+                # self.logUI.info('reset selected ball (Low)')
+                print("reset selected ball (Low)")
+                
+                
+            # else:
+            #     self.ui_SP.close()
+            #     return
+            ############################################################################################
+        "automatic find registration ball center"
+        try:
+            ## 自動找球心 + 辨識定位球位置 ############################################################################################
+            flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            ############################################################################################
+        except Exception as e:
+            # self.ui_SP.close()
+            # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
+            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
+            print('get candidate ball error / SetRegistration_L() error')
+            print(e)
+            return False
+        
+        if flag == True:
+            # self.logUI.info('get candidate ball of inhale/Low DICOM in VTK:')
+            i = 0
+            for key, value in answer.items():
+                tmp = str(i) + ": " + str(key) + str(value)
+                # self.logUI.info(tmp)
+                i += 1
+            self.currentTag.update({"candidateBallVTK": answer})
+            ## 顯示定位球註冊結果 ############################################################################################
+            "open another ui window to check registration result"
+            # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
+            # self.ui_SP.close()
+            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            # self.ui_CS.show()
+            ############################################################################################
+            # self.Button_ShowRegistration_L.setEnabled(True)
+        else:
+            # self.ui_SP.close()
+            # self.logUI.warning('get candidate ball error')
+            
+            # QMessageBox.critical(self, "error", "get candidate ball error")
+            MessageBox.ShowCritical("get candidate ball error", "OK")
+            print('get candidate ball error / SetRegistration_L() error')
+            ## 顯示手動註冊定位球視窗 ############################################################################################
+            "Set up the coordinate system manually"
+            # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
+            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            # self.ui_CS.show()
+            ############################################################################################
+            # self.Button_ShowRegistration_L.setEnabled(True)
+            return False
+        
+        return True
+    
+    def _ResumeStored(self):
+        """從已儲存的資料中，恢復至UI介面上"""
+        trajectoryLength = self.currentTag.get('trajectoryLength')
+        trajectoryValue  = self.currentTag.get('trajectoryValue')
+        if trajectoryValue and trajectoryLength:
+            self.sldTrajectory.setMaximum(trajectoryLength)
+            self.sldTrajectory.setValue(trajectoryValue)
+            
+        for key, view in self.viewport_L.items():
+            strKey = 'index_' + key
+            index = self.currentTag.get(strKey)
+            combox = view.uiCbxOrientation
+            if index is not None and isinstance(combox, QComboBox):
+                view.currentIndex = index
+                combox.blockSignals(True)
+                combox.setCurrentIndex(index)
+                combox.blockSignals(False)
+            else:
+                print(f'Error: [{strKey}] = {index}')
+            
+    def _Robot_driveTo(self):
+        if self.language == LAN_CN:
+            translator = QTranslator()
+            translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
+            QCoreApplication.installTranslator(translator)
+                
+        self.stkScene.setCurrentWidget(self.pgImageView)
+        
+        self.Laser_OnTracking()
+        
+        dlgDriveTo = DlgInstallAdaptor()
+        dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+        dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
+        dlgDriveTo.setModal(True)
+        self.dlgRobotDrive = dlgDriveTo
+        
+        dlgDriveTo.exec_()
+        self.listSubDialog.append(dlgDriveTo)
+        
+        self.stkScene.setCurrentWidget(self.pgImageView)
+        
+    def _TreeDicomViewFilter(self, item:QStandardItem):
+        if not item:
+            return
+        
+        # if item.hasChildren():
+        #     self.treeItemCheckAll(item, checkState)
+        #     return
+        checkState = item.checkState()
+        rowSelectAll = self.treeDicomFilter.model().item(0, 0)
+        item = rowSelectAll.child(item.row(), 1)
+        
+        text = item.text()
+        col = item.column()
+        if checkState == Qt.Unchecked:
+            model = self.treeDicom.model()
+            listItem = model.findItems(text, column = col)
+            for item in listItem:
+                rowData = model.takeRow(item.row())
+                self.modelHide.appendRow(rowData)
+        else:
+            listItem = self.modelHide.findItems(text, column = col)
+            for item in listItem:
+                rowData = self.modelHide.takeRow(item.row())
+                
+                model = self.treeDicom.model()
+                model.appendRow(rowData)
+                model.sort(6, Qt.DescendingOrder)
+            
+    def _TreeItemCheckAll(self, item:QStandardItem, checkState:Qt.CheckState):
+        # if checkState == Qt.Unchecked:
+        for row in range(item.rowCount()):
+            item.child(row, 0).setCheckState(checkState)
+            
+    def SetTreeDicomUserRole(self, data, nRow:int = None, modelIndex = None):
+        
+        model:QStandardItemModel = self.treeDicom.model()
+        column_count = model.columnCount()
+        
+        if nRow is not None:
+            for col in range(column_count):
+                item = model.item(nRow, col)
+                item.setData(data, Qt.UserRole + 4)
+                
+        elif modelIndex is not None:
+            if isinstance(modelIndex, QModelIndex):
+                row = modelIndex.row()
+                for col in range(column_count):
+                    item = model.item(row, col)
+                    item.setData(data, Qt.UserRole + 4)
+                    
+            elif isinstance(modelIndex, list):
+                for index in modelIndex:
+                    if not model.setItemData(index, {Qt.UserRole + 4: data}):
+                        print('error occurred in set UserRole data')
+        
+    def Focus(self, pos):
+        # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
+        # indexH = self.tabWidget.indexOf(self.tabWidget_High)
+        
+        # if self.tabWidget.currentIndex() == indexL:
+        for view in self.viewport_L.values():
+            view.Focus(pos)
+                # view.MapPositionToImageSlice(pos)
+        # elif self.tabWidget.currentIndex() == indexH:
+        #     for key, view in self.viewPortH.items():
+        #         view.Focus(pos)
+             
+    def ChangeSlice_L(self, pos):
+        
+        if isinstance(pos, list) or isinstance(pos, tuple):
+            pos = np.array(pos)
+        
+        # self.lblSagittal.setText(f'{pos[0]}')
+        # self.lblCoronal.setText(f'{pos[1]}')
+        # self.lblAxial.setText(f'{pos[2]}')
+        
+        for view in self.viewport_L.values():
+            view.ChangeSliceView(pos)
+            
+    def ChangeSlice_H(self, pos):
+        
+        if isinstance(pos, list) or isinstance(pos, tuple):
+            pos = np.array(pos)
+        
+        # self.lblSagittal.setText(f'{pos[0]}')
+        # self.lblCoronal.setText(f'{pos[1]}')
+        # self.lblAxial.setText(f'{pos[2]}')
+        
+        for view in self.viewport_H.values():
+            view.ChangeSliceView(pos)
+            
+    def GetCurrentRendererCallback(self, renderer):
+        bUpdate = False
+        if self.currentRenderer is not None and self.currentRenderer != renderer:
+            self.currentRenderer.SetSelectedOff()
+            bUpdate = True
+            
+            if self.currentStyle:
+                if isinstance(self.currentStyle, InteractorStyleImageAlgorithm):
+                    self.currentStyle.ResumeRendererStyle()
+                    self.currentStyle.StartInteractor(renderer)
+                    
+                    if renderer.orientation == VIEW_3D:
+                        self.currentStyle.SetActor(renderer.volume)
+                    else:
+                        self.currentStyle.SetActor(renderer.actorImage)
+                    
+        self.currentRenderer = renderer
+        renderer.SetSelectedOn()
+        
+        if bUpdate:
+            self.UpdateView()
+            
+    def ImportDicom(self, path):
+        self.dlgSystemProcessing = SystemProcessing()
+        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+        self.dlgSystemProcessing.show()
         QApplication.processEvents()
         
         self.reader = DICOM()
-        self.reader.signalProcess.connect(self.ui_SP.UpdateProgress)
-        
-        # dicom = self.reader.LoadPath('C:/Leon/CT/sT1W_3D__2853')
-        # dicom = self.reader.LoadPath('C:/Leon/CT/S62070')
-        # dicom = self.reader.LoadPath('C:\\Leon\\CT\\20220615\\all\\S43520\\S3010')
+        self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
         dicom = self.reader.LoadPath(path)
-        # self.vtkImage = self.reader.GetData(-1, 0, 0)
         
         model = QStandardItemModel()
         stringList = ['patient name', 'patient ID', 'sex', 'Modality', 'dim', 'voxel size','acqusition date', 'path']
@@ -332,7 +969,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         rowSelectAll[0].setCheckState(Qt.Checked)
         
         modelFilter.appendRow(rowSelectAll)
-        modelFilter.itemChanged.connect(self.onTreeItemChanged)
+        modelFilter.itemChanged.connect(self.OnItemChanged)
         
         for keyPatien, dicPatient in dicom.items():
             for keyStudy, dicStudy in dicPatient.items():
@@ -419,437 +1056,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         rowFilter[0].setCheckable(True)
                         rowFilter[0].setCheckState(Qt.Checked)
                         rowSelectAll[0].appendRow(rowFilter)
-                        # modelFilter.appendRow(rowFilter)
-                        
-                    # model.appendRow(rowNew)
-                        
-        # for row in range(len(data)):
-        #     rowNew = []
-        #     for col in range(len(data[row])):
-        #         item = QStandardItem(data[row][col])
-        #         if col % 2 == 1:
-        #             item.setData(QColor(0, 0, 255, 30), role = Qt.BackgroundRole)
-        #         else:
-        #             item.setData(QColor(0, 255, 255, 30), role = Qt.BackgroundRole)
-                    
-        #         rowNew.append(item)
-            
-        #     bHasChild = False
-        #     for childRow in range(rowSelectAll[0].rowCount()):
-        #         # if not modelFilter.findItems(data[row][1], column = 1):
-        #         if rowSelectAll[0].child(childRow, 1).text() == data[row][1]:
-        #             bHasChild = True
-        #             break
-                
-        #     if not bHasChild:
-        #         rowFilter = [QStandardItem(item) for item in data[row][:3]]
-        #         rowFilter[0].setCheckable(True)
-        #         rowFilter[0].setCheckState(Qt.Checked)
-        #         rowSelectAll[0].appendRow(rowFilter)
-        #         # modelFilter.appendRow(rowFilter)
-                
-        #     model.appendRow(rowNew)
-        
             
         model.sort(6, Qt.DescendingOrder)
         
         model.setHeaderData(0, Qt.Horizontal, QColor(0, 0, 255, 100), role = Qt.BackgroundRole)
         self.treeDicom.setModel(model)
         
-        
-        # header = self.treeDicom.header()
-        # header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        # header.setDefaultAlignment(Qt.AlignHCenter)
-        
         modelFilter.sort(1, Qt.AscendingOrder)
-        modelFilter.itemChanged.connect(self.onTreeItemChanged)
+        modelFilter.itemChanged.connect(self.OnItemChanged)
         self.treeDicomFilter.setModel(modelFilter)
         self.treeDicomFilter.expandAll()
-        # self.treeDicom.selectionModel().currentRowChanged.connect(self.OnCurrentRowChanged_treeDicom)
         self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
-        # header = self.treeDicomFilter.header()
-        # header.setSectionResizeMode(QHeaderView.ResizeToContents)
         self.dicSelectedSeries = {0:{'selected':[]}, 
                                   1:{'selected':[]}
                                   }
-        
-        
-    def eventFilter(self, obj, event):
-        if obj == self.treeDicom and event.type() == QEvent.Leave:
-            pass
-            # print("Mouse left QTreeView")
-        return super().eventFilter(obj, event)
-        
-        
-    def onTreeItemChanged(self, item:QStandardItem):
-        if not item:
-            return
-        
-        if item.isCheckable():
-            if item.isAutoTristate():
-                checkState = item.checkState()
-                if checkState != Qt.PartiallyChecked:
-                    self.treeItemCheckAll(item, checkState)
-            else:
-                checkState = self.checkChildAlterParent(item)
-                parent = item.parent()
-                if parent:
-                    parent.setCheckState(checkState)
-            
-                self.treeDicomViewFilter(item)
-            
-                
-    def checkChildAlterParent(self, item:QStandardItem):
-                
-        parent = item.parent()
-        if parent is None:
-            return item.checkState()
-        
-        siblingCount = parent.rowCount()
-        checkCount = 0
-        uncheckedCount = 0
-        for iRow in range(siblingCount):
-            item = parent.child(iRow)
-            state = item.checkState()
-            
-            if state == Qt.Checked:
-                checkCount += 1
-            elif state == Qt.Unchecked:
-                uncheckedCount += 1
-                
-            if checkCount > 0 and uncheckedCount > 0:
-                return Qt.PartiallyChecked
-        if checkCount > 0:
-            return Qt.Checked
-        return Qt.Unchecked
-    
-    def getSeriesFromModelIndex(self, index:QModelIndex):
-        model = self.treeDicom.model()
-        index = index.sibling(index.row(), 0)
-        item:QStandardItem = model.itemFromIndex(index)
-        if item:
-            idPatient = item.data(Qt.UserRole + 1)
-            idStudy   = item.data(Qt.UserRole + 2)
-            idSeries  = item.data(Qt.UserRole + 3)
-            # print(f'patient ID = {idPatient}')
-            # print(f'Study ID   = {idStudy}')
-            # print(f'Series ID  = {idSeries}')
-            # print(f'No.{i} : {item.data(Qt.UserRole + 4)}')
-            selectedSeries = [idPatient, idStudy, idSeries, index.row()]
-            # self.selectedSeries.append(selectedSeries)
-            # if len(self.selectedSeries) > 2:
-            #     self.selectedSeries.pop(0)
-            # self.reader.SelectDataFromID(idPatient, idStudy, idSeries, i)
-            return selectedSeries
-        else:
-            return None
-        
-    def getInfoFromModelIndex(self, index:QModelIndex):
-        model = self.treeDicom.model()
-        row = index.row()
-        item:QStandardItem = model.item(row, 4)
-        dim = item.text()
-        
-        item:QStandardItem = model.item(row, 5)
-        voxel = item.text()
-        strDim = 'Dim'
-        strVoxel = 'Voxel'
-        strText = f'{strDim:10}{dim}\n{strVoxel:10}{voxel}'
-        dimZ = int(dim.split('x')[-1])
-        
-        return strText, dimZ
-    
-    def resumeStored(self):
-        """從已儲存的資料中，恢復至UI介面上"""
-        trajectoryLength = self.currentTag.get('trajectoryLength')
-        trajectoryValue  = self.currentTag.get('trajectoryValue')
-        if trajectoryValue and trajectoryLength:
-            self.sldTrajectory.setMaximum(trajectoryLength)
-            self.sldTrajectory.setValue(trajectoryValue)
-            
-        for key, view in self.viewport_L.items():
-            strKey = 'index_' + key
-            index = self.currentTag.get(strKey)
-            combox = view.uiCbxOrientation
-            if index is not None and isinstance(combox, QComboBox):
-                view.currentIndex = index
-                combox.blockSignals(True)
-                combox.setCurrentIndex(index)
-                combox.blockSignals(False)
-            else:
-                print(f'Error: [{strKey}] = {index}')
-        
-        
-            
-    def treeDicomViewFilter(self, item:QStandardItem):
-        if not item:
-            return
-        
-        # if item.hasChildren():
-        #     self.treeItemCheckAll(item, checkState)
-        #     return
-        checkState = item.checkState()
-        rowSelectAll = self.treeDicomFilter.model().item(0, 0)
-        item = rowSelectAll.child(item.row(), 1)
-        
-        text = item.text()
-        col = item.column()
-        if checkState == Qt.Unchecked:
-            model = self.treeDicom.model()
-            listItem = model.findItems(text, column = col)
-            for item in listItem:
-                rowData = model.takeRow(item.row())
-                self.modelHide.appendRow(rowData)
-        else:
-            listItem = self.modelHide.findItems(text, column = col)
-            for item in listItem:
-                rowData = self.modelHide.takeRow(item.row())
-                
-                model = self.treeDicom.model()
-                model.appendRow(rowData)
-                model.sort(6, Qt.DescendingOrder)
-            
-    def treeItemCheckAll(self, item:QStandardItem, checkState:Qt.CheckState):
-        # if checkState == Qt.Unchecked:
-        for row in range(item.rowCount()):
-            item.child(row, 0).setCheckState(checkState)
-            
-    def setTreeDicomUserRole(self, data, nRow:int = None, modelIndex = None):
-        
-        model:QStandardItemModel = self.treeDicom.model()
-        column_count = model.columnCount()
-        
-        if nRow is not None:
-            for col in range(column_count):
-                item = model.item(nRow, col)
-                item.setData(data, Qt.UserRole + 4)
-                
-        elif modelIndex is not None:
-            if isinstance(modelIndex, QModelIndex):
-                row = modelIndex.row()
-                for col in range(column_count):
-                    item = model.item(row, col)
-                    item.setData(data, Qt.UserRole + 4)
-                    
-            elif isinstance(modelIndex, list):
-                for index in modelIndex:
-                    if not model.setItemData(index, {Qt.UserRole + 4: data}):
-                        print('error occurred in set UserRole data')
-                
-            
-        
-    def init_ui(self):
-        self.stkMain.setCurrentIndex(0)
-        self.stkScene.setCurrentIndex(0)
-        
-        self.treeDicom.setStyleSheet("""
-            QHeaderView::section {
-                background-color: #3498db;  
-                color: white;  
-                text-align: center; 
-                font-size:12pt; 
-            }
-            
-            QTreeView::item{
-                text-align:center;
-            }
-            """)
-        
-        self.wdgPlanning.clicked.connect(self.onClick_Planning)
-        self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
-        self.stkScene.currentChanged.connect(self.SceneChanged)
-        self.stkMain.currentChanged.connect(self.MainSceneChanged)
-        self.signalLoadingReady.connect(self.onSignal_LoadingReady)
-        self.signalSetProgress.connect(self.onSignal_SetProgress)
-        self.signalShowMessage.connect(self.onSignal_ShowMessage)
-        self.signalModelBuildingUI.connect(self.onSignal_ModelBuilding)
-        self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
-        
-        self.signalSetCheck.connect(self.onSignal_SetCheck)
-        
-        self.btnNext_confirmHomingStep2.clicked.connect(self.Robot_StartHoming)
-        # self.btnNext_settingRobot.clicked.connect(self.Robot_StartHoming)
-        
-        self.laserFigure = Canvas(self, dpi = 150)
-        self.lytLaserAdjust = QVBoxLayout(self.wdgLaserPlot)
-        self.lytLaserAdjust.addWidget(self.laserFigure)
-        
-        self.figModel = Canvas(self, dpi = 150, subplot = '121')
-        layout = QVBoxLayout(self.wdgLaser)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.figModel)
-        
-        self.btnSceneLaser.setEnabled(False)
-        self.btnSceneRobot.setEnabled(False)
-        self.btnSceneRobot.clicked.connect(self.ToSceneRobotSetting)
-        self.btnSceneLaser.clicked.connect(self.ToSceneLaser)
-        self.btnSceneView.clicked.connect(self.ToSceneView)
-        
-        self.SetStageButtonStyle(0)
-        
-        self.wdgNaviBar.layout().setAlignment(self.btnSceneRobot, Qt.AlignCenter)
-        self.wdgNaviBar.layout().setAlignment(self.btnSceneLaser, Qt.AlignCenter)
-        self.wdgNaviBar.layout().setAlignment(self.btnSceneView, Qt.AlignCenter)
-        
-        self.sldWindowLevel.valueChanged.connect(self.OnChanged_sldWindowLevel)
-        self.sldWindowWidth.valueChanged.connect(self.OnChanged_sldWindowWidth)
-        self.currentDicom = self.buttonGroup.checkedButton().objectName()
-        
-        self.buttonGroup.buttonToggled.connect(self.OnToggled_buttonGroup)
-        self.btgDicom.buttonToggled.connect(self.OnToggled_btgDIcom)
-        
-        self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
-        
-        self.tbsCTScan.selectionChanged.connect(self.OnSelection)
-        
-        self.tabWidget.currentChanged.connect(self.OnCurrentChange_tabWidget)
-        
-        self.cbxLanguage.currentIndexChanged.connect(self.OnChanged_cbxLanguage)
-        
-        self.btnCancel.clicked.connect(self.OnClicked_btnCancel)
-        self.btnSetEntry.clicked.connect(self.OnClicked_btnSetEntry)
-        self.btnSetTarget.clicked.connect(self.OnClicked_btnSetTarget)
-        
-        self.btnToEntry.clicked.connect(self.OnClicked_btnToEntry)
-        self.btnToTarget.clicked.connect(self.OnClicked_btnToTarget)
-        self.sldTrajectory.valueChanged.connect(self.OnValueChanged_sldTrajectory)
-        
-        self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
-        self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
-        
-        for combobox in self.dicViewSelector_L.values():
-            combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
-            
-        model = QStandardItemModel()
-        stringList = ['patient name', 'patient ID', 'sex', 'Modality', 'dim', 'voxel size','acqusition date', 'path']
-        model.setHorizontalHeaderLabels(stringList)
-        
-        modelFilter = QStandardItemModel()
-        stringList = ['patient name', 'patient ID', 'sex']
-        modelFilter.setHorizontalHeaderLabels(stringList)
-        
-        rowSelectAll = [QStandardItem() for _ in range(3)]
-        rowSelectAll[0].setCheckable(True)
-        rowSelectAll[0].setCheckState(Qt.Checked)
-        
-        modelFilter.appendRow(rowSelectAll)
-        modelFilter.itemChanged.connect(self.onTreeItemChanged)
-        
-        model.sort(6, Qt.DescendingOrder)
-        model.setHeaderData(0, Qt.Horizontal, QColor(0, 0, 255, 100), role = Qt.BackgroundRole)
-        self.treeDicom.setModel(model)
-        self.treeDicom.setSelectionMode(QAbstractItemView.MultiSelection)
-        
-        header = self.treeDicom.header()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        header.setDefaultAlignment(Qt.AlignHCenter)
-        
-        modelFilter.sort(1, Qt.AscendingOrder)
-        self.treeDicomFilter.setModel(modelFilter)
-        self.treeDicomFilter.expandAll()
-        
-        header = self.treeDicomFilter.header()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        
-        self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
-        self.treeDicom.entered.connect(self.OnEntered_treeDicom)
-        self.treeDicom.installEventFilter(self)
-        self.treeDicom.setItemDelegate(TreeViewDelegate())
-        
-        self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
-        
-        self.btnRobotRelease.clicked.connect(self.Robot_ReleaseArm)
-        self.btnRobotFix.clicked.connect(self.Robot_FixArm)
-        self.btnRobotSetTarget.clicked.connect(self.Robot_SettingTarget)
-        self.btnRobotBackTarget.clicked.connect(self.Robot_BackToTarget)
-        
-        # self.btnStartBuildModel_2.clicked.connect(self.Laser_StartRecordBreathingBase)
-        self.btnStartBuildModel.clicked.connect(self.Laser_StartRecordBreathingBase)
-        self.spinBox.valueChanged.connect(self.OnValueChanged_spin)
-        self.btnRecord.clicked.connect(self.Laser_OnClick_btnRecord)
-        self.btnAutoRecord.clicked.connect(self.Laser_OnClick_btnAutoRecord)
-        
-        self.btnReloadDicom.clicked.connect(self.OnClicked_btnReloadDicom)
-        
-        self.btnDriveConfirm.clicked.connect(self.OnClicked_btnDriveConfirm)
-        
-        self.btnUnlockRobot_2.clicked.connect(self.Robot_ReleaseArm)
-        # self.btnRobotTarget.clicked.connect(self.Robot_FixAndTarget)
-        self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
-        
-        self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
-        
-        self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
-        self.lstAnimateWidget.append(self.wdgAnimate)
-        
-        layout = self.wdgBottom.parentWidget().layout()
-        layout.replaceWidget(self.wdgBottom, self.wdgAnimate)
-        
-        layoutAnimate = QVBoxLayout(self.wdgAnimate)
-        layoutAnimate.setContentsMargins(0, 0, 0, 0)
-        layoutAnimate.addWidget(self.wdgBottom)
-        
-        self.wdgAnimateUnlock.signalIdle.connect(self.Robot_GetPedal)
-        self.wdgAnimatePositionRobot.signalIdle.connect(self.Robot_GetPedal)
-        self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
-        
-    def Focus(self, pos):
-        # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
-        # indexH = self.tabWidget.indexOf(self.tabWidget_High)
-        
-        # if self.tabWidget.currentIndex() == indexL:
-        for view in self.viewport_L.values():
-            view.Focus(pos)
-                # view.MapPositionToImageSlice(pos)
-        # elif self.tabWidget.currentIndex() == indexH:
-        #     for key, view in self.viewPortH.items():
-        #         view.Focus(pos)
-             
-    def ChangeSlice_L(self, pos):
-        
-        if isinstance(pos, list) or isinstance(pos, tuple):
-            pos = np.array(pos)
-        
-        # self.lblSagittal.setText(f'{pos[0]}')
-        # self.lblCoronal.setText(f'{pos[1]}')
-        # self.lblAxial.setText(f'{pos[2]}')
-        
-        for view in self.viewport_L.values():
-            view.ChangeSliceView(pos)
-            
-    def ChangeSlice_H(self, pos):
-        
-        if isinstance(pos, list) or isinstance(pos, tuple):
-            pos = np.array(pos)
-        
-        # self.lblSagittal.setText(f'{pos[0]}')
-        # self.lblCoronal.setText(f'{pos[1]}')
-        # self.lblAxial.setText(f'{pos[2]}')
-        
-        for view in self.viewport_H.values():
-            view.ChangeSliceView(pos)
-            
-    def GetCurrentRendererCallback(self, renderer):
-        bUpdate = False
-        if self.currentRenderer is not None and self.currentRenderer != renderer:
-            self.currentRenderer.SetSelectedOff()
-            bUpdate = True
-            
-            if self.currentStyle:
-                if isinstance(self.currentStyle, InteractorStyleImageAlgorithm):
-                    self.currentStyle.ResumeRendererStyle()
-                    self.currentStyle.StartInteractor(renderer)
-                    
-                    if renderer.orientation == VIEW_3D:
-                        self.currentStyle.SetActor(renderer.volume)
-                    else:
-                        self.currentStyle.SetActor(renderer.actorImage)
-                    
-        self.currentRenderer = renderer
-        renderer.SetSelectedOn()
-        
-        if bUpdate:
-            self.UpdateView()
                   
     def ImportDicom_L(self):
         """load inhale (Low breath) DICOM to get image array and metadata
@@ -1065,7 +1285,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if trajectoryValue and trajectoryLength:
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
-        self.resumeStored()
+        self._ResumeStored()
             
         self.UpdateView()
         
@@ -1140,7 +1360,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if trajectoryValue and trajectoryLength:
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
-        self.resumeStored()
+        self._ResumeStored()
         self.UpdateView()
         
     def UpdateView(self):
@@ -1185,6 +1405,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     return self.viewPortH
         
         # return None
+        
+    def OnClicked_btnPlanning(self):
+        print('planning')
         
     def OnClicked_btnGuidance(self):
         self.stkMain.setCurrentWidget(self.page_loading)
@@ -1237,9 +1460,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 point2 = self.currentTag.get("target")
                 # currentDicom.CreateLine(pickPoint, point2)
-                self.modifyTrajectory(currentDicom, pickPoint, point2)
+                self._ModifyTrajectory(currentDicom, pickPoint, point2)
                 self.SetUIEnable_Trajectory(True)
-                self.addCrossSectionItemInSelector()
+                self._AddCrossSectionItemInSelector()
             self.UpdateView()
             
     
@@ -1260,9 +1483,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 point1 = self.currentTag.get("entry")
                 # self.dicomLow.CreateLine(point1, pickPoint)
-                self.modifyTrajectory(currentDicom, point1, pickPoint)
+                self._ModifyTrajectory(currentDicom, point1, pickPoint)
                 self.SetUIEnable_Trajectory(True)
-                self.addCrossSectionItemInSelector()
+                self._AddCrossSectionItemInSelector()
             self.UpdateView()
             
     def OnClicked_btnToEntry(self):
@@ -1334,9 +1557,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if nStep == 2:
             self.StopVedio()
-            layout = self.wdgPicture.layout()
-            layout.removeWidget(self.tmpWidget)
-            self.tmpWidget = None
+            for wdg in self.wdgPicture.children():
+                if isinstance(wdg, QWidget):
+                    self.wdgPicture.layout().removeWidget(wdg)
+            # layout.removeWidget(self.tmpWidget)
+            # self.tmpWidget = None
             
             if self.bSterile == True:
                 self.OnClicked_btnDriveConfirm()
@@ -1345,15 +1570,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.wdgPicture.setStyleSheet('image:url(image/foot_pedal_and_drapping.png);')
             self.btnUnlockRobot_2.setHidden(True)
             self.btnUnlockRobot_2.setEnabled(True)
-            self.btnDriveConfirm.setHidden(True)
+            self.btnDriveConfirm.setHidden(False)
             
-            self.lblDescription.setText("""
-                                        <div style='color:#FFFFD0'>
-                                        <p>1. Press <span style='color:#f00'>Unlock button</span> to release robot arm</p>
-                                        <p>2. Press <span style='color:#f00'>foot pedal</span> and move robot arm <span style='color:#f00'>by hand</span></p>
-                                        <p>3. Make sure the position is <span style='color:#f00'>convenient for draping robot arm</span></p>
-                                        </div>
-                                        """)
+            # self.lblDescription.setText("""
+            #                             <div style='color:#FFFFD0'>
+            #                             <p>1. Press <span style='color:#f00'>Unlock button</span> to release robot arm</p>
+            #                             <p>2. Press <span style='color:#f00'>foot pedal</span> and move robot arm <span style='color:#f00'>by hand</span></p>
+            #                             <p>3. Make sure the position is <span style='color:#f00'>convenient for draping robot arm</span></p>
+            #                             </div>
+            #                             """)
             self.wdgAnimate.Start()
         elif nStep == 3:
             # self.btnUnlockRobot_2.setEnabled(False)
@@ -1554,10 +1779,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # column_count = model.columnCount()
         
         index = index.sibling(index.row(), 0)
-        selectedSeries = self.getSeriesFromModelIndex(index)
+        selectedSeries = self._GetSeriesFromModelIndex(index)
         
         if selectedSeries is not None:
-            strText, dimZ = self.getInfoFromModelIndex(index)
+            strText, dimZ = self._GetInfoFromModelIndex(index)
             
             index = int(not self.bToggleInhale) # bToggleInhale == True, index = 0, else index = 1
             image = self.reader.GetSlice(selectedSeries[0], selectedSeries[1], selectedSeries[2], index, int(dimZ / 2))
@@ -1575,6 +1800,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if image is not None:
                         self.axExhale.imshow(image, cmap = plt.cm.gray)
                         self.canvasExhale.draw()
+                        
+    def OnItemChanged(self, item:QStandardItem):
+        if not item:
+            return
+        
+        if item.isCheckable():
+            if item.isAutoTristate():
+                checkState = item.checkState()
+                if checkState != Qt.PartiallyChecked:
+                    self._TreeItemCheckAll(item, checkState)
+            else:
+                checkState = self._CheckChildAlterParent(item)
+                parent = item.parent()
+                if parent:
+                    parent.setCheckState(checkState)
+            
+                self._TreeDicomViewFilter(item)
     
     def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
         
@@ -1617,12 +1859,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if selected.count() > 0:
             # get first column of selected.indexes() as currentIndex 
             currentIndex = selected.indexes()[0]
-            selectedRow = self.getSeriesFromModelIndex(currentIndex)
+            selectedRow = self._GetSeriesFromModelIndex(currentIndex)
                 
             self.reader.SelectDataFromID(selectedRow[0], selectedRow[1], selectedRow[2], index)
             
             # when click once, auto switch to Exhale selection
-            self.setTreeDicomUserRole(index + 1, modelIndex = selected.indexes())
+            self.SetTreeDicomUserRole(index + 1, modelIndex = selected.indexes())
                 
             lstSelected = self.dicSelectedSeries[index].get('selected')
             if lstSelected is not None and len(lstSelected) == 4:
@@ -1630,7 +1872,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 deselection = QItemSelection()
                 deselection.select(model.index(oldRow, 0), model.index(oldRow, column_count - 1))
                 
-                self.setTreeDicomUserRole(None, oldRow)
+                self.SetTreeDicomUserRole(None, oldRow)
                 
                 selectionModel.blockSignals(True)
                 selectionModel.select(deselection, QItemSelectionModel.Deselect)
@@ -1639,7 +1881,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             patientID = selectedRow[0]
             studyID   = selectedRow[1]
             seriesID  = selectedRow[2]
-            strText, dimZ = self.getInfoFromModelIndex(currentIndex)
+            strText, dimZ = self._GetInfoFromModelIndex(currentIndex)
             image = self.reader.GetSlice(patientID, studyID, seriesID, index, int(dimZ / 2))
             self.dicSelectedSeries[index]['selected'] = selectedRow
             
@@ -1680,7 +1922,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         self.axExhale.axis('off')
                         self.canvasExhale.draw()
                         
-                    self.setTreeDicomUserRole(None, modelIndex = deselected.indexes())
+                    self.SetTreeDicomUserRole(None, modelIndex = deselected.indexes())
                     
                     if self.bToggleInhale:
                         self.dicSelectedSeries[0]['selected'] = []
@@ -1828,7 +2070,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
 
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
-                    self.importDicom(filePath)
+                    self.ImportDicom(filePath)
                     
                 else:
                     return
@@ -1866,118 +2108,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.sldTrajectory.blockSignals(True)
         self.sldTrajectory.setValue(value)
         self.sldTrajectory.blockSignals(False)
-    
-    def onClick_Planning(self):
-        print('planning')
-        
-    def onClick_Guidance(self):
-        # index = self.stkScene.currentIndex()
-        # self.stkScene.setCurrentIndex(index + 1)
-        # self.stkScene.blockSignals(True)
-        self.NextScene()
-        
-    def modifyTrajectory(self, dicom, entry, target):
-        dicom.CreateLine(entry, target)
-        
-        length = np.linalg.norm(np.array(entry) - np.array(target))
-        self.sldTrajectory.setMinimum(0)
-        self.sldTrajectory.setSingleStep(1)
-        self.sldTrajectory.setPageStep(1)
-        self.sldTrajectory.setMaximum(int(length))
-        self.sldTrajectory.setValue(0)
-        
-        self.currentTag['trajectoryLength'] = int(length)
-        # if dicom == self.dicomLow:
-        for view in self.viewport_L.values():
-            if view.orientation == VIEW_CROSS_SECTION:
-                view.uiScrollSlice.setMaximum(length)
-                view.uiScrollSlice.setValue(0)
-        # else:
-        #     for view in self.viewport_H.values():
-        #         length = np.linalg.norm(np.array(entry) - np.array(target))
-        #         if view.orientation == VIEW_CROSS_SECTION:
-        #             view.uiScrollSlice.setMaximum(length)
-        
-    def keyPressEvent(self, event):
-        currentIndex = self.stkScene.currentIndex()
-        if not hasattr(self, 'bFull'):
-            self.bFull = True
-        if event.key() == Qt.Key_Escape:
-            if self.bFull:
-                self.showNormal()
-            else:
-                self.showFullScreen()
-        
-        self.bFull = not self.bFull
-        
-    def enableDevice(self, nDevice:int = 0):
-        if nDevice == (DEVICE_ALL):
-            self.robot = Robot.MOTORSUBFUNCTION()
-            self.robot.signalProgress.connect(self.Robot_OnLoading)
-            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
-            
-            self.tRobot = threading.Thread(target = self.robot.Initialize)
-            self.tRobot.start()
-            
-            self.RobotSupportArm = Robot.RobotSupportArm()
-            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
-            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
-            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
-            self.OperationLight = Robot.OperationLight()
-            
-            self.Laser = Robot.LineLaser()
-            self.Laser.signalProgress.connect(self.Laser_OnLoading)
-            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
-            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
-            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
-            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
-            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
-            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
-            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
-            self.tLaser= threading.Thread(target = self.Laser.Initialize)
-            self.tLaser.start()
-            
-            self.stkScene.setCurrentWidget(self.pgLaser)
-        elif nDevice == DEVICE_ROBOT:
-            self.loadingLaser = 100
-            self.robot = Robot.MOTORSUBFUNCTION()
-            self.robot.signalProgress.connect(self.Robot_OnLoading)
-            self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
-            
-            self.tRobot = threading.Thread(target = self.robot.Initialize)
-            self.tRobot.start()
-            
-            self.RobotSupportArm = Robot.RobotSupportArm()
-            self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
-            self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
-            self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
-            self.OperationLight = Robot.OperationLight()
-        elif nDevice == DEVICE_LASER:
-            self.stkScene.setCurrentWidget(self.pgLaser)
-            
-            self.loadingRobot = 100
-            self.Laser = Robot.LineLaser()
-            self.Laser.signalProgress.connect(self.Laser_OnLoading)
-            self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
-            self.Laser.signalBreathingRatio.connect(self.Laser_OnSignalBreathingRatio)
-            self.Laser.signalInhaleProgress.connect(self.Laser_OnSignalInhale)
-            self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
-            self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
-            self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
-            self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
-            self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
-            self.tLaser= threading.Thread(target = self.Laser.Initialize)
-            self.tLaser.start()
-        else:
-            self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            self.stkScene.setCurrentWidget(self.pgImageView)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
             self.idEnabledDevice = DEVICE_ENABLED
-            self.enableDevice(DEVICE_ENABLED)
+            self._EnableDevice(DEVICE_ENABLED)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2017,18 +2152,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgDicomList:
             self.btnImport.setEnabled(True)
             
-            self.dlgHint = DlgHint()
-            self.dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
-            self.dlgHint.setWindowFlags(self.dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
-            self.dlgHint.show()
-            self.listSubDialog.append(self.dlgHint)
+            dlgHint = DlgHint()
+            dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
+            dlgHint.setWindowFlags(dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
+            dlgHint.show()
+            self.listSubDialog.append(dlgHint)
             
         elif currentWidget == self.pgRobotRegSphere:
-            self.playVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
+            self._PlayVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
         elif currentWidget == self.pgPositionRobot:
             self.wdgAnimatePositionRobot.Start()
         elif currentWidget == self.pgRobotSupportArm:
-            self.playVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+            self._PlayVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
             self.btnDriveConfirm.setEnabled(True)
@@ -2044,11 +2179,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if layout is None:
                 layout = QHBoxLayout(self.wdgPicture)
                 layout.setContentsMargins(0, 0, 0, 0)
+            # self.tmpWidget = tmpWidget
             layout.addWidget(tmpWidget)
-            self.tmpWidget = tmpWidget
-            self.playVedio(self.tmpWidget, 'video/InstallHolder.mp4')
+            self._PlayVedio(tmpWidget, 'video/InstallHolder.mp4')
         elif currentWidget == self.pgSterileStep1:
-            self.playVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
+            self._PlayVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         
@@ -2233,34 +2368,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         QTimer.singleShot(2000, lambda:self.stkJoint2.setCurrentWidget(self.pgJoint2Pass))
         QTimer.singleShot(3000, lambda:self.stkScene.setCurrentWidget(self.pgImageView))
         
-    
-        
-    def playVedio(self, widget:QWidget, filePath:str):
-        
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(filePath)))
-        
-        layout = widget.layout()
-        if layout is None:
-        
-            videoWidget = QVideoWidget()
-            videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
-            self.player.setVideoOutput(videoWidget)
-        
-            layout = QVBoxLayout(widget)
-            layout.addWidget(videoWidget)
-            layout.setContentsMargins(0, 0, 0, 0)
-            
-            videoWidget.brightnessChanged.connect(self.OnBrightnessChanged)
-            videoWidget.contrastChanged.connect(self.OnConstrastChanged)
-            
-            self.videoWidget = videoWidget
-        else:
-            videoWidget = layout.itemAt(0).widget()
-            self.player.setVideoOutput(videoWidget)
-        
-        self.player.play()
-        self.player.mediaStatusChanged.connect(self.OnStatusChanged)
-        
     def StopVedio(self):
         if self.videoWidget is not None:
             parentWidget = self.videoWidget.parentWidget()
@@ -2304,25 +2411,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
     
         
-    def onSignal_LoadingReady(self):
+    def OnSignal_LoadingReady(self):
         index = self.stkMain.currentIndex()
         self.stkMain.setCurrentIndex(index + 1)
         if self.stkScene.currentWidget() == self.pgUnlockRobot:
             self.wdgAnimateUnlock.Start()
         
-    def onSignal_ModelBuilding(self, bValid):
+    def OnSignal_ModelBuilding(self, bValid):
         if bValid:
             self.btnNext_startBuildModel.setEnabled(True)
         else:
             self.btnNext_startBuildModel.setEnabled(False)
         
-    def onSignal_SetProgress(self, progressBar, percent):
+    def OnSignal_SetProgress(self, progressBar, percent):
         if not isinstance(progressBar, QProgressBar):
             return
         
         progressBar.setValue(percent)
         
-    def onSignal_SetCheck(self, widget, bCheck):
+    def OnSignal_SetCheck(self, widget, bCheck):
         if not isinstance(widget, QWidget):
             return
         
@@ -2332,12 +2439,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             widget.setStyleSheet('border-image:none;')
             
-    def onSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
+    def OnSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
         if len(msg) > 0:
             if not bIsError:
                 MessageBox.ShowInformation(msg)
             else:
                 MessageBox.ShowCritical(msg)
+                
+    def OnSignal_ProcessClose(self):
+        self.dlgSystemProcessing = None
             
             
     def sti_LaserOutput(self):
@@ -2392,150 +2502,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # fft_result = np.fft.fft(self.recordData)
         
         print(f'total cycle = {cycleCount}')
-        
-    def closeEvent(self, event):
-        self.Laser_Close()
-        try:
-            for dlg in self.listSubDialog:
-                dlg.close()
-            ## 移除VTK道具 ############################################################################################
-            # self.irenSagittal_L.RemoveAllViewProps() 
-            # if hasattr(self.dicomLow, 'rendererSagittal'):
-            #     self.dicomLow.rendererSagittal.RemoveAllViewProps()
-                
-            # if hasattr(self.dicomLow, 'rendererCoronal'):
-            #     self.dicomLow.rendererCoronal.RemoveAllViewProps()
-                
-            # if hasattr(self.dicomLow, 'rendererAxial'):
-            #     self.dicomLow.rendererAxial.RemoveAllViewProps()
-                
-            # if hasattr(self.dicomLow, 'renderer3D'):
-            #     self.dicomLow.renderer3D.RemoveAllViewProps()
-                
-            ############################################################################################
-            ## 關閉VTK Widget ############################################################################################
-            self.CloseView()
-            
-            
-            ############################################################################################
-            print("remove dicomLow VTk success")
-            
-            
-        except Exception as e:
-            print(e)
-            print("remove dicomLow VTk error")
-            
-    def registration(self, image, spacing, series):
-        """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
-        """
-        # self.ui_SP = SystemProcessing()
-        # self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        # self.ui_SP.show()
-        # QApplication.processEvents()
-        self.ui_SP = SystemProcessing()
-        self.ui_SP.setWindowTitle('Registration')
-        self.ui_SP.label_Processing.setText('Registing Robot Position...')
-        self.ui_SP.show()
-        QApplication.processEvents()
-        self.regFn.signalProgress.connect(self.ui_SP.UpdateProgress)
-        
-        
-        if self.currentTag.get("regBall") != None or self.currentTag.get("candidateBall") != None:
-            # self.ui_SP.close()
-            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
-            ## 重新設定儲存的資料 ############################################################################################
-            # if reply == QMessageBox.Yes:
-            if reply == 0:
-                # self.dcmTagLow.update({"selectedBall": []})
-                self.currentTag.update({"regBall": []})
-                self.currentTag.update({"flagSelectedBall": False})
-                
-                self.currentTag.update({"candidateBall": []})
-                self.currentTag.update({"selectedBallKey": []})
-                self.currentTag.update({"regMatrix": []})
-                # self.dcmTagLow.update({"sectionTag": []})
-                self.currentTag.update({"selectedPoint": []})
-                self.currentTag.update({"flagSelectedPoint": False})
-                
-                "UI"
-                # self.label_Error_L.setText('Registration difference: mm')
-                # self.Button_ShowRegistration_L.setEnabled(False)
-                # self.comboBox_L.setEnabled(False)
-                # self.Button_SetPoint_L.setEnabled(False)
-                # self.Button_ShowPoint_L.setEnabled(False)
-                
-                "VTK"
-                # try:
-                #     self.dicomLow.RemovePoint()
-                # except:
-                #     pass
-                
-                # self.logUI.info('reset selected ball (Low)')
-                print("reset selected ball (Low)")
-                
-                
-            # else:
-            #     self.ui_SP.close()
-            #     return
-            ############################################################################################
-        "automatic find registration ball center"
-        try:
-            ## 自動找球心 + 辨識定位球位置 ############################################################################################
-            flag, answer = self.regFn.GetBallAuto(image, spacing, series)
-            ############################################################################################
-        except Exception as e:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
-            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            MessageBox.ShowCritical("get candidate ball error", "OK")
-            print('get candidate ball error / SetRegistration_L() error')
-            print(e)
-            return False
-        
-        if flag == True:
-            # self.logUI.info('get candidate ball of inhale/Low DICOM in VTK:')
-            i = 0
-            for key, value in answer.items():
-                tmp = str(i) + ": " + str(key) + str(value)
-                # self.logUI.info(tmp)
-                i += 1
-            self.currentTag.update({"candidateBallVTK": answer})
-            ## 顯示定位球註冊結果 ############################################################################################
-            "open another ui window to check registration result"
-            # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
-            # self.ui_SP.close()
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
-        else:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error')
-            
-            # QMessageBox.critical(self, "error", "get candidate ball error")
-            MessageBox.ShowCritical("get candidate ball error", "OK")
-            print('get candidate ball error / SetRegistration_L() error')
-            ## 顯示手動註冊定位球視窗 ############################################################################################
-            "Set up the coordinate system manually"
-            # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
-            return False
-        
-        return True
             
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self.registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
     
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self.registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
     
     def ShowRegistrationDifference_L(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
@@ -2691,8 +2667,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.Laser.CloseLaser()
                 sleep(0.5)
                 print('Laser device suffered connection error in first switch on, re-connecting...')
-                self.tLaser= threading.Thread(target = self.Laser.Initialize)
-                self.tLaser.start()
+                tLaser = threading.Thread(target = self.Laser.Initialize)
+                tLaser.start()
             else:
                 ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
             
@@ -2701,39 +2677,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                     if (self.errDevice & DEVICE_ROBOT) != 0:
                         self.errDevice &= ~DEVICE_ROBOT
-                        self.tRobot = threading.Thread(target = self.robot.Initialize)
-                        self.tRobot.start()
+                        tRobot = threading.Thread(target = self.robot.Initialize)
+                        tRobot.start()
                         
                     if (self.errDevice & DEVICE_LASER) != 0:
                         self.errDevice &= ~DEVICE_LASER
                         self.Laser.CloseLaser()
                         sleep(0.5)
-                        self.tLaser= threading.Thread(target = self.Laser.Initialize)
-                        self.tLaser.start()
+                        tLaser = threading.Thread(target = self.Laser.Initialize)
+                        tLaser.start()
                     
                 elif ret == 1:
                     self.close()
-                    
-    def _Robot_driveTo(self):
-        if self.language == LAN_CN:
-            translator = QTranslator()
-            translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
-            QCoreApplication.installTranslator(translator)
-                
-        self.stkScene.setCurrentWidget(self.pgImageView)
-        
-        self.Laser_OnTracking()
-        
-        dlgDriveTo = DlgInstallAdaptor()
-        dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
-        dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
-        dlgDriveTo.setModal(True)
-        self.dlgRobotDrive = dlgDriveTo
-        
-        dlgDriveTo.exec_()
-        self.listSubDialog.append(dlgDriveTo)
-        
-        self.stkScene.setCurrentWidget(self.pgImageView)
                 
     def Robot_SetLoadingMessage(self, msg:str):
         fmt = QTextCharFormat()
@@ -2832,7 +2787,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.wdgAnimatePositionRobot.Stop()
                 self.Robot_ReleaseArm()
             elif self.wdgStep.GetStep() == 2 and self.wdgAnimate.IsActive():
-                self.wdgAnimate.Stop()
+                # self.wdgAnimate.Stop()
+                self.wdgAnimate.SetPause()
                 # self.tmPedal.stop()
                 self.Robot_ReleaseArm()
             elif self.wdgStep.GetStep() == 3 and self.wdgAnimate.IsActive():
@@ -2951,9 +2907,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             idAction = self.dlgFootPedal.GetAction()
             if idAction == ACTION_NEXT_SCENE:
                 self.NextScene()
-            elif idAction == ACTION_DRIVE_CONFIRM:
-                if self.wdgStep.GetStep() == 2:
-                    self.OnClicked_btnDriveConfirm()
+            # elif idAction == ACTION_DRIVE_CONFIRM:
+            #     if self.wdgStep.GetStep() == 2:
+            #         self.OnClicked_btnDriveConfirm()
             elif idAction == ACTION_POSITION_ROBOT:
                 sleep(0.5)
                 self.Robot_SettingTarget()
@@ -4286,22 +4242,31 @@ class DlgRobotMoving(QDialog, FunctionLib_UI.Ui_DlgRobotMoving.Ui_DlgRobotMoving
         self.lblRobotMoving.setStyleSheet(strStyleSheet)
             
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
-    def __init__(self):
+    signalClose = pyqtSignal()
+    
+    def __init__(self, nParts = 1):
         """show loading window"""
         ## 顯示 loading 畫面 ############################################################################################
+        self.nParts = max(nParts, 1)
+        self.nPartSize = 100 // self.nParts
+        self.idPart = 0
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         ############################################################################################
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        
+    
     def UpdateProgress(self, value:float, content:str):
-        progress = int(value * 100)
+        progress = int(value * 100 // self.nParts)
+        progress += self.idPart * int(self.nPartSize)
         self.pgbLoadDIcom.setValue(progress)
+            
         content = content.replace('\\', '/')
         self.lblContent.setText('from ' + content)
         if progress >= 100:
+            self.signalClose.emit()
             self.close()
+        self.idPart = progress // self.nPartSize
             
 class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
     signalClose = pyqtSignal()
