@@ -12,7 +12,7 @@ import subprocess
 # from PyQt5.QtWidgets import QWidget, QVideoWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import QWidget
+# from PyQt5.QtWidgets import QWidget
 import numpy as np
 import math
 import cv2
@@ -34,7 +34,7 @@ from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
 
-# from skimage import io
+from skimage import io
 from cycler import cycler
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -252,6 +252,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.addWidget(self.wdgAnimatePositionRobot)
         self.lstAnimateWidget.append(self.wdgAnimatePositionRobot)
         
+        self.stepDicom = 1
+        
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
@@ -273,19 +275,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgResumeSupportArm = None
         self.dlgRobotDrive = None
         
+        # 暫時隱藏之後考慮刪除的button
+        self.btnRobotFix.setHidden(True)
+        self.btnRobotBackTarget.setHidden(True)
+        
         self.init_ui()
         
-        # 消除PNG影像警告用轉檔程式 需要skimage和cv2
-        # path = os.path.join(os.getcwd(), 'image/msg_green/')
-        # outPath = os.path.join(os.getcwd(), 'image/1/')
-        
-        # for dirPath, dirNames, fileNames in os.walk(path):
-        #     for f in fileNames:
-        #         imagePath = os.path.join(path, f)
-        #         outPath = os.path.join(path, '1', f)
-        #         image = io.imread(imagePath)
-        #         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
-        #         cv2.imencode('.png', image)[1].tofile(outPath)
+        # self._SaveAnotherImages('image\\msgbox\\down_right_side\\dark', 'image\\msgbox\\temp')
         
     def init_ui(self):
         self.stkMain.setCurrentIndex(0)
@@ -402,8 +398,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
         self.treeDicom.entered.connect(self.OnEntered_treeDicom)
-        self.treeDicom.installEventFilter(self)
+        # self.treeDicom.installEventFilter(self)
         self.treeDicom.setItemDelegate(TreeViewDelegate())
+        
+        self.btnInhale.installEventFilter(self)
+        self.btnExhale.installEventFilter(self)
         
         self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
         
@@ -447,10 +446,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             wdg.signalIdle.connect(self.Robot_GetPedal)
         
     def eventFilter(self, obj, event):
-        if obj == self.treeDicom and event.type() == QEvent.Leave:
-            pass
-            # print("Mouse left QTreeView")
-        return super().eventFilter(obj, event)
+        if obj == self.treeDicom:
+            # if event.type() == QEvent.MouseButtonPress:
+            #     self.stepDicom += 1
+            # print(f'other event [{event.type()}] is been triggle')
+            return False
+        
+        if obj in [self.btnInhale, self.btnExhale] and event.type() == QEvent.MouseButtonPress:
+            if self.stepDicom == 1:
+                if DlgHintBox.IsShow():
+                    dlg = DlgHintBox()
+                    dlg.SetText('select <span style="color:#f00">Inhale dicom</span> series first', self.treeDicom, None)
+                    dlg.show()
+                    self.listSubDialog.append(dlg)
+                    return True
+                
+            elif self.stepDicom == 3:
+                if DlgHintBox.IsShow():
+                    dlg = DlgHintBox()
+                    dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                    dlg.show()
+                    self.listSubDialog.append(dlg)
+                    # 如果是step 3，按了inhale exhale button會被攔截
+                    return True
+                
+        bFilter = super().eventFilter(obj, event)
+        return bFilter
     
     def keyPressEvent(self, event):
         currentIndex = self.stkScene.currentIndex()
@@ -558,6 +579,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.Laser.signalShowHint.connect(self.Laser_OnSignalShowHint)
             self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             tLaser= threading.Thread(target = self.Laser.Initialize)
@@ -590,6 +612,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser.signalExhaleProgress.connect(self.Laser_OnSignalExhale)
             self.Laser.signalCycleCounter.connect(self.Laser_OnSignalShowCounter)
             self.Laser.signalInitFailed.connect(self.RobotSystem_OnFailed)
+            self.Laser.signalShowHint.connect(self.Laser_OnSignalShowHint)
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             self.signalResetLaserUI.connect(self.Laser_SetBreathingCycleUI)
             tLaser= threading.Thread(target = self.Laser.Initialize)
@@ -828,6 +851,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.listSubDialog.append(dlgDriveTo)
         
         self.stkScene.setCurrentWidget(self.pgImageView)
+        
+    def _SaveAnotherImages(self, pathDir:str, pathOut:str):
+        # 消除PNG影像警告用轉檔程式 需要skimage和cv2
+        path = os.path.join(os.getcwd(), pathDir)
+        out = os.path.join(os.getcwd(), pathOut)
+        
+        for dirPath, dirNames, fileNames in os.walk(path):
+            for f in fileNames:
+                pathImageIn = os.path.join(path, f)
+                pathImageOut = os.path.join(out, f)
+                image = io.imread(pathImageIn)
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
+                cv2.imencode('.png', image)[1].tofile(pathImageOut)
         
     def _TreeDicomViewFilter(self, item:QStandardItem):
         if not item:
@@ -1568,6 +1604,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 return
             
             self.wdgPicture.setStyleSheet('image:url(image/foot_pedal_and_drapping.png);')
+            self.wdgBottom.setHidden(False)
             self.btnUnlockRobot_2.setHidden(True)
             self.btnUnlockRobot_2.setEnabled(True)
             self.btnDriveConfirm.setHidden(False)
@@ -1586,6 +1623,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Robot_FixArm()
             self.wdgPicture.setStyleSheet('image:url(image/robot_back_target.png);')
             self.btnUnlockRobot_2.setText('Unlock')
+            self.wdgBottom.setHidden(True)
             # self.btnUnlockRobot_2.setEnabled(True)
             self.btnUnlockRobot_2.setHidden(False)
             self.btnUnlockRobot_2.setHidden(True)
@@ -1819,6 +1857,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self._TreeDicomViewFilter(item)
     
     def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
+        if self.stepDicom == 1:
+            if DlgHintBox.IsShow():
+                dlg = DlgHintBox()
+                dlg.SetText('then press <span style="color:#ff0000">Exhale button</span>', self.btnExhale, None)
+                self.listSubDialog.append(dlg)
+                dlg.show()
+            self.stepDicom += 1
         
         
         selectionModel = self.treeDicom.selectionModel()
@@ -1863,7 +1908,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
             self.reader.SelectDataFromID(selectedRow[0], selectedRow[1], selectedRow[2], index)
             
-            # when click once, auto switch to Exhale selection
             self.SetTreeDicomUserRole(index + 1, modelIndex = selected.indexes())
                 
             lstSelected = self.dicSelectedSeries[index].get('selected')
@@ -1943,6 +1987,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             self.btnImport.setEnabled(False)
         else:
+            if self.stepDicom == 3:
+                if DlgHintBox.IsShow():
+                    dlg = DlgHintBox()
+                    dlg.SetText('press confirm', self.btnImport, HINT_DOWN_RIGHT)
+                    self.listSubDialog.append(dlg)
+                    dlg.show()
+                self.stepDicom += 1
             self.btnImport.setEnabled(True)
             
         self.treeDicom.viewport().update()
@@ -1979,6 +2030,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.bToggleInhale = True
             else:
                 self.bToggleInhale = False
+                
+                if self.stepDicom == 2:
+                    if DlgHintBox.IsShow():
+                        dlg = DlgHintBox()
+                        dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                        dlg.show()
+                        self.listSubDialog.append(dlg)
+                    if self.stepDicom == 2:
+                        self.stepDicom += 1
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
@@ -2035,6 +2095,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         button = self.sender()
         if isinstance(button, QPushButton):
             if button == self.btnImport:
+                
+                #clear DlgHintBox
+                DlgHintBox.params['show'] = True
+                
                 self.bDicomChanged = True
                 self.btnImport.setEnabled(False)
                 if not self.ImportDicom_L():
@@ -2132,6 +2196,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneLaser.setStyleSheet('')
             self.btnSceneView.setStyleSheet('')
             
+    def MoveDlg(self):
+        self.tabWidget.setCurrentWidget(self.tabGuidance)
+        if DlgHintBox.IsShow():
+            msg = DlgHintBox()
+            msg.SetText('checkout the signal light is green for placing needle', self.stkSignalLight)
+            self.listSubDialog.append(msg)
+            msg.show()
+        
     def SceneChanged(self, index):
         self.StopVedio()
         self.indexPrePage = self.indexCurrentPage
@@ -2149,14 +2221,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser_CheckInhale()
         elif currentWidget == self.pgStartExhaleCT:
             self.Laser_CheckExhale()
-        elif currentWidget == self.pgDicomList:
-            self.btnImport.setEnabled(True)
-            
+        elif currentWidget == self.pgDicomList:   
+            self.btnImport.setEnabled(False)
+                     
             dlgHint = DlgHint()
             dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
             dlgHint.setWindowFlags(dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
             dlgHint.show()
             self.listSubDialog.append(dlgHint)
+            
+            if DlgHintBox.IsShow():
+                dlg = DlgHintBox()
+                dlg.SetText('select Inhale dicom series first', self.treeDicom, None)
+                dlg.show()
+                self.listSubDialog.append(dlg)
+        elif currentWidget == self.pgImageView:
+            self.MoveDlg()
             
         elif currentWidget == self.pgRobotRegSphere:
             self._PlayVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
@@ -2166,6 +2246,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._PlayVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
+            self.wdgBottom.setHidden(False)
             self.btnDriveConfirm.setEnabled(True)
             self.btnUnlockRobot_2.setEnabled(False)
             self.btnRobotResume.setEnabled(False)
@@ -3177,11 +3258,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
                         if self.dlgShowHint is None:
                             self.dlgShowHint = DlgHintBox()
-                            
-                            pos = self.stkSignalLight.mapToGlobal(self.stkSignalLight.pos())
-                            self.dlgShowHint.SetPosition(pos)
-                            self.dlgShowHint.SetText('Adjust patient\'s breath to reach green light')
-                            self.dlgShowHint.show()
+                            if self.dlgShowHint.IsShow():
+                                pos = self.stkSignalLight.mapToGlobal(self.stkSignalLight.pos())
+                                self.dlgShowHint.SetPosition(pos)
+                                self.dlgShowHint.SetText('Adjust patient\'s breath to reach green light')
+                                self.dlgShowHint.show()
                     
     def Laser_OnSignalModelPassed(self, bPass):
         if self.bLaserForceClose:
@@ -3283,7 +3364,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             self.Laser_SetBreathingCycleUI(nCycle, False)
          
-        
+    def Laser_OnSignalShowHint(self, text:str):
+        self.lblLaserHint.setText(text)
                     
     def Laser_ShowLaserProfile(self):
         if self.Laser is None:
@@ -4146,28 +4228,227 @@ class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
         
 class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
     signalDontShow = pyqtSignal(bool)
+    params = {'show':True}
+    stkDlg = []
     
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.setupUi(self)
         
-        self.bDontShow = False
+        if len(self.stkDlg) > 0:
+            dlg = DlgHintBox.stkDlg.pop(0)
+            dlg.close()
+            del dlg
+        self.stkDlg.append(self)
+        self.alignment = HINT_UP_RIGHT
+        self.obj = None
+        self.timer = QTimer()
+        self.nFlashTime = 0
+        self.timer.timeout.connect(self._OnTimerHightlight)
+        self.bFlash = False
+        self.colorizeEffect = QGraphicsColorizeEffect()
+        self.colorizeEffect.setColor(QColor(255, 255, 255))
+        self.colorizeEffect.setStrength(0.5)
         
-        self.chbKnown.toggled.connect(self._checkDontShow)
+        self.strText = ''
+        self.nIndexText = 0
+        self.timerText = QTimer()
+        self.timerText.timeout.connect(self._OnTimerShowText)
+        
+        self.lstLabel = []
+        self.lstLabel.append(self.lblHintText_URSide)
+        self.lstLabel.append(self.lblHintText_ULSide)
+        self.lstLabel.append(self.lblHintText_DRSide)
+        self.lstLabel.append(self.lblHintText_DLSide)
+        
+        self.lstCheckBox = []
+        self.lstCheckBox.append(self.chbKnown_URSide)
+        self.lstCheckBox.append(self.chbKnown_ULSide)
+        self.lstCheckBox.append(self.chbKnown_DRSide)
+        self.lstCheckBox.append(self.chbKnown_DLSide)
+        
+        self.lstConfirm = []
+        self.lstConfirm.append(self.btnConfirm_URSide)
+        self.lstConfirm.append(self.btnConfirm_ULSide)
+        self.lstConfirm.append(self.btnConfirm_DRSide)
+        self.lstConfirm.append(self.btnConfirm_DLSide)
+        
+        for i in range(self.stackedWidget.count()):
+            self.lstCheckBox[i].toggled.connect(self._CheckDontShow)
+            self.lstConfirm[i].clicked.connect(self._OnClickConfirm)
+        
+        # self.chbKnown_ULSide.toggled.connect(self._CheckDontShow)
+        # self.chbKnown_URSide.toggled.connect(self._CheckDontShow)
+        # self.chbKnown_DLSide.toggled.connect(self._CheckDontShow)
+        # self.chbKnown_DRSide.toggled.connect(self._CheckDontShow)
+        # self.btnConfirm_ULSide.clicked.connect(self._OnClickConfirm)
+        # self.btnConfirm_URSide.clicked.connect(self._OnClickConfirm)
+        # self.btnConfirm_DLSide.clicked.connect(self._OnClickConfirm)
+        # self.btnConfirm_DRSide.clicked.connect(self._OnClickConfirm)
+        
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
-    def _checkDontShow(self, bChecked:bool):
+        self.setMinimumSize(600, 300)
+        self.setFixedSize(800, 300)
+        
+    def closeEvent(self, event: QCloseEvent):
+        self.timer.stop()
+        self.timerText.stop()
+        
+        return super().closeEvent(event)
+        
+    def _CheckDontShow(self, bChecked:bool):
         self.signalDontShow.emit(bChecked)
-        self.bDontShow = bChecked
+        DlgHintBox.params['show'] = not bChecked
+        
+    def _OnTimerHightlight(self):
+        if self.obj is not None:
+            if self.nFlashTime >= 10:
+                self.nFlashTime = 0
+                self.timer.stop()
+                self.colorizeEffect.setStrength(0)
+                self.obj.setGraphicsEffect(self.colorizeEffect)
+            else:
+                fStrength = self.bFlash * 0.5
+                self.colorizeEffect.setStrength(fStrength)
+                self.obj.setGraphicsEffect(self.colorizeEffect)
+                self.bFlash = not self.bFlash
+                self.nFlashTime += 1
+                
+    def _OnTimerShowText(self):
+        if self.nIndexText >= len(self.strText):
+            self.timerText.stop()
+            
+        text = self.strText[:self.nIndexText]
+        
+        index = self.stackedWidget.currentIndex()
+        self.lstLabel[index].setText(text)
+        # if self.stackedWidget.currentWidget() == self.pgURSide:
+        #     self.lblHintText_URSide.setText(text)
+        # elif self.stackedWidget.currentWidget() == self.pgULSide:
+        #     self.lblHintText_ULSide.setText(text)
+        # elif self.stackedWidget.currentWidget() == self.pgDRSide:
+        #     self.lblHintText_DRSide.setText(text)
+        # elif self.stackedWidget.currentWidget() == self.pgDLSide:
+        #     self.lblHintText_DLSide.setText(text)
+            
+        self.nIndexText += 1
+        
+    def _OnClickConfirm(self):
+        # if self.stackedWidget.currentWidget() == self.pgRSide:
+        #     self.SetSide('left')
+        # else:
+        #     self.SetSide('right')
+        self.close()
+            
+    def Replay(self, tDuration:int):
+        self.nIndexText = 0
+        self.timerText.start(tDuration)
         
         
-    def SetText(self, text:str):
-        self.lblHintText.setText(text)
+    def SetSide(self, side:int):
+        # if side == HINT_UP_LEFT:
+        #     self.lblHintText_ULSide.setText('')
+        #     self.stackedWidget.setCurrentWidget(self.pgULSide)
+        # elif side == HINT_DOWN_LEFT:
+        #     self.lblHintText_DLSide.setText('')
+        #     self.stackedWidget.setCurrentWidget(self.pgDLSide)
+        # elif side == HINT_DOWN_RIGHT:
+        #     self.lblHintText_DRSide.setText('')
+        #     self.stackedWidget.setCurrentWidget(self.pgDRSide)
+        # else:
+        #     self.lblHintText_URSide.setText('')
+        #     self.stackedWidget.setCurrentWidget(self.pgURSide)
+        self.lstLabel[side].setText('')
+        self.stackedWidget.setCurrentIndex(side)
+            
+        self.alignment = side
+        # self.SetPosition(self.obj)
+        # self.Replay(100)
+            
+    def SetText(self, text:str, widget, alignment:int = HINT_UP_RIGHT, tDuration:int = 0):
+        """show hint dialog box on the specified widget
+
+        Args:
+            text (str): description
+            widget (QWidget): dialog position will be on this widget
+            alignment (str, optional): dialog alignment, 'right' or 'left'. Defaults to None.
+            tDuration (int, optional): Animation duration, minisecond. Defaults to 0.
+        """
+        self.strText = text
         
-    def SetPosition(self, pos:QPoint):
-        pos.setX(pos.x() - self.width())
-        self.move(pos)
+        self.SetPosition(widget, alignment)
+        
+        if tDuration > 0:
+            self.Replay(tDuration)
+        else:
+            # if self.stackedWidget.currentWidget() == self.pgURSide:
+            #     self.lblHintText_URSide.setText(text)
+            # elif self.stackedWidget.currentWidget() == self.pgULSide:
+            #     self.lblHintText_ULSide.setText(text)
+            # elif self.stackedWidget.currentWidget() == self.pgDLSide:
+            #     self.lblHintText_DLSide.setText(text)
+            # elif self.stackedWidget.currentWidget() == self.pgDRSide:
+            #     self.lblHintText_DRSide.setText(text)
+            index = self.stackedWidget.currentIndex()
+            self.lstLabel[index].setText(text)
+
+    def SetPosition(self, obj, alignment:int = HINT_UP_RIGHT, pos:QPoint = QPoint(0, 0)):
+        
+            
+        if isinstance(obj, QWidget):
+            self.obj = obj
+            self.timer.start(500)
+            
+            # alignment 如果由參數傳入，代表要指定DlgHintBox的定位點，是在元件的哪個位置
+            # 否則將按照DlgHintBox圖案的方向(左側、右側)做預設定位
+            
+            # if alignment == HINT_UP_RIGHT or alignment == HINT_DOWN_RIGHT:
+            #     pos = QPoint(0, obj.height())
+            # elif alignment == HINT_UP_LEFT or alignment == HINT_DOWN_LEFT:
+            #     pos = QPoint(obj.width(), obj.height())
+            # else:
+            pos = QPoint(obj.width() // 2, obj.height() // 2)
+            pos = obj.mapToGlobal(pos)
+            
+            screen = QApplication.primaryScreen().availableGeometry()
+            width  = screen.width()
+            height = screen.height()
+            
+            if pos.x() < width * 0.5 and pos.y() < height * 0.5:
+                alignment = HINT_UP_LEFT
+            elif pos.x() < width * 0.5 and pos.y() > height * 0.5:
+                alignment = HINT_DOWN_LEFT
+            elif pos.x() >= width * 0.5 and pos.y() > height * 0.5:
+                alignment = HINT_DOWN_RIGHT
+            else:
+                alignment = HINT_UP_RIGHT
+                
+            self.SetSide(alignment)
+                
+            if self.alignment == HINT_UP_RIGHT:
+                pos.setX(pos.x() - self.width() + 10)
+                pos.setY(pos.y() - 10)
+            elif self.alignment == HINT_UP_LEFT:
+                pos.setX(pos.x() - 15)
+                pos.setY(pos.y() - 10)
+            elif self.alignment == HINT_DOWN_RIGHT:
+                pos.setX(pos.x() - self.width() + 10)
+                pos.setY(pos.y() - self.height() + 5)
+            elif self.alignment == HINT_DOWN_LEFT:
+                pos.setX(pos.x() - 15)
+                pos.setY(pos.y() - self.height() + 5)
+            
+            self.move(pos)
+            
+    def SetSize(self, width:int, height:int):
+        width = max(600, width)
+        height = max(300, height)
+        self.setFixedSize(width, height)
+        
+    def IsShow():
+        return DlgHintBox.params['show']
         
 class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()

@@ -732,27 +732,13 @@ class Ui_MainWindow(object):
         self.gridLayout_10.addWidget(self.label_title_4, 0, 0, 1, 4)
         self.stkScene.addWidget(self.pgLaser)
         self.pgLaserAdjust = QtWidgets.QWidget()
+        self.pgLaserAdjust.setStyleSheet("#lblLaserHint{\n"
+"    color:#f00;\n"
+"    font: 64px \"Arial\";\n"
+"}")
         self.pgLaserAdjust.setObjectName("pgLaserAdjust")
         self.gridLayout_16 = QtWidgets.QGridLayout(self.pgLaserAdjust)
         self.gridLayout_16.setObjectName("gridLayout_16")
-        self.label_10 = QtWidgets.QLabel(self.pgLaserAdjust)
-        self.label_10.setMinimumSize(QtCore.QSize(600, 0))
-        self.label_10.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.label_10.setStyleSheet("font: 24pt \"Arial\";\n"
-"color: rgb(255, 255, 208);")
-        self.label_10.setWordWrap(True)
-        self.label_10.setObjectName("label_10")
-        self.gridLayout_16.addWidget(self.label_10, 1, 1, 1, 1)
-        self.label_title_8 = QtWidgets.QLabel(self.pgLaserAdjust)
-        self.label_title_8.setMinimumSize(QtCore.QSize(0, 100))
-        self.label_title_8.setMaximumSize(QtCore.QSize(16777215, 100))
-        self.label_title_8.setStyleSheet("    color:#eeeeee;\n"
-"    font: 64pt \"Cascadia Code SemiBold\";\n"
-"    padding:0px;\n"
-"    margin:0px;")
-        self.label_title_8.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_title_8.setObjectName("label_title_8")
-        self.gridLayout_16.addWidget(self.label_title_8, 0, 0, 1, 2)
         self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
         self.btnNext_startAdjustLaser = QtWidgets.QPushButton(self.pgLaserAdjust)
@@ -786,15 +772,17 @@ class Ui_MainWindow(object):
 "}")
         self.btnNext_startAdjustLaser.setObjectName("btnNext_startAdjustLaser")
         self.horizontalLayout_6.addWidget(self.btnNext_startAdjustLaser)
-        self.gridLayout_16.addLayout(self.horizontalLayout_6, 4, 0, 1, 2)
-        self.wdgLaserOk = QtWidgets.QWidget(self.pgLaserAdjust)
-        self.wdgLaserOk.setStyleSheet("border-image:url(image/laserOK.jpg)")
-        self.wdgLaserOk.setObjectName("wdgLaserOk")
-        self.gridLayout_16.addWidget(self.wdgLaserOk, 2, 1, 1, 1)
-        self.wdgLaserFail = QtWidgets.QWidget(self.pgLaserAdjust)
-        self.wdgLaserFail.setStyleSheet("border-image:url(image/laserFail.jpg)")
-        self.wdgLaserFail.setObjectName("wdgLaserFail")
-        self.gridLayout_16.addWidget(self.wdgLaserFail, 3, 1, 1, 1)
+        self.gridLayout_16.addLayout(self.horizontalLayout_6, 5, 0, 1, 2)
+        self.label_title_8 = QtWidgets.QLabel(self.pgLaserAdjust)
+        self.label_title_8.setMinimumSize(QtCore.QSize(0, 100))
+        self.label_title_8.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.label_title_8.setStyleSheet("    color:#eeeeee;\n"
+"    font: 64pt \"Cascadia Code SemiBold\";\n"
+"    padding:0px;\n"
+"    margin:0px;")
+        self.label_title_8.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_title_8.setObjectName("label_title_8")
+        self.gridLayout_16.addWidget(self.label_title_8, 0, 0, 1, 2)
         self.wdgLaserPlot = QtWidgets.QWidget(self.pgLaserAdjust)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -804,7 +792,37 @@ class Ui_MainWindow(object):
         self.wdgLaserPlot.setMinimumSize(QtCore.QSize(1000, 500))
         self.wdgLaserPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.wdgLaserPlot.setObjectName("wdgLaserPlot")
-        self.gridLayout_16.addWidget(self.wdgLaserPlot, 1, 0, 3, 1)
+        self.gridLayout_16.addWidget(self.wdgLaserPlot, 2, 0, 3, 1)
+        self.wdgLaserFail = QtWidgets.QWidget(self.pgLaserAdjust)
+        self.wdgLaserFail.setStyleSheet("border-image:url(image/laserFail.jpg)")
+        self.wdgLaserFail.setObjectName("wdgLaserFail")
+        self.gridLayout_16.addWidget(self.wdgLaserFail, 4, 1, 1, 1)
+        self.wdgLaserOk = QtWidgets.QWidget(self.pgLaserAdjust)
+        self.wdgLaserOk.setStyleSheet("border-image:url(image/laserOK.jpg)")
+        self.wdgLaserOk.setObjectName("wdgLaserOk")
+        self.gridLayout_16.addWidget(self.wdgLaserOk, 3, 1, 1, 1)
+        self.lblLaserHint = QtWidgets.QLabel(self.pgLaserAdjust)
+        self.lblLaserHint.setMinimumSize(QtCore.QSize(0, 100))
+        self.lblLaserHint.setText("")
+        self.lblLaserHint.setObjectName("lblLaserHint")
+        self.gridLayout_16.addWidget(self.lblLaserHint, 1, 0, 1, 1)
+        self.label_10 = QtWidgets.QLabel(self.pgLaserAdjust)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_10.sizePolicy().hasHeightForWidth())
+        self.label_10.setSizePolicy(sizePolicy)
+        self.label_10.setMinimumSize(QtCore.QSize(600, 0))
+        self.label_10.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.label_10.setStyleSheet("font: 24pt \"Arial\";\n"
+"color: rgb(255, 255, 208);")
+        self.label_10.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.label_10.setTextFormat(QtCore.Qt.AutoText)
+        self.label_10.setScaledContents(False)
+        self.label_10.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.label_10.setWordWrap(True)
+        self.label_10.setObjectName("label_10")
+        self.gridLayout_16.addWidget(self.label_10, 2, 1, 1, 1)
         self.stkScene.addWidget(self.pgLaserAdjust)
         self.pgModelBuilding1 = QtWidgets.QWidget()
         self.pgModelBuilding1.setObjectName("pgModelBuilding1")
@@ -2203,6 +2221,18 @@ class Ui_MainWindow(object):
 "\n"
 "QToolBox::tab{\n"
 "    background-color: rgb(109, 190, 247);\n"
+"    border:1px solid #c0c0c0;\n"
+"    border-top-left-radius: 10px;\n"
+"    border-top-right-radius: 10px;\n"
+"    border-bottom: none;\n"
+"    padding-left: 15px;\n"
+"}\n"
+"\n"
+"QToolBox::tab:selected{\n"
+"    background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,\n"
+"                        stop:0 rgba(109, 190, 247, 255),\n"
+"                         stop:0.5 rgba(0, 255, 255, 255),\n"
+"                        stop:1 rgba(109, 190, 247, 255));\n"
 "}\n"
 "\n"
 "QToolBox QPushButton{\n"
@@ -2233,7 +2263,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 312))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 300, 318))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -2288,7 +2318,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addItem(spacerItem42)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 189))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 318))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -2364,7 +2394,8 @@ class Ui_MainWindow(object):
         self.pgRedLight = QtWidgets.QWidget()
         self.pgRedLight.setObjectName("pgRedLight")
         self.gridLayout_21 = QtWidgets.QGridLayout(self.pgRedLight)
-        self.gridLayout_21.setContentsMargins(11, 11, 11, 11)
+        self.gridLayout_21.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_21.setSpacing(0)
         self.gridLayout_21.setObjectName("gridLayout_21")
         self.wdgRedLight = QtWidgets.QWidget(self.pgRedLight)
         self.wdgRedLight.setMinimumSize(QtCore.QSize(48, 48))
@@ -2383,6 +2414,8 @@ class Ui_MainWindow(object):
         self.pgOrangeLight.setStyleSheet("")
         self.pgOrangeLight.setObjectName("pgOrangeLight")
         self.gridLayout_40 = QtWidgets.QGridLayout(self.pgOrangeLight)
+        self.gridLayout_40.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_40.setSpacing(0)
         self.gridLayout_40.setObjectName("gridLayout_40")
         self.wdgOrangeLight = QtWidgets.QWidget(self.pgOrangeLight)
         self.wdgOrangeLight.setMinimumSize(QtCore.QSize(48, 48))
@@ -2982,7 +3015,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(2)
-        self.stkScene.setCurrentIndex(11)
+        self.stkScene.setCurrentIndex(15)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -3042,9 +3075,9 @@ class Ui_MainWindow(object):
         self.label_11.setText(_translate("MainWindow", "Setup the laser device."))
         self.btnNext_settingLaser.setText(_translate("MainWindow", "Confirm"))
         self.label_title_4.setText(_translate("MainWindow", "Setting Laser"))
-        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">1. Adjusting the height between laser and human body. </span></p><p><span style=\" font-size:24pt;\">2. Please making sure the </span><span style=\" font-size:24pt; color:#ff0000;\">laser line is bounded at rectangle window</span><span style=\" font-size:24pt;\"> during human is breathing.</span></p></body></html>"))
-        self.label_title_8.setText(_translate("MainWindow", "Setting Laser"))
         self.btnNext_startAdjustLaser.setText(_translate("MainWindow", "Confirm"))
+        self.label_title_8.setText(_translate("MainWindow", "Setting Laser"))
+        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:24pt;\">1. Adjusting the height between laser and human body. </span></p><p><span style=\" font-size:24pt;\">2. Please making sure the </span><span style=\" font-size:24pt; color:#ff0000;\">laser line is bounded at rectangle window</span><span style=\" font-size:24pt;\"> during human is breathing.</span></p></body></html>"))
         self.lblCycle1.setText(_translate("MainWindow", "Cycle 1"))
         self.lblCycle4.setText(_translate("MainWindow", "Cycle 4"))
         self.lblCycle5.setText(_translate("MainWindow", "Cycle 5"))

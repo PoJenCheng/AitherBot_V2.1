@@ -1111,6 +1111,7 @@ class LineLaser(MOTORCONTROL, QObject):
     signalModelPassed = pyqtSignal(bool)
     signalBreathingRatio = pyqtSignal(float)
     signalCycleCounter = pyqtSignal(int)
+    signalShowHint = pyqtSignal(str)
     
     def __init__(self):
         QObject.__init__(self)
@@ -2137,8 +2138,14 @@ class LineLaser(MOTORCONTROL, QObject):
         if avg < -120 or avg > -80:
             output.append(dataTemp)
             output.append([])
+            
+            if avg > -80:
+                self.signalShowHint.emit('Laser Sensor too close')
+            else:
+                self.signalShowHint.emit('Laser Sensor too far')
         else:
             output.append([])
             output.append(dataTemp)
+            self.signalShowHint.emit('')
            
         return output     
