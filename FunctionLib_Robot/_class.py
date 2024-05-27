@@ -1124,6 +1124,7 @@ class LineLaser(MOTORCONTROL, QObject):
         self.realTimeHeightAvgValue  = []
         self.laserDataBase           = {}
         self.laserDataBase_filter    = {}
+        self.laserDataBase_values    = []
         self.percentageBase          = {}
         self.ret = None
         
@@ -1338,6 +1339,12 @@ class LineLaser(MOTORCONTROL, QObject):
             bInhale = False
             if percentage >= INHALE_AREA and percentage <= 100:
                 bInhale = True
+            elif percentage > 100:
+                # 取出percentage中的raw data
+                self.laserDataBase_values.append(arr)
+                self.CalculateHeightAvg(yellowLightCriteria_LowAccuracy, self.laserDataBase_values)
+                
+                
             self.signalInhaleProgress.emit(bInhale, percentage)
             
             # self.receiveData = arr[laserStartPoint:laserEndPoint]
@@ -1377,6 +1384,10 @@ class LineLaser(MOTORCONTROL, QObject):
             bExhale = False
             if percentage <= EXHALE_AREA and percentage >= 0:
                 bExhale = True
+            elif percentage < 0:
+                # 取出percentage中的raw data
+                self.laserDataBase_values.append(arr)
+                self.CalculateHeightAvg(yellowLightCriteria_LowAccuracy, self.laserDataBase_values)
             self.signalExhaleProgress.emit(bExhale, percentage)
             
     # private function
@@ -2056,7 +2067,7 @@ class LineLaser(MOTORCONTROL, QObject):
         if len(self.laserDataBase_filter) > 5:
             self.CalculateHeightAvg(yellowLightCriteria)
             
-    def CalculateHeightAvg(self,yellowLightCriteria):  #得到相對應的percentage
+    def CalculateHeightAvg(self, yellowLightCriteria, dataAddition:list = None):  #得到相對應的percentage
         heightAvg = {}
         # for lineNum in range(len(self.laserDataBase_filter)):
         #     X = np.array(self.laserDataBase_filter[lineNum])
@@ -2069,6 +2080,12 @@ class LineLaser(MOTORCONTROL, QObject):
                 if avg > 0:
                     heightAvg[avg] = X
                 # heightAvg.append(getChestProfile.calHeightAvg(X))
+            if dataAddition is not None:
+                for data in dataAddition:
+                    data = np.array(data)
+                    avg = self.CalHeightAvg(data)
+                    if avg > 0:
+                        heightAvg[avg] = data
 
             maxAvg =  max(list(heightAvg.keys()))
             minAvg =  min(list(heightAvg.keys()))
