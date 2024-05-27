@@ -7,6 +7,7 @@ import numpy as np
 import keyboard
 import winsound
 import serial
+import cv2
 # import random
 # import atexit
 from pylltLib import pyllt as llt
@@ -15,6 +16,7 @@ from FunctionLib_Robot.__init__ import *
 from FunctionLib_Vision._class import REGISTRATION
 from FunctionLib_Robot._subFunction import lowPass
 from ._globalVar import *
+from pyueye import ueye
 # from FunctionLib_UI.ui_matplotlib_pyqt import *
 
 import matplotlib
@@ -451,7 +453,202 @@ class RobotSupportArm(QObject):
     def IsMove(self):
         return self.bRobotMoveFromTarget
 
-class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
+class imageCalibration():
+    def __init__(self,id):
+        # 初始化相機
+        self.camera = ueye.HIDS(id)
+
+        # 嘗試初始化相機
+        ret = ueye.is_InitCamera(self.camera, None)
+        if ret != ueye.IS_SUCCESS:
+            print("相機初始化失敗")
+            exit(1)
+
+        # 獲取相機感測器的資訊
+        self.sensor_info = ueye.SENSORINFO()
+        ueye.is_GetSensorInfo(self.camera, self.sensor_info)
+
+        # 設置相機的尺寸
+        self.original_width = int(self.sensor_info.nMaxWidth)
+        self.original_height = int(self.sensor_info.nMaxHeight)
+
+        # 設定像素格式為灰階
+        ueye.is_SetColorMode(self.camera, ueye.IS_CM_MONO8)
+
+        # 調整曝光度
+        self.exposure_time = 3
+        ueye.is_Exposure(self.camera, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ueye.DOUBLE(self.exposure_time), ueye.sizeof(ueye.DOUBLE))
+
+        # 分配內存
+        self.mem_ptr = ueye.c_mem_p()
+        self.mem_id = ueye.int()
+        ueye.is_AllocImageMem(self.camera, self.original_width, self.original_height, 8, self.mem_ptr, self.mem_id)
+        ueye.is_SetImageMem(self.camera, self.mem_ptr, self.mem_id)
+
+        
+    # 繪製紅色虛線
+    def draw_dashed_line(self, img, start_point, end_point, color, dash_length=10, space_length=10, thickness=2):
+        vector = np.array(end_point) - np.array(start_point)
+        vector_length = np.linalg.norm(vector)
+        unit_vector = vector / vector_length
+
+        num_segments = int(vector_length // (dash_length + space_length))
+        for i in range(num_segments):
+            segment_start = np.array(start_point) + unit_vector * (i * (dash_length + space_length))
+            segment_end = segment_start + unit_vector * dash_length
+            cv2.line(img, tuple(segment_start.astype(int)), tuple(segment_end.astype(int)), color, thickness)
+
+
+    def CameraCalibration(self,image, CrossP1, CrossP2, CrossP3, CrossP4):
+        # 原始梯形的四個頂點
+        src_points = np.float32([CrossP1, CrossP2, CrossP3, CrossP4])
+        
+        # 計算寬度
+        width = math.sqrt((CrossP2[0] - CrossP1[0])**2 + (CrossP2[1] - CrossP1[1])**2)
+        
+        # 計算高度
+        height = math.sqrt((CrossP3[0] - CrossP1[0])**2 + (CrossP3[1] - CrossP1[1])**2)
+
+        # 校正後的目標正方形頂點坐標
+        dst_points = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
+
+        # 計算透視變換矩陣
+        M = cv2.getPerspectiveTransform(src_points, dst_points)
+
+        # 應用透視變換
+        corrected_image = cv2.warpPerspective(image, M, (int(width), int(height)))
+        
+        return corrected_image, width, height
+
+
+    def FindCrossPoint(self, L1,L2):
+        # 定義兩條直線的一般方程式
+        # 第一條直線 Ax + By + C = 0
+        A1, B1, C1,S1 = L1  # 直線1的係數
+        # 第二條直線 Ax + By + C = 0
+        A2, B2, C2,S2 = L2  # 直線2的係數
+
+        # 使用 numpy 解決線性方程式
+        # 建立係數矩陣
+        coefficients = np.array([[A1, B1], [A2, B2]])
+        # 建立常數項
+        constants = np.array([-C1, -C2])
+        # 求解交點
+        solution = np.linalg.solve(coefficients, constants)
+        # 輸出交點
+        print(solution)
+        return solution
+
+    def lineEquation(self, x1,y1,x2,y2):
+        # 計算斜率
+        div = x2-x1
+        lineEquationResult = True
+        # if abs(div) > 0.5 and div < 1 and abs(div) != 1:
+        if abs(div) > 1:
+            m = (y2 - y1) / (x2 - x1)  # 斜率
+            # 計算截距
+            b = y1 - m * x1  # y-截距
+            # 一般方程式
+            A = -m
+            B = 1
+            C = -b
+        else:
+            A = 1
+            B = 0
+            C = -x1
+            
+        general_form = f"{A:.2f}x + {B:.2f}y + {C:.2f} = 0"
+        print("一般方程式:", general_form)
+          
+        return A,B,C,lineEquationResult
+    
+    # def lineEquation(self, x1, y1, x2, y2):
+    #     if x1 == x2:
+    #         return f"垂直線：x = {x1}"
+    #     else:
+    #         m = (y2 - y1) / (x2 - x1)
+    #         b = y1 - m * x1
+    #         return f"直線方程式：y = {m}x + {b}"
+        
+
+    def edgeFinder_intercept_X(self,image,X_value1,X_value2,threadValue):
+        data1 = []
+        data2 = []
+        for y in range(image.shape[0]):  # 行
+                # 確保像素值為無符號 8 位整數
+                pixel_value1 = int(image[y, X_value1])  # 轉換為整數
+                pixel_value2 = int(image[y, X_value2])  # 轉換為整數
+                if pixel_value1 >= threadValue:
+                    pixel_value1 = 1
+                    data1.append([X_value1,y])
+                if pixel_value2 >= threadValue:
+                    pixel_value2 = 1
+                    data2.append([X_value2, y])
+        upperLine = self.lineEquation(data1[0][0],data1[0][1],data2[0][0],data2[0][1])   
+        lowerLine = self.lineEquation(data1[-1][0],data1[-1][1],data2[-1][0],data2[-1][1])
+        if upperLine[3] == True and lowerLine[3] == True:
+            intercept_X = True
+        else:
+            intercept_X = False
+                
+        return upperLine, lowerLine,intercept_X
+
+    def edgeFinder_intercept_Y(self,image,Y_value1,Y_value2,threadValue):
+        data1 = []
+        data2 = []
+        for x in range(image.shape[1]):  # 列
+                # 確保像素值為無符號 8 位整數
+                pixel_value1 = int(image[Y_value1, x])  # 轉換為整數
+                pixel_value2 = int(image[Y_value2, x])  # 轉換為整數
+                if pixel_value1 >= threadValue:
+                    pixel_value1 = 1
+                    data1.append([x,Y_value1])
+                if pixel_value2 >= threadValue:
+                    pixel_value2 = 1
+                    data2.append([x, Y_value2])
+        leftLine = self.lineEquation(data1[0][0],data1[0][1],data2[0][0],data2[0][1])   
+        rightLine = self.lineEquation(data1[-1][0],data1[-1][1],data2[-1][0],data2[-1][1])
+              
+        if leftLine[3] == True and rightLine[3] == True:
+            intercept_Y = True
+        else:
+            intercept_Y = False
+                      
+        return leftLine, rightLine,intercept_Y
+
+    def poleEdgeFider(self, imagePixel,Y_value1,Y_value2,threadValue):
+        data1 = []
+        data2 = []
+        for x in range(imagePixel.shape[1]):  # 列
+                # 確保像素值為無符號 8 位整數
+                pixel_value1 = int(imagePixel[Y_value1, x])  # 轉換為整數
+                pixel_value2 = int(imagePixel[Y_value2, x])  # 轉換為整數
+                if pixel_value1 <= threadValue:
+                    pixel_value1 = 1
+                    data1.append([x,Y_value1])
+                if pixel_value2 <= threadValue:
+                    pixel_value2 = 1
+                    data2.append([x, Y_value2])
+        leftLine = self.lineEquation(data1[0][0],data1[0][1],data2[0][0],data2[0][1])   
+        rightLine = self.lineEquation(data1[-1][0],data1[-1][1],data2[-1][0],data2[-1][1])
+                
+        return leftLine, rightLine,data1
+
+    def findAngle(self,slope):
+        theta_rad = math.atan(slope)  # 反正切，得到弧度值
+        # 轉換為角度
+        theta_deg = math.degrees(theta_rad)
+        # 直線與垂直線的夾角
+        angle_with_vertical = 90 - theta_deg  # 與垂直線的夾角
+
+        return angle_with_vertical
+    
+    def releaseCamera(self):
+        # 釋放內存並退出相機
+        ueye.is_FreeImageMem(self.camera, self.mem_ptr, self.mem_id)
+        ueye.is_ExitCamera(self.camera)
+    
+class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
@@ -466,6 +663,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
         self.fHomeProgress = 0.0
         self.initProgress = 0
         self.bStop = False
+        
+        self.cameraCali_Front = imageCalibration(0)
+        # self.cameraCali_Side = imageCalibration(1)
+        
         
     def sti_init(self):
         # for test
@@ -820,7 +1021,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
             print("Home Processing Started.")
             self.Home(1000, 1000,1, 0.125)  #dir = 1 前進 ; dir = 3 後退
             sleep(1)
-            self.HomeLinearMotion(-3500,-3500,1000, 0.25)
+            self.HomeLinearMotion(-4500,-4500,1000, 0.25)
             sleep(1)
             self.Home(100, 100,1, 0.375)
             sleep(1)
@@ -833,7 +1034,244 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
             self.signalHomingProgress.emit(1.0)
             self.DisplaySafe()
         return True
- 
+    
+    def poleCalibration_rotate(self,camera,corrected_image,caliStatus):
+        leftLine, rightLine,data = camera.poleEdgeFider(corrected_image,20,70,140)
+        if leftLine[3] == True or rightLine[3] == True:
+            try:
+                caliAngle = camera.findAngle(((leftLine[0])+(rightLine[0]))/2)
+                print(caliAngle)
+                
+                if caliAngle >= 0.2 and caliAngle < 40:
+                    # 根據取得的歪斜角度進行補償
+                    RotationCount_axis1 = -1*(float(caliAngle*(RotationMotorCountPerLoop*RotateGearRatio)/360))
+                    self.FLDC_Up.MoveRelativeSetting(RotationCount_axis1,200)
+                    self.FLDC_Up.bMoveRelativeEnable()
+                    while self.FLDC_Up.fbMoveRelative() != True:
+                        caliStatus = False
+                elif (180-caliAngle) >= 0.2 and caliAngle > 120:
+                    # 根據取得的歪斜角度進行補償
+                    RotationCount_axis1 = float((180-caliAngle)*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+                    self.FLDC_Up.MoveRelativeSetting(RotationCount_axis1,200)
+                    self.FLDC_Up.bMoveRelativeEnable()
+                    while self.FLDC_Up.fbMoveRelative() != True:
+                        caliStatus = False
+                else:
+                    caliStatus = True
+            except:
+                pass
+        else:
+            caliStatus = True
+        
+        return caliStatus
+    
+    def poleCalibration_movement(self,camera, corrected_image,imageWidth,caliStatus):
+        leftLine, rightLine, data = camera.poleEdgeFider(corrected_image,50,100,140)
+        poleWidth = abs(leftLine[2] - rightLine[2])
+        edgeX = data[0][0]
+        pole_midLine = edgeX + poleWidth
+        diff_distance = (imageWidth/2 - pole_midLine)*(138/605)
+        print(diff_distance)
+        if abs(diff_distance) >= 1 and abs(diff_distance) < 100:
+            diff_angle = math.asin(diff_distance/robotInitialLength)
+            caliAngle = diff_angle*180/math.pi
+            RotationCount_axis3 = float(caliAngle*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+            self.FLDC_Down.MoveRelativeSetting(RotationCount_axis3,500)
+            self.FLDC_Down.bMoveRelativeEnable()
+            while self.FLDC_Down.fbMoveRelative() != True:
+                caliStatus = False
+        elif abs(diff_distance) >= 100:
+            caliStatus = False
+        else:
+            caliStatus = True   
+            
+        return caliStatus                 
+    
+    def imageCalibraionProcess_front(self,camera):
+        caliStatus = False
+        caliStatus_rotate_camera1 = False
+        caliStatus_movement_camera1 = False
+        while caliStatus == False:
+            # 開始攝影
+            ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
+            sleep(1)  # 等待攝影完成
+
+            # 取得影像數據
+            image_data = ueye.get_data(camera.mem_ptr, camera.original_width, \
+                camera.original_height, 8, camera.original_width, copy=True)
+
+            # 確保無符號 8 位整數
+            image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
+
+            # 縮放圖像至原始尺寸的一半
+            self.scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
+            self.scaled_width = camera.original_width // 2
+            self.scaled_height = camera.original_height // 2
+            
+            cv2.imwrite("imageFront.jpg",self.scaled_image)
+            
+            
+            
+            # value = self.scaled_image[196,196]
+            # print(value)
+            horizentalLine = camera.edgeFinder_intercept_X(self.scaled_image,100,500,255)
+            verticalLine = camera.edgeFinder_intercept_Y(self.scaled_image,100,400,255)
+            
+            CrossP1 = camera.FindCrossPoint(horizentalLine[0],verticalLine[0])
+            CrossP2 = camera.FindCrossPoint(horizentalLine[0],verticalLine[1])
+            CrossP3 = camera.FindCrossPoint(horizentalLine[1],verticalLine[0])
+            CrossP4 = camera.FindCrossPoint(horizentalLine[1],verticalLine[1])
+
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
+            corrected_image = CalibrationResult[0]
+            imageWidth = CalibrationResult[1]
+            
+            cv2.imwrite("imageFront.jpg",corrected_image)
+            # 如果需要繪製紅線，則將灰階圖像轉換為彩色
+            # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+
+            # 計算校正桿的傾斜角度
+            # 取得邊界pixel
+            if caliStatus_rotate_camera1 == False:
+                caliStatus_rotate_camera1 = self.poleCalibration_rotate(camera,corrected_image,caliStatus_rotate_camera1)
+                print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+            elif caliStatus_movement_camera1 == False:
+                caliStatus_movement_camera1 = self.poleCalibration_movement(camera,corrected_image,imageWidth,caliStatus_movement_camera1)
+                print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
+                if caliStatus_movement_camera1 == True:
+                    caliStatus = True
+                    self.cameraCali_Front.releaseCamera()
+                    
+    def imageCalibraionProcess_side(self,camera):
+        caliStatus = False
+        caliStatus_rotate_camera1 = False
+        caliStatus_movement_camera1 = False
+        while caliStatus == False:
+            # 開始攝影
+            ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
+            sleep(1)  # 等待攝影完成
+
+            # 取得影像數據
+            image_data = ueye.get_data(camera.mem_ptr, camera.original_width, \
+                camera.original_height, 8, camera.original_width, copy=True)
+
+            # 確保無符號 8 位整數
+            image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
+
+            # 縮放圖像至原始尺寸的一半
+            self.scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
+            self.scaled_width = camera.original_width // 2
+            self.scaled_height = camera.original_height // 2
+            
+            horizentalLine = camera.edgeFinder_intercept_X(self.scaled_image,100,500,170)
+            verticalLine = camera.edgeFinder_intercept_Y(self.scaled_image,100,400,170)
+            
+            CrossP1 = camera.FindCrossPoint(horizentalLine[0],verticalLine[0])
+            CrossP2 = camera.FindCrossPoint(horizentalLine[0],verticalLine[1])
+            CrossP3 = camera.FindCrossPoint(horizentalLine[1],verticalLine[0])
+            CrossP4 = camera.FindCrossPoint(horizentalLine[1],verticalLine[1])
+
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
+            corrected_image = CalibrationResult[0]
+            imageWidth = CalibrationResult[1]
+            
+            cv2.imwrite("imageSide.jpg",self.scaled_image)
+            # 如果需要繪製紅線，則將灰階圖像轉換為彩色
+            # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+
+            # 計算校正桿的傾斜角度
+            # 取得邊界pixel
+            if caliStatus_rotate_camera1 == False:
+                caliStatus_rotate_camera1 = self.poleCalibration_rotate(camera,corrected_image,caliStatus_rotate_camera1)
+                print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+            elif caliStatus_movement_camera1 == False:
+                caliStatus_movement_camera1 = self.poleCalibration_movement(camera,corrected_image,imageWidth,caliStatus_movement_camera1)
+                print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
+                if caliStatus_movement_camera1 == True:
+                    caliStatus = True
+                    self.cameraCali_Front.releaseCamera()
+        
+    def HomeProcessing_image(self):
+        #先執行一般HomeProcessing
+        # self.HomeProcessing()
+        self.imageCalibraionProcess_front(self.cameraCali_Front)
+        self.imageCalibraionProcess_side(self.cameraCali_Side)
+        pass
+        #透過視覺微校正
+        # # 相機視覺校正
+        # caliStatus = False
+        # caliStatus_rotate_camera1 = False
+        # caliStatus_movement_camera1 = False
+        # while caliStatus == False:
+        #     # 開始攝影
+        #     ueye.is_CaptureVideo(self.cameraCali_Front.camera, ueye.IS_WAIT)
+        #     sleep(1)  # 等待攝影完成
+
+        #     # 取得影像數據
+        #     image_data = ueye.get_data(self.cameraCali_Front.mem_ptr, self.cameraCali_Front.original_width, \
+        #         self.cameraCali_Front.original_height, 8, self.cameraCali_Front.original_width, copy=True)
+
+        #     # 確保無符號 8 位整數
+        #     image = np.array(image_data, dtype=np.uint8).reshape((self.cameraCali_Front.original_height, self.cameraCali_Front.original_width))
+
+        #     # 縮放圖像至原始尺寸的一半
+        #     self.scaled_image = cv2.resize(image, (self.cameraCali_Front.original_width // 2, self.cameracameraCali_FrontCali.original_height // 2))
+        #     self.scaled_width = self.cameraCali_Front.original_width // 2
+        #     self.scaled_height = self.cameraCali_Front.original_height // 2
+            
+        #     horizentalLine = self.cameraCali_Front.edgeFinder_intercept_X(self.scaled_image,100,500,170)
+        #     verticalLine = self.cameraCali_Front.edgeFinder_intercept_Y(self.scaled_image,100,400,170)
+            
+        #     CrossP1 = self.cameraCali_Front.FindCrossPoint(horizentalLine[0],verticalLine[0])
+        #     CrossP2 = self.cameraCali_Front.FindCrossPoint(horizentalLine[0],verticalLine[1])
+        #     CrossP3 = self.cameraCali_Front.FindCrossPoint(horizentalLine[1],verticalLine[0])
+        #     CrossP4 = self.cameraCali_Front.FindCrossPoint(horizentalLine[1],verticalLine[1])
+
+        #     CalibrationResult = self.cameraCali_Front.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
+        #     corrected_image = CalibrationResult[0]
+        #     imageWidth = CalibrationResult[1]
+            
+        #     # 如果需要繪製紅線，則將灰階圖像轉換為彩色
+        #     # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+
+        #     # 計算校正桿的傾斜角度
+        #     # 取得邊界pixel
+        #     if caliStatus_rotate_camera1 == False:
+        #         caliStatus_rotate_camera1 = self.poleCalibration_rotate(corrected_image,caliStatus_rotate_camera1)
+        #         print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+        #     elif caliStatus_movement_camera1 == False:
+        #         caliStatus_movement_camera1 = self.poleCalibration_movement(corrected_image,imageWidth,caliStatus_movement_camera1)
+        #         print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
+        #         if caliStatus_movement_camera1 == True:
+        #             caliStatus = True
+        #             self.cameraCali_Front.releaseCamera()
+
+            # if horizentalLine[2] == True and verticalLine[2] == True:
+            #     CrossP1 = self.cameraCali.FindCrossPoint(horizentalLine[0],verticalLine[0])
+            #     CrossP2 = self.cameraCali.FindCrossPoint(horizentalLine[0],verticalLine[1])
+            #     CrossP3 = self.cameraCali.FindCrossPoint(horizentalLine[1],verticalLine[0])
+            #     CrossP4 = self.cameraCali.FindCrossPoint(horizentalLine[1],verticalLine[1])
+
+            #     CalibrationResult = self.cameraCali.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
+            #     corrected_image = CalibrationResult[0]
+            #     imageWidth = CalibrationResult[1]
+            #     imageheight = CalibrationResult[2]
+                
+            #     # 如果需要繪製紅線，則將灰階圖像轉換為彩色
+            #     # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+
+            #     # 計算校正桿的傾斜角度
+            #     # 取得邊界pixel
+            #     if caliStatus_rotate_camera1 == False:
+            #         caliStatus_rotate_camera1 = self.poleCalibration_rotate(corrected_image,caliStatus_rotate_camera1)
+            #         print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+            #     elif caliStatus_movement_camera1 == False:
+            #         caliStatus_movement_camera1 = self.poleCalibration_movement(corrected_image,caliStatus_movement_camera1)
+            # else:
+            #     print("Cali Done")
+        
+        
+        return True
 
     def Upper_RobotMovingPoint(self, PointX, PointY):
         global upper_G_length
