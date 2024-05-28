@@ -1,18 +1,14 @@
 
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtCore import QTranslator, QCoreApplication
 from time import sleep
 from datetime import datetime, timedelta
 import sys
 import subprocess
-# from PyQt5.QtWidgets import QWidget, QVideoWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-# from PyQt5.QtWidgets import QWidget
 import numpy as np
 import math
 import cv2
@@ -20,7 +16,6 @@ import logging
 import threading
 import time
 import os
-# from FunctionLib_UI.ui_demo_1 import *
 import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_DlgHintBox
 from FunctionLib_UI.Ui__Aitherbot import *
@@ -34,7 +29,7 @@ from FunctionLib_Robot.__init__ import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.ui_processing
 
-from skimage import io
+# from skimage import io
 from cycler import cycler
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -454,19 +449,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if obj in [self.btnInhale, self.btnExhale] and event.type() == QEvent.MouseButtonPress:
             if self.stepDicom == 1:
-                if DlgHintBox.IsShow():
-                    dlg = DlgHintBox()
-                    dlg.SetText('select <span style="color:#f00">Inhale dicom</span> series first', self.treeDicom, None)
-                    dlg.show()
-                    self.listSubDialog.append(dlg)
+                dlg = DlgHintBox()
+                dlg.SetText('select <span style="color:#f00">Inhale dicom</span> series first', self.treeDicom, None)
+                if dlg.show():
                     return True
                 
             elif self.stepDicom == 3:
-                if DlgHintBox.IsShow():
-                    dlg = DlgHintBox()
-                    dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
-                    dlg.show()
-                    self.listSubDialog.append(dlg)
+                dlg = DlgHintBox()
+                dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                if dlg.show():
                     # 如果是step 3，按了inhale exhale button會被攔截
                     return True
                 
@@ -490,6 +481,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         try:
             for dlg in self.listSubDialog:
                 dlg.close()
+                
+            DlgHintBox.Clear()
             ## 移除VTK道具 ############################################################################################
             # self.irenSagittal_L.RemoveAllViewProps() 
             # if hasattr(self.dicomLow, 'rendererSagittal'):
@@ -1858,11 +1851,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
         if self.stepDicom == 1:
-            if DlgHintBox.IsShow():
-                dlg = DlgHintBox()
-                dlg.SetText('then press <span style="color:#ff0000">Exhale button</span>', self.btnExhale, None)
-                self.listSubDialog.append(dlg)
-                dlg.show()
+            dlg = DlgHintBox()
+            dlg.SetText('then press <span style="color:#ff0000">Exhale button</span>', self.btnExhale, None)
+            dlg.show()
             self.stepDicom += 1
         
         
@@ -1988,11 +1979,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnImport.setEnabled(False)
         else:
             if self.stepDicom == 3:
-                if DlgHintBox.IsShow():
-                    dlg = DlgHintBox()
-                    dlg.SetText('press confirm', self.btnImport, HINT_DOWN_RIGHT)
-                    self.listSubDialog.append(dlg)
-                    dlg.show()
+                dlg = DlgHintBox()
+                dlg.SetText('Press confirm', self.btnImport, HINT_DOWN_RIGHT, 96)
+                dlg.show()
+                
                 self.stepDicom += 1
             self.btnImport.setEnabled(True)
             
@@ -2032,24 +2022,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.bToggleInhale = False
                 
                 if self.stepDicom == 2:
-                    if DlgHintBox.IsShow():
-                        dlg = DlgHintBox()
-                        dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
-                        dlg.show()
-                        self.listSubDialog.append(dlg)
+                    dlg = DlgHintBox()
+                    dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                    dlg.show()
                     if self.stepDicom == 2:
                         self.stepDicom += 1
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
-            # if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
-            #     self.bTargetSetSwitch = False
-            #     self.btnUnlockRobot_2.setHidden(False)
-            #     self.btnDriveConfirm.setHidden(False)
-            #     self.btnRobotResume.setHidden(True)
-            #     self.btnUnlockRobot_2.setEnabled(False)
-            #     self.NextScene()
-            pass
+            msg = DlgHintBox()
+            msg.SetText('checkout the signal light is green for placing needle', self.stkSignalLight)
+            msg.show()
         
     def OnSelection(self):
         tbsObj:QTextBrowser = self.sender()
@@ -2097,7 +2080,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if button == self.btnImport:
                 
                 #clear DlgHintBox
-                DlgHintBox.params['show'] = True
+                DlgHintBox.Clear()
                 
                 self.bDicomChanged = True
                 self.btnImport.setEnabled(False)
@@ -2195,14 +2178,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnSceneRobot.setStyleSheet('')
             self.btnSceneLaser.setStyleSheet('')
             self.btnSceneView.setStyleSheet('')
-            
-    def MoveDlg(self):
-        self.tabWidget.setCurrentWidget(self.tabGuidance)
-        if DlgHintBox.IsShow():
-            msg = DlgHintBox()
-            msg.SetText('checkout the signal light is green for placing needle', self.stkSignalLight)
-            self.listSubDialog.append(msg)
-            msg.show()
         
     def SceneChanged(self, index):
         self.StopVedio()
@@ -2224,19 +2199,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgDicomList:   
             self.btnImport.setEnabled(False)
                      
-            dlgHint = DlgHint()
-            dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
-            dlgHint.setWindowFlags(dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
-            dlgHint.show()
-            self.listSubDialog.append(dlgHint)
+            # dlgHint = DlgHint()
+            # dlgHint.setWindowFlags(Qt.WindowStaysOnTopHint)
+            # dlgHint.setWindowFlags(dlgHint.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
+            # dlgHint.show()
+            # self.listSubDialog.append(dlgHint)
             
-            if DlgHintBox.IsShow():
-                dlg = DlgHintBox()
-                dlg.SetText('select Inhale dicom series first', self.treeDicom, None)
-                dlg.show()
-                self.listSubDialog.append(dlg)
-        elif currentWidget == self.pgImageView:
-            self.MoveDlg()
+            dlg = DlgHintBox()
+            dlg.SetText('select Inhale dicom series first', self.treeDicom, None)
+            dlg.show()
             
         elif currentWidget == self.pgRobotRegSphere:
             self._PlayVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
@@ -3285,11 +3256,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.Laser_SetBreathingCycleUI()
             self.ToSceneLaser()
            
+    # def Laser_OnSignalInhale(self, bInhale:bool, percentage:float, lstPercent:list):
     def Laser_OnSignalInhale(self, bInhale:bool, percentage:float):
         
         if bInhale:
             # self.stkSignalLightInhale.setCurrentWidget(self.pgGreenLightInhale)
-            
             
             now = time.time()
             if self.tInhale is None:
@@ -3311,6 +3282,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.btnNext_scanCT.setEnabled(False)
             self.tInhale = None
         self.indicatorInhale.setValue(percentage)
+        
+        # if not hasattr(self, '_dataY'):
+        #     plt.ion()
+        #     plt.rc('font', family='Microsoft JhengHei')
+        #     fig = plt.figure(figsize=(5, 5))
+        #     self.fig = fig
+        #     axe = fig.add_subplot(111)
+        #     axe.set_xlabel('前100筆資料(percent由大到小)')
+        #     axe.set_ylabel('percentage (%)')
+            
+        #     axe.set_xlim([0, 100])
+        #     axe.set_ylim([-10, 110])
+        #     self.axe = axe
+        #     self._dataY, = axe.plot([], [])
+            
+        # if len(lstPercent) > 100:
+        #     lstPercent = lstPercent[:100] 
+            
+        # self._dataY.set_data(range(len(lstPercent)), lstPercent)
+        # plt.draw()
         
     def Laser_OnSignalExhale(self, bExhale:bool, percentage:float):
         
@@ -4024,8 +4015,6 @@ class Canvas(FigureCanvasQTAgg):
                 if maxDataX > 25:
                     self.axes[nIndex].set_xlim([0, maxDataX + 5])
             self.line2[nIndex].set_data(dataX, dataY)
-            print(f'dataX = {len(dataX)}\n{dataX}')
-            print(f'dataY = {len(dataY)}\n{dataY}')
             
     
         
@@ -4228,18 +4217,18 @@ class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
         
 class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
     signalDontShow = pyqtSignal(bool)
-    params = {'show':True}
-    stkDlg = []
+    bShow = True
+    stkDialog = []
     
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.setupUi(self)
         
-        if len(self.stkDlg) > 0:
-            dlg = DlgHintBox.stkDlg.pop(0)
+        if len(DlgHintBox.stkDialog) > 0:
+            dlg = DlgHintBox.stkDialog.pop(0)
             dlg.close()
-            del dlg
-        self.stkDlg.append(self)
+            # del dlg
+        self.stkDialog.append(self)
         self.alignment = HINT_UP_RIGHT
         self.obj = None
         self.timer = QTimer()
@@ -4290,17 +4279,51 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         self.setMinimumSize(600, 300)
-        self.setFixedSize(800, 300)
+        # self.setFixedSize(800, 300)
         
     def closeEvent(self, event: QCloseEvent):
         self.timer.stop()
         self.timerText.stop()
         
+        if self.obj is not None:
+            self.colorizeEffect.setStrength(0)
+            self.obj.setGraphicsEffect(self.colorizeEffect)
+            DlgHintBox.stkDialog = []
+            self.obj = None
+        
         return super().closeEvent(event)
+    
+    def show(self):
+        if DlgHintBox.bShow:
+            super().show()
+        return DlgHintBox.bShow
+    
+    def _AdjustSize(self, text:str, pixelSize:int):
+        # 注意：此初始值有可能會變，這是根據Qt Designer中顯示的建議長寬所設
+        # 因為在dialog使用show()方法前，取得的size會不正確
+        # 而不想在調整長寬前，先呯叫一次show()，故把此值設為初始值
+        labelWidth  = 500
+        labelHeight = 78
+        
+        font = QFont()
+        font.setFamily('Arial')
+        font.setPixelSize(pixelSize)
+        
+        fm = QFontMetrics(font)
+        rect = fm.boundingRect(text)
+        
+        width = max(rect.width() - labelWidth + 10, 0)
+        height = max(rect.height() - labelHeight, 0)
+        dlgWidth = self.width()
+        dlgHeight = self.height()
+        
+        dlgWidth += width
+        dlgHeight += height
+        self.setFixedSize(dlgWidth, dlgHeight)
         
     def _CheckDontShow(self, bChecked:bool):
         self.signalDontShow.emit(bChecked)
-        DlgHintBox.params['show'] = not bChecked
+        DlgHintBox.bShow = not bChecked
         
     def _OnTimerHightlight(self):
         if self.obj is not None:
@@ -4367,7 +4390,7 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         # self.SetPosition(self.obj)
         # self.Replay(100)
             
-    def SetText(self, text:str, widget, alignment:int = HINT_UP_RIGHT, tDuration:int = 0):
+    def SetText(self, text:str, widget, alignment:int = HINT_UP_RIGHT, pixelSize = 48, tDuration:int = 0):
         """show hint dialog box on the specified widget
 
         Args:
@@ -4376,7 +4399,18 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
             alignment (str, optional): dialog alignment, 'right' or 'left'. Defaults to None.
             tDuration (int, optional): Animation duration, minisecond. Defaults to 0.
         """
+        
+        # if pixelSize is not None:
+        pixelSize = min(128, max(pixelSize, 16))
+        doc = QTextDocument()
+        doc.setHtml(text)
+        plainText = doc.toPlainText()
+        
+        self._AdjustSize(plainText, pixelSize)
+        text = f'<span style="font-size:{pixelSize}px">{text}</span>'
         self.strText = text
+        
+        
         
         self.SetPosition(widget, alignment)
         
@@ -4394,7 +4428,7 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
             index = self.stackedWidget.currentIndex()
             self.lstLabel[index].setText(text)
 
-    def SetPosition(self, obj, alignment:int = HINT_UP_RIGHT, pos:QPoint = QPoint(0, 0)):
+    def SetPosition(self, obj, alignment:int = None, pos:QPoint = QPoint(0, 0)):
         
             
         if isinstance(obj, QWidget):
@@ -4416,14 +4450,15 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
             width  = screen.width()
             height = screen.height()
             
-            if pos.x() < width * 0.5 and pos.y() < height * 0.5:
-                alignment = HINT_UP_LEFT
-            elif pos.x() < width * 0.5 and pos.y() > height * 0.5:
-                alignment = HINT_DOWN_LEFT
-            elif pos.x() >= width * 0.5 and pos.y() > height * 0.5:
-                alignment = HINT_DOWN_RIGHT
-            else:
-                alignment = HINT_UP_RIGHT
+            if alignment is None:
+                if pos.x() < width * 0.5 and pos.y() < height * 0.5:
+                    alignment = HINT_UP_LEFT
+                elif pos.x() < width * 0.5 and pos.y() > height * 0.5:
+                    alignment = HINT_DOWN_LEFT
+                elif pos.x() >= width * 0.5 and pos.y() > height * 0.5:
+                    alignment = HINT_DOWN_RIGHT
+                else:
+                    alignment = HINT_UP_RIGHT
                 
             self.SetSide(alignment)
                 
@@ -4447,8 +4482,14 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         height = max(300, height)
         self.setFixedSize(width, height)
         
+    def Clear():
+        for dlg in DlgHintBox.stkDialog:
+            dlg.close()
+            DlgHintBox.stkDialog = []
+            DlgHintBox.bShow = True
+        
     def IsShow():
-        return DlgHintBox.params['show']
+        return DlgHintBox.bShow
         
 class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()

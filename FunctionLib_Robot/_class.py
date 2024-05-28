@@ -1106,6 +1106,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight, REGISTRATION, QObject):
 class LineLaser(MOTORCONTROL, QObject):
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
+    # signalInhaleProgress = pyqtSignal(bool, float, list)
     signalInhaleProgress = pyqtSignal(bool, float)
     signalExhaleProgress = pyqtSignal(bool, float)
     signalModelPassed = pyqtSignal(bool)
@@ -1344,7 +1345,13 @@ class LineLaser(MOTORCONTROL, QObject):
                 self.laserDataBase_values.append(arr)
                 self.CalculateHeightAvg(yellowLightCriteria_LowAccuracy, self.laserDataBase_values)
                 
-                
+            # lstPercent = list(self.percentageBase.keys())
+            # lstAvg = [avg for avg, _ in self.percentageBase.values()]
+            # for percent, avg in zip(lstPercent, lstAvg):
+            #     print(f'percent = {percent}, avg = {avg}')
+            # print('=' * 50)    
+            
+            # self.signalInhaleProgress.emit(bInhale, percentage, lstPercent)
             self.signalInhaleProgress.emit(bInhale, percentage)
             
             # self.receiveData = arr[laserStartPoint:laserEndPoint]

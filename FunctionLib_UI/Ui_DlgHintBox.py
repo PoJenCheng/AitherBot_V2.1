@@ -14,12 +14,30 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_DlgHintBox(object):
     def setupUi(self, DlgHintBox):
         DlgHintBox.setObjectName("DlgHintBox")
-        DlgHintBox.resize(943, 579)
+        DlgHintBox.resize(600, 300)
+        DlgHintBox.setMinimumSize(QtCore.QSize(600, 300))
         self.gridLayout = QtWidgets.QGridLayout(DlgHintBox)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
         self.gridLayout.setObjectName("gridLayout")
         self.stackedWidget = QtWidgets.QStackedWidget(DlgHintBox)
+        self.stackedWidget.setStyleSheet("QPushButton{\n"
+"    font: 24px \"Arial\";\n"
+"    color:rgb(241, 231, 255);\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(170, 170, 255), stop:0.2 rgb(200, 200, 255), stop:0.3 rgb(210, 210, 255), stop:0.5 rgb(200, 200, 255),  stop:1 rgb(170, 170, 255));\n"
+"    border-radius: 5px;\n"
+"    border-top:1px solid #ddd;\n"
+"    border-left:1px solid #ddd;\n"
+"    border-bottom:2px solid #999;\n"
+"    border-right:2px solid #999;\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    border-top:2px solid #999;\n"
+"    border-left:2px solid #999;\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"}")
         self.stackedWidget.setObjectName("stackedWidget")
         self.pgURSide = QtWidgets.QWidget()
         self.pgURSide.setObjectName("pgURSide")
@@ -47,11 +65,6 @@ class Ui_DlgHintBox(object):
 "    color:rgb(207, 255, 255);\n"
 "}\n"
 "\n"
-"QPushButton{\n"
-"    font: 24px \"Arial\";\n"
-"    background-color:#ff00ff;\n"
-"    color:rgb(241, 231, 255);\n"
-"}\n"
 "\n"
 "QCheckBox{\n"
 "    font:12px \"Arial\";\n"
@@ -64,7 +77,7 @@ class Ui_DlgHintBox(object):
         self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.lblHintText_URSide = QtWidgets.QLabel(self.wdgMain_URSide)
-        self.lblHintText_URSide.setStyleSheet("font:36px \"Arial\";")
+        self.lblHintText_URSide.setStyleSheet("font:48px;")
         self.lblHintText_URSide.setText("")
         self.lblHintText_URSide.setWordWrap(True)
         self.lblHintText_URSide.setObjectName("lblHintText_URSide")
@@ -222,12 +235,6 @@ class Ui_DlgHintBox(object):
 "    color:rgb(207, 255, 255);\n"
 "}\n"
 "\n"
-"QPushButton{\n"
-"    font: 24px \"Arial\";\n"
-"    background-color:#ff00ff;\n"
-"    color:rgb(241, 231, 255);\n"
-"}\n"
-"\n"
 "QCheckBox{\n"
 "    font:12px \"Arial\";\n"
 "    color:rgb(240, 240, 0);\n"
@@ -239,7 +246,7 @@ class Ui_DlgHintBox(object):
         self.gridLayout_4.setSpacing(0)
         self.gridLayout_4.setObjectName("gridLayout_4")
         self.lblHintText_ULSide = QtWidgets.QLabel(self.wdgMain_ULSide)
-        self.lblHintText_ULSide.setStyleSheet("font:36px \"Arial\";")
+        self.lblHintText_ULSide.setStyleSheet("font:48px;")
         self.lblHintText_ULSide.setText("")
         self.lblHintText_ULSide.setWordWrap(True)
         self.lblHintText_ULSide.setObjectName("lblHintText_ULSide")
@@ -359,12 +366,6 @@ class Ui_DlgHintBox(object):
 "    color:rgb(207, 255, 255);\n"
 "}\n"
 "\n"
-"QPushButton{\n"
-"    font: 24px \"Arial\";\n"
-"    background-color:#ff00ff;\n"
-"    color:rgb(241, 231, 255);\n"
-"}\n"
-"\n"
 "QCheckBox{\n"
 "    font:12px \"Arial\";\n"
 "    color:rgb(240, 240, 0);\n"
@@ -376,7 +377,7 @@ class Ui_DlgHintBox(object):
         self.gridLayout_6.setSpacing(0)
         self.gridLayout_6.setObjectName("gridLayout_6")
         self.lblHintText_DRSide = QtWidgets.QLabel(self.wdgMain_DRSide)
-        self.lblHintText_DRSide.setStyleSheet("font:36px \"Arial\";")
+        self.lblHintText_DRSide.setStyleSheet("font:48px;")
         self.lblHintText_DRSide.setText("")
         self.lblHintText_DRSide.setWordWrap(True)
         self.lblHintText_DRSide.setObjectName("lblHintText_DRSide")
@@ -504,12 +505,6 @@ class Ui_DlgHintBox(object):
 "    color:rgb(207, 255, 255);\n"
 "}\n"
 "\n"
-"QPushButton{\n"
-"    font: 24px \"Arial\";\n"
-"    background-color:#ff00ff;\n"
-"    color:rgb(241, 231, 255);\n"
-"}\n"
-"\n"
 "QCheckBox{\n"
 "    font:12px \"Arial\";\n"
 "    color:rgb(240, 240, 0);\n"
@@ -521,7 +516,7 @@ class Ui_DlgHintBox(object):
         self.gridLayout_8.setSpacing(0)
         self.gridLayout_8.setObjectName("gridLayout_8")
         self.lblHintText_DLSide = QtWidgets.QLabel(self.wdgMain_DLSide)
-        self.lblHintText_DLSide.setStyleSheet("font:36px \"Arial\";")
+        self.lblHintText_DLSide.setStyleSheet("font:48px;")
         self.lblHintText_DLSide.setText("")
         self.lblHintText_DLSide.setWordWrap(True)
         self.lblHintText_DLSide.setObjectName("lblHintText_DLSide")
