@@ -1,4 +1,3 @@
-# from FunctionLib_UI import matplotlib_pyqt as mat
 from FunctionLib_UI import MainInterface as mi
 from PyQt5.QtCore import QTranslator, QLocale, QCoreApplication
 from PyQt5.QtWidgets import *

@@ -41,6 +41,7 @@ from functools import reduce
 import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.Ui_dlgInstallAdaptor
 import FunctionLib_UI.Ui_DlgRobotMoving
+from FunctionLib_Vision.lungSegmentation import LungSegmentation
 
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
@@ -439,7 +440,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
         for wdg in self.lstAnimateWidget:
             wdg.signalIdle.connect(self.Robot_GetPedal)
-        
+    
     def eventFilter(self, obj, event):
         if obj == self.treeDicom:
             # if event.type() == QEvent.MouseButtonPress:
