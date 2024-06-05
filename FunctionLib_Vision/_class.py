@@ -42,6 +42,8 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolume,
     vtkVolumeProperty
 )
+from FunctionLib_Robot.logger import logger
+
 
 VIEW_AXIAL          = 'Axial'
 VIEW_CORONAL        = 'Coronal'
@@ -136,9 +138,9 @@ class DICOM(QObject):
         try:
             os.makedirs(path)
         except FileExistsError:
-            print('directory already exists')
+            logger.error('directory already exists')
         except Exception as e:
-            print(f'create directory error:{e}')
+            logger.critical(f'create directory error:{e}')
             
     def ClearSelectedSeries(self, index:int):
         if self.currentSeries.get(index):
@@ -248,8 +250,8 @@ class DICOM(QObject):
             count += 1
             self.signalProcess.emit(np.round(count / totalFiles, 2), fileData.filename)
         self.dicPatient = dicPatient
-        print(f'skip {skipCount} files')
-        print(f'found {skipRepeatCount} files repeated and skip')
+        logger.info(f'skip {skipCount} files')
+        logger.info(f'found {skipRepeatCount} files repeated and skip')
         
         #sort series
         # count = 0
@@ -297,10 +299,10 @@ class DICOM(QObject):
                             #     if tagImagePos:
                             #         print(f'image position = {tagImagePos}, InstanceNumber = {img.InstanceNumber}')
                         else:
-                            print(f'missing:ImagePositionPatient')
+                            logger.warning(f'missing:ImagePositionPatient')
                             elem = self.FindTag(slice, (0x20, 0x32))
                             if elem:
-                                print(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
+                                logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
                         
                     # 讀取X, Y spacing
                     elem = self.FindTag(slice, (0x28, 0x30))
@@ -334,13 +336,13 @@ class DICOM(QObject):
                                     elemImagePosition2 = self.FindTag(slice_2, (0x20, 0x32))
                                     
                                     if thickness != np.round(abs(elemImagePosition1[2] - elemImagePosition2[2]), 2):
-                                        print(f'thickness between slice {i} and slice {i + 1} is different')
+                                        logger.warning(f'thickness between slice {i} and slice {i + 1} is different')
                                         bSameOfThickness = False
                                         break
                                 if bSameOfThickness:
                                     series['spacingZ'] = thickness
                             else:
-                                print(f'Invalid series')
+                                logger.warning(f'Invalid series')
                                 
                     else:
                         series['spacingZ'] = elem
@@ -463,7 +465,7 @@ class DICOM(QObject):
         if nSlice >= len(listSeries):
             dataSet = listSeries[0]
             if nSlice > len(dataSet.pixel_array):
-                print('Invalid nSlice of Dicom')
+                logger.warning('Invalid nSlice of Dicom')
                 return None
             
             if self.rescaleIntercept and self.rescaleSlope:
@@ -562,7 +564,7 @@ class DICOM(QObject):
         images = np.array(images).astype(np.int16)
         
         if len(images.shape) > 3:
-            print(f'this is multi-frame dicom')
+            logger.info(f'this is multi-frame dicom')
             images = images[0] 
         else:
             # 不是muti frame dicom，就必須反轉Z、Y方向
@@ -915,7 +917,7 @@ class REGISTRATION(QObject):
         elif V.shape[0] == 2:
             d = math.sqrt(np.square(V[0])+np.square(V[1]))
         else:
-            print("GetNorm() error")
+            logger.debug("GetNorm() error")
             return 0
         ############################################################################################
         return d
@@ -954,7 +956,7 @@ class REGISTRATION(QObject):
             return imagesHuThr
         except:
             pass
-        print("ThresholdFilter() error")
+        logger.debug("ThresholdFilter() error")
         ############################################################################################
         return
     ### 公式7
@@ -1941,7 +1943,7 @@ class ImageAlgorithm():
             
             
         else:
-            print('input data must be vtkImageData type')
+            logger.warning('input data must be vtkImageData type')
                     
     
     
@@ -2103,7 +2105,7 @@ class SegmentationFunction(ImageAlgorithm):
         minValue, maxValue = SCALAR_TYPE_RANGE.get(scalarType, (None, None))
         
         if minValue is None or maxValue is None:
-            print('scalarType error')
+            logger.error('scalarType error')
             self.imageOutputPort = None
             return False
         
@@ -2152,7 +2154,7 @@ class SegmentationFunction(ImageAlgorithm):
         minValue, maxValue = SCALAR_TYPE_RANGE.get(scalarType, (None, None))
         
         if minValue is None or maxValue is None:
-            print('scalarType error')
+            logger.error('scalarType error')
             self.imageOutputPort = None
             return False
         
@@ -2373,7 +2375,7 @@ class InteractorStyleImageAlgorithm(vtk.vtkInteractorStyleImage):
             
     def SetActor(self, actor):
         if not hasattr(actor, 'GetMapper'):
-            print('actor has not GetMapper attribute, please set correct actor or volume')
+            logger.error('actor has not GetMapper attribute, please set correct actor or volume')
         else:
             self.actor = actor
             
@@ -2467,7 +2469,7 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
     # mode 1 : cut outside
     def SetMode(self, mode):
         if mode < 0 or mode > 1:
-            print('mode is not support')
+            logger.error('mode is not support')
         self.mode = mode
         
     def SetModeCutIn(self):
@@ -2487,11 +2489,11 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
             
     def CutInside(self):
         if self.imageAlgorithm is None:
-            print('imageAlgorithm not exist at InteractorStyleSegmentation')
+            logger.error('imageAlgorithm not exist at InteractorStyleSegmentation')
             return
         
         if self.iren is None:
-            print('iren not exist in at InteractorStyleSegmentation')
+            logger.error('iren not exist in at InteractorStyleSegmentation')
             return
         
         self.imageAlgorithm.CutInside()
@@ -2499,11 +2501,11 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
         
     def CutOutside(self):
         if self.imageAlgorithm is None:
-            print('imageAlgorithm not exist at InteractorStyleSegmentation')
+            logger.error('imageAlgorithm not exist at InteractorStyleSegmentation')
             return
         
         if self.iren is None:
-            print('iren not exist in at InteractorStyleSegmentation')
+            logger.error('iren not exist in at InteractorStyleSegmentation')
             return
         
         self.imageAlgorithm.CutOutside()
@@ -2535,7 +2537,7 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
         if self.iren is None:
             self.iren = self.GetInteractor()
             if self.iren is None:
-                print('iren of InteractorStyleSegmentation is None')
+                logger.error('iren of InteractorStyleSegmentation is None')
                 return None
             
             self.renderer = self.iren.GetRenderWindow().GetRenderers().GetFirstRenderer()
@@ -3059,10 +3061,10 @@ class ContourWidget(vtk.vtkContourWidget):
         
         
     def OnPlacePointEvent(self, obj, event):
-        print('place points')
+        logger.debug('place points')
         
     def OnWidgetValueChangedEvent(self, obj, event):
-        print('value changed')
+        logger.debug('value changed')
         
     def OnEndInteraction(self, obj, event):
         spacing = self.spacing
@@ -3075,7 +3077,7 @@ class ContourWidget(vtk.vtkContourWidget):
         
         polyData = self.GetContourRepresentation().GetContourRepresentationAsPolyData()
         verts = polyData.GetNumberOfPoints()
-        print(f'original verts : {verts}')
+        logger.debug(f'original verts : {verts}')
         
         # scalarPoly1 = vtk.vtkIntArray()
         # pointData = polyData.GetPointData()
@@ -3298,7 +3300,7 @@ class ContourWidget(vtk.vtkContourWidget):
     def initImageView(self, image):
         
         if image:
-            print(f'dim = {image.GetDimensions()}')
+            logger.debug(f'dim = {image.GetDimensions()}')
         
         imageView = vtk.vtkImageViewer2()
         imageView.SetInputData(image)
@@ -3529,7 +3531,7 @@ class RendererObj(vtkRenderer):
                     self.textActor.SetInput(f'{self.imagePosition[0]}/{self.imageDimensions[0] - 1}')
                 
             else:
-                print(f'value dtype = {value.dtype}')
+                logger.debug(f'value dtype = {value.dtype}')
                 
         else:
             if self.orientation == VIEW_AXIAL: 
@@ -3603,7 +3605,7 @@ class RendererObj(vtkRenderer):
         
         if pos is None:
             pos = self.target
-            print(f'pos is None')
+            logger.debug(f'pos is None')
             
         # move camera to select point
         camera = self.GetActiveCamera()
@@ -3863,7 +3865,7 @@ class RendererObj(vtkRenderer):
         
     def SetCamera(self, orientation:str):
         if not isinstance(orientation, str):
-            print(f'parameter "orientation" is not str type')
+            logger.debug(f'parameter "orientation" is not str type')
             return
         
         center = np.array(self.imageDimensions).astype(float) * 0.5
@@ -4160,11 +4162,11 @@ class RendererCrossSectionObj(RendererObj):
             posCS = np.array(posCS)
             
         if not isinstance(posCS, np.ndarray):
-            print(f'posCS type error')
+            logger.debug(f'posCS type error')
             return None
         
         if posCS.shape[0] < 3:
-            print(f'dimensions of posCS is little than 3')
+            logger.debug(f'dimensions of posCS is little than 3')
             return None
         
         if posCS.shape[0] == 3:
@@ -4172,7 +4174,7 @@ class RendererCrossSectionObj(RendererObj):
         
         
         if self.imageReslice is None:
-            print(f'imageReslice is not exist')
+            logger.debug(f'imageReslice is not exist')
             return None
         
         matrix = self.imageReslice.GetResliceAxes()
@@ -4189,16 +4191,16 @@ class RendererCrossSectionObj(RendererObj):
             pos = np.array(pos)
             
         if not isinstance(pos, np.ndarray):
-            print(f'pos type error')
+            logger.debug(f'pos type error')
             return None
         
         if pos.shape[0] < 3:
-            print(f'dimensions of pos is little than 3')
+            logger.debug(f'dimensions of pos is little than 3')
             return None
         
         
         if self.imageReslice is None:
-            print(f'imageReslice not exist')
+            logger.debug(f'imageReslice not exist')
             return None
             
         if pos.shape[0] == 3:
@@ -4266,7 +4268,7 @@ class RendererCrossSectionObj(RendererObj):
         #         actor.VisibilityOn()
         
         if position is None:
-            print('position of Cross-Section is None')
+            logger.debug('position of Cross-Section is None')
             return None
         
         self.SetCameraToTarget(position)
@@ -4286,7 +4288,7 @@ class RendererCrossSectionObj(RendererObj):
             target = np.array(target)
             
         if not isinstance(target, np.ndarray):
-            print(f'variant "position" type error')
+            logger.debug(f'variant "position" type error')
             return
         
         coord2D = vtkCoordinate()
@@ -4310,7 +4312,7 @@ class RendererCrossSectionObj(RendererObj):
             self.image = image
             
         if self.image is None:
-            print(f'imageReslice is NULL')
+            logger.debug(f'imageReslice is NULL')
             return
         
         matrix = transform.GetMatrix()
@@ -4403,7 +4405,7 @@ class RendererCrossSectionObj(RendererObj):
             return None
         
         if posCS is None and pos is None:
-            print(f'function "checkTargetVisible" at least one parameter is required')
+            logger.debug(f'function "checkTargetVisible" at least one parameter is required')
             return
         
         elif pos is None:
@@ -4442,7 +4444,7 @@ class RendererCrossSectionObj(RendererObj):
         if pos is None and posOriginal is None:
             pos = self.GetCrossSectionFromPosition(self.target)
             if pos is None:
-                print('pos in RendererCrossSectionObj.SetTarget is None')
+                logger.debug('pos in RendererCrossSectionObj.SetTarget is None')
                 return
             
             self.targetCS = pos
@@ -4455,13 +4457,13 @@ class RendererCrossSectionObj(RendererObj):
                 if posOriginal is not None:
                     self.target[:] = posOriginal
                 else:
-                    print('posOriginal is None')
+                    logger.debug('posOriginal is None')
                     return
                     
             if pos is None:
                 pos = self.GetCrossSectionFromPosition(self.target)
                 if pos is None:
-                    print('pos in RendererCrossSectionObj.SetTarget is None')
+                    logger.debug('pos in RendererCrossSectionObj.SetTarget is None')
                     return
             self.targetCS = pos
         
@@ -4739,8 +4741,8 @@ class TargetObj():
         self.renderer.ViewToWorld()
         p2 = np.array(self.renderer.GetWorldPoint())[:3]
         
-        print(f'index[{index}], after trans p1 = {p1}')
-        print(f'index[{index}], after trans p2 = {p2}')
+        logger.debug(f'index[{index}], after trans p1 = {p1}')
+        logger.debug(f'index[{index}], after trans p2 = {p2}')
         
         return p1, p2
         
@@ -4851,8 +4853,6 @@ class DISPLAY(QObject):
         self.vtkImage.DeepCopy(image)
         self.imageOrigin = vtk.vtkImageData()
         self.imageOrigin.DeepCopy(self.vtkImage)
-        
-        print('copy done')
         
         # 這邊的target和各個renderer中的target是同一個實體
         # 只是建立連結關係

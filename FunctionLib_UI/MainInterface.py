@@ -12,7 +12,6 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 import numpy as np
 import math
 import cv2
-import logging
 import threading
 import time
 import os
@@ -42,6 +41,7 @@ import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.Ui_dlgInstallAdaptor
 import FunctionLib_UI.Ui_DlgRobotMoving
 from FunctionLib_Vision.lungSegmentation import LungSegmentation
+from FunctionLib_Robot.logger import logger
 
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
@@ -400,7 +400,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnInhale.installEventFilter(self)
         self.btnExhale.installEventFilter(self)
         
-        self.player.error.connect(lambda:print(f'media player error:{self.player.errorString()}'))
+        self.player.error.connect(lambda:logger.error(f'media player error:{self.player.errorString()}'))
         
         self.btnRobotRelease.clicked.connect(self.Robot_ReleaseArm)
         self.btnRobotFix.clicked.connect(self.Robot_FixArm)
@@ -504,12 +504,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             
             ############################################################################################
-            print("remove dicomLow VTk success")
+            logger.info("remove dicomLow VTk success")
             
             
         except Exception as e:
-            print(e)
-            print("remove dicomLow VTk error")
+            logger.critical(e)
+            logger.error("remove dicomLow VTk error")
         
     def _AddCrossSectionItemInSelector(self):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -624,10 +624,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             idPatient = item.data(Qt.UserRole + 1)
             idStudy   = item.data(Qt.UserRole + 2)
             idSeries  = item.data(Qt.UserRole + 3)
-            # print(f'patient ID = {idPatient}')
-            # print(f'Study ID   = {idStudy}')
-            # print(f'Series ID  = {idSeries}')
-            # print(f'No.{i} : {item.data(Qt.UserRole + 4)}')
             selectedSeries = [idPatient, idStudy, idSeries, index.row()]
             # self.selectedSeries.append(selectedSeries)
             # if len(self.selectedSeries) > 2:
@@ -750,7 +746,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 #     pass
                 
                 # self.logUI.info('reset selected ball (Low)')
-                print("reset selected ball (Low)")
+                logger.info("reset selected ball (Low)")
                 
                 
             # else:
@@ -767,8 +763,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
             MessageBox.ShowCritical("get candidate ball error", "OK")
-            print('get candidate ball error / SetRegistration_L() error')
-            print(e)
+            logger.error('get candidate ball error / SetRegistration_L() error')
+            logger.critical(e)
             return False
         
         if flag == True:
@@ -793,7 +789,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             # QMessageBox.critical(self, "error", "get candidate ball error")
             MessageBox.ShowCritical("get candidate ball error", "OK")
-            print('get candidate ball error / SetRegistration_L() error')
+            logger.error('get candidate ball error / SetRegistration_L() error')
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
             # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
@@ -823,7 +819,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 combox.setCurrentIndex(index)
                 combox.blockSignals(False)
             else:
-                print(f'Error: [{strKey}] = {index}')
+                logger.debug(f'Error: [{strKey}] = {index}')
             
     def _Robot_driveTo(self):
         if self.language == LAN_CN:
@@ -912,7 +908,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif isinstance(modelIndex, list):
                 for index in modelIndex:
                     if not model.setItemData(index, {Qt.UserRole + 4: data}):
-                        print('error occurred in set UserRole data')
+                        logger.error('error occurred in set UserRole data')
         
     def Focus(self, pos):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
@@ -1126,27 +1122,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.currentTag['spacing'] = spacing
         self.currentTag['series'] = listSeries
-        # elif self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
-        #     self.dicomHigh.LoadImage(self.vtkImageHigh)
-        #     self.SetDicomData(self.dicomHigh, 'HIGH')
-        
-        
-        # imageVTKHu = self.dicomLow.LoadImage('C:/Leon/CT/sT1W_3D__2853/sT1W_3D__2853', self.vtkImage)
-        # self.dicomHigh.LoadImage('C:/Leon/CT/S62090/S3010')
-        ############################################################################################
-        ## 設定 window width 和 window level 初始值 ############################################################################################
-        ### 公式1
-        
-        # thresholdValue = int(((self.dicomLow.dicomGrayscaleRange[1] - self.dicomLow.dicomGrayscaleRange[0]) / 6) + self.dicomLow.dicomGrayscaleRange[0])
-        # self.SetDicomData(self.dicomLow, 'LOW')
-        # self.SetDicomData(self.dicomHigh, 'HIGH')
-        
-        # if self.currentTag is None:
-        #     self.currentTag = self.dicDicom.get(self.currentDicom)
-        #     print(f'dicom name = {self.currentTag}')
-        #     if self.currentTag is None:
-        #         print('dicom tag name error')
-        #         return False
             
         if not self.SetRegistration_L():
             # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
@@ -1412,13 +1387,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         viewPort = self.GetViewPort()
         
         if viewPort is None:
-            print(f'viewPort is not exist')
+            logger.debug(f'viewPort is not exist')
             return
         
         for view in viewPort.values():
             if (orientation is None) or (orientation != view.orientation):
                 
-                # print(f'orientation = {orientation}, view.orientation = {view.orientation}')
                 if bFocus == True:
                     view.Focus()
                 view.renderer.SetTarget(pos)
@@ -1437,7 +1411,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # return None
         
     def OnClicked_btnPlanning(self):
-        print('planning')
+        logger.debug('planning')
         
     def OnClicked_btnGuidance(self):
         self.stkMain.setCurrentWidget(self.page_loading)
@@ -1989,28 +1963,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         self.treeDicom.viewport().update()
     
-    def OnCurrentRowChanged_treeDicom(self, current:QModelIndex, previous:QModelIndex):
-        pass
-        # index = current.sibling(current.row(), 0)
-        # model:QStandardItemModel = self.treeDicom.model()
-        # item:QStandardItem = model.itemFromIndex(index)
-        # if item:
-        #     idPatient = item.data(Qt.UserRole + 1)
-        #     idStudy   = item.data(Qt.UserRole + 2)
-        #     idSeries  = item.data(Qt.UserRole + 3)
-        #     print(f'patient ID = {idPatient}')
-        #     print(f'Study ID   = {idStudy}')
-        #     print(f'Series ID  = {idSeries}')
-        #     self.selectedSeries = [idPatient, idStudy, idSeries]
-        #     self.reader.SelectDataFromID(idPatient, idStudy, idSeries)
-        # selectionModel:QItemSelectionModel = self.treeDicom.selectionModel()
-        # model = self.treeDicom.model()
-        # indexes = selectionModel.selectedIndexes()
-        # for index in indexes:
-        #     item = model.itemFromIndex(index)
-        #     if item:
-        #         print(f'item text = {item.text()}')
-    
     def OnToggled_buttonGroup(self, button:QAbstractButton, bChecked:bool):
         if bChecked:
             self.ChangeCurrentDicom(button.objectName())
@@ -2048,10 +2000,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.player.play()
             
     def OnBrightnessChanged(self, brightness:int):
-        print(f'brightness = {brightness}')
+        logger.debug(f'brightness = {brightness}')
         
     def OnConstrastChanged(self, contrast:int):
-        print(f'contrast = {contrast}')
+        logger.debug(f'contrast = {contrast}')
     
     ### Navigation Bar ###
     def ToSceneRobotSetting(self):
@@ -2099,7 +2051,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.Laser_StopRecordBreathingBase()
             elif button == self.btnNext_endBuildModel:
                 self.Laser_StopRecordBreathingBase()
-                print('end model building')
+                logger.info('end model building')
             elif button == self.btnNext_scanCT:
                 if self.tCheckInhale:
                     self.tCheckInhale.stop()
@@ -2550,11 +2502,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if self.lastSlope * slope < 0:
                         cycleCount += 1
                 self.lastSlope = slope
-                print(f'slope = {slope}')
             sleep(0.1)
         # fft_result = np.fft.fft(self.recordData)
         
-        print(f'total cycle = {cycleCount}')
+        logger.debug(f'total cycle = {cycleCount}')
             
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
@@ -2577,7 +2528,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if selectedBallKey is None or selectedBallKey == []:
             # QMessageBox.critical(self, "error", "please redo registration, select the ball")
             MessageBox.ShowCritical("please redo registration, select the ball")
-            print("pair error / ShowRegistrationDifference_L() error")
+            logger.warning("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
         else:
@@ -2693,7 +2644,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         for i in range(1, 1001):
             sleep(0.01)
             percent = i * 0.001
-            print(percent)
             self.signalDemoHoming.emit(percent)
                 
     def RobotSystem_OnFailed(self, errDevice:int):
@@ -2719,7 +2669,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.nLaserErrorCount += 1
                 self.Laser.CloseLaser()
                 sleep(0.5)
-                print('Laser device suffered connection error in first switch on, re-connecting...')
+                logger.warning('Laser device suffered connection error in first switch on, re-connecting...')
                 tLaser = threading.Thread(target = self.Laser.Initialize)
                 tLaser.start()
             else:
@@ -2787,7 +2737,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.RealTimeTracking(self.breathingPercentage)
             self.robot.MoveToPoint()
         except:
-            print("Robot Compensation error")
+            logger.error("Robot Compensation error")
         # else:
         #     self.trackingBreathingCommand = True
         
@@ -2825,7 +2775,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def Robot_OnThreadHomingProcess(self):
         if self.robot.bConnected == True:
             if self.robot.HomeProcessing() == True:
-                print("Home processing is done!")
+                logger.info("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
                 # self.RobotRun()
@@ -2878,7 +2828,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
                 greenZoneColor = QColor(colorRed[index], colorGreen[index], 0)
             except Exception as msg:
-                print(msg)
+                logger.critical(msg)
         # 將數值-5000 ~ 5000轉換成 0 ~ 100
         # diffValue = (diffValue + 5000) * 0.01
         if self.dlgResumeSupportArm is not None:
@@ -2891,13 +2841,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def RobotRun(self):
         if self.homeStatus is True:
             self.robot.P2P()
-            print("Robot run processing is done!")
+            logger.info("Robot run processing is done!")
             # QMessageBox.information(self, "information", "Robot run processing is done!")
             
             #執行呼吸補償
             self.robot.breathingCompensation()
         else:
-            print("Please execute home processing first.")
+            logger.warning("Please execute home processing first.")
             # QMessageBox.information(self, "information", "Please execute home processing first.")
             MessageBox.ShowInformation("Please execute home processing first.")
         
@@ -3009,7 +2959,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.RobotSupportArm.SetTargetPos()
         self.settingTarget = True
         
-        print('setting robot target')
+        logger.info('setting robot target')
         
     def Robot_FixAndTarget(self):
         self.Robot_FixArm()
@@ -3132,8 +3082,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             percent = tuple(percent)
                             percentIn, percentEx = percent
                             self.signalModelCycle.emit(percent, i)
-                            print(f'cycle {i} = ({percentIn}, {percentEx})')
-                        print('=' * 50)
+                            logger.debug(f'cycle {i} = ({percentIn}, {percentEx})')
+                        logger.debug('=' * 50)
                             
                         self.dicDataCycleManual[self.nCycle] = self.dicDataCycle[1].copy()
                         self.bUpdateCycleData = True
@@ -3156,7 +3106,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         self.nCycle = 0
                     self.nCycle += 1
             else:
-                print('laser data is None')
+                logger.warning('laser data is None')
         
     def Laser_OnLoading(self, strState:str, progress:int):
         # QThread.msleep(1000)
@@ -3195,9 +3145,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         score = len(indexes) / len(percent) * 100
         
         strScore = f'score:{score:5.1f}'
-        print('=' * 30)
-        print(f'{strScore:^30}')
-        print('=' * 30)
+        logger.debug('=' * 30)
+        logger.debug(f'{strScore:^30}')
+        logger.debug('=' * 30)
         
         return score, percent
     
@@ -3395,7 +3345,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             # FPS 30
             sleep(0.033)
-        print("Laser Adjust Done!")
+        logger.info("Laser Adjust Done!")
         # self.signalShowPlot.emit()
         
         
@@ -3447,14 +3397,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 percent = tuple(percent)
                 percentIn, percentEx = percent
                 self.signalModelCycle.emit(percent, i)
-                print(f'cycle {i} = ({percentIn}, {percentEx})')
+                logger.debug(f'cycle {i} = ({percentIn}, {percentEx})')
                 if percentIn < 80 or percentEx > 20:
                     bPass = False
                     
             if bPass:
-                print('cycles reconstruction succeed')
+                logger.info('cycles reconstruction succeed')
             else:
-                print('ccycles reconstruction failed')
+                logger.warning('ccycles reconstruction failed')
                 
             return bPass
         return False
@@ -3467,7 +3417,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if isinstance(lstPercent, (tuple, list, np.ndarray)):
                 lstPercent = np.reshape(lstPercent, (-1, 2))
         except Exception as msg:
-            print(msg)
+            logger.critical(msg)
             return False
         
         nNum = len(lstPercent)
@@ -3475,7 +3425,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         indexes, = np.where((lstPercent[:, 0] >= 80) & (lstPercent[:, 1] <= 20))
         numOfIndexes = len(indexes)
         score = (numOfIndexes / nNum) * 100
-        print(f'first time score:{score}')
+        logger.debug(f'first time score:{score}')
         
         if score > MODEL_SCORE:
             return True    
@@ -3485,7 +3435,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             avgOrigin = np.reshape(lstAvg, (-1, 2))
             while score < MODEL_SCORE:
                 if len(lstPercent) < VALID_CYCLE_NUM:
-                    print('validated model data is not enough')
+                    logger.warning('validated model data is not enough')
                     return False
                 
                 indexesInhale, = np.where(lstPercent[:, 0] < INHALE_AREA)
@@ -3496,8 +3446,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # 選擇第二小的值
                     avgMin = sortedAvg[1]
                     avgMax = np.max(avgOrigin[:, 1])
-                    print('\ncase 1')
-                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    logger.debug('\ncase 1')
+                    logger.debug(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
                     nRound += 1
                     
                     self.Laser.FilterDataByAvgRange(avgMax, avgMin)
@@ -3509,7 +3459,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
                         for i, p, avg in zip(indexes, percent, avgData):
                             _a, _b = lstPercent[i]
-                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                            logger.debug(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
                     
                         if score > MODEL_SCORE:
                             return True
@@ -3518,7 +3468,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         lstPercent = percent
                         avgOrigin = avgData
                     else:
-                        print('test data empty')
+                        logger.warning('test data empty')
                         return False
                     
                 elif len(indexesInhale) < len(indexesExhale):
@@ -3526,8 +3476,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     sortedAvg = sorted(avgOrigin[:, 1])
                     # 找第二大的值
                     avgMax = sortedAvg[-2]
-                    print('\ncase 2')
-                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    logger.debug('\ncase 2')
+                    logger.debug(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
                     nRound += 1
                     
                     self.Laser.FilterDataByAvgRange(avgMax, avgMin)
@@ -3539,7 +3489,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
                         for i, p, avg in zip(indexes, percent, avgData):
                             _a, _b = lstPercent[i]
-                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                            logger.debug(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
                     
                         if score > MODEL_SCORE:
                             return True
@@ -3548,7 +3498,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         lstPercent = percent
                         avgOrigin = avgData
                     else:
-                        print('test data empty')
+                        logger.warning('test data empty')
                 elif len(indexesInhale) == len(indexesExhale):
                     # 選擇第二小的值
                     sortedAvg = sorted(avgOrigin[:, 0])
@@ -3558,8 +3508,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     sortedAvg = sorted(avgOrigin[:, 1])
                     avgMax = sortedAvg[-2]
                     
-                    print('\ncase 3')
-                    print(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
+                    logger.debug('\ncase 3')
+                    logger.debug(f'round {nRound} avg max = {avgMax}, avg min = {avgMin}\n')
                     nRound += 1
                     
                     self.Laser.FilterDataByAvgRange(avgMax, avgMin)
@@ -3571,7 +3521,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
                         for i, p, avg in zip(indexes, percent, avgData):
                             _a, _b = lstPercent[i]
-                            print(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
+                            logger.debug(f'[{i:2}] origin = [{_a:10.6f} {_b:10.6f}], after = [{p[0]:10.6f} {p[1]:10.6f}]')
                         
                         if score > MODEL_SCORE:
                             return True
@@ -3580,7 +3530,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         lstPercent = percent
                         avgOrigin = avgData
                     else:
-                        print('test data empty')
+                        logger.warning('test data empty')
                         return False
             # except Exception as msg:
             #     print(f'error:{msg}')
@@ -3618,7 +3568,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         t.start()
         
     def Laser_StopRecordBreathingBase(self):
-        print("Stop")
+        logger.info("breath recording Stop")
         # if self.Button_StopRecording.isChecked():
         #     self.Button_RecordCycle.setStyleSheet("")
         #     self.Button_StopRecording.setStyleSheet("background-color:#4DE680")
@@ -3640,7 +3590,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         receiveDataTemp = {}
         receiveData = {}
         # self.TriggerSetting()
-        print("Cheast Breathing Measure Start")
+        logger.info("Cheast Breathing Measure Start")
         
         # 紀錄初始時間戳記
         startTime = time.time()
@@ -3676,7 +3626,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         lastTime = curTime
                             
                         
-        print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
+        logger.debug(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
         # 完成資料蒐集後，進行資料編排處理、計算百分比等演算法
         if self.Laser.DataRearrange(receiveData, self.yellowLightCriteria, self.greenLightCriteria):
             # 對編排後的資料再進行一次週期分析，確保週期數目符合設定
@@ -3700,7 +3650,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         nCycle = 1
         self.dicDataCycle = {}
         self.dicDataCycle[nCycle] = {}
-        print("Cheast Breathing Measure Start")
+        logger.info("Cheast Breathing Measure Start")
         startTime = time.time()
         
         if self.bAutoRecord:
@@ -3758,8 +3708,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                     percent = tuple(percent)
                                     percentIn, percentEx = percent
                                     self.signalModelCycle.emit(percent, i)
-                                    print(f'cycle {i} = ({percentIn}, {percentEx})')
-                                print('=' * 50)
+                                    logger.info(f'cycle {i} = ({percentIn}, {percentEx})')
+                                logger.info('=' * 50)
                             
                             while self.dicDataCycle.get(nCycle + 1) is not None:
                                 nCycle += 1
@@ -3786,14 +3736,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                 
                             self.dicDataCycle[nCycle] = {}
                         
-        print(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
+        logger.info(f"Breathing recording stopped.Total spends:{(curTime - startTime):.3f} sec")
         self.signalResetLaserUI.emit()
         
     def Laser_OnTracking(self):
         if self.Laser is None:
             return
         
-        print("即時量測呼吸狀態")
+        logger.info("即時量測呼吸狀態")
         if self.recordBreathingBase is True:
             self.bLaserTracking = True
             
@@ -3801,7 +3751,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             t_laser = threading.Thread(target = self.Laser_OnThreadTracking)
             t_laser.start()
         else:
-            print("Please build cheast breathing model first.")
+            logger.warning("Please build cheast breathing model first.")
             
     def Laser_OnThreadTracking(self):
         self.avgValueDataTmp = []
@@ -3824,7 +3774,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.robot.RealTimeTracking(self.breathingPercentage)
                 self.RobotRun()
             except:
-                print("Robot Compensation error")
+                logger.critical("Robot Compensation error")
         # else:
         #     self.trackingBreathingCommand = True
     
@@ -3901,8 +3851,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if self.Laser is not None:
                 self.Laser.CloseLaser()
         except Exception as e:
-            print(e)
-            print("close Laser error")
+            logger.critical(e)
+            logger.error("close Laser error")
         
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
@@ -4532,7 +4482,7 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
         QTimer.singleShot(1000, lambda: self.close())
         
         if ret == 0:
-            print('robot move')
+            logger.info('robot move')
             self.signalRobotStartMoving.emit()
             
     def SetState(self, bEnabled:bool):

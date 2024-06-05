@@ -1,6 +1,3 @@
-# from fileinput import filename
-# from turtle import update
-# import typing
 from PyQt5.QtCore import QModelIndex, QObject
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import *
@@ -10,30 +7,15 @@ from PyQt5.QtWidgets import QStyleOptionViewItem
 import numpy
 import cv2
 import logging
-# from FunctionLib_Robot._class import *
-# from FunctionLib_Robot._subFunction import *
-# from FunctionLib_Robot.__init__ import *
-# from FunctionLib_Robot._globalVar import *
-# from time import sleep
-# from datetime import datetime
 import abc
 import copy
-# import sys
-# import math
-# import threading
-# import os
-# import FunctionLib_UI.ui_coordinate_system
-# from FunctionLib_UI.ui_coordinate_system import *
-# import FunctionLib_UI.ui_coordinate_system_manual
-# import FunctionLib_UI.ui_set_point_system
 import FunctionLib_UI.ui_processing
-# import FunctionLib_UI.ui_matplotlib_pyqt
-# from FunctionLib_UI.ui_matplotlib_pyqt import *
 from FunctionLib_Vision._class import *
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingCore import vtkCellPicker
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # from vtkmodules.all import vtkCallbackCommand
+from FunctionLib_Robot.logger import logger
 
 class ViewPortUnit(QObject):
     
@@ -542,7 +524,7 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         # self.currentDicom = self.parent.dicomLow    
         self.currentDicom = self.currentTag.get('display')   
         if not self.currentDicom:
-            print('current dicom is None at MyInteractorStyle') 
+            logger.warning('current dicom is None at MyInteractorStyle') 
         # self.irenSagittal = self.parent.irenSagittal_L
         # self.irenAxial    = self.parent.irenAxial_L
         # self.irenCoronal  = self.parent.irenCoronal_L
@@ -608,7 +590,7 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         picker, pick_point = self.GetPickPosition(points)
         
         if not self.currentTag:
-            print('dicom tag is Null')
+            logger.warning('dicom tag is Null')
             return
         
         if self.isRightPress == True:
@@ -766,7 +748,7 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
                 
                 self.currentTag["pickPoint"] = self.currentDicom.target
         else:
-            print("no objects be picked")
+            logger.warning("no objects be picked")
        
     def GetCurrentRenderer(self):
         points = self.GetInteractor().GetEventPosition()

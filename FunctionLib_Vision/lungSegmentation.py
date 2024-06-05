@@ -136,12 +136,12 @@ g_nSlice = 0
 g_axesImage = None
 g_timer = None
     
-def ShowImage(dicomPath:str):
+def ShowImage(dicomPath:str, bUserAI:bool = False):
     # lungSegment = LungSegmentation('C:/Leon/CT/20220615/S43320/S2010')
     lungSegment = LungSegmentation(dicomPath)
     
     global g_image, g_nSlice
-    g_image, volumeSize = lungSegment.apply()
+    g_image, volumeSize = lungSegment.apply(bUserAI)
     g_nSlice = 0
     
     plt.ion()
