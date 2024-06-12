@@ -2210,7 +2210,12 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSpacing(0)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.toolBox = QtWidgets.QToolBox(self.tabPlanning)
-        self.toolBox.setMaximumSize(QtCore.QSize(16777215, 400))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.toolBox.sizePolicy().hasHeightForWidth())
+        self.toolBox.setSizePolicy(sizePolicy)
+        self.toolBox.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.toolBox.setStyleSheet("QToolBox{\n"
 "background-color: rgb(93, 161, 209);\n"
 "}\n"
@@ -2220,7 +2225,10 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QToolBox::tab{\n"
-"    background-color: rgb(109, 190, 247);\n"
+"    background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,\n"
+"                        stop:0 rgba(176, 180, 200, 255),\n"
+"                         stop:0.5 rgba(200, 200, 255, 255),\n"
+"                        stop:1 rgba(176, 180, 200, 255));\n"
 "    border:1px solid #c0c0c0;\n"
 "    border-top-left-radius: 10px;\n"
 "    border-top-right-radius: 10px;\n"
@@ -2230,9 +2238,11 @@ class Ui_MainWindow(object):
 "\n"
 "QToolBox::tab:selected{\n"
 "    background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,\n"
-"                        stop:0 rgba(109, 190, 247, 255),\n"
-"                         stop:0.5 rgba(0, 255, 255, 255),\n"
-"                        stop:1 rgba(109, 190, 247, 255));\n"
+"                        stop:0 rgba(206, 210, 230, 255),\n"
+"                        stop:0.4 rgba(255, 255, 255, 255),\n"
+"                         stop:0.6 rgba(230, 230, 255, 255),\n"
+"                        stop:1 rgba(206, 210, 230, 255));\n"
+"    color: rgb(66, 138, 255);\n"
 "}\n"
 "\n"
 "QToolBox QPushButton{\n"
@@ -2263,7 +2273,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 300, 318))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 300, 482))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -2318,17 +2328,61 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addItem(spacerItem42)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 318))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 482))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.treeTrajectory = QtWidgets.QTreeWidget(self.pgTrajectory)
+        self.treeTrajectory.setMinimumSize(QtCore.QSize(0, 200))
+        self.treeTrajectory.setStyleSheet("QHeaderView:section{\n"
+"    background:rgb(7, 81, 255);\n"
+"    color:rgb(197, 255, 246);\n"
+"    font: 16px \"Arial\";\n"
+"}\n"
+"\n"
+"QTreeWidget::item{\n"
+"    border:none;\n"
+"}\n"
+"\n"
+"\n"
+"QTreeWidget::item:selected{\n"
+"    background-color:rgb(187, 239, 255);\n"
+"    color:#333;\n"
+"}\n"
+"")
+        self.treeTrajectory.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.treeTrajectory.setIconSize(QtCore.QSize(48, 48))
+        self.treeTrajectory.setTextElideMode(QtCore.Qt.ElideLeft)
+        self.treeTrajectory.setIndentation(0)
+        self.treeTrajectory.setAnimated(True)
+        self.treeTrajectory.setWordWrap(True)
+        self.treeTrajectory.setColumnCount(3)
+        self.treeTrajectory.setObjectName("treeTrajectory")
+        self.treeTrajectory.header().setCascadingSectionResizes(False)
+        self.treeTrajectory.header().setDefaultSectionSize(150)
+        self.treeTrajectory.header().setMinimumSectionSize(0)
+        self.treeTrajectory.header().setSortIndicatorShown(False)
+        self.treeTrajectory.header().setStretchLastSection(True)
+        self.verticalLayout_3.addWidget(self.treeTrajectory)
+        self.btnAddTrajectory = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnAddTrajectory.setMinimumSize(QtCore.QSize(0, 48))
+        self.btnAddTrajectory.setStyleSheet("background-image:url(image/plus.png);\n"
+"background-repeat:no-repeat;\n"
+"background-position:center;\n"
+"height:74px;\n"
+"border-radius:10px;")
+        self.btnAddTrajectory.setText("")
+        self.btnAddTrajectory.setObjectName("btnAddTrajectory")
+        self.verticalLayout_3.addWidget(self.btnAddTrajectory)
         self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_14.setObjectName("horizontalLayout_14")
         self.btnSetEntry = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnSetEntry.setEnabled(False)
         self.btnSetEntry.setMinimumSize(QtCore.QSize(0, 40))
         self.btnSetEntry.setObjectName("btnSetEntry")
         self.horizontalLayout_14.addWidget(self.btnSetEntry)
         self.btnSetTarget = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnSetTarget.setEnabled(False)
         self.btnSetTarget.setMinimumSize(QtCore.QSize(0, 40))
         self.btnSetTarget.setObjectName("btnSetTarget")
         self.horizontalLayout_14.addWidget(self.btnSetTarget)
@@ -2376,6 +2430,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.toolBox)
         spacerItem44 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem44)
+        self.verticalLayout_4.setStretch(0, 3)
+        self.verticalLayout_4.setStretch(1, 2)
         self.tabWidget.addTab(self.tabPlanning, "")
         self.tabGuidance = QtWidgets.QWidget()
         self.tabGuidance.setObjectName("tabGuidance")
@@ -2385,6 +2441,8 @@ class Ui_MainWindow(object):
         self.btnDriveTo.setMinimumSize(QtCore.QSize(0, 50))
         self.btnDriveTo.setObjectName("btnDriveTo")
         self.gridLayout_32.addWidget(self.btnDriveTo, 1, 0, 1, 1)
+        spacerItem45 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_32.addItem(spacerItem45, 2, 0, 1, 1)
         self.horizontalLayout_23 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_23.setObjectName("horizontalLayout_23")
         self.stkSignalLight = QtWidgets.QStackedWidget(self.tabGuidance)
@@ -2448,9 +2506,7 @@ class Ui_MainWindow(object):
         self.gridLayout_31.addWidget(self.wdgGreenLight, 0, 0, 1, 1)
         self.stkSignalLight.addWidget(self.pgGreenLight)
         self.horizontalLayout_23.addWidget(self.stkSignalLight)
-        self.gridLayout_32.addLayout(self.horizontalLayout_23, 0, 0, 1, 2)
-        spacerItem45 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_32.addItem(spacerItem45, 2, 0, 1, 1)
+        self.gridLayout_32.addLayout(self.horizontalLayout_23, 0, 0, 1, 1)
         self.tabWidget.addTab(self.tabGuidance, "")
         self.gridLayout_5.addWidget(self.tabWidget, 0, 1, 1, 1)
         self.stkScene.addWidget(self.pgImageView)
@@ -3019,8 +3075,8 @@ class Ui_MainWindow(object):
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.cbxRightBottom.setCurrentIndex(3)
-        self.tabWidget.setCurrentIndex(1)
-        self.toolBox.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(0)
+        self.toolBox.setCurrentIndex(1)
         self.stkSignalLight.setCurrentIndex(0)
         self.stkJoint1.setCurrentIndex(1)
         self.stkJoint2.setCurrentIndex(1)
@@ -3155,6 +3211,8 @@ class Ui_MainWindow(object):
         self.label_16.setText(_translate("MainWindow", "Window Level"))
         self.label_17.setText(_translate("MainWindow", "Window Width"))
         self.toolBox.setItemText(self.toolBox.indexOf(self.pgImage), _translate("MainWindow", "Image"))
+        self.treeTrajectory.headerItem().setText(1, _translate("MainWindow", "Trajectory Name"))
+        self.treeTrajectory.headerItem().setText(2, _translate("MainWindow", "Color"))
         self.btnSetEntry.setText(_translate("MainWindow", "Set Entry"))
         self.btnSetTarget.setText(_translate("MainWindow", "SetTarget"))
         self.label_15.setText(_translate("MainWindow", "Trajectory"))

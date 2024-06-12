@@ -28,6 +28,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from time import *
+from FunctionLib_Robot.logger import logger
 
 upper_G_length = 0
 upper_G_angle = 0
@@ -103,7 +104,7 @@ class MOTORCONTROL(QObject):
         # self.bLimitSwitch6 = 'GVL.LimitSwitch6'
         self.bDualAbsolute = 'GVL.bDualAbsolute'
 
-
+        
 
         try:
             self.plc = pyads.Connection('5.97.65.198.1.1', 851)

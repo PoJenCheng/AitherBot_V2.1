@@ -43,7 +43,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolumeProperty
 )
 from FunctionLib_Robot.logger import logger
-
+from numpy._typing import _ArrayLike
 
 VIEW_AXIAL          = 'Axial'
 VIEW_CORONAL        = 'Coronal'
@@ -3705,9 +3705,13 @@ class RendererObj(vtkRenderer):
         if length < scale:
             return
         
-        count = int(length / scale)
-        lines = [vtkLineSource() for _ in range(count)]
-        actorTargetScale = [vtkActor2D() for _ in range(count)]
+        try:
+            count = int(length / scale)
+            lines = [vtkLineSource() for _ in range(count)]
+            actorTargetScale = [vtkActor2D() for _ in range(count)]
+        except Exception as msg:
+            logger.debug(msg)
+            logger.debug(f'length = {length}, scale = {scale}')
         
         unitVector = (endPos - startPos) / length
         viewPlaneVector = self.camera.GetViewPlaneNormal()
@@ -4284,32 +4288,40 @@ class RendererCrossSectionObj(RendererObj):
         """
         ## 改變 slice ############################################################################################
 
-        if isinstance(target, tuple) or isinstance(target, list):
-            target = np.array(target)
-            
-        if not isinstance(target, np.ndarray):
-            logger.debug(f'variant "position" type error')
+        if isinstance(target, (tuple, list, np.ndarray)):
+            target = np.asarray(target)
+        else:
+            logger.error(f'variant "position" type error')
+            return
+        
+        if isinstance(entry, (tuple, list, np.ndarray)):
+            entry = np.asarray(entry)
+        else:
+            logger.error(f'variant "position" type error')
             return
         
         coord2D = vtkCoordinate()
         coord2D.SetCoordinateSystemToWorld()
         
         vector = np.array(entry - target)
-        vector = vector / np.linalg.norm(vector)
+        length = np.linalg.norm(vector)
+        length = length if length > 0 else 1
+        vector = vector / length
         
         viewPlaneVector = np.array([0, 0, 1])
         angle = vtk.vtkMath.AngleBetweenVectors(vector, viewPlaneVector)
         
         axis = np.cross(vector, viewPlaneVector)
-        axis = axis / np.linalg.norm(axis)
+        length = np.linalg.norm(axis)
+        length = length if length > 0 else 1
+        axis = axis / length
                 
         transform = vtk.vtkTransform()
         transform.RotateWXYZ(angle * 180.0 / np.pi, axis)
         
         # get image info
         # self.SetImage(image)
-        if image is not None:
-            self.image = image
+        self.image = image if image is not None else self.image
             
         if self.image is None:
             logger.debug(f'imageReslice is NULL')
@@ -4745,7 +4757,390 @@ class TargetObj():
         logger.debug(f'index[{index}], after trans p2 = {p2}')
         
         return p1, p2
+    
+class StippleLine():
+    def __init__(
+        self, 
+        startPoint:_ArrayLike, 
+        endPoint:_ArrayLike, 
+        colors:_ArrayLike,
+        spacing:float = 10
+    ):
+        self.startPoint = np.zeros(3)
+        self.endPoint = np.zeros(3)
+        self.spacing = spacing
+        self.colors = colors
+        self.renderer = None
         
+        self.setPosition(startPoint, endPoint)
+        
+        # vector = self.endPoint - self.startPoint
+        # length = np.linalg.norm(vector)
+        # if length > 0:
+        #     vector = vector / length
+        
+        # self.stippeLines = []
+        # lineStart = self.startPoint.copy()
+        # lineEnd = self.startPoint + vector * spacing
+        
+        # while np.linalg.norm(lineStart - self.startPoint) < length:
+        #     lineSource = vtkLineSource()
+        #     lineSource.SetPoint1(lineStart)
+        #     lineSource.SetPoint2(lineEnd)
+
+        #     lineMapper2D = vtkPolyDataMapper2D()
+        #     lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
+            
+        #     c = vtkCoordinate()
+        #     c.SetCoordinateSystemToWorld()
+        #     lineMapper2D.SetTransformCoordinate(c)
+            
+        #     actorLine = vtkActor2D()
+        #     actorLine.SetMapper(lineMapper2D)
+        #     actorLine.GetProperty().SetColor(colors)
+        #     self.stippeLines.append(actorLine)
+            
+        #     offset = spacing * 2
+        #     lineStart += (vector * offset)
+        #     lineEnd += (vector * offset)
+            
+        #     if np.linalg.norm(lineEnd - self.startPoint) > length:
+        #         lineEnd = self.endPoint
+                
+    def setPosition(self, startPoint:_ArrayLike = None, endPoint:_ArrayLike = None):
+        assert(startPoint is not None and endPoint is not None), 'must have startPoint or endPoint'
+        
+        if startPoint is not None:
+            self.startPoint = np.asarray(startPoint)
+            
+        if endPoint is not None:
+            self.endPoint = np.asarray(endPoint)
+            
+            
+        vector = self.endPoint - self.startPoint
+        length = np.linalg.norm(vector)
+        if length > 0:
+            vector = vector / length
+        
+        self.stippeLines = []
+        lineStart = self.startPoint.copy()
+        lineEnd = self.startPoint + vector * self.spacing
+        
+        # clear old actor
+        if self.renderer is not None:
+            for line in self.stippeLines:
+                self.renderer.RemoveActor(line)
+            self.stippeLines = []
+        
+        while np.linalg.norm(lineStart - self.startPoint) < length:
+            lineSource = vtkLineSource()
+            lineSource.SetPoint1(lineStart)
+            lineSource.SetPoint2(lineEnd)
+
+            lineMapper2D = vtkPolyDataMapper2D()
+            lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
+            
+            c = vtkCoordinate()
+            c.SetCoordinateSystemToWorld()
+            lineMapper2D.SetTransformCoordinate(c)
+                
+            actorLine = vtkActor2D()
+            actorLine.SetMapper(lineMapper2D)
+            actorLine.GetProperty().SetColor(self.colors)
+            self.stippeLines.append(actorLine)
+            if self.renderer is not None:
+                self.renderer.AddActor(actorLine)
+            
+            offset = self.spacing * 2
+            lineStart += (vector * offset)
+            lineEnd += (vector * offset)
+            
+            if np.linalg.norm(lineEnd - self.startPoint) > length:
+                lineEnd = self.endPoint
+        
+    def setRenderer(self, renderer:vtkRenderer):
+        for line in self.stippeLines:
+            renderer.AddActor(line)
+        self.renderer = renderer
+        
+    def setVisibility(self, bVisible:bool):
+        for line in self.stippeLines:
+            line.SetVisibility(bVisible)
+    
+class TrajectoryVTKObj():
+    def __init__(self, entryPoint:_ArrayLike, targetPoint:_ArrayLike, colors:_ArrayLike):
+        self.stippleLine = None
+        self.actorLine = vtkActor2D()
+        self.actorTube = vtkActor()
+        self.actorBallGreen = vtkActor()
+        self.actorBallRed = vtkActor()
+        self.entryPoint = np.asarray(entryPoint)
+        self.targetPoint = np.asarray(targetPoint)
+        self.bVisible = True
+        self.bCurrent = True
+        
+        self.property = self.actorLine.GetProperty()
+        self.property.SetColor(colors)
+        
+        self.setPosition(entryPoint, targetPoint)
+        # self.property.SetLineStipplePattern(1)
+        # self.property.SetLineStippleRepeatFactor(1)
+        
+        # self.originProperty = vtk.vtkProperty2D()
+        # self.originProperty.DeepCopy(self.property)
+        
+    def setCurrent(self, bEnabled:bool = True):
+        if self.bVisible:
+            self.actorLine.SetVisibility(bEnabled)
+            self.stippleLine.setVisibility(not bEnabled)
+        self.bCurrent = bEnabled
+        
+            # self.property.SetLineStipplePattern(0xFFFF)
+        # else:
+        #     self.property.DeepCopy(self.originProperty)
+        #     self.actorLine.SetProperty(self.property)
+        
+    def setPosition(self, entryPoint:_ArrayLike = None, targetPoint:_ArrayLike = None):
+        if entryPoint is None:
+            entryPoint = self.entryPoint
+        else:
+            self.entryPoint = entryPoint
+            
+        if targetPoint is None:
+            targetPoint = self.targetPoint
+        else:
+            self.targetPoint = targetPoint
+        ## 建立線 ############################################################################################
+        "Create a line"
+        lineSource = vtkLineSource()
+        lineSource.SetPoint1(entryPoint)
+        lineSource.SetPoint2(targetPoint)
+
+        lineMapper2D = vtkPolyDataMapper2D()
+        lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
+        
+        c = vtkCoordinate()
+        c.SetCoordinateSystemToWorld()
+        lineMapper2D.SetTransformCoordinate(c)
+        
+        self.actorLine.SetMapper(lineMapper2D)
+        colors = self.actorLine.GetProperty().GetColor()
+        
+        if self.stippleLine is None:
+            self.stippleLine = StippleLine(entryPoint, targetPoint, colors)
+        else:
+            self.stippleLine.setPosition(entryPoint, targetPoint)
+        self.stippleLine.setVisibility(False)
+        
+        "Create tube filter"
+        tubeFilter = vtkTubeFilter()
+        tubeFilter.SetInputConnection(lineSource.GetOutputPort())
+        tubeFilter.SetRadius(3)
+        tubeFilter.SetNumberOfSides(50)
+        tubeFilter.Update()
+
+        tubeMapper = vtkPolyDataMapper()
+        tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
+
+        self.actorTube.SetMapper(tubeMapper)
+        "Make the tube have some transparency"
+        self.actorTube.GetProperty().SetOpacity(0.5)
+        self.actorTube.PickableOff()
+        
+    def setRenderer(self, renderer:vtkRenderer):
+        renderer.AddActor(self.actorLine)
+        # renderer.AddActor(self.actorTube)
+        self.stippleLine.setRenderer(renderer)
+        
+    def setVisibility(self, bVisible:bool):
+        bVisibleAndCurrent = bVisible and self.bCurrent
+        bVisbleAndNotCurrent = bVisible and not self.bCurrent
+        self.actorLine.SetVisibility(bVisibleAndCurrent)
+        self.actorTube.SetVisibility(bVisibleAndCurrent)
+        self.stippleLine.setVisibility(bVisbleAndNotCurrent)
+        self.bVisible = bVisible
+class Trajectory():
+    def __init__(self):
+        self.nLimitTrajectory = 8
+        self.colors = ['#FFFF00',
+                       '#FF0000', 
+                       '#00FF00',
+                       '#9ACD32', 
+                       '#EE82EE', 
+                       '#FF6347', 
+                       '#87CEEB',
+                       '#FFFAFA']
+        
+        self.lstColor = []
+        for color in self.colors:
+            fColor = (int(color[1:3], 16) / 255, int(color[3:5], 16) / 255, int(color[5:], 16) / 255)
+            self.lstColor.append(fColor)
+        
+        
+        self._listTrajectory = []
+        self._listVTKObj = []
+        # 還沒產生路徑物件時的暫存可視狀態，在物件產生後賦予物件
+        self._preVisible = True
+        # 紀錄已被設定的點數量，只有0、1、2，來表示一個路徑是否已被完整設定
+        self._pointBeenSetNum = 0
+        
+        self.entryPoint = np.zeros(3)
+        self.targetPoint = np.zeros(3)
+        self.currentIndex = -1
+        
+    def __getitem__(self, index):
+        num = len(self._listTrajectory)
+        if num == 0:
+            return np.zeros((2, 3))
+        else:
+            index = min(num - 1, max(-num, index))
+            return np.asarray(self._listTrajectory[index])
+        
+    def _assertPoint(self, point):
+        assert(
+            isinstance(point, (tuple, list, np.ndarray)) and len(point) == 3
+        ), 'entry or target point type error'
+        
+    def _checkAddTrajectory(self):
+        # 檢查並判斷是否加入新路徑
+        if self._pointBeenSetNum == 3 and len(self._listTrajectory) < self.nLimitTrajectory:
+            self._pointBeenSetNum = 0
+            nCount = len(self._listTrajectory)
+            self._listTrajectory.append([self.entryPoint, self.targetPoint])
+            self._listVTKObj.append(TrajectoryVTKObj(self.entryPoint, self.targetPoint, self.lstColor[nCount]))
+            
+            # 賦予物件前置可視屬性，然後重置為預設值(可視)
+            self._listVTKObj[-1].setVisibility(self._preVisible)
+            self._preVisible = True
+            
+            self.currentIndex = len(self._listTrajectory) - 1
+            self.setCurrentIndex(self.currentIndex)
+            
+    def addEntry(self, entryPoint):
+        self._assertPoint(entryPoint)
+        self.entryPoint = np.asarray(entryPoint)
+        
+        self._pointBeenSetNum |= 1
+        self._checkAddTrajectory()
+        
+    def addTarget(self, targetPoint):
+        self._assertPoint(targetPoint)
+        self.targetPoint = np.asarray(targetPoint)
+        
+        self._pointBeenSetNum |= 2
+        self._checkAddTrajectory()
+        
+    def count(self):
+        return len(self._listTrajectory)
+    
+    def getCurrentTrajectory(self):
+        return self[self.currentIndex]
+        
+    
+    def getEntry(self, index:int = None):
+        if index is None:
+            if self.currentIndex == -1:
+                return self.entryPoint
+            else:
+                return self._listTrajectory[self.currentIndex][0]
+        else:
+            return self[index][0]
+    
+    def getTarget(self, index:int = None):
+        if index is None:
+            if self.currentIndex == -1:
+                return self.targetPoint
+            else:
+                return self._listTrajectory[self.currentIndex][1]
+        else:
+            return self[index][1]
+        
+    def goBackward(self):
+        """
+        return False if is begin of _listTrajectory
+
+        Returns:
+            bool: Is begin of list
+        """
+        self.currentIndex -= 1
+        if self.currentIndex <= 0:
+            self.currentIndex = 0
+            return self[self.currentIndex], False
+        return self[self.currentIndex], True
+    
+    def goForward(self):
+        """
+        return False if is end of _listTrajectory
+
+        Returns:
+            bool: Is end of list
+        """
+        self.currentIndex += 1
+        count = self.count() - 1
+        if self.currentIndex >= count:
+            self.currentIndex = count
+            return self[self.currentIndex], False
+        return self[self.currentIndex], True
+    
+    def setCurrentIndex(self, index:int):
+        self.currentIndex = min(len(self._listTrajectory) - 1, max(0, index))
+        for i, obj in enumerate(self._listVTKObj):
+            if i == self.currentIndex:
+                obj.setCurrent()
+            else:
+                obj.setCurrent(False)
+    
+    def setEntry(self, entryPoint:np.ndarray, index:int = None):
+        self._assertPoint(entryPoint)
+        if index is None:
+            if self.currentIndex == -1:
+                self.addEntry(entryPoint)
+            else:
+                self.entryPoint = np.asarray(entryPoint)
+                self._listTrajectory[self.currentIndex][0] = self.entryPoint
+                self._listVTKObj[self.currentIndex].setPosition(entryPoint = entryPoint)
+        elif index < len(self._listTrajectory):
+            self.currentIndex = index
+            self.entryPoint = np.asarray(entryPoint)
+            self._listTrajectory[index][0] = self.entryPoint
+            self._listVTKObj[index].setPosition(entryPoint = entryPoint)
+        else:
+            self.addEntry(entryPoint)
+        
+    def setTarget(self, targetPoint:np.ndarray, index:int = None):
+        self._assertPoint(targetPoint)
+        if index is None:
+            if self.currentIndex == -1:
+                self.addTarget(targetPoint)
+            else:
+                self.targetPoint = np.asarray(targetPoint)
+                self._listTrajectory[self.currentIndex][1] = self.targetPoint
+                self._listVTKObj[self.currentIndex].setPosition(targetPoint = targetPoint)
+        elif index < len(self._listTrajectory):
+            self.targetPoint = np.asarray(targetPoint)
+            self.currentIndex = index
+            self._listTrajectory[index][1] = self.targetPoint
+            self._listVTKObj[index].setPosition(targetPoint = targetPoint)
+        else:
+            self.addTarget(targetPoint)
+            
+    def setRenderer(self, index:int, *rendererObjs:RendererObj):
+        if index in range(0, len(self._listVTKObj)):
+            for renderer in rendererObjs:
+                if isinstance(renderer, RendererObj):
+                    self._listVTKObj[index].setRenderer(renderer)
+        
+            
+    def setVisibility(self, index:int, bVisible:bool):
+        if index in range(0, len(self._listVTKObj)):
+            self._listVTKObj[index].setVisibility(bVisible)
+        self._preVisible = bVisible
+        
+    def toArray(self, index:int = None):
+        if index is None or len(self._listTrajectory) == 0:
+            return np.asarray(self._listTrajectory)
+        else:
+            return np.asarray(self[index])
 
 class DISPLAY(QObject):
     
@@ -4760,6 +5155,8 @@ class DISPLAY(QObject):
         super().__init__()
         self.targetPoint = np.zeros(3)
         self.entryPoint = np.zeros(3)
+        self.currentTrajectory = 0
+        self.trajectory = Trajectory()
         self.imageOrigin = None
         
         self.irenList = {}
@@ -4778,6 +5175,9 @@ class DISPLAY(QObject):
         self.pcoord[:] = np.zeros(3)
         self.irenList = {}
         self.rendererList = {}
+        
+    def CountOfTrajectory(self):
+        return self.trajectory.count()
             
     def LoadImage(self, image):
         """load image
@@ -4905,6 +5305,9 @@ class DISPLAY(QObject):
             for key, renderer in self.rendererList.items():
                 if key != '3D' and key != 'Cross-Section':
                     renderer.SetCameraToTarget(pos)
+                    
+    def SetCurrentTrajectory(self, index:int):
+        self.trajectory.setCurrentIndex(index)
     
     # Get normal slice position from cross-section slice position
     def GetPositionFromCrossSection(self, posCS):
@@ -4964,6 +5367,11 @@ class DISPLAY(QObject):
         
         return posCS
     
+    def GetTrajectoryColor(self, index:int):
+        nLimit = self.trajectory.nLimitTrajectory
+        index = min(nLimit - 1, max(-nLimit, index))
+        return self.trajectory.colors[index]
+    
         
     def SetMapColor(self):
         """init window level and window width
@@ -5001,6 +5409,9 @@ class DISPLAY(QObject):
         self.rendererCrossSection.SetCamera(VIEW_CROSS_SECTION)
         ############################################################################################
         return
+    
+    def SetTrajectoryVisibility(self, index:int, bVisible:bool):
+        self.trajectory.setVisibility(index, bVisible)
         
     def CreateActorAndRender(self, value):
         """create actor and render for VTK
@@ -5351,7 +5762,7 @@ class DISPLAY(QObject):
         ############################################################################################
         return
        
-    def CreateLine(self, startPoint, endPoint):
+    def CreateLine(self, index:int):
         """create line between enter point and target point
 
         Args:
@@ -5359,60 +5770,68 @@ class DISPLAY(QObject):
             endPoint (_numpy.array_): target point
         """
         ## 建立線 ############################################################################################
-        colors = vtkNamedColors()
+        # colors = vtkNamedColors()
 
-        "Create a line"
-        lineSource = vtkLineSource()
-        lineSource.SetPoint1(startPoint)
-        lineSource.SetPoint2(endPoint)
+        # "Create a line"
+        # lineSource = vtkLineSource()
+        # lineSource.SetPoint1(startPoint)
+        # lineSource.SetPoint2(endPoint)
         
 
-        lineMapper2D = vtkPolyDataMapper2D()
-        lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
+        # lineMapper2D = vtkPolyDataMapper2D()
+        # lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
         
-        c = vtkCoordinate()
-        c.SetCoordinateSystemToWorld()
-        lineMapper2D.SetTransformCoordinate(c)
+        # c = vtkCoordinate()
+        # c.SetCoordinateSystemToWorld()
+        # lineMapper2D.SetTransformCoordinate(c)
         
-        self.actorLine.SetMapper(lineMapper2D)
-        self.actorLine.GetProperty().SetColor(colors.GetColor3d('Yellow'))
-        
-        self.rendererCrossSection.SetCrossSectionView(endPoint, startPoint)
+        # self.actorLine.SetMapper(lineMapper2D)
+        # self.actorLine.GetProperty().SetColor(colors.GetColor3d('Yellow'))
              
-        # lineMapper = vtkPolyDataMapper()
-        # lineMapper.SetInputConnection(lineSource.GetOutputPort())
+        # # lineMapper = vtkPolyDataMapper()
+        # # lineMapper.SetInputConnection(lineSource.GetOutputPort())
 
         
-        # self.actorLine.SetMapper(lineMapper)
-        # self.actorLine.GetProperty().SetColor(colors.GetColor3d('Red'))
-        # self.actorLine.SetForceTranslucent(True)
+        # # self.actorLine.SetMapper(lineMapper)
+        # # self.actorLine.GetProperty().SetColor(colors.GetColor3d('Red'))
+        # # self.actorLine.SetForceTranslucent(True)
 
-        "Create tube filter"
-        tubeFilter = vtkTubeFilter()
-        tubeFilter.SetInputConnection(lineSource.GetOutputPort())
-        tubeFilter.SetRadius(3)
-        tubeFilter.SetNumberOfSides(50)
-        tubeFilter.Update()
+        # "Create tube filter"
+        # tubeFilter = vtkTubeFilter()
+        # tubeFilter.SetInputConnection(lineSource.GetOutputPort())
+        # tubeFilter.SetRadius(3)
+        # tubeFilter.SetNumberOfSides(50)
+        # tubeFilter.Update()
 
-        tubeMapper = vtkPolyDataMapper()
-        tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
+        # tubeMapper = vtkPolyDataMapper()
+        # tubeMapper.SetInputConnection(tubeFilter.GetOutputPort())
 
-        self.actorTube.SetMapper(tubeMapper)
-        "Make the tube have some transparency"
-        self.actorTube.GetProperty().SetOpacity(0.5)
-        self.actorTube.PickableOff()
+        # self.actorTube.SetMapper(tubeMapper)
+        # "Make the tube have some transparency"
+        # self.actorTube.GetProperty().SetOpacity(0.5)
+        # self.actorTube.PickableOff()
         
-        self.rendererSagittal.AddActor(self.actorLine)
-        self.rendererAxial.AddActor(self.actorLine)
-        self.rendererCoronal.AddActor(self.actorLine)
-        self.renderer3D.AddActor(self.actorLine)
+        startPoint, endPoint = self.trajectory[index]
+        self.rendererCrossSection.SetCrossSectionView(endPoint, startPoint)
         
-        self.rendererSagittal.AddActor(self.actorTube)
-        self.rendererAxial.AddActor(self.actorTube)
-        self.rendererCoronal.AddActor(self.actorTube)
-        self.renderer3D.AddActor(self.actorTube)
+        self.trajectory.setRenderer(
+            index,
+            self.rendererSagittal,
+            self.rendererAxial,
+            self.rendererCoronal,
+            self.renderer3D
+        )
+        
+        # self.rendererSagittal.AddActor(self.actorLine)
+        # self.rendererAxial.AddActor(self.actorLine)
+        # self.rendererCoronal.AddActor(self.actorLine)
+        # self.renderer3D.AddActor(self.actorLine)
+        
+        # self.rendererSagittal.AddActor(self.actorTube)
+        # self.rendererAxial.AddActor(self.actorTube)
+        # self.rendererCoronal.AddActor(self.actorTube)
+        # self.renderer3D.AddActor(self.actorTube)
         ############################################################################################
-        return
 
      
     def CreatePath(self, planningPointCenter):

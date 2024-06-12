@@ -16,6 +16,7 @@ from vtkmodules.vtkRenderingCore import vtkCellPicker
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # from vtkmodules.all import vtkCallbackCommand
 from FunctionLib_Robot.logger import logger
+from FunctionLib_Robot.__init__ import *
 
 class ViewPortUnit(QObject):
     
@@ -383,10 +384,29 @@ class TreeViewDelegate(QStyledItemDelegate):
                     color = QColor(100, 0, 0)
                 elif selData == 2:
                     color = QColor(0, 100, 0)
-                    
+                
+                painter.save()
                 painter.fillRect(option.rect, color)
+                painter.restore()
+                
                 option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
+        
         super().paint(painter, option, index)
+class TrajectoryViewDelegate(QStyledItemDelegate):
+    def __init__(self):
+        
+        super().__init__()
+        
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        super().paint(painter, option, index)
+        
+        strColor = index.data(ROLE_COLOR)
+        
+        if strColor is not None:
+            color = QColor(strColor)
+            
+            painter.fillRect(option.rect, color)
+            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         
 # class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
 #     def __init__(self, nParts = 1):

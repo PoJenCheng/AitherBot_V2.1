@@ -1,4 +1,5 @@
 import numpy as np
+from PyQt5.QtCore import Qt
 
 LinearMotorCountPerLoop = 360  # 8192 count per loop in encoder
 LinearGearRatio = 1  # screw pitch is 1
@@ -95,3 +96,12 @@ HINT_UP_RIGHT   = 0
 HINT_UP_LEFT    = 1
 HINT_DOWN_RIGHT = 2
 HINT_DOWN_LEFT  = 3
+
+# trajectory item data
+ROLE_VISIBLE = Qt.UserRole + 1
+ROLE_COLOR = Qt.UserRole + 2
+
+
+IMG_VISIBLE = 'image/eye2.png'
+IMG_HIDDEN = 'image/eye-off2.png'
+IMG_PARTIAL = 'image/eye-close-line2.png'

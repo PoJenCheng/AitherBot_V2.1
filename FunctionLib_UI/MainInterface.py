@@ -42,7 +42,7 @@ import FunctionLib_UI.Ui_dlgInstallAdaptor
 import FunctionLib_UI.Ui_DlgRobotMoving
 from FunctionLib_Vision.lungSegmentation import LungSegmentation
 from FunctionLib_Robot.logger import logger
-
+from numpy._typing import _ArrayLike
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
 STAGE_DICOM = 'ST_DICOM'
@@ -248,6 +248,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         layout.addWidget(self.wdgAnimatePositionRobot)
         self.lstAnimateWidget.append(self.wdgAnimatePositionRobot)
         
+        self.prevSelection_trajectory = None
+        
         self.stepDicom = 1
         
         #Laser =================================================
@@ -270,6 +272,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgFootPedal = None
         self.dlgResumeSupportArm = None
         self.dlgRobotDrive = None
+        
+        # trajectory tree view header item
+        self.countOfVisibleItem = 0
+        headerItem = QTreeWidgetItem(['', '', ''])
+        headerItem.setIcon(0, QIcon(IMG_VISIBLE))
+        headerItem.setData(0, ROLE_VISIBLE, 2)
+        headerItem.setText(1, 'Trajectory Name')
+        headerItem.setText(2, 'color')
+        
+        self.treeTrajectory.setHeaderItem(headerItem)
         
         # 暫時隱藏之後考慮刪除的button
         self.btnRobotFix.setHidden(True)
@@ -440,6 +452,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.wdgAnimate.signalIdle.connect(self.Robot_GetPedal)
         for wdg in self.lstAnimateWidget:
             wdg.signalIdle.connect(self.Robot_GetPedal)
+        
+        self.treeTrajectory.setIconSize(QSize(32, 32))
+        self.treeTrajectory.itemClicked.connect(self.OnItemClicked)
+        self.treeTrajectory.itemSelectionChanged.connect(self.OnItemSelectionChanged_treeTrajectory)
+        header:QHeaderView = self.treeTrajectory.header()
+        header.setIconSize(QSize(32, 32))
+        header.setSectionsClickable(True)
+        header.sectionClicked.connect(self.OnHeaderClicked_trajectory)
+        self.treeTrajectory.setColumnWidth(0, 48)
+        self.treeTrajectory.setColumnWidth(2, 32)
+        self.treeTrajectory.setItemDelegate(TrajectoryViewDelegate())
+        # self.treeTrajectory.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        
+        self.btnAddTrajectory.clicked.connect(self.OnClicked_btnAddTrajectory)
     
     def eventFilter(self, obj, event):
         if obj == self.treeDicom:
@@ -549,6 +575,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if checkCount > 0:
             return Qt.Checked
         return Qt.Unchecked
+    
+    def _CheckTrajectoryVisibleItem(self):
+        totalCount = self.treeTrajectory.topLevelItemCount()
+        visibleCount = 0
+        for i in range(totalCount):
+            item:QTreeWidgetItem = self.treeTrajectory.topLevelItem(i)
+            if item.data(0, ROLE_VISIBLE):
+                visibleCount += 1
+                
+        headItem:QTreeWidgetItem = self.treeTrajectory.headerItem()
+        
+        visibleStatus = 0
+        icon = IMG_HIDDEN
+        if (totalCount == visibleCount):
+            visibleStatus = 2
+            icon = IMG_VISIBLE
+        elif visibleCount > 0:
+            visibleStatus = 1
+            icon = IMG_PARTIAL
+            
+        headItem.setData(0, ROLE_VISIBLE, visibleStatus)
+        headItem.setIcon(0, QIcon(icon))
         
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
@@ -614,6 +662,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgImageView)
             # self.stkScene.setCurrentWidget(self.pgDriveRobotGuide)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
@@ -648,8 +697,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _ModifyTrajectory(self, dicom, entry, target):
-        dicom.CreateLine(entry, target)
+    def _GetCurrentTrajectory(self):
+        idx = 0
+        try:
+            item = self.treeTrajectory.currentItem()
+            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+        except Exception as msg:
+            logger.critical(msg)
+        return idx
+    
+    def _ModifyTrajectory(
+        self, 
+        index:int, 
+        dicom:DISPLAY
+    ):
+        dicom.CreateLine(index)
+        entry, target = dicom.trajectory[index]
         
         length = np.linalg.norm(np.array(entry) - np.array(target))
         self.sldTrajectory.setMinimum(0)
@@ -660,10 +723,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.currentTag['trajectoryLength'] = int(length)
         # if dicom == self.dicomLow:
+        
         for view in self.viewport_L.values():
             if view.orientation == VIEW_CROSS_SECTION:
-                view.uiScrollSlice.setMaximum(length)
+                view.uiScrollSlice.setMaximum(int(length))
                 view.uiScrollSlice.setValue(0)
+        
         # else:
         #     for view in self.viewport_H.values():
         #         length = np.linalg.norm(np.array(entry) - np.array(target))
@@ -854,6 +919,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 image = io.imread(pathImageIn)
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
                 cv2.imencode('.png', image)[1].tofile(pathImageOut)
+                
+    def _SetTrajectoryVisible(self, index:int, bVisible:bool):
+        display = self.currentTag.get('display')
+        if display is not None and isinstance(display, DISPLAY):
+            display.SetTrajectoryVisibility(index, bVisible)
+            self.UpdateView()
         
     def _TreeDicomViewFilter(self, item:QStandardItem):
         if not item:
@@ -1410,6 +1481,35 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         # return None
         
+    def OnClicked_btnAddTrajectory(self):
+        display = self.currentTag.get('display')
+        countOfTrajectory = display.CountOfTrajectory()
+        
+        itemName = f'T {countOfTrajectory + 1}'
+        itemCount = self.treeTrajectory.topLevelItemCount()
+        
+        # 檢查treeWidget的item項目數量，和路徑是否一致，一致的時候才允許增加路徑
+        if countOfTrajectory == itemCount:
+            item = QTreeWidgetItem(self.treeTrajectory)
+            item.setIcon(0, QIcon(IMG_VISIBLE))
+            item.setText(1, itemName)
+            item.setText(2, '')
+            # item.setData(0, Qt.UserRole + 1, countOfTrajectory + 1)
+            item.setData(0, ROLE_VISIBLE, True)
+            self._CheckTrajectoryVisibleItem()
+            
+            index = countOfTrajectory
+            item.setData(2, ROLE_COLOR, display.GetTrajectoryColor(index))
+            
+            self.treeTrajectory.blockSignals(True)
+            self.treeTrajectory.setCurrentItem(item)
+            self.prevSelection_trajectory = item
+            self.treeTrajectory.blockSignals(False)
+        
+        self.btnSetEntry.setEnabled(True)
+        self.btnSetTarget.setEnabled(True)
+        
+        
     def OnClicked_btnPlanning(self):
         logger.debug('planning')
         
@@ -1456,18 +1556,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         currentDicom = self.currentTag.get('display')
         if pickPoint is not None and currentDicom is not None:
             currentDicom.DrawPoint(pickPoint, 1)      
-            currentDicom.entryPoint = pickPoint
-            self.currentTag["entry"] = np.array(pickPoint)
-            
-            if self.currentTag.get("target") is not None:
-                self.currentTag.update({"flageSelectedPoint": True})
+            # currentDicom.entryPoint = pickPoint
+            idx = self._GetCurrentTrajectory()
+            if idx > -1:
+                currentDicom.trajectory.setEntry(pickPoint, idx)
+                self.currentTag["entry"] = np.array(pickPoint)
                 
-                point2 = self.currentTag.get("target")
-                # currentDicom.CreateLine(pickPoint, point2)
-                self._ModifyTrajectory(currentDicom, pickPoint, point2)
-                self.SetUIEnable_Trajectory(True)
-                self._AddCrossSectionItemInSelector()
-            self.UpdateView()
+                # if self.currentTag.get("target") is not None:
+                if currentDicom.CountOfTrajectory() > idx:
+                    self.currentTag.update({"flageSelectedPoint": True})
+                    
+                    # point2 = self.currentTag.get("target")
+                    # currentDicom.CreateLine(pickPoint, point2)
+                    self._ModifyTrajectory(idx, currentDicom)
+                    self.SetUIEnable_Trajectory(True)
+                    self._AddCrossSectionItemInSelector()
+                self.UpdateView()
             
     
     def OnClicked_btnSetTarget(self):
@@ -1479,25 +1583,30 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         currentDicom = self.currentTag.get('display')
         if pickPoint is not None and currentDicom is not None:
             currentDicom.DrawPoint(pickPoint, 2)
-            currentDicom.targetPoint = pickPoint
-            self.currentTag["target"] = np.array(pickPoint)
-            
-            if self.currentTag.get("entry") is not None:
-                self.currentTag.update({"flageSelectedPoint": True})
+            # currentDicom.targetPoint = pickPoint
+            idx = self._GetCurrentTrajectory()
+            if idx > -1:
+                currentDicom.trajectory.setTarget(pickPoint, idx)
+                self.currentTag["target"] = np.array(pickPoint)
                 
-                point1 = self.currentTag.get("entry")
-                # self.dicomLow.CreateLine(point1, pickPoint)
-                self._ModifyTrajectory(currentDicom, point1, pickPoint)
-                self.SetUIEnable_Trajectory(True)
-                self._AddCrossSectionItemInSelector()
-            self.UpdateView()
+                # if self.currentTag.get("entry") is not None:
+                if currentDicom.trajectory.count() > idx:
+                    self.currentTag.update({"flageSelectedPoint": True})
+                    
+                    # point1 = self.currentTag.get("entry")
+                    # self.dicomLow.CreateLine(point1, pickPoint)
+                    self._ModifyTrajectory(idx, currentDicom)
+                    self.SetUIEnable_Trajectory(True)
+                    self._AddCrossSectionItemInSelector()
+                self.UpdateView()
             
     def OnClicked_btnToEntry(self):
         currentDicom = self.currentTag.get('display')
         if not currentDicom:
             return
         
-        entryPoint = currentDicom.entryPoint
+        # entryPoint = currentDicom.entryPoint
+        entryPoint = currentDicom.trajectory.getEntry()
         if entryPoint is not None:
             bHasCrossSection = False
             self.sldTrajectory.setValue(self.sldTrajectory.maximum())
@@ -1520,7 +1629,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        targetPoint = currentDicom.targetPoint
+        # targetPoint = currentDicom.targetPoint
+        targetPoint = currentDicom.trajectory.getTarget()
         if targetPoint is not None:
             bHasCrossSection = False
             self.sldTrajectory.setValue(0)
@@ -1606,6 +1716,63 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.bSterile = True
         elif nStep is None:
             self.stkScene.setCurrentWidget(self.pgPlaceHolder)
+            
+    def OnItemClicked(self, item:QTreeWidgetItem, column):
+        if column == 0:
+            bVisible = not item.data(0, ROLE_VISIBLE)
+            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            if not bVisible:
+                item.setIcon(0, QIcon(IMG_HIDDEN))
+            else:
+                item.setIcon(0, QIcon(IMG_VISIBLE))
+            
+            item.setData(0, ROLE_VISIBLE, bVisible)
+            
+            self._CheckTrajectoryVisibleItem()
+            self._SetTrajectoryVisible(idx, bVisible)
+            
+    def OnItemSelectionChanged_treeTrajectory(self):
+        column = self.treeTrajectory.currentColumn()
+        item = self.treeTrajectory.currentItem()
+        if column > 0:
+            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            display = self.currentTag.get('display')
+            if display is not None and isinstance(display, DISPLAY) and idx < display.CountOfTrajectory():
+                self.sldTrajectory.blockSignals(True)
+                self._ModifyTrajectory(idx, display)
+                self.sldTrajectory.blockSignals(False)
+                display.SetCurrentTrajectory(idx)
+                # _, target = display.trajectory[idx]
+                # self.UpdateTarget(pos = target)
+                # self.UpdateView()
+            self.prevSelection_trajectory = item
+            self.UpdateView()
+        else:
+            if self.prevSelection_trajectory is not None:
+                self.treeTrajectory.blockSignals(True)
+                self.treeTrajectory.setCurrentItem(self.prevSelection_trajectory)
+                self.treeTrajectory.blockSignals(False)
+                
+    def OnHeaderClicked_trajectory(self, index:int):
+        if index == 0:
+            headItem:QTreeWidgetItem = self.treeTrajectory.headerItem()
+            visibleStatus = headItem.data(0, ROLE_VISIBLE)
+            # 0: all hidden 1:partial hidden 2:all visible
+            bVisible = True
+            icon = IMG_VISIBLE
+            headerVisible = 2
+            if visibleStatus == 2:
+                bVisible = False
+                icon = IMG_HIDDEN
+                headerVisible = 0
+                
+            headItem.setData(0, ROLE_VISIBLE, headerVisible)
+            headItem.setIcon(0, QIcon(icon))
+            for i in range(self.treeTrajectory.topLevelItemCount()):
+                item = self.treeTrajectory.topLevelItem(i)
+                item.setIcon(0, QIcon(icon))
+                item.setData(0, ROLE_VISIBLE, bVisible)
+                self._SetTrajectoryVisible(i, bVisible)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.001
@@ -1615,8 +1782,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnValueChanged_sldTrajectory(self, value):
         # print(f'value = {value}')
         # sldValue = self.sldTrajectory.maximum() - value
-        entry  = self.currentTag.get('entry')
-        target = self.currentTag.get('target')
+        idx = self._GetCurrentTrajectory()
+        display = self.currentTag.get('display')
+        # entry  = self.currentTag.get('entry')
+        # target = self.currentTag.get('target')
+        entry, target  = display.trajectory[idx]
         vector = entry - target
         
         vectorUnit = vector / np.linalg.norm(vector)
