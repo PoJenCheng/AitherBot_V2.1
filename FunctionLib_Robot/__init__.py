@@ -82,7 +82,7 @@ DEVICE_ROBOT = 1
 DEVICE_LASER = 2
 DEVICE_ALL = 3
 
-DEVICE_ENABLED = DEVICE_NONE
+DEVICE_ENABLED = DEVICE_ALL
 
 # foot pedal action
 NUM_OF_ACTION = 4
@@ -105,3 +105,5 @@ ROLE_COLOR = Qt.UserRole + 2
 IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
+
+SKIP_REGISTRATION = False

@@ -1,49 +1,42 @@
-from multiprocessing.sharedctypes import Value
-import pydicom
-import matplotlib.pyplot as plt
-import numpy as np
+import copy
+import itertools
+import math
 import os
+import shutil
+import sys
+from datetime import datetime, timedelta
+from multiprocessing.sharedctypes import Value
+
 # from keras.models import load_model
 import cv2
-import math
-import itertools
-from PyQt5.QtGui import *
-from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import *
-from ._subFunction import *
-import copy
-import sys
-import shutil
-from datetime import datetime, timedelta
-
+import matplotlib.pyplot as plt
+import numpy as np
+import pydicom
 import vtkmodules.all as vtk
-from vtkmodules.vtkImagingCore import vtkImageReslice
-# import vtk.numpy_interface.dataset_adapter as dsa
-
+from numpy._typing import _ArrayLike
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkFiltersCore import vtkTubeFilter
+from vtkmodules.vtkFiltersSources import vtkLineSource, vtkSphereSource
+from vtkmodules.vtkImagingCore import vtkImageMapToColors, vtkImageReslice
 # from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
-from vtkmodules.vtkImagingCore import vtkImageMapToColors
-from vtkmodules.vtkFiltersSources import vtkSphereSource
-from vtkmodules.vtkFiltersCore import vtkTubeFilter
-from vtkmodules.vtkFiltersSources import vtkLineSource
-from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkRenderingCore import (
-    vtkCamera,
-    vtkImageActor,
-    vtkActor,
-    vtkActor2D,
-    vtkAssembly,
-    vtkPolyDataMapper,
-    vtkPolyDataMapper2D,
-    vtkRenderer,
-    vtkWindowLevelLookupTable,
-    vtkCoordinate,
-    vtkVolume,
-    vtkVolumeProperty
-)
+from vtkmodules.vtkRenderingCore import (vtkActor, vtkActor2D, vtkAssembly,
+                                         vtkCamera, vtkCoordinate,
+                                         vtkImageActor, vtkPolyDataMapper,
+                                         vtkPolyDataMapper2D, vtkRenderer,
+                                         vtkVolume, vtkVolumeProperty,
+                                         vtkWindowLevelLookupTable)
+
 from FunctionLib_Robot.logger import logger
-from numpy._typing import _ArrayLike
+
+from ._subFunction import *
+
+# import vtk.numpy_interface.dataset_adapter as dsa
+
 
 VIEW_AXIAL          = 'Axial'
 VIEW_CORONAL        = 'Coronal'
@@ -273,20 +266,20 @@ class DICOM(QObject):
                     
                     if hasattr(slice, 'InstanceNumber'):
                         slices.sort(key = lambda x:x.InstanceNumber)
-                    #     # 讀取DTI 試作
-                    #     # DGO = self.FindTag(slices[0], (0x18,0x9089))
-                    #     # if DGO:
-                    #     #     newList = []
-                    #     #     for img in slices:
-                    #     #         elem = self.FindTag(img, (0x18,0x9089))
-                    #     #         if elem and elem == DGO:
-                    #     #             BValue = self.FindTag(img, (0x18, 0x9087))
-                    #     #             if BValue:
-                    #     #                 print(f'B Value = {BValue}')
-                    #     #                 newList.append(img)
-                    #     #             print(f'Diffusion Gradient Orientation = {elem}')
+                        # 讀取DTI 試作
+                        # DGO = self.FindTag(slices[0], (0x18,0x9089))
+                        # if DGO:
+                        #     newList = []
+                        #     for img in slices:
+                        #         elem = self.FindTag(img, (0x18,0x9089))
+                        #         if elem and elem == DGO:
+                        #             BValue = self.FindTag(img, (0x18, 0x9087))
+                        #             if BValue:
+                        #                 print(f'B Value = {BValue}')
+                        #                 newList.append(img)
+                        #             print(f'Diffusion Gradient Orientation = {elem}')
                             
-                    #     #     series['data'] = newList
+                        #     series['data'] = newList
                                 
                             
                             
@@ -366,6 +359,24 @@ class DICOM(QObject):
                                 series['acquisitionDate'] = dateObj.strftime('%Y-%m-%d')
                             else:
                                 series['acquisitionDate'] = 'NONE'
+                                
+                    # 讀取DimX
+                    dimension = np.array([], int)
+                    # 讀取multiframe data
+                    frames = self.FindTag(slice, (0x28, 0x8))            
+                    if frames and frames > 1:
+                        logger.info(f'is a multi-frame dicom, {frames} frame in the series')
+                        dimension = np.append(dimension, frames)
+                        
+                    dimY = self.FindTag(slice, (0x28, 0x10))            
+                    if dimY:
+                        dimension = np.append(dimension, dimY)
+                        
+                    dimX = self.FindTag(slice, (0x28, 0x11))            
+                    if dimX:
+                        dimension = np.append(dimension, dimX)
+                        
+                    series['dimension'] = dimension
         
                                 
         self.signalProcess.emit(1.0, '')
@@ -3331,6 +3342,9 @@ class RendererObj(vtkRenderer):
     # target為全實例共享，故設置為類屬性
     target = [0, 0, 0]
     
+    # 之後透過類變數統一管理全部view的target是否顯示
+    bShowTarget = False
+    
     def __init__(self):
         super(RendererObj, self).__init__()
         
@@ -3802,29 +3816,30 @@ class RendererObj(vtkRenderer):
                 self.InitTarget(pos)
                 return
             
-            lines = self.targetObj.SetPosition(pos)
+            if TargetObj.bVisible:
+                lines = self.targetObj.SetPosition(pos)
             
-            for actor in self.actorTargetScale:
-                self.RemoveActor(actor)
-                        
-            self.actorTargetScale = []
-            
-            for i in range(len(self.actorTarget)):
-                p1, p2 = self.targetObj.GetLinePointsByIndex(i)
-                if p1 is not None and p2 is not None:
-                    r1 = self.drawRuler(pos, p1)
-                    r2 = self.drawRuler(pos, p2)
-                    
-                    if r1:
-                        self.actorTargetScale.extend(r1)
-                        
-                    if r2:
-                        self.actorTargetScale.extend(r2)
+                for actor in self.actorTargetScale:
+                    self.RemoveActor(actor)
+                            
+                self.actorTargetScale = []
                 
-            for i in range(len(lines)):
-                mapper = self.actorTarget[i].GetMapper()
-                if mapper is not None:
-                    mapper.SetInputConnection(lines[i].GetOutputPort())
+                for i in range(len(self.actorTarget)):
+                    p1, p2 = self.targetObj.GetLinePointsByIndex(i) 
+                    if p1 is not None and p2 is not None:
+                        r1 = self.drawRuler(pos, p1)
+                        r2 = self.drawRuler(pos, p2)
+                        
+                        if r1:
+                            self.actorTargetScale.extend(r1)
+                            
+                        if r2:
+                            self.actorTargetScale.extend(r2)
+                    
+                for i in range(len(lines)):
+                    mapper = self.actorTarget[i].GetMapper()
+                    if mapper is not None:
+                        mapper.SetInputConnection(lines[i].GetOutputPort())
             
         else:
             self.actorTargetCenter = self.targetObj.SetInViewportCenter()
@@ -3843,17 +3858,18 @@ class RendererObj(vtkRenderer):
                 self.SetViewPoint(point)
                 self.ViewToWorld()
                 point[:] = np.array(self.GetWorldPoint())[:3]
-        
-            for actor in self.actorTargetScale:
-                self.RemoveActor(actor)
-                        
-            self.actorTargetScale = []
-            
-            pList = list(pointsMap.values())
-            for p in pList:
-                ruler = self.drawRuler(pos, p)
-                if ruler:
-                    self.actorTargetScale.extend(ruler)
+
+            if TargetObj.bVisible:
+                for actor in self.actorTargetScale:
+                    self.RemoveActor(actor)
+                            
+                self.actorTargetScale = []
+                
+                pList = list(pointsMap.values())
+                for p in pList:
+                    ruler = self.drawRuler(pos, p)
+                    if ruler:
+                        self.actorTargetScale.extend(ruler)
     
     
     def SetMapColor(self, windowLevelLookup):
@@ -4511,6 +4527,8 @@ class RendererCrossSectionObj(RendererObj):
         self.SetFocusMode(self.bFocusMode)
                 
 class TargetObj():
+    bVisible = True
+    
     def __init__(self, renderer:RendererObj):
         self.renderer = renderer
         
@@ -4602,13 +4620,15 @@ class TargetObj():
         
         for actor in actorTarget:
             self.renderer.AddActor(actor) 
+            actor.SetVisibility(TargetObj.bVisible)
             
         self.position = pos.copy()
         return actorTarget
     
     def SetHide(self, bHide = True):
         self.bHide = bHide
-        
+        for obj in self.actorLineCenter:
+            obj.SetVisibility(not bHide)
     
     def SetInViewportCenter(self):
         
@@ -4646,8 +4666,10 @@ class TargetObj():
             
             self.renderer.AddActor(self.actorLineCenter[0])
             self.renderer.AddActor(self.actorLineCenter[1])
-            self.actorLineCenter[0].VisibilityOn()
-            self.actorLineCenter[1].VisibilityOn()
+            # self.actorLineCenter[0].VisibilityOn()
+            # self.actorLineCenter[1].VisibilityOn()
+            self.actorLineCenter[0].SetVisibility(TargetObj.bVisible)
+            self.actorLineCenter[1].SetVisibility(TargetObj.bVisible)
             
         
 

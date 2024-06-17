@@ -1,48 +1,51 @@
 
-from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from time import sleep
-from datetime import datetime, timedelta
-import sys
-import subprocess
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-import numpy as np
 import math
-import cv2
+import os
+import subprocess
+import sys
 import threading
 import time
-import os
-import FunctionLib_UI.Ui_DlgFootPedal
-import FunctionLib_UI.Ui_DlgHintBox
-from FunctionLib_UI.Ui__Aitherbot import *
-import FunctionLib_UI.Ui_step
-from FunctionLib_UI.ViewPortUnit import *
-from FunctionLib_UI.WidgetButton import *
-from FunctionLib_UI.Ui_DlgHint import *
-from FunctionLib_UI.Ui_step import *
-from FunctionLib_UI.Ui_DlgFootPedal import *
-from FunctionLib_Robot.__init__ import *
-import FunctionLib_Robot._class as Robot
-import FunctionLib_UI.ui_processing
+from datetime import datetime, timedelta
+from functools import reduce
+from time import sleep
 
-# from skimage import io
-from cycler import cycler
+import cv2
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-mpl.use('QT5Agg')
-
+import numpy as np
+import torch
+# from skimage import io
+from cycler import cycler
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from functools import reduce
-import FunctionLib_UI.Ui_homing
+from numpy._typing import _ArrayLike
+from PyQt5.QtCore import *
+from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtGui import *
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QMediaPlaylist
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtWidgets import *
+
+import FunctionLib_Robot._class as Robot
+import FunctionLib_UI.Ui_DlgFootPedal
+import FunctionLib_UI.Ui_DlgHintBox
 import FunctionLib_UI.Ui_dlgInstallAdaptor
 import FunctionLib_UI.Ui_DlgRobotMoving
-from FunctionLib_Vision.lungSegmentation import LungSegmentation
+import FunctionLib_UI.Ui_homing
+import FunctionLib_UI.ui_processing
+import FunctionLib_UI.Ui_step
+from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
-from numpy._typing import _ArrayLike
+from FunctionLib_UI.Ui__Aitherbot import *
+from FunctionLib_UI.Ui_DlgFootPedal import *
+from FunctionLib_UI.Ui_DlgHint import *
+from FunctionLib_UI.Ui_step import *
+from FunctionLib_UI.ViewPortUnit import *
+from FunctionLib_UI.WidgetButton import *
+from FunctionLib_Vision.lungSegmentation import LungSegmentation
+
+mpl.use('QT5Agg')
+
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
 STAGE_DICOM = 'ST_DICOM'
@@ -309,7 +312,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             """)
         
         self.wdgPlanning.clicked.connect(self.OnClicked_btnPlanning)
-        self.wdgGuidance.clicked.connect(self.OnClicked_btnGuidance)
+        self.wdgGuidance.clicked.connect(self.NextSceneMain)
         self.stkScene.currentChanged.connect(self.SceneChanged)
         self.stkMain.currentChanged.connect(self.MainSceneChanged)
         self.signalLoadingReady.connect(self.OnSignal_LoadingReady)
@@ -661,9 +664,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgImageView)
-            # self.stkScene.setCurrentWidget(self.pgDriveRobotGuide)
+            self.stkScene.setCurrentWidget(self.pgRobotSupportArm)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -1077,8 +1080,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                     slice = dicSeries['data'][0]
                     
-                    dim = np.array(slice.pixel_array).shape
-                    if len(dim) == 2:
+                    # dim = np.array(slice.pixel_array).shape
+                    dim = dicSeries.get('dimension')
+                    if dim is None:
+                        logger.critical('dicom data missing dimension information')
+                        continue
+                    
+                    numOfSlices = len(dicSeries['data'])
+                    if len(dim) < 3 or (numOfSlices != dim[0] and numOfSlices > 1):
                         dim = np.append(len(dicSeries['data']), dim)
                         
                     # 如果slice張數小於SKIP_SLICES(5張)，則略過
@@ -1194,10 +1203,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.currentTag['spacing'] = spacing
         self.currentTag['series'] = listSeries
             
-        if not self.SetRegistration_L():
-            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-            MessageBox.ShowCritical('ERROR', 'Registration Failed')
-            return False
+        if not SKIP_REGISTRATION:
+            if not self.SetRegistration_L():
+                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                return False
         
             
         ############################################################################################
@@ -1235,15 +1245,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not dicomTag:
             # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
             MessageBox.ShowCritical('DICOM TAG ERROR', 'missing current tag [HIGH]')
+            logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         self.currentTag['spacing'] = spacing
         self.currentTag['series'] = listSeries
         
-        if not self.SetRegistration_H():
-            # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-            MessageBox.ShowCritical('ERROR', 'Registration Failed')
-            return False
+        if not SKIP_REGISTRATION:
+            if not self.SetRegistration_H():
+                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                return False
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
         self.ShowDicom_H()
@@ -1514,7 +1526,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         logger.debug('planning')
         
     def OnClicked_btnGuidance(self):
-        self.stkMain.setCurrentWidget(self.page_loading)
+        # self.stkMain.setCurrentWidget(self.page_loading)
+        pass
         
     def OnClicked_btnDriveTo(self):
         if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
@@ -1699,7 +1712,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.btnUnlockRobot_2.setEnabled(False)
             self.lblDescription.setText('')
             self.Robot_FixArm()
-            self.wdgPicture.setStyleSheet('image:url(image/robot_back_target.png);')
+            # self.wdgPicture.setStyleSheet('image:url(image/robot_back_target.png);')
+            
+            tmpWidget = QWidget()
+            tmpWidget.setMinimumSize(1280, 720)
+            tmpWidget.setMaximumSize(1280, 720)
+            
+            self.wdgPicture.setStyleSheet('')
+            layout = self.wdgPicture.layout()
+            if layout is None:
+                layout = QHBoxLayout(self.wdgPicture)
+                layout.setContentsMargins(0, 0, 0, 0)
+            # self.tmpWidget = tmpWidget
+            layout.addWidget(tmpWidget)
+            self._PlayVedio(tmpWidget, 'video/resume_robot.mp4')
+            
             self.btnUnlockRobot_2.setText('Unlock')
             self.wdgBottom.setHidden(True)
             # self.btnUnlockRobot_2.setEnabled(True)
@@ -1712,6 +1739,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         elif nStep == 4:
             # self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
+            self.StopVedio()
             self.stkScene.setCurrentWidget(self.pgPlaceHolder)
             self.bSterile = True
         elif nStep is None:
@@ -2153,9 +2181,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
-            msg = DlgHintBox()
-            msg.SetText('checkout the signal light is green for placing needle', self.stkSignalLight)
-            msg.show()
+            # msg = DlgHintBox()
+            # msg.SetText('checkout the signal light is green for placing needle', self.stkSignalLight)
+            # msg.show()
+            pass
         
     def OnSelection(self):
         tbsObj:QTextBrowser = self.sender()
@@ -2194,8 +2223,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
     ### End Navigation Bar ###
-        
-   
+    def NextSceneMain(self):
+        currentIndex = self.stkMain.currentIndex()
+        currentIndex = min(self.stkMain.count() - 1, currentIndex + 1)
+        self.stkMain.setCurrentIndex(currentIndex)
         
     def NextScene(self):
         button = self.sender()
@@ -2337,7 +2368,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgPositionRobot:
             self.wdgAnimatePositionRobot.Start()
         elif currentWidget == self.pgRobotSupportArm:
-            self._PlayVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+            # self._PlayVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
+            self._PlayVedio(self.wdgSetupRobot, 'video/robot_install.mp4')
         elif currentWidget == self.pgDriveRobotGuide:
             self.wdgStep.GotoStep(1)
             self.wdgBottom.setHidden(False)
@@ -2566,7 +2598,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         sleep(1)
         if hasattr(self, 'loadingRobot'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-                if self.stkMain.currentIndex() < 2:
+                if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
         
     def thread_LoadRobot(self):
@@ -2581,14 +2613,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalSetCheck.emit(self.wdgCheckRobot, True)
         sleep(1)
         if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-            if self.stkMain.currentIndex() < 2:
+            if self.stkMain.currentWidget() != self.pgScene:
                 self.signalLoadingReady.emit()
                 
     
         
     def OnSignal_LoadingReady(self):
-        index = self.stkMain.currentIndex()
-        self.stkMain.setCurrentIndex(index + 1)
+        # index = self.stkMain.currentIndex()
+        # self.stkMain.setCurrentIndex(index + 1)
+        self.stkMain.setCurrentWidget(self.pgScene)
         if self.stkScene.currentWidget() == self.pgUnlockRobot:
             self.wdgAnimateUnlock.Start()
         
@@ -2773,7 +2806,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if hasattr(self, 'loadingLaser'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-                if self.stkMain.currentIndex() < 2:
+                if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
                 
     def Demo_OnLaserLoading(self, progress:int):
@@ -2783,9 +2816,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         sleep(1)
         if hasattr(self, 'loadingRobot'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-                if self.stkMain.currentIndex() < 2:
+                if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
-                    self.stkMain.setCurrentWidget(self.pgScene)
+                    # self.stkMain.setCurrentWidget(self.pgScene)
                     
     def Demo_RecordBreathingCycle(self):
         for i in range(1, 6):
@@ -2891,7 +2924,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.pteProgress.moveCursor(QTextCursor.End)
         if hasattr(self, 'loadingLaser'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-                if self.stkMain.currentIndex() < 2:
+                if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
             
     def Robot_Compensation(self):
@@ -3293,10 +3326,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         sleep(1)
         if hasattr(self, 'loadingRobot'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
-                if self.stkMain.currentIndex() < 2:
+                if self.stkMain.currentWidget() != self.pgScene:
                     # self.stkScene.setCurrentWidget(self.pgLaser)
                     self.signalLoadingReady.emit()
-                    self.stkMain.setCurrentWidget(self.pgScene)
+                    # self.stkMain.setCurrentWidget(self.pgScene)
                     
     def Laser_autoNextPage(self, msgbox = None):
         if isinstance(msgbox, QMessageBox):
@@ -3350,10 +3383,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
                         if self.dlgShowHint is None:
                             self.dlgShowHint = DlgHintBox()
-                            if self.dlgShowHint.IsShow():
-                                pos = self.stkSignalLight.mapToGlobal(self.stkSignalLight.pos())
-                                self.dlgShowHint.SetPosition(pos)
-                                self.dlgShowHint.SetText('Adjust patient\'s breath to reach green light')
+                            if DlgHintBox.IsShow():
+                                # pos = self.stkSignalLight.mapToGlobal(self.stkSignalLight.pos())
+                                # self.dlgShowHint.SetPosition(pos)
+                                self.dlgShowHint.SetText('Adjust patient\'s breath to reach green light', self.stkSignalLight)
                                 self.dlgShowHint.show()
                     
     def Laser_OnSignalModelPassed(self, bPass):

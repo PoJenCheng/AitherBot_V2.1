@@ -1,22 +1,25 @@
-from PyQt5.QtCore import QModelIndex, QObject
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QStyleOptionViewItem
-import numpy
-import cv2
-import logging
 import abc
 import copy
-import FunctionLib_UI.ui_processing
-from FunctionLib_Vision._class import *
+import logging
+
+import cv2
+import numpy
+from PyQt5.QtCore import *
+from PyQt5.QtCore import QModelIndex, QObject
+from PyQt5.QtGui import *
+from PyQt5.QtGui import QPainter
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QStyleOptionViewItem
+from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingCore import vtkCellPicker
-from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+
+import FunctionLib_UI.ui_processing
+from FunctionLib_Robot.__init__ import *
 # from vtkmodules.all import vtkCallbackCommand
 from FunctionLib_Robot.logger import logger
-from FunctionLib_Robot.__init__ import *
+from FunctionLib_Vision._class import *
+
 
 class ViewPortUnit(QObject):
     

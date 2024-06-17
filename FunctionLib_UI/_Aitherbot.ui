@@ -43,6 +43,9 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <item row="0" column="0">
      <widget class="QStackedWidget" name="stkMain">
       <property name="styleSheet">
@@ -51,7 +54,7 @@
 }</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="pgHome">
        <layout class="QGridLayout" name="gridLayout_33">
@@ -242,7 +245,7 @@ QLabel{
             </spacer>
            </item>
            <item row="5" column="2">
-            <widget class="QWidget" name="wdgGuidance" native="true">
+            <widget class="WidgetButton" name="wdgGuidance" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -363,7 +366,7 @@ QLabel{
             </spacer>
            </item>
            <item row="5" column="1">
-            <widget class="QWidget" name="wdgPlanning" native="true">
+            <widget class="WidgetButton" name="wdgPlanning" native="true">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -524,6 +527,201 @@ color: rgba(255, 255, 255, 100);</string>
            <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
           </property>
          </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pgPatientPosition">
+       <property name="styleSheet">
+        <string notr="true">font: 96px &quot;Arial&quot;;
+color:#ffe</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_42" rowstretch="1,0,0,0">
+        <property name="bottomMargin">
+         <number>11</number>
+        </property>
+        <item row="3" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_29">
+          <item>
+           <widget class="QPushButton" name="btnNext_patientPosition">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>324</width>
+              <height>150</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Confirm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0">
+         <spacer name="verticalSpacer_18">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="1" column="0">
+         <widget class="QWidget" name="wdgPatientPosition" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>1600</width>
+            <height>600</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">image:url(image/patient_position.png);</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="lblPatientPosition">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:72pt; color:#ffeeff;&quot;&gt;P&lt;/span&gt;&lt;span style=&quot; font-size:72pt;&quot;&gt;atient &lt;/span&gt;&lt;span style=&quot; font-size:72pt; color:#ffeeff;&quot;&gt;P&lt;/span&gt;&lt;span style=&quot; font-size:72pt;&quot;&gt;osition&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pgInstallSupportArm">
+       <property name="styleSheet">
+        <string notr="true">font: 96px &quot;Arial&quot;;
+color:#ffe</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_43">
+        <item row="1" column="0">
+         <widget class="QWidget" name="wdgInstallSupportArm" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>1600</width>
+            <height>600</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">image:url(image/patient_support_arm.png);</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="lblInstallSupportArm">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:72pt; color:#ffeeff;&quot;&gt;I&lt;/span&gt;&lt;span style=&quot; font-size:72pt;&quot;&gt;nstall &lt;/span&gt;&lt;span style=&quot; font-size:72pt; color:#ffeeff;&quot;&gt;S&lt;/span&gt;&lt;span style=&quot; font-size:72pt;&quot;&gt;upport &lt;/span&gt;&lt;span style=&quot; font-size:72pt; color:#ffeeff;&quot;&gt;A&lt;/span&gt;&lt;span style=&quot; font-size:72pt;&quot;&gt;rm&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_30">
+          <item>
+           <widget class="QPushButton" name="btnNext_installSupportArm">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>324</width>
+              <height>150</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Confirm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0">
+         <spacer name="verticalSpacer_19">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>
@@ -1116,7 +1314,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>15</number>
+           <number>16</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
            <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0" columnstretch="2,1">
@@ -1371,74 +1569,10 @@ margin-right:0px;
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(71, 137, 190);</string>
+            <string notr="true">background-color: rgb(77, 132, 174);</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_15" rowstretch="1,0,0">
-            <item row="1" column="0">
-             <spacer name="horizontalSpacer_15">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="1" column="1">
-             <widget class="QWidget" name="wdgSetupRobot" native="true">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>798</width>
-                <height>600</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>798</width>
-                <height>600</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true"/>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="label_9">
-              <property name="minimumSize">
-               <size>
-                <width>800</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">font: 24pt &quot;Arial&quot;;
-color: rgb(255, 255, 208);</string>
-              </property>
-              <property name="text">
-               <string>Set the AitherBot at the end of support arm.</string>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0" colspan="4">
+            <item row="2" column="0" colspan="3">
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
                <widget class="QPushButton" name="btnNext_settingRobot_2">
@@ -1484,7 +1618,32 @@ margin-right:0px;
               </item>
              </layout>
             </item>
-            <item row="0" column="0" colspan="4">
+            <item row="1" column="1">
+             <widget class="QWidget" name="wdgSetupRobot" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>798</width>
+                <height>600</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1484</width>
+                <height>600</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="3">
              <widget class="QLabel" name="label_title_7">
               <property name="minimumSize">
                <size>
@@ -4320,81 +4479,20 @@ QScrollBar::add-page:vertical {   /* 设置滑动条下侧区域样式*/
                 <property name="spacing">
                  <number>0</number>
                 </property>
-                <item row="0" column="0" colspan="2">
-                 <widget class="QComboBox" name="cbxLeftTop">
-                  <item>
-                   <property name="text">
-                    <string>3D View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Axial View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Sagittal View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Coronal View</string>
-                   </property>
-                  </item>
+                <item row="3" column="1">
+                 <widget class="QScrollBar" name="sbrLeftBottom">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
                  </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgLeftTop"/>
                 </item>
                 <item row="0" column="2" colspan="2">
                  <widget class="QComboBox" name="cbxRightTop">
                   <property name="currentIndex">
                    <number>1</number>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>3D View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Axial View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Sagittal View</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Coronal View</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QWidget" name="wdgLeftTop" native="true"/>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QScrollBar" name="sbrLeftTop">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="2">
-                 <widget class="QWidget" name="wdgRightTop" native="true"/>
-                </item>
-                <item row="1" column="3">
-                 <widget class="QScrollBar" name="sbrRightTop">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0" colspan="2">
-                 <widget class="QComboBox" name="cbxLeftBottom">
-                  <property name="currentIndex">
-                   <number>2</number>
                   </property>
                   <item>
                    <property name="text">
@@ -4445,18 +4543,19 @@ QScrollBar::add-page:vertical {   /* 设置滑动条下侧区域样式*/
                   </item>
                  </widget>
                 </item>
-                <item row="3" column="0">
-                 <widget class="QWidget" name="wdgLeftBottom" native="true"/>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QScrollBar" name="sbrLeftBottom">
+                <item row="1" column="1">
+                 <widget class="QScrollBar" name="sbrLeftTop">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="2">
-                 <widget class="QWidget" name="wdgRightBottom" native="true"/>
+                <item row="1" column="3">
+                 <widget class="QScrollBar" name="sbrRightTop">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
                 </item>
                 <item row="3" column="3">
                  <widget class="QScrollBar" name="sbrRightBottom">
@@ -4464,6 +4563,66 @@ QScrollBar::add-page:vertical {   /* 设置滑动条下侧区域样式*/
                    <enum>Qt::Vertical</enum>
                   </property>
                  </widget>
+                </item>
+                <item row="2" column="0" colspan="2">
+                 <widget class="QComboBox" name="cbxLeftBottom">
+                  <property name="currentIndex">
+                   <number>2</number>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>3D View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Axial View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Sagittal View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Coronal View</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="2">
+                 <widget class="QComboBox" name="cbxLeftTop">
+                  <item>
+                   <property name="text">
+                    <string>3D View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Axial View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Sagittal View</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Coronal View</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgRightTop"/>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgLeftBottom"/>
+                </item>
+                <item row="3" column="2">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgRightBottom"/>
                 </item>
                </layout>
               </widget>
@@ -5227,7 +5386,8 @@ font: 12px Arial;</string>
           </widget>
           <widget class="QWidget" name="pgDriveRobotGuide">
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(77, 140, 187);</string>
+            <string notr="true">background-color: rgb(77, 140, 187);
+/* rgb(76, 131, 173) */</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_37" rowstretch="0,1,0,0" columnstretch="4,1">
             <property name="spacing">
@@ -6279,6 +6439,19 @@ margin-right:0px;
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKRenderWindowInteractor</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">vtkmodules.qt.QVTKRenderWindowInteractor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>WidgetButton</class>
+   <extends>QWidget</extends>
+   <header location="global">FunctionLib_UI.WidgetButton.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -6288,8 +6461,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>535</x>
-     <y>194</y>
+     <x>1217</x>
+     <y>992</y>
     </hint>
     <hint type="destinationlabel">
      <x>1094</x>
@@ -6304,8 +6477,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1217</x>
-     <y>946</y>
+     <x>661</x>
+     <y>197</y>
     </hint>
     <hint type="destinationlabel">
      <x>1049</x>
@@ -6320,8 +6493,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1217</x>
-     <y>986</y>
+     <x>535</x>
+     <y>197</y>
     </hint>
     <hint type="destinationlabel">
      <x>1104</x>
@@ -6512,8 +6685,8 @@ margin-right:0px;
    <slot>NextScene()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>959</x>
-     <y>836</y>
+     <x>535</x>
+     <y>197</y>
     </hint>
     <hint type="destinationlabel">
      <x>592</x>
@@ -6521,10 +6694,43 @@ margin-right:0px;
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btnNext_patientPosition</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>NextSceneMain()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1027</x>
+     <y>916</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1084</x>
+     <y>1034</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnNext_installSupportArm</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>NextSceneMain()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>939</x>
+     <y>904</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>936</x>
+     <y>1033</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>NextScene()</slot>
   <slot>BackScene()</slot>
+  <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
   <buttongroup name="btgDicom"/>
