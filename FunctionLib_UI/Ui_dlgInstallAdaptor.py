@@ -15,32 +15,39 @@ class Ui_dlgInstallAdaptor(object):
     def setupUi(self, dlgInstallAdaptor):
         dlgInstallAdaptor.setObjectName("dlgInstallAdaptor")
         dlgInstallAdaptor.setWindowModality(QtCore.Qt.NonModal)
-        dlgInstallAdaptor.resize(1229, 711)
+        dlgInstallAdaptor.resize(1229, 806)
         dlgInstallAdaptor.setStyleSheet("background-color: #4D8CBB;")
         self.gridLayout = QtWidgets.QGridLayout(dlgInstallAdaptor)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setObjectName("gridLayout")
-        self.wdgMedia = QtWidgets.QWidget(dlgInstallAdaptor)
+        self.stkWidget = QtWidgets.QStackedWidget(dlgInstallAdaptor)
+        self.stkWidget.setObjectName("stkWidget")
+        self.pgDriveRobot = QtWidgets.QWidget()
+        self.pgDriveRobot.setObjectName("pgDriveRobot")
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.pgDriveRobot)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.wdgMedia = QtWidgets.QWidget(self.pgDriveRobot)
         self.wdgMedia.setMinimumSize(QtCore.QSize(800, 600))
         self.wdgMedia.setMaximumSize(QtCore.QSize(800, 600))
         self.wdgMedia.setStyleSheet("image:url(image/foot_pedal.png)")
         self.wdgMedia.setObjectName("wdgMedia")
-        self.gridLayout.addWidget(self.wdgMedia, 0, 0, 1, 1)
-        self.label = QtWidgets.QLabel(dlgInstallAdaptor)
+        self.gridLayout_2.addWidget(self.wdgMedia, 0, 0, 1, 1)
+        self.label = QtWidgets.QLabel(self.pgDriveRobot)
         self.label.setMinimumSize(QtCore.QSize(400, 0))
         self.label.setStyleSheet("font: 24pt \"Arial\";\n"
 "color: rgb(255, 255, 208);")
         self.label.setWordWrap(True)
         self.label.setObjectName("label")
-        self.gridLayout.addWidget(self.label, 0, 1, 1, 1)
+        self.gridLayout_2.addWidget(self.label, 0, 1, 1, 1)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.btnConfirm = QtWidgets.QPushButton(dlgInstallAdaptor)
+        self.btnConfirm = QtWidgets.QPushButton(self.pgDriveRobot)
         self.btnConfirm.setEnabled(False)
         self.btnConfirm.setMinimumSize(QtCore.QSize(300, 120))
         self.btnConfirm.setMaximumSize(QtCore.QSize(200, 16777215))
         self.btnConfirm.setStyleSheet("QPushButton{\n"
-"font: 48pt \"Arial\";\n"
+"font: 48px \"Arial\";\n"
 "color:#666666;\n"
 "border-radius:24px;\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
@@ -66,10 +73,81 @@ class Ui_dlgInstallAdaptor(object):
 "}")
         self.btnConfirm.setObjectName("btnConfirm")
         self.horizontalLayout.addWidget(self.btnConfirm)
-        self.gridLayout.addLayout(self.horizontalLayout, 1, 0, 1, 2)
-        self.gridLayout.setRowStretch(0, 1)
+        self.gridLayout_2.addLayout(self.horizontalLayout, 1, 0, 1, 2)
+        self.stkWidget.addWidget(self.pgDriveRobot)
+        self.pgRobotMoving = WidgetProgressing()
+        self.pgRobotMoving.setObjectName("pgRobotMoving")
+        self.stkWidget.addWidget(self.pgRobotMoving)
+        self.pgNeedle = QtWidgets.QWidget()
+        self.pgNeedle.setStyleSheet("QLabel{\n"
+"    color:rgb(255, 255, 255);\n"
+"    font: 64px \"Arial\";\n"
+"}")
+        self.pgNeedle.setObjectName("pgNeedle")
+        self.gridLayout_4 = QtWidgets.QGridLayout(self.pgNeedle)
+        self.gridLayout_4.setObjectName("gridLayout_4")
+        self.gridLayout_3 = QtWidgets.QGridLayout()
+        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.wdgPutNeedle = WidgetProgressing(self.pgNeedle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.wdgPutNeedle.sizePolicy().hasHeightForWidth())
+        self.wdgPutNeedle.setSizePolicy(sizePolicy)
+        self.wdgPutNeedle.setMinimumSize(QtCore.QSize(960, 540))
+        self.wdgPutNeedle.setMaximumSize(QtCore.QSize(960, 540))
+        self.wdgPutNeedle.setObjectName("wdgPutNeedle")
+        self.gridLayout_3.addWidget(self.wdgPutNeedle, 0, 0, 1, 1)
+        self.gridLayout_4.addLayout(self.gridLayout_3, 0, 0, 1, 1)
+        self.lblPutNeedle = QtWidgets.QLabel(self.pgNeedle)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lblPutNeedle.sizePolicy().hasHeightForWidth())
+        self.lblPutNeedle.setSizePolicy(sizePolicy)
+        self.lblPutNeedle.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblPutNeedle.setObjectName("lblPutNeedle")
+        self.gridLayout_4.addWidget(self.lblPutNeedle, 1, 0, 1, 1)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setSpacing(0)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.btnConfirm_needle = QtWidgets.QPushButton(self.pgNeedle)
+        self.btnConfirm_needle.setEnabled(True)
+        self.btnConfirm_needle.setMinimumSize(QtCore.QSize(300, 120))
+        self.btnConfirm_needle.setMaximumSize(QtCore.QSize(200, 16777215))
+        self.btnConfirm_needle.setStyleSheet("QPushButton{\n"
+"font: 48px \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnConfirm_needle.setObjectName("btnConfirm_needle")
+        self.horizontalLayout_2.addWidget(self.btnConfirm_needle)
+        self.gridLayout_4.addLayout(self.horizontalLayout_2, 2, 0, 1, 1)
+        self.stkWidget.addWidget(self.pgNeedle)
+        self.gridLayout.addWidget(self.stkWidget, 0, 0, 1, 1)
 
         self.retranslateUi(dlgInstallAdaptor)
+        self.stkWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(dlgInstallAdaptor)
 
     def retranslateUi(self, dlgInstallAdaptor):
@@ -77,3 +155,6 @@ class Ui_dlgInstallAdaptor(object):
         dlgInstallAdaptor.setWindowTitle(_translate("dlgInstallAdaptor", "Dialog"))
         self.label.setText(_translate("dlgInstallAdaptor", "<html><head/><body><p><span style=\" font-size:24pt;\">Robot will move, please </span><span style=\" font-size:24pt; color:#ff0000;\">keep breathing rate upper 90</span></p></body></html>"))
         self.btnConfirm.setText(_translate("dlgInstallAdaptor", "Confirm"))
+        self.lblPutNeedle.setText(_translate("dlgInstallAdaptor", "<html><head/><body><p><span style=\" font-size:48pt;\">insert needle along </span><span style=\" font-size:48pt; color:#ff0000;\">universal holder</span></p></body></html>"))
+        self.btnConfirm_needle.setText(_translate("dlgInstallAdaptor", "Confirm"))
+from FunctionLib_UI.WidgetButton import WidgetProgressing

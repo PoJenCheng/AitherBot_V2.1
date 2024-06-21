@@ -638,19 +638,25 @@ color:#ffe</string>
         <item row="1" column="0">
          <widget class="QWidget" name="wdgInstallSupportArm" native="true">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
            <size>
-            <width>1600</width>
-            <height>600</height>
+            <width>1280</width>
+            <height>720</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1280</width>
+            <height>720</height>
            </size>
           </property>
           <property name="styleSheet">
-           <string notr="true">image:url(image/patient_support_arm.png);</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>
@@ -4789,15 +4795,15 @@ QToolBox QPushButton:disabled{
 </string>
                   </property>
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="pgImage">
                    <property name="geometry">
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>222</width>
+                     <height>312</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4863,7 +4869,7 @@ QToolBox QPushButton:disabled{
                          <bool>true</bool>
                         </property>
                         <property name="checked">
-                         <bool>true</bool>
+                         <bool>false</bool>
                         </property>
                         <attribute name="buttonGroup">
                          <string notr="true">buttonGroup</string>
@@ -4882,6 +4888,9 @@ QToolBox QPushButton:disabled{
                          <string>High</string>
                         </property>
                         <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
                          <bool>true</bool>
                         </property>
                         <attribute name="buttonGroup">
@@ -4939,8 +4948,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>243</width>
+                     <height>451</height>
                     </rect>
                    </property>
                    <attribute name="label">

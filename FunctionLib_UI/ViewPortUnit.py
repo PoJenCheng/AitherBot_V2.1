@@ -151,14 +151,15 @@ class ViewPortUnit(QObject):
         self.renderer.ChangeView(value)
         
         if self.orientation == VIEW_AXIAL:
-            self.dicom.target[2] = value * self.dicom.pixel2Mm[2]
+            self.dicom.target[2] = value * self.dicom.voxelSize[2]
             self.dicom.imagePosition[2] = value
         elif self.orientation == VIEW_CORONAL:
-            self.dicom.target[1] = value * self.dicom.pixel2Mm[1]
+            self.dicom.target[1] = value * self.dicom.voxelSize[1]
             self.dicom.imagePosition[1] = value
         elif self.orientation == VIEW_SAGITTAL:
-            self.dicom.target[0] = value * self.dicom.pixel2Mm[0]
+            self.dicom.target[0] = value * self.dicom.voxelSize[0]
             self.dicom.imagePosition[0] = value
+            
         
         self.signalSetSliceValue.emit(self.dicom.imagePosition)
         
@@ -170,7 +171,11 @@ class ViewPortUnit(QObject):
             
         self.UpdateView()
         
-    def MapPositionToImageSlice(self, pos = None, posCS = None):
+    def MapPositionToImageSlice(
+        self, 
+        pos = None, 
+        posCS = None
+    ):
         if not self.renderer:
             return
         
@@ -191,8 +196,6 @@ class ViewPortUnit(QObject):
                 self.renderer.SetTarget(pos)
                 self.ChangeSliceView(imagePos)
                 self.imagePosition[:] = imagePos
-                
-                # self.renderer.Segmentation(pos)
                 
             self.signalUpdateAll.emit()
             self.signalUpdateSlice.emit(np.array(imagePos))
@@ -217,7 +220,7 @@ class ViewPortUnit(QObject):
             return
         
         if pos is None:
-            pos = np.round(self.renderer.target / self.renderer.pixel2Mm)
+            pos = np.round(self.renderer.target / self.renderer.voxelSize)
         iPos = np.array(pos).astype(int)
         
         scrollValue = None
@@ -253,7 +256,7 @@ class ViewPortUnit(QObject):
             if isinstance(pos, list) or isinstance(pos, tuple):
                 pos = np.array(pos)
                 
-            iPos = np.round(pos / self.renderer.pixel2Mm)
+            iPos = np.round(pos / self.renderer.voxelSize)
         
     def Assign(self, viewPortUnit):
         self.dicom              = viewPortUnit.dicom
@@ -733,7 +736,7 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
         if distance > 1:
             super(MyInteractorStyle, self).OnMiddleButtonUp()
             if self.currentRenderer != self.render3D:
-                self.parent.UpdateTarget(bFocus = False)
+                self.parent.UpdateTarget()
             return
         
         # pick_point = picker.GetPickPosition()        
@@ -768,7 +771,6 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
             # actor = actors.GetNextProp3D()
                 
             if isValidActor == True:
-                
                 self.currentTag["pickPoint"] = self.currentDicom.target
         else:
             logger.warning("no objects be picked")

@@ -22,14 +22,22 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkSphereSource
 from vtkmodules.vtkImagingCore import vtkImageMapToColors, vtkImageReslice
-# from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
-from vtkmodules.vtkRenderingCore import (vtkActor, vtkActor2D, vtkAssembly,
-                                         vtkCamera, vtkCoordinate,
-                                         vtkImageActor, vtkPolyDataMapper,
-                                         vtkPolyDataMapper2D, vtkRenderer,
-                                         vtkVolume, vtkVolumeProperty,
-                                         vtkWindowLevelLookupTable)
+from vtkmodules.vtkRenderingCore import (
+    vtkActor, 
+    vtkActor2D, 
+    vtkAssembly,
+    vtkCamera, 
+    vtkCoordinate,
+    vtkImageActor, 
+    vtkPolyDataMapper,
+    vtkPolyDataMapper2D, 
+    vtkRenderer,
+    vtkVolume, 
+    vtkVolumeProperty,
+    vtkWindowLevelLookupTable
+)
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 from FunctionLib_Robot.logger import logger
 
@@ -54,7 +62,7 @@ SCALAR_TYPE_RANGE = {
             vtk.VTK_LONG:           (-sys.maxsize - 1, sys.maxsize),
             vtk.VTK_FLOAT:          (-sys.float_info.max, sys.float_info.max),
             vtk.VTK_DOUBLE:         (-sys.float_info.max, sys.float_info.max)
-        }
+}
 
 copy_count = 0
 
@@ -2343,7 +2351,7 @@ class InteractorStylePlaneWidget(vtk.vtkInteractorStyleTrackballCamera):
     
 
     
-class InteractorStyleImageAlgorithm(vtk.vtkInteractorStyleImage):
+class InteractorStyleImageAlgorithm(vtkInteractorStyleImage):
     
     signalObj = QSignalObject()
     
@@ -3360,6 +3368,8 @@ class RendererObj(vtkRenderer):
         self.bSelected = False
         self.bFocusMode = True
         self.bTargetVisible = True
+        self.bRulerVisible = True
+        self.bRulerVisibleTemp = True
         self.textActor = None
             
         self.targetObj = TargetObj(self)
@@ -3378,11 +3388,31 @@ class RendererObj(vtkRenderer):
         self.dicomGrayscaleRange = None
         self.dicomBoundsRange = None
         self.imageDimensions = None
-        self.pixel2Mm = None
+        self.voxelSize = None
         self.imageReslice = None
         self.targetPoint = None
         self.entryPoint = None
         self.actorTargetPoint = [vtkActor2D() for _ in range(2)]
+        
+    def GetWorldToView(self, pos:_ArrayLike):
+        self.SetWorldPoint(np.append(pos, 1))
+        self.WorldToView()
+        return np.array(self.GetViewPoint())
+    
+    def GetDisplayToView(self, pos:_ArrayLike):
+        self.SetDisplayPoint(pos)
+        self.DisplayToView()
+        return np.array(self.GetViewPoint())
+    
+    def GetDisplayToWorld(self, pos:_ArrayLike):
+        self.SetDisplayPoint(pos)
+        self.DisplayToWorld()
+        return np.array(self.GetWorldPoint())[:3]
+    
+    def GetViewToWorld(self, pos:_ArrayLike):
+        self.SetViewPoint(pos)
+        self.ViewToWorld()
+        return np.array(self.GetWorldPoint())[:3]
         
     def ResetImage(self):
         if self.image and self.imageOrigin:
@@ -3396,7 +3426,7 @@ class RendererObj(vtkRenderer):
     def GetImageInfo(self):
         if self.image:
             origin = self.image.GetOrigin()
-            return self.imageDimensions, self.pixel2Mm, origin
+            return self.imageDimensions, self.voxelSize, origin
         else:
             return None
         
@@ -3454,6 +3484,9 @@ class RendererObj(vtkRenderer):
             
         if level is not None:
             self.actorSegment.GetProperty().SetColorLevel(level)
+            
+    def IsRulerVisible(self):
+        return self.bRulerVisible
     
     def Segmentation(self, pos:np.ndarray):
         if isinstance(pos, tuple) or isinstance(pos, list):
@@ -3530,17 +3563,17 @@ class RendererObj(vtkRenderer):
             if value.dtype == np.float64:
                 if self.orientation == VIEW_AXIAL: 
                     self.target[:] = value
-                    self.imagePosition[:] = np.round(value / self.pixel2Mm)
+                    self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
                     self.textActor.SetInput(f'{self.imagePosition[2]}/{self.imageDimensions[2] - 1}')
                 elif self.orientation == VIEW_CORONAL: 
                     self.target[:] = value
-                    self.imagePosition[:] = np.round(value / self.pixel2Mm)
+                    self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
                     self.textActor.SetInput(f'{self.imagePosition[1]}/{self.imageDimensions[1] - 1}')
                 elif self.orientation == VIEW_SAGITTAL: 
                     self.target[:] = value
-                    self.imagePosition[:] = np.round(value / self.pixel2Mm)
+                    self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
                     self.textActor.SetInput(f'{self.imagePosition[0]}/{self.imageDimensions[0] - 1}')
                 
@@ -3551,16 +3584,19 @@ class RendererObj(vtkRenderer):
             if self.orientation == VIEW_AXIAL: 
                 # self.target[2] = value * self.pixel2Mm[2]
                 # self.imagePosition[2] = value
+                value = max(0, min(self.imageDimensions[2] - 1, value))
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[2] - 1}')
             elif self.orientation == VIEW_CORONAL: 
                 # self.target[1] = value * self.pixel2Mm[1]
                 # self.imagePosition[1] = value
+                value = max(0, min(self.imageDimensions[1] - 1, value))
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[1] - 1}')
             elif self.orientation == VIEW_SAGITTAL: 
                 # self.target[0] = value * self.pixel2Mm[0]
                 # self.imagePosition[0] = value
+                value = max(0, min(self.imageDimensions[0] - 1, value))
                 self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[0] - 1}')
                 
@@ -3580,13 +3616,8 @@ class RendererObj(vtkRenderer):
         rightTop = [viewSize[0], viewSize[1], 0]
         
         # 将窗口坐标转换为3D坐标
-        self.SetDisplayPoint(leftBottom[0], leftBottom[1], leftBottom[2])
-        self.DisplayToWorld()
-        worldLeftBottom = self.GetWorldPoint()
-
-        self.SetDisplayPoint(rightTop[0], rightTop[1], rightTop[2])
-        self.DisplayToWorld()
-        worldRightTop = self.GetWorldPoint()
+        worldLeftBottom = self.GetDisplayToWorld(leftBottom)
+        worldRightTop = self.GetDisplayToWorld(rightTop)
         
         return [worldLeftBottom, worldRightTop]
         
@@ -3607,7 +3638,7 @@ class RendererObj(vtkRenderer):
         self.dicomGrayscaleRange = image.GetScalarRange()
         self.dicomBoundsRange = image.GetBounds()
         self.imageDimensions = image.GetDimensions()
-        self.pixel2Mm = image.GetSpacing()
+        self.voxelSize = image.GetSpacing()
         self.image = image
         self.imageOrigin = imageOrigin
         self.target = target
@@ -3619,7 +3650,6 @@ class RendererObj(vtkRenderer):
         
         if pos is None:
             pos = self.target
-            logger.debug(f'pos is None')
             
         # move camera to select point
         camera = self.GetActiveCamera()
@@ -3691,17 +3721,9 @@ class RendererObj(vtkRenderer):
         SCALE_LINE_LEN_BIG = 30
         
         #計算縮放比例
-        self.SetDisplayPoint(0, 0, 0)
-        self.DisplayToWorld()
-        p1 = self.GetWorldPoint()
-        
-        self.SetDisplayPoint(SCALE_LINE_LEN, 0, 0)
-        self.DisplayToWorld()
-        p2 = self.GetWorldPoint()
-        
-        self.SetDisplayPoint(SCALE_LINE_LEN_BIG, 0, 0)
-        self.DisplayToWorld()
-        p3 = self.GetWorldPoint()
+        p1 = self.GetDisplayToWorld((0, 0, 0))
+        p2 = self.GetDisplayToWorld((SCALE_LINE_LEN, 0, 0))
+        p3 = self.GetDisplayToWorld((SCALE_LINE_LEN_BIG, 0, 0))
         
         scaleRatio = np.linalg.norm(np.array(p1) - np.array(p2)) * 0.5
         # lengthInWorld = np.linalg.norm(np.array(p1) - np.array(p2)) * 0.5
@@ -3710,15 +3732,16 @@ class RendererObj(vtkRenderer):
         lengthInWorldBig = SCALE_LINE_LEN_BIG * 0.5
         
         if scaleRatio > 10:
-            return
+            return None
             
         #calculate line scale, minimum is 0.5mm
         scale = max(scale, MIN_SCALE)
         length = np.linalg.norm(endPos - startPos)
         
-        if length < scale:
-            return
+        if length < scale or np.isnan(length):
+            return None
         
+        count = 0
         try:
             count = int(length / scale)
             lines = [vtkLineSource() for _ in range(count)]
@@ -3765,6 +3788,134 @@ class RendererObj(vtkRenderer):
             
         return actorTargetScale
     
+    def drawRuler2(self, viewStartPos:np.array, viewEndPos:np.array):
+        """draw a ruler between two view points
+            if not VIEW coordinate, must be transformed to view coordinate point 
+        Args:
+            viewStartPos (np.array): view coordinate point
+            viewEndPos (np.array): view coordinate point
+
+        Returns:
+            _type_: list[vtkActor2D]
+        """
+        if isinstance(viewStartPos, (list, tuple, np.ndarray)):
+            startPos = np.array(viewStartPos)
+        else:
+            return None
+            
+        if isinstance(viewEndPos, (list, tuple, np.ndarray)):
+            endPos = np.array(viewEndPos)
+        else:
+            return None
+            
+        MIN_SCALE = 10
+        SCALE_LINE_LEN = 10
+        SCALE_LINE_LEN_BIG = 30
+        
+        # view座標系中心點(原點)
+        p0 = self.GetDisplayToView((0, 0, 0))
+        
+        # 尺標的小刻度
+        pViewLen = self.GetDisplayToView((SCALE_LINE_LEN, 0, 0))
+        
+        # 尺標的大刻度
+        pViewLenBig = self.GetDisplayToView((SCALE_LINE_LEN_BIG, 0, 0))
+        
+        # 判斷是世界座標的哪一軸，並乘上對應的voxel size
+        worldStartPos = self.GetViewToWorld(startPos)
+        worldEndPos = self.GetViewToWorld(endPos)
+        diff = np.abs(worldEndPos - worldStartPos)
+        voxelSize = self.voxelSize[np.argmax(diff)]
+        
+        # view座標系中，X Y方向的單位距離不同，要分開計算
+        p4 = np.zeros(3)
+        if abs(startPos[0] - endPos[0]) < abs(startPos[1] - endPos[1]):
+            p4 = self.GetDisplayToView((0, MIN_SCALE / voxelSize, 0))
+        else:
+            p4 = self.GetDisplayToView((MIN_SCALE / voxelSize, 0, 0))
+            
+            
+        # 換算在view座標系的實際長度
+        scaleRatio = np.linalg.norm(p0 - pViewLen) * 0.5
+        scaleRatioBig = np.linalg.norm(p0 - pViewLenBig) * 0.5
+        scaleMin = np.linalg.norm(p0 - p4)
+        
+        # zoom in / out時，view座標系的長度會改變，計算實際Zoom in / out 縮放比例
+        p5 = self.GetDisplayToWorld((0, 0, 0))
+        p6 = self.GetDisplayToWorld((SCALE_LINE_LEN, 0, 0))
+        
+        ratio = np.linalg.norm(p5 - p6)
+        
+        if ratio == 0 or np.isnan(ratio):
+            ratio = 1
+        ratio = SCALE_LINE_LEN / ratio
+        
+        scaleMin *= ratio
+        ratio = min(2.0, ratio)
+        scaleRatio *= ratio
+        scaleRatioBig *= ratio
+        
+        # lengthInWorld = np.linalg.norm(np.array(p1) - np.array(p2)) * 0.5
+        # lengthInWorldBig = np.linalg.norm(np.array(p1) - np.array(p3)) * 0.5
+        # lengthInWorld = scaleRatio
+        lengthInWorldBig = scaleRatioBig
+            
+        #calculate line scale, minimum is 0.5mm
+        # worldEndPos = self.GetViewToWorld(endPos)
+        # worldStartPos = self.GetViewToWorld(startPos)
+        length = np.linalg.norm(endPos - startPos)
+        
+        if np.isnan(length):
+            return None
+        
+        count = 0
+        try:
+            count = int(length / scaleMin)
+            lines = [vtkLineSource() for _ in range(count)]
+            actorTargetScale = [vtkActor2D() for _ in range(count)]
+        except Exception as msg:
+            logger.debug(msg)
+            logger.debug(f'length = {length}, scale = {scaleMin}')
+        
+        unitVector = (endPos - startPos) / length
+        # viewPlaneVector = self.camera.GetViewPlaneNormal()
+        viewPlaneVector = np.array([0, 0, 1])
+        
+        crossVector = np.cross(unitVector, viewPlaneVector)
+        crossVectorLittle = crossVector * scaleRatio
+        crossVectorBig = crossVector * lengthInWorldBig
+        
+        coord2D = vtkCoordinate()
+        coord2D.SetCoordinateSystemToView()
+        # coord2D.SetCoordinateSystemToDisplay()
+        
+        stepPos = startPos.copy()
+        for i in range(count):
+            stepPos += unitVector * scaleMin
+            
+            if i % 5 == 4:
+                lines[i].SetPoint1(stepPos - crossVectorBig)
+                lines[i].SetPoint2(stepPos + crossVectorBig)
+            else:
+                if scaleRatio < 4:
+                    lines[i].SetPoint1(stepPos - crossVectorLittle)
+                    lines[i].SetPoint2(stepPos + crossVectorLittle)
+                else:
+                    continue
+            
+            mapper = vtkPolyDataMapper2D()
+            mapper.SetInputConnection(lines[i].GetOutputPort())
+            mapper.SetTransformCoordinate(coord2D) 
+        
+            actorTargetScale[i].SetMapper(mapper)   
+            actorTargetScale[i].GetProperty().SetColor(1, 0, 1)
+            actorTargetScale[i].GetProperty().SetLineWidth(1.0)  
+            actorTargetScale[i].SetVisibility(self.bTargetVisible) 
+            
+            self.AddActor(actorTargetScale[i])
+            
+        return actorTargetScale
+    
     def SetFocusMode(self, bFocus):
         self.bFocusMode = bFocus
         if not bFocus:
@@ -3785,6 +3936,13 @@ class RendererObj(vtkRenderer):
                 
             for actor in self.actorTargetCenter:
                 actor.VisibilityOn()
+                
+    def SetRulerVisible(self, bVisible:bool):
+        
+        self.bRulerVisible = bVisible
+        for actor in self.actorTargetScale:
+            actor.SetVisibility(bVisible) 
+            
      
     def SetTargetVisible(self, bVisible = True):
         for actor in self.actorTarget:
@@ -3809,7 +3967,7 @@ class RendererObj(vtkRenderer):
         else:
             self.target[:] = np.array(pos)
                 
-        imagePos = np.round(pos / self.pixel2Mm)
+        imagePos = np.round(pos / self.voxelSize)
         
         if not self.bFocusMode:
             if self.isInitialize == False:
@@ -3824,11 +3982,12 @@ class RendererObj(vtkRenderer):
                             
                 self.actorTargetScale = []
                 
+                pos = self.GetWorldToView(pos)
                 for i in range(len(self.actorTarget)):
                     p1, p2 = self.targetObj.GetLinePointsByIndex(i) 
                     if p1 is not None and p2 is not None:
-                        r1 = self.drawRuler(pos, p1)
-                        r2 = self.drawRuler(pos, p2)
+                        r1 = self.drawRuler2(pos, p1)
+                        r2 = self.drawRuler2(pos, p2)
                         
                         if r1:
                             self.actorTargetScale.extend(r1)
@@ -3842,11 +4001,10 @@ class RendererObj(vtkRenderer):
                         mapper.SetInputConnection(lines[i].GetOutputPort())
             
         else:
-            self.actorTargetCenter = self.targetObj.SetInViewportCenter()
+            # self.SetCameraToTarget()
             
-            self.SetWorldPoint(np.append(pos, 1))
-            self.WorldToView()
-            viewPos = self.GetViewPoint()
+            self.actorTargetCenter = self.targetObj.SetInViewportCenter()
+            viewPos = self.GetWorldToView(pos)
             # draw ruler
             pointsMap = {}
             pointsMap['top']     = [ 0,-1, viewPos[2]]
@@ -3854,20 +4012,18 @@ class RendererObj(vtkRenderer):
             pointsMap['left']    = [-1, 0, viewPos[2]]
             pointsMap['right']   = [ 1, 0, viewPos[2]]
             
-            for point in pointsMap.values():
-                self.SetViewPoint(point)
-                self.ViewToWorld()
-                point[:] = np.array(self.GetWorldPoint())[:3]
+            # for point in pointsMap.values():
+            #     point[:] = self.GetViewToWorld(point)
 
-            if TargetObj.bVisible:
+            if self.bRulerVisible:
                 for actor in self.actorTargetScale:
                     self.RemoveActor(actor)
                             
                 self.actorTargetScale = []
                 
-                pList = list(pointsMap.values())
-                for p in pList:
-                    ruler = self.drawRuler(pos, p)
+                viewOrigin = [0, 0, viewPos[2]]
+                for p in pointsMap.values():
+                    ruler = self.drawRuler2(viewOrigin, p)
                     if ruler:
                         self.actorTargetScale.extend(ruler)
     
@@ -4018,7 +4174,7 @@ class RendererObj3D(RendererObj):
             pos = np.array(pos)
         
         volumePos = pos.copy()
-        center = np.array(self.imageDimensions) * np.array(self.pixel2Mm) * 0.5
+        center = np.array(self.imageDimensions) * np.array(self.voxelSize) * 0.5
         volumePos -= center
         return volumePos
     
@@ -4510,11 +4666,12 @@ class RendererCrossSectionObj(RendererObj):
                         
             self.actorTargetScale = []
             
+            pos = self.GetWorldToView(pos)
             for i in range(len(self.actorTarget)):
                 p1, p2 = self.targetObj.GetLinePointsByIndex(i)
                 if p1 is not None and p2 is not None:
-                    self.actorTargetScale.extend(self.drawRuler(pos, p1))
-                    self.actorTargetScale.extend(self.drawRuler(pos, p2))
+                    self.actorTargetScale.extend(self.drawRuler2(pos, p1))
+                    self.actorTargetScale.extend(self.drawRuler2(pos, p2))
                 
             for i in range(len(lines)):
                 mapper = self.actorTarget[i].GetMapper()
@@ -4634,8 +4791,6 @@ class TargetObj():
         
         if not self.actorLineCenter:
             
-            self.actorLineCenter = [vtkActor2D() for _ in range(2)]
-            
             coord2D = vtkCoordinate()
             coord2D.SetCoordinateSystemToView()
             
@@ -4670,8 +4825,6 @@ class TargetObj():
             # self.actorLineCenter[1].VisibilityOn()
             self.actorLineCenter[0].SetVisibility(TargetObj.bVisible)
             self.actorLineCenter[1].SetVisibility(TargetObj.bVisible)
-            
-        
 
         return self.actorLineCenter
             
@@ -4683,41 +4836,19 @@ class TargetObj():
         if isinstance(pos, tuple) or isinstance(pos, list):
             pos = np.array(pos)
         
-        
         renderWindow = self.renderer.GetRenderWindow()
         if renderWindow is None:
             return
         
-        # viewPort = self.renderer.GetViewport()
-        # renderSize = renderWindow.GetSize()
-        # viewSize = [viewPort[2] * renderSize[0], viewPort[3] * renderSize[1]]
+        worldLeftBottom = self.renderer.GetViewToWorld((-1, -1, 0))
+        worldRightBottom = self.renderer.GetViewToWorld(( 1, -1, 0))
+        worldRightTop = self.renderer.GetViewToWorld((1, 1, 0))
         
-        # leftBottom = [0, 0, 0]
-        # rightTop = [viewSize[0], viewSize[1], 0]
-        
-        
-        self.renderer.SetViewPoint(-1, -1, 0)
-        self.renderer.ViewToWorld()
-        worldLeftBottom = self.renderer.GetWorldPoint()
-        
-        self.renderer.SetViewPoint( 1, -1, 0)
-        self.renderer.ViewToWorld()
-        worldRightBottom = self.renderer.GetWorldPoint()
-        
-        self.renderer.SetViewPoint(1, 1, 0)
-        self.renderer.ViewToWorld()
-        worldRightTop = self.renderer.GetWorldPoint()
-        
-        self.renderer.SetWorldPoint(np.append(pos, 1))
-        self.renderer.WorldToView()
-        viewPos = self.renderer.GetViewPoint()
-        
+        viewPos = self.renderer.GetWorldToView(pos)
         
         # calculate Vector
         vectorUp = np.array(self.renderer.camera.GetViewUp())
         vectorViewPlane = self.renderer.camera.GetViewPlaneNormal()
-        vectorLeft = np.cross(vectorViewPlane, vectorUp)
-        # vectorViewWidthHalf = (np.array(worldLeftBottom) - np.array(worldRightTop))
         
         count = len(self.lines)     
         #line 1
@@ -4726,27 +4857,16 @@ class TargetObj():
         axisXLength = np.array(worldLeftBottom)[:3] - np.array(worldRightBottom)[:3]
         axisXLength = np.linalg.norm(axisXLength)
         
-        # vectorProjLeft = self.renderer.getProjVector(vectorViewWidthHalf[:3], vectorLeft)
-        # point1 = pos + vectorProjLeft
-        # point2 = pos - vectorProjLeft
-        # point1 = pos + vectorLeft * axisXLength
-        # point2 = pos - vectorLeft * axisXLength
         point1 = [-1, viewPos[1], viewPos[2]]
         point2 = [ 1, viewPos[1], viewPos[2]]
         lines[0].SetPoint1(point1)
         lines[0].SetPoint2(point2)
         
-        
         self.linesPoint[0] = [point1, point2]
         
         axisYLength = np.array(worldRightTop)[:3] - np.array(worldRightBottom)[:3]
         axisYLength = np.linalg.norm(axisYLength)
-        # point1 = pos + vectorUp * axisYLength
-        # point2 = pos - vectorUp * axisYLength
-        
-        # vectorProjUp = self.renderer.getProjVector(vectorViewWidthHalf[:3], vectorUp)
-        # point1 = pos + vectorProjUp
-        # point2 = pos - vectorProjUp
+
         point1 = [viewPos[0], -1, viewPos[2]]
         point2 = [viewPos[0],  1, viewPos[2]]
         lines[1].SetPoint1(point1)
@@ -4754,11 +4874,10 @@ class TargetObj():
         
         self.linesPoint[1] = [point1, point2]
         
-        
         self.position = pos.copy()
         return lines
     
-    def GetLinePointsByIndex(self, index:int):
+    def GetLinePointsByIndex(self, index:int, bWorldCoordinate:bool = False):
         countOfLines = len(self.lines)
         
         if index >= countOfLines:
@@ -4767,16 +4886,9 @@ class TargetObj():
         p1 = self.linesPoint[index][0]
         p2 = self.linesPoint[index][1]
         
-        self.renderer.SetViewPoint(p1)
-        self.renderer.ViewToWorld()
-        p1 = np.array(self.renderer.GetWorldPoint())[:3]
-        
-        self.renderer.SetViewPoint(p2)
-        self.renderer.ViewToWorld()
-        p2 = np.array(self.renderer.GetWorldPoint())[:3]
-        
-        logger.debug(f'index[{index}], after trans p1 = {p1}')
-        logger.debug(f'index[{index}], after trans p2 = {p2}')
+        if bWorldCoordinate:
+            p1 = self.renderer.GetViewToWorld(p1)
+            p2 = self.renderer.GetViewToWorld(p2)
         
         return p1, p2
     
@@ -4833,10 +4945,10 @@ class StippleLine():
         assert(startPoint is not None and endPoint is not None), 'must have startPoint or endPoint'
         
         if startPoint is not None:
-            self.startPoint = np.asarray(startPoint)
+            self.startPoint = np.array(startPoint)
             
         if endPoint is not None:
-            self.endPoint = np.asarray(endPoint)
+            self.endPoint = np.array(endPoint)
             
             
         vector = self.endPoint - self.startPoint
@@ -5013,7 +5125,7 @@ class Trajectory():
     def __getitem__(self, index):
         num = len(self._listTrajectory)
         if num == 0:
-            return np.zeros((2, 3))
+            return None
         else:
             index = min(num - 1, max(-num, index))
             return np.asarray(self._listTrajectory[index])
@@ -5040,14 +5152,14 @@ class Trajectory():
             
     def addEntry(self, entryPoint):
         self._assertPoint(entryPoint)
-        self.entryPoint = np.asarray(entryPoint)
+        self.entryPoint = np.array(entryPoint)
         
         self._pointBeenSetNum |= 1
         self._checkAddTrajectory()
         
     def addTarget(self, targetPoint):
         self._assertPoint(targetPoint)
-        self.targetPoint = np.asarray(targetPoint)
+        self.targetPoint = np.array(targetPoint)
         
         self._pointBeenSetNum |= 2
         self._checkAddTrajectory()
@@ -5114,16 +5226,18 @@ class Trajectory():
     
     def setEntry(self, entryPoint:np.ndarray, index:int = None):
         self._assertPoint(entryPoint)
+        entryPoint = np.array(entryPoint)
+        
         if index is None:
             if self.currentIndex == -1:
                 self.addEntry(entryPoint)
             else:
-                self.entryPoint = np.asarray(entryPoint)
+                self.entryPoint = np.array(entryPoint)
                 self._listTrajectory[self.currentIndex][0] = self.entryPoint
                 self._listVTKObj[self.currentIndex].setPosition(entryPoint = entryPoint)
         elif index < len(self._listTrajectory):
             self.currentIndex = index
-            self.entryPoint = np.asarray(entryPoint)
+            self.entryPoint = np.array(entryPoint)
             self._listTrajectory[index][0] = self.entryPoint
             self._listVTKObj[index].setPosition(entryPoint = entryPoint)
         else:
@@ -5131,26 +5245,29 @@ class Trajectory():
         
     def setTarget(self, targetPoint:np.ndarray, index:int = None):
         self._assertPoint(targetPoint)
+        targetPoint = np.array(targetPoint)
+        
         if index is None:
             if self.currentIndex == -1:
                 self.addTarget(targetPoint)
             else:
-                self.targetPoint = np.asarray(targetPoint)
+                self.targetPoint = np.array(targetPoint)
                 self._listTrajectory[self.currentIndex][1] = self.targetPoint
                 self._listVTKObj[self.currentIndex].setPosition(targetPoint = targetPoint)
         elif index < len(self._listTrajectory):
-            self.targetPoint = np.asarray(targetPoint)
+            self.targetPoint = np.array(targetPoint)
             self.currentIndex = index
             self._listTrajectory[index][1] = self.targetPoint
             self._listVTKObj[index].setPosition(targetPoint = targetPoint)
         else:
             self.addTarget(targetPoint)
             
-    def setRenderer(self, index:int, *rendererObjs:RendererObj):
+    def setRenderer(self, index:int, *rendererObjs:list):
         if index in range(0, len(self._listVTKObj)):
-            for renderer in rendererObjs:
-                if isinstance(renderer, RendererObj):
-                    self._listVTKObj[index].setRenderer(renderer)
+            for lstRenderer in rendererObjs:
+                for renderer in lstRenderer:
+                    if isinstance(renderer, RendererObj):
+                        self._listVTKObj[index].setRenderer(renderer)
         
             
     def setVisibility(self, index:int, bVisible:bool):
@@ -5172,13 +5289,18 @@ class DISPLAY(QObject):
     signalUpdateWW = pyqtSignal(int)
     signalUpdateWL = pyqtSignal(int)
     
+    trajectory = Trajectory()
+    _lstRendererAxial     = []
+    _lstRendererCoronal   = []
+    _lstRendererSagittal  = []
+    _lstRenderer3D        = []
+    _lstRendererCrossSection = []
     
     def __init__(self):
         super().__init__()
         self.targetPoint = np.zeros(3)
         self.entryPoint = np.zeros(3)
         self.currentTrajectory = 0
-        self.trajectory = Trajectory()
         self.imageOrigin = None
         
         self.irenList = {}
@@ -5199,7 +5321,7 @@ class DISPLAY(QObject):
         self.rendererList = {}
         
     def CountOfTrajectory(self):
-        return self.trajectory.count()
+        return DISPLAY.trajectory.count()
             
     def LoadImage(self, image):
         """load image
@@ -5236,6 +5358,12 @@ class DISPLAY(QObject):
         self.rendererAxial = RendererObj()
         self.renderer3D = RendererObj3D()
         self.rendererCrossSection = RendererCrossSectionObj()
+        
+        DISPLAY._lstRendererAxial.append(self.rendererAxial)
+        DISPLAY._lstRendererCoronal.append(self.rendererCoronal)
+        DISPLAY._lstRendererSagittal.append(self.rendererSagittal)
+        DISPLAY._lstRenderer3D.append(self.renderer3D)
+        DISPLAY._lstRendererCrossSection.append(self.rendererCrossSection)
         
         self.rendererList = {}
         self.rendererList['3D'] = self.renderer3D
@@ -5286,7 +5414,7 @@ class DISPLAY(QObject):
         self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
         self.dicomBoundsRange = self.vtkImage.GetBounds()
         self.imageDimensions = self.vtkImage.GetDimensions()
-        self.pixel2Mm = self.vtkImage.GetSpacing()
+        self.voxelSize = self.vtkImage.GetSpacing()
         
         # print(f'grayScale = {self.dicomGrayscaleRange}')
         # print(f'bounds = {self.dicomBoundsRange}')
@@ -5303,7 +5431,7 @@ class DISPLAY(QObject):
         # self.imageReslice.SetBackgroundLevel(self.dicomGrayscaleRange[0])
         
         # self.SetMapColor()
-        self.target[:] = np.array(self.imageDimensions) * np.array(self.pixel2Mm) * 0.5
+        self.target[:] = np.array(self.imageDimensions) * np.array(self.voxelSize) * 0.5
         self.imagePosition[:] = np.array(self.imageDimensions, dtype = int) * 0.5
         self.SetMapColor()
         
@@ -5329,7 +5457,7 @@ class DISPLAY(QObject):
                     renderer.SetCameraToTarget(pos)
                     
     def SetCurrentTrajectory(self, index:int):
-        self.trajectory.setCurrentIndex(index)
+        DISPLAY.trajectory.setCurrentIndex(index)
     
     # Get normal slice position from cross-section slice position
     def GetPositionFromCrossSection(self, posCS):
@@ -5390,9 +5518,9 @@ class DISPLAY(QObject):
         return posCS
     
     def GetTrajectoryColor(self, index:int):
-        nLimit = self.trajectory.nLimitTrajectory
+        nLimit = DISPLAY.trajectory.nLimitTrajectory
         index = min(nLimit - 1, max(-nLimit, index))
-        return self.trajectory.colors[index]
+        return DISPLAY.trajectory.colors[index]
     
         
     def SetMapColor(self):
@@ -5433,7 +5561,7 @@ class DISPLAY(QObject):
         return
     
     def SetTrajectoryVisibility(self, index:int, bVisible:bool):
-        self.trajectory.setVisibility(index, bVisible)
+        DISPLAY.trajectory.setVisibility(index, bVisible)
         
     def CreateActorAndRender(self, value):
         """create actor and render for VTK
@@ -5833,15 +5961,15 @@ class DISPLAY(QObject):
         # self.actorTube.GetProperty().SetOpacity(0.5)
         # self.actorTube.PickableOff()
         
-        startPoint, endPoint = self.trajectory[index]
+        startPoint, endPoint = DISPLAY.trajectory[index]
         self.rendererCrossSection.SetCrossSectionView(endPoint, startPoint)
         
-        self.trajectory.setRenderer(
+        DISPLAY.trajectory.setRenderer(
             index,
-            self.rendererSagittal,
-            self.rendererAxial,
-            self.rendererCoronal,
-            self.renderer3D
+            DISPLAY._lstRendererAxial,
+            DISPLAY._lstRendererCoronal,
+            DISPLAY._lstRendererSagittal,
+            DISPLAY._lstRenderer3D
         )
         
         # self.rendererSagittal.AddActor(self.actorLine)

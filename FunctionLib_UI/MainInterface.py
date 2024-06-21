@@ -29,11 +29,11 @@ from PyQt5.QtWidgets import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_DlgHintBox
-import FunctionLib_UI.Ui_dlgInstallAdaptor
 import FunctionLib_UI.Ui_DlgRobotMoving
 import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
 from FunctionLib_UI.Ui__Aitherbot import *
@@ -188,8 +188,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.dicViewSelector_H['RB'] = self.cbxViewSelection4_H
         
         self.currentDicom = self.buttonGroup.checkedButton().objectName()
-        self.dicDicom[self.btnDicomLow.objectName()] = {}
-        self.dicDicom[self.btnDicomHigh.objectName()] = {}
+        dicomL = self.btnDicomLow.objectName()
+        dicomH = self.btnDicomHigh.objectName()
+        self.dicDicom[dicomL] = {'name' : dicomL, 'trajectory':[]}
+        self.dicDicom[dicomH] = {'name' : dicomH, 'trajectory':[]}
         self.currentTag = self.dicDicom.get(self.currentDicom)
         
         for item in self.dicDicom.values():
@@ -664,9 +666,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgImageView)
-            self.stkScene.setCurrentWidget(self.pgRobotSupportArm)
+            # self.stkScene.setCurrentWidget(self.pgRobotSupportArm)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -715,28 +717,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicom:DISPLAY
     ):
         dicom.CreateLine(index)
-        entry, target = dicom.trajectory[index]
+        # trajectory = dicom.trajectory[index]
+        trajectory = DISPLAY.trajectory[index]
         
-        length = np.linalg.norm(np.array(entry) - np.array(target))
-        self.sldTrajectory.setMinimum(0)
-        self.sldTrajectory.setSingleStep(1)
-        self.sldTrajectory.setPageStep(1)
-        self.sldTrajectory.setMaximum(int(length))
-        self.sldTrajectory.setValue(0)
-        
-        self.currentTag['trajectoryLength'] = int(length)
-        # if dicom == self.dicomLow:
-        
-        for view in self.viewport_L.values():
-            if view.orientation == VIEW_CROSS_SECTION:
-                view.uiScrollSlice.setMaximum(int(length))
-                view.uiScrollSlice.setValue(0)
-        
-        # else:
-        #     for view in self.viewport_H.values():
-        #         length = np.linalg.norm(np.array(entry) - np.array(target))
-        #         if view.orientation == VIEW_CROSS_SECTION:
-        #             view.uiScrollSlice.setMaximum(length)
+        if trajectory is not None:
+            entry, target = trajectory
+            
+            length = np.linalg.norm(np.array(entry) - np.array(target))
+            self.sldTrajectory.setMinimum(0)
+            self.sldTrajectory.setSingleStep(1)
+            self.sldTrajectory.setPageStep(1)
+            self.sldTrajectory.setMaximum(int(length))
+            self.sldTrajectory.setValue(0)
+            
+            self.currentTag['trajectoryLength'] = int(length)
+            # if dicom == self.dicomLow:
+            
+            for view in self.viewport_L.values():
+                if view.orientation == VIEW_CROSS_SECTION:
+                    view.uiScrollSlice.setMaximum(int(length))
+                    view.uiScrollSlice.setValue(0)
+            
+            # else:
+            #     for view in self.viewport_H.values():
+            #         length = np.linalg.norm(np.array(entry) - np.array(target))
+            #         if view.orientation == VIEW_CROSS_SECTION:
+            #             view.uiScrollSlice.setMaximum(length)
         
     def _PlayVedio(self, widget:QWidget, filePath:str):
         
@@ -928,6 +934,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if display is not None and isinstance(display, DISPLAY):
             display.SetTrajectoryVisibility(index, bVisible)
             self.UpdateView()
+            
+    def _ShowTrajectoryList(self, lstTrajectory:list):
+        # 用clear會導致item實體被刪除，如還想保留實體的話不能使用
+        for i in range(self.treeTrajectory.topLevelItemCount()):
+            self.treeTrajectory.takeTopLevelItem(0)
+        
+        self.treeTrajectory.insertTopLevelItems(0, lstTrajectory)
         
     def _TreeDicomViewFilter(self, item:QStandardItem):
         if not item:
@@ -1212,7 +1225,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
-        self.ShowDicom_L()
+        self.ShowDicom()
         self.bDicomChanged = False
         ## 啟用 ui ############################################################################################
         "Enable ui"
@@ -1258,7 +1271,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 return False
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
-        self.ShowDicom_H()
+        self.ShowDicom()
         self.bDicomChanged = False
         ## 啟用 ui ############################################################################################
         "Enable ui"
@@ -1288,22 +1301,29 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnToTarget.setEnabled(bEnable)
         self.sldTrajectory.setEnabled(bEnable)
     
-    def ShowDicom_L(self):
+    def ShowDicom(self):
         """show low dicom to ui
         """
         #Initialize window level / window width
         #Dicom Low
         self.sldWindowWidth.blockSignals(True)
         self.sldWindowWidth.setMinimum(0)
-        self.sldWindowWidth.setMaximum(int(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1]))
+        # self.sldWindowWidth.setMaximum(int(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1]))
+        display = self.currentTag.get('display')
+        if display is None:
+            return
+        
+        self.sldWindowWidth.setMaximum(int(abs(display.dicomGrayscaleRange[0]) + display.dicomGrayscaleRange[1]))
         # self.currentTag['ww'] = abs(thresholdValue * 2)
         self.sldWindowWidth.setValue(self.currentTag.get('ww'))
         self.sldWindowWidth.blockSignals(False)
         
         "WindowCenter / WindowLevel"
         self.sldWindowLevel.blockSignals(True)
-        self.sldWindowLevel.setMinimum(int(self.dicomLow.dicomGrayscaleRange[0]))
-        self.sldWindowLevel.setMaximum(int(self.dicomLow.dicomGrayscaleRange[1]))
+        # self.sldWindowLevel.setMinimum(int(self.dicomLow.dicomGrayscaleRange[0]))
+        # self.sldWindowLevel.setMaximum(int(self.dicomLow.dicomGrayscaleRange[1]))
+        self.sldWindowLevel.setMinimum(int(display.dicomGrayscaleRange[0]))
+        self.sldWindowLevel.setMaximum(int(display.dicomGrayscaleRange[1]))
         # self.currentTag['wl'] = thresholdValue
         self.sldWindowLevel.setValue(self.currentTag.get('wl'))
         self.sldWindowLevel.blockSignals(False)
@@ -1335,14 +1355,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not orientationRB:
             orientationRB = VIEW_CORONAL
             
-        self.viewport_L["LT"] = ViewPortUnit(self, self.dicomLow, self.wdgLeftTop, orientationLT, self.sbrLeftTop, self.cbxLeftTop)
-        self.viewport_L["RT"] = ViewPortUnit(self, self.dicomLow, self.wdgRightTop, orientationRT, self.sbrRightTop, self.cbxRightTop)
-        self.viewport_L["LB"] = ViewPortUnit(self, self.dicomLow, self.wdgLeftBottom, orientationLB, self.sbrLeftBottom, self.cbxLeftBottom)
-        self.viewport_L["RB"] = ViewPortUnit(self, self.dicomLow, self.wdgRightBottom, orientationRB, self.sbrRightBottom, self.cbxRightBottom)
+        self.viewport_L["LT"] = ViewPortUnit(self, display, self.wdgLeftTop, orientationLT, self.sbrLeftTop, self.cbxLeftTop)
+        self.viewport_L["RT"] = ViewPortUnit(self, display, self.wdgRightTop, orientationRT, self.sbrRightTop, self.cbxRightTop)
+        self.viewport_L["LB"] = ViewPortUnit(self, display, self.wdgLeftBottom, orientationLB, self.sbrLeftBottom, self.cbxLeftBottom)
+        self.viewport_L["RB"] = ViewPortUnit(self, display, self.wdgRightBottom, orientationRB, self.sbrRightBottom, self.cbxRightBottom)
         self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
-        
-        
-        
         self.currentRenderer = self.viewport_L['LT'].renderer
         self.currentRenderer.SetSelectedOn()
         # 綁定GetRenderer signal
@@ -1363,7 +1380,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             view.signalFocus.connect(self.Focus)
             view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
             # view.signalSetSliceValue.connect(self.SetSliceValue_L)
-        
         # 強制更新第一次
         # self.SetSliceValue_L(self.dicomLow.imagePosition)
         
@@ -1374,81 +1390,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
         self._ResumeStored()
-            
-        self.UpdateView()
-        
-    def ShowDicom_H(self):
-        """show low dicom to ui
-        """
-        #Dicom Low
-        self.sldWindowWidth.blockSignals(True)
-        self.sldWindowWidth.setMinimum(0)
-        self.sldWindowWidth.setMaximum(int(abs(self.dicomHigh.dicomGrayscaleRange[0]) + self.dicomHigh.dicomGrayscaleRange[1]))
-        self.sldWindowWidth.setValue(self.currentTag.get('ww'))
-        self.sldWindowWidth.blockSignals(False)
-        
-        "WindowCenter / WindowLevel"
-        self.sldWindowLevel.blockSignals(True)
-        self.sldWindowLevel.setMinimum(int(self.dicomHigh.dicomGrayscaleRange[0]))
-        self.sldWindowLevel.setMaximum(int(self.dicomHigh.dicomGrayscaleRange[1]))
-        self.sldWindowLevel.setValue(self.currentTag.get('wl'))
-        self.sldWindowLevel.blockSignals(False)
-        ## 用 vtk 顯示 diocm ############################################################################################
-        # if self.viewport_H:
-        #     for view in self.viewport_H.values():
-        #         view.Reset() 
-        if self.viewport_L:
-            for view in self.viewport_L.values():
-                view.Reset() 
-                
-        # self.viewport_H = {}
-        self.viewport_L = {}
-        
-        # self.viewport_H["LT"] = ViewPortUnit(self, self.dicomHigh, self.wdgLeftTop, VIEW_3D, self.sbrLeftTop, self.cbxLeftTop)
-        # self.viewport_H["RT"] = ViewPortUnit(self, self.dicomHigh, self.wdgRightTop, VIEW_AXIAL, self.sbrRightTop, self.cbxRightTop)
-        # self.viewport_H["LB"] = ViewPortUnit(self, self.dicomHigh, self.wdgLeftBottom, VIEW_SAGITTAL, self.sbrLeftBottom, self.cbxLeftBottom)
-        # self.viewport_H["RB"] = ViewPortUnit(self, self.dicomHigh, self.wdgRightBottom, VIEW_CORONAL, self.sbrRightBottom, self.cbxRightBottom)
-        # self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_H)
-        self.viewport_L["LT"] = ViewPortUnit(self, self.dicomHigh, self.wdgLeftTop, VIEW_3D, self.sbrLeftTop, self.cbxLeftTop)
-        self.viewport_L["RT"] = ViewPortUnit(self, self.dicomHigh, self.wdgRightTop, VIEW_AXIAL, self.sbrRightTop, self.cbxRightTop)
-        self.viewport_L["LB"] = ViewPortUnit(self, self.dicomHigh, self.wdgLeftBottom, VIEW_SAGITTAL, self.sbrLeftBottom, self.cbxLeftBottom)
-        self.viewport_L["RB"] = ViewPortUnit(self, self.dicomHigh, self.wdgRightBottom, VIEW_CORONAL, self.sbrRightBottom, self.cbxRightBottom)
-        self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
-        
-        
-        # self.currentRenderer = self.viewport_H['LT'].renderer
-        self.currentRenderer = self.viewport_L['LT'].renderer
-        self.currentRenderer.SetSelectedOn()
-        # 綁定GetRenderer signal
-        # for widget in self.vtkWidgets_L:
-        #     iStyle = widget.GetRenderWindow().GetInteractor().GetInteractorStyle()
-            
-        
-        # for view in self.viewport_H.values():
-        for view in self.viewport_L.values():
-            iStyle = view.iren.GetInteractorStyle()
-            iStyle.signalObject.ConnectUpdateView(self.UpdateView)
-            # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
-            iStyle.signalObject.ConnectGetRenderer(self.GetCurrentRendererCallback)
-            
-            # view.SetFocusMode(False)
-            # view.signalUpdateSlice.connect(self.ChangeSlice_H)
-            view.signalUpdateSlice.connect(self.ChangeSlice_L)
-            view.signalUpdateAll.connect(self.UpdateTarget)
-            view.signalUpdateExcept.connect(self.UpdateTarget)
-            view.signalFocus.connect(self.Focus)
-            # view.signalSetSliceValue.connect(self.SetSliceValue_L)
-        
-        # 強制更新第一次
-        # self.SetSliceValue_L(self.dicomLow.imagePosition)
-        
-        """trajectory"""
-        # trajectoryLength = self.currentTag.get('trajectoryLength')
-        # trajectoryValue  = self.currentTag.get('trajectoryValue')
-        # if trajectoryValue and trajectoryLength:
-        #     self.sldTrajectory.setMaximum(trajectoryLength)
-        #     self.sldTrajectory.setValue(trajectoryValue)
-        self._ResumeStored()
+        self.UpdateTarget()
         self.UpdateView()
         
     def UpdateView(self):
@@ -1466,7 +1408,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if ww is not None:
                 self.sldWindowWidth.setValue(ww)
             
-    def UpdateTarget(self, orientation:str = None, pos = None, bFocus = True):
+    def UpdateTarget(
+        self, 
+        orientation:str = None, 
+        pos = None, 
+        bFocus = True
+    ):
         viewPort = self.GetViewPort()
         
         if viewPort is None:
@@ -1478,6 +1425,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 if bFocus == True:
                     view.Focus()
+                    
                 view.renderer.SetTarget(pos)
                 view.ChangeSliceView()
                 # view.UpdateView()
@@ -1512,6 +1460,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             index = countOfTrajectory
             item.setData(2, ROLE_COLOR, display.GetTrajectoryColor(index))
+            
+            item.setData(0, ROLE_DICOM, self.currentTag['name'])
+            
+            self.currentTag['trajectory'].append(item)
+                
+            
             
             self.treeTrajectory.blockSignals(True)
             self.treeTrajectory.setCurrentItem(item)
@@ -1567,6 +1521,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         pickPoint = self.currentTag.get("pickPoint").copy()
         currentDicom = self.currentTag.get('display')
+        # pickPoint = currentDicom.target.copy()
         if pickPoint is not None and currentDicom is not None:
             currentDicom.DrawPoint(pickPoint, 1)      
             # currentDicom.entryPoint = pickPoint
@@ -1594,16 +1549,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         pickPoint = self.currentTag.get("pickPoint").copy()
         currentDicom = self.currentTag.get('display')
+        # pickPoint = currentDicom.target.copy()
         if pickPoint is not None and currentDicom is not None:
             currentDicom.DrawPoint(pickPoint, 2)
             # currentDicom.targetPoint = pickPoint
             idx = self._GetCurrentTrajectory()
             if idx > -1:
-                currentDicom.trajectory.setTarget(pickPoint, idx)
+                # currentDicom.trajectory.setTarget(pickPoint, idx)
+                DISPLAY.trajectory.setTarget(pickPoint, idx)
                 self.currentTag["target"] = np.array(pickPoint)
                 
-                # if self.currentTag.get("entry") is not None:
-                if currentDicom.trajectory.count() > idx:
+                # if currentDicom.trajectory.count() > idx:
+                if DISPLAY.trajectory.count() > idx:
                     self.currentTag.update({"flageSelectedPoint": True})
                     
                     # point1 = self.currentTag.get("entry")
@@ -1618,8 +1575,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # entryPoint = currentDicom.entryPoint
-        entryPoint = currentDicom.trajectory.getEntry()
+        # entryPoint = currentDicom.trajectory.getEntry()
+        entryPoint = DISPLAY.trajectory.getEntry()
         if entryPoint is not None:
             bHasCrossSection = False
             self.sldTrajectory.setValue(self.sldTrajectory.maximum())
@@ -1642,8 +1599,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # targetPoint = currentDicom.targetPoint
-        targetPoint = currentDicom.trajectory.getTarget()
+        # targetPoint = currentDicom.trajectory.getTarget()
+        targetPoint = DISPLAY.trajectory.getTarget()
         if targetPoint is not None:
             bHasCrossSection = False
             self.sldTrajectory.setValue(0)
@@ -1811,36 +1768,38 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # print(f'value = {value}')
         # sldValue = self.sldTrajectory.maximum() - value
         idx = self._GetCurrentTrajectory()
-        display = self.currentTag.get('display')
-        # entry  = self.currentTag.get('entry')
-        # target = self.currentTag.get('target')
-        entry, target  = display.trajectory[idx]
-        vector = entry - target
+        # display = self.currentTag.get('display')
         
-        vectorUnit = vector / np.linalg.norm(vector)
-        newTarget = target + vectorUnit * value
-        
-        self.lblDistanceToTarget.setText(f'{value:.2f}mm')
-        self.currentTag['trajectoryValue'] = value
-        # print(f'target = {target}, value = {value}, newTarget = {newTarget}')
-        
-        bHasCrossSection = False
-        for view in self.viewport_L.values():
-            if view.orientation == VIEW_CROSS_SECTION:
-                view.ChangeTrajectoryPosition(value)
-                bHasCrossSection = True
-                break
+        # trajectory = display.trajectory[idx]
+        trajectory = DISPLAY.trajectory[idx]
+        if trajectory is not None:
+            entry, target  = trajectory
+            vector = entry - target
             
-        if bHasCrossSection == False:
+            vectorUnit = vector / np.linalg.norm(vector)
+            newTarget = target + vectorUnit * value
+            
+            self.lblDistanceToTarget.setText(f'{value:.2f}mm')
+            self.currentTag['trajectoryValue'] = value
+            # print(f'target = {target}, value = {value}, newTarget = {newTarget}')
+            
+            bHasCrossSection = False
             for view in self.viewport_L.values():
-                if view.orientation != VIEW_3D:
-                    # view.MapPositionToImageSlice(pos = newTarget)
-                    # imagePos = np.round(newTarget / view.renderer.pixel2Mm)
-                    # view.ChangeSliceView(imagePos)
-                    view.renderer.SetTarget(newTarget)
+                if view.orientation == VIEW_CROSS_SECTION:
+                    view.ChangeTrajectoryPosition(value)
+                    bHasCrossSection = True
                     break
-            self.UpdateTarget()
-            self.UpdateView()
+                
+            if bHasCrossSection == False:
+                for view in self.viewport_L.values():
+                    if view.orientation != VIEW_3D:
+                        # view.MapPositionToImageSlice(pos = newTarget)
+                        # imagePos = np.round(newTarget / view.renderer.pixel2Mm)
+                        # view.ChangeSliceView(imagePos)
+                        view.renderer.SetTarget(newTarget)
+                        break
+                self.UpdateTarget()
+                self.UpdateView()
         # self.renderer.ChangeView(value)
         # # 還沒改完..
         
@@ -1949,6 +1908,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         currentDicom = self.currentTag.get('display')
                         if currentDicom is not None:
                             view.SetViewPort(viewName, currentDicom.rendererList[viewName])
+                            view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
                         else:
                             # QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
                             MessageBox.ShowCritical('DICOM ERROR', 'missing current dicom')
@@ -2288,16 +2248,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def ChangeCurrentDicom(self, dicomName:str):
         tag = self.dicDicom.get(dicomName)
-        if not tag:
+        if tag is None:
             # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
             MessageBox.ShowCritical('dicom error', 'dicom name not exists')
             return False
         
         self.currentTag = tag
-        if dicomName == self.btnDicomLow.objectName():
-            self.ShowDicom_L()
-        elif dicomName == self.btnDicomHigh.objectName():
-            self.ShowDicom_H()
+        # if dicomName == self.btnDicomLow.objectName():
+        self.ShowDicom()
+        # elif dicomName == self.btnDicomHigh.objectName():
+        #     self.ShowDicom_H()
         return True
         
     def ChangeTrajectorySlider(self, value:int):
@@ -2305,15 +2265,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 這是單純為了讓拖動scrollBar同步改變sldTrajectory的值
         # 而不會觸發OnValueChanged
         # 以避免重複觸發slot事件的無限迴圈
-        
         self.sldTrajectory.blockSignals(True)
         self.sldTrajectory.setValue(value)
         self.sldTrajectory.blockSignals(False)
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
+            self.StopVedio()
             self.idEnabledDevice = DEVICE_ENABLED
             self._EnableDevice(DEVICE_ENABLED)
+        elif self.stkMain.currentWidget() == self.pgInstallSupportArm:
+            self._PlayVedio(self.wdgInstallSupportArm, 'video/patient_install_support_arm.mp4')
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -4173,16 +4135,17 @@ class Canvas(FigureCanvasQTAgg):
     
         
 class WidgetProcess(QWidget):
-    angle = 0
-    angleStep = 3.6
-    radius = 100
-    circleWidth = 10
     signalPercent = pyqtSignal(float)
     signalFinished = pyqtSignal()
-    bFinished = False
     
     def __init__(self, parent: QWidget):
         super().__init__(parent)
+        
+        self.angle = 0
+        self.angleStep = 3.6
+        self.radius = 100
+        self.circleWidth = 10
+        self.bFinished = False
         
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -4645,31 +4608,22 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
     def IsShow():
         return DlgHintBox.bShow
         
-class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInstallAdaptor):
+class DlgInstallAdaptor(QDialog, Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()
     
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.player = QMediaPlayer()
+        self.player.mediaStatusChanged.connect(self.statusChanged)
         
-        
-        # self.player = QMediaPlayer()
-        
-        # self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/InstallHolder.mp4')))
-        
-        # videoWidget = QVideoWidget()
-        # videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
-        # self.player.setVideoOutput(videoWidget)
-        
-        # layout = QVBoxLayout(self.wdgMedia)
-        # layout.addWidget(videoWidget)
-        # layout.setContentsMargins(0, 0, 0, 0)
-        
-        # self.player.play()
-        
-        # self.player.mediaStatusChanged.connect(self.statusChanged)
         self.btnConfirm.setEnabled(False)
         self.btnConfirm.clicked.connect(self.OnClicked_btnConfirm)
+        self.btnConfirm_needle.clicked.connect(lambda: self.close())
+        self.stkWidget.currentChanged.connect(self.onCurrentChanged)
+        self.stkWidget.setCurrentWidget(self.pgDriveRobot)
+        self.pgRobotMoving.SetText('Robot Moving...')
+        
         
     def statusChanged(self, status):
         if status == QMediaPlayer.EndOfMedia:
@@ -4677,15 +4631,31 @@ class DlgInstallAdaptor(QDialog, FunctionLib_UI.Ui_dlgInstallAdaptor.Ui_dlgInsta
             self.player.play()
             
     def closeEvent(self, event: QCloseEvent):
-        # self.player.stop()
+        self.player.stop()
         return super().closeEvent(event)
+    
+    def onCurrentChanged(self, index):
+        currentWidget = self.stkWidget.currentWidget()
+        if currentWidget == self.pgNeedle:
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/patient_needle.mp4')))
+            
+            videoWidget = QVideoWidget()
+            videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
+            self.player.setVideoOutput(videoWidget)
+            
+            layout = QVBoxLayout(self.wdgPutNeedle)
+            layout.addWidget(videoWidget)
+            layout.setContentsMargins(0, 0, 0, 0)
+            self.player.play()
+        elif currentWidget == self.pgRobotMoving:
+            QTimer.singleShot(3000, lambda:self.stkWidget.setCurrentWidget(self.pgNeedle))
     
     def OnClicked_btnConfirm(self):
         ret = MessageBox.ShowInformation('This action will move robot, do you sure about that?', 'YES', 'NO')
-        QTimer.singleShot(1000, lambda: self.close())
+        QTimer.singleShot(1000, lambda: self.stkWidget.setCurrentWidget(self.pgRobotMoving))
         
         if ret == 0:
-            logger.info('robot move')
+            logger.info('robot start to move')
             self.signalRobotStartMoving.emit()
             
     def SetState(self, bEnabled:bool):

@@ -98,6 +98,52 @@ class WidgetHoming(QWidget):
         self.percent = percent
         self.update()
         
+class WidgetProgressing(QWidget):
+    
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self.angle = 0
+        self.text = ''
+        
+        self.idle = QTimer()
+        self.idle.timeout.connect(self._onTimer)
+        self.idle.start(33)
+        
+    def paintEvent(self, event: QPaintEvent):
+        center = self.rect().center()
+        painter = QPainter(self)
+        
+        painter.translate(center)
+        
+        font = painter.font()
+        font.setFamily('Arial')
+        font.setPointSize(36)
+        
+        fm = QFontMetrics(font)
+        painter.setFont(font)
+        painter.setPen(QColor(255, 255, 255))
+        
+        posX = int(fm.width(self.text) * 0.5)
+        posY = int(fm.height() * 0.5) - 3
+        painter.drawText(-posX, posY, self.text)
+        
+        painter.setPen(Qt.NoPen)
+        painter.rotate(self.angle)
+        radius = min(self.width(), self.height()) // 2 - 50
+        stepColor = 255 // 72
+        for i in range(72):
+            painter.setBrush(QColor(255, 255, 255, 255 - i * stepColor))
+            painter.drawEllipse(QPoint(radius, 0), 10, 10)
+            painter.rotate(-5)
+        
+        return super().paintEvent(event)
+    
+    def _onTimer(self):
+        self.angle = (self.angle + 5) % 360
+        self.update()
+        
+    def SetText(self, text:str):
+        self.text = text
             
 class NaviButton(QPushButton):
     angle = 0

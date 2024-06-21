@@ -100,6 +100,7 @@ HINT_DOWN_LEFT  = 3
 # trajectory item data
 ROLE_VISIBLE = Qt.UserRole + 1
 ROLE_COLOR = Qt.UserRole + 2
+ROLE_DICOM = Qt.UserRole + 3
 
 
 IMG_VISIBLE = 'image/eye2.png'
