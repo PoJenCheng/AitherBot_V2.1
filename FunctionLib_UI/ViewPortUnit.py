@@ -138,8 +138,8 @@ class ViewPortUnit(QObject):
         
         if self.bFocusMode:
             if hasattr(self, 'renderer') and \
-                self.orientation != VIEW_3D and \
                 self.orientation != VIEW_CROSS_SECTION:
+                # self.orientation != VIEW_3D and \
                 if pos is None:
                     pos = self.renderer.target
                 self.renderer.SetCameraToTarget(pos)

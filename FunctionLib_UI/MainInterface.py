@@ -666,9 +666,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            self.stkScene.setCurrentWidget(self.pgImportDicom)
-            # self.stkScene.setCurrentWidget(self.pgImageView)
-            # self.stkScene.setCurrentWidget(self.pgRobotSupportArm)
+            # self.stkScene.setCurrentWidget(self.pgImportDicom)
+            self.stkScene.setCurrentWidget(self.pgPositionRobot)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -1697,10 +1696,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif nStep == 4:
             # self.wdgPicture.setStyleSheet('image:url(image/pedal_lock.png);')
             self.StopVedio()
-            self.stkScene.setCurrentWidget(self.pgPlaceHolder)
+            # self.stkScene.setCurrentWidget(self.pgPlaceHolder)
+            self._Robot_driveTo()
             self.bSterile = True
         elif nStep is None:
-            self.stkScene.setCurrentWidget(self.pgPlaceHolder)
+            self._Robot_driveTo()
+            # self.stkScene.setCurrentWidget(self.pgImageView)
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
         if column == 0:
@@ -2328,6 +2329,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgRobotRegSphere:
             self._PlayVedio(self.wdgSetupBall, 'video/ball_setup.mp4')
         elif currentWidget == self.pgPositionRobot:
+            self._PlayVedio(self.wdgPositionRobotPicture, 'video/robot_set_target.mp4')
             self.wdgAnimatePositionRobot.Start()
         elif currentWidget == self.pgRobotSupportArm:
             # self._PlayVedio(self.wdgSetupRobot, 'video/robot_mount_support_arm.mp4')
@@ -3148,7 +3150,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.Robot_FixArm()
         
     def Robot_GetPedal(self):
-        self.RobotSupportArm.ReadPedal()
+        if self.RobotSupportArm:
+            self.RobotSupportArm.ReadPedal()
     
         
     def Laser_SetLoadingMessage(self, msg:str):
