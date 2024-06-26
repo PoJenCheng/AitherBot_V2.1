@@ -2272,11 +2272,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            self.StopVedio()
-            self.idEnabledDevice = DEVICE_ENABLED
-            self._EnableDevice(DEVICE_ENABLED)
-        elif self.stkMain.currentWidget() == self.pgInstallSupportArm:
-            self._PlayVedio(self.wdgInstallSupportArm, 'video/patient_install_support_arm.mp4')
+            # self.enableDevice(DEVICE_LASER)
+            self.enableDevice(DEVICE_ROBOT)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2919,7 +2916,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return
         
         # self.robot.signalProgress.disconnect(self.Robot_OnLoading)
-        
+        self.Robot_HomingProcess()
         self.uiHoming = HomingWidget(self)
         self.uiHoming.finished.connect(lambda:self.NextScene())
         self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
@@ -2941,8 +2938,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
     def Robot_OnThreadHomingProcess(self):
         if self.robot.bConnected == True:
-            if self.robot.HomeProcessing() == True:
-                logger.info("Home processing is done!")
+            if self.robot.HomeProcessing_image() == True:
+                print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
                 # self.RobotRun()
@@ -3007,12 +3004,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def RobotRun(self):
         if self.homeStatus is True:
-            self.robot.P2P()
-            logger.info("Robot run processing is done!")
+            self.robot.P2P(entry_full_1, target_full_1, entry_halt_1, target_halt_1)
+            print("Robot run processing is done!")
             # QMessageBox.information(self, "information", "Robot run processing is done!")
             
             #執行呼吸補償
             self.robot.breathingCompensation()
+            
+            nextPoint = input("是否執行下一個手術點?如果是，請按'Y'，若不是請按'N'")
+            if nextPoint == 'Y':
+                self.robot.P2P(entry_full_2, target_full_2, entry_halt_2, target_halt_2)
+                #執行呼吸補償
+                self.robot.breathingCompensation()
         else:
             logger.warning("Please execute home processing first.")
             # QMessageBox.information(self, "information", "Please execute home processing first.")

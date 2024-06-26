@@ -31,9 +31,9 @@ maxManualRotateSpeed = 200
 jogResolution = 1
 differential_time = 2
 normalSpeed = 1000
-shiftingFLDC_up = -7407.9492-11.0742
+shiftingFLDC_up = -81.2109 - 7790.4492
 shiftingBLDC_Up = -37126.9336-0.0879
-shiftingFLDC_Down = -8178.5742-6828.7500
+shiftingFLDC_Down = 6314.7656 - 16182.7734
 shiftingBLDC_Down = -37000.0195+0.1758
 robotShifting = np.array([70, -11.5, 205])
 
@@ -108,3 +108,18 @@ IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
 
 SKIP_REGISTRATION = False
+
+entry_full_1 = np.array([5,20.93392833,-85.62637816])
+target_full_1 = np.array([ 35,80.55959477,-126.77388984])
+entry_halt_1 = np.array([5,10.93381232,-85.61114631])
+target_halt_1 = np.array([ 20,72.57378253,-127.63668602])
+
+entry_full_2 = np.array([8,25.93392833,-90.62637816])
+target_full_2 = np.array([ 32,75.55959477,-123.77388984])
+entry_halt_2 = np.array([8,13.93381232,-90.61114631])
+target_halt_2 = np.array([ 18,70.57378253,-130.63668602])
+
+max_linear_count = 36000
+max_linearDiffCount_1 = 5000 # motor axis 2 - motor axis 4
+max_linearDiffCount_2 = 10000 # motor axis 4 - motor axis 2
+max_rotateDiffCount = 9000 # motor axis 1 -motor axis 3
