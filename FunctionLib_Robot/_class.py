@@ -415,7 +415,7 @@ class RobotSupportArm(QObject):
         return self.TargetEn1, self.TargetEn2
     
     def CaliEncoder1(self):
-        caliStatus  = False
+        caliStatus  = True   # test, 預設False
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
@@ -430,7 +430,7 @@ class RobotSupportArm(QObject):
                     winsound.Beep(self.frequency, self.duration)
                     
     def CaliEncoder2(self):
-        caliStatus  = False
+        caliStatus  = True   # test, 預設False
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
@@ -454,7 +454,7 @@ class RobotSupportArm(QObject):
         return self.bRobotMoveFromTarget
 
 class imageCalibration():
-    def __init__(self,id):
+    def __init__(self,id,exposure_time):        
         # 初始化相機
         self.camera = ueye.HIDS(id)
 
@@ -466,6 +466,7 @@ class imageCalibration():
 
         # 獲取相機感測器的資訊
         self.sensor_info = ueye.SENSORINFO()
+        print(self.sensor_info.SensorID)
         ueye.is_GetSensorInfo(self.camera, self.sensor_info)
 
         # 設置相機的尺寸
@@ -476,7 +477,7 @@ class imageCalibration():
         ueye.is_SetColorMode(self.camera, ueye.IS_CM_MONO8)
 
         # 調整曝光度
-        self.exposure_time = 3
+        self.exposure_time = exposure_time
         ueye.is_Exposure(self.camera, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ueye.DOUBLE(self.exposure_time), ueye.sizeof(ueye.DOUBLE))
 
         # 分配內存
@@ -519,25 +520,64 @@ class imageCalibration():
         corrected_image = cv2.warpPerspective(image, M, (int(width), int(height)))
         
         return corrected_image, width, height
+    
+    def cameraLogOut(self):
+        # 釋放內存並退出相機
+        ueye.is_FreeImageMem(self.camera, self.mem_ptr, self.mem_id)
+        ueye.is_ExitCamera(self.camera)
 
 
-    def FindCrossPoint(self, L1,L2):
-        # 定義兩條直線的一般方程式
-        # 第一條直線 Ax + By + C = 0
-        A1, B1, C1,S1 = L1  # 直線1的係數
-        # 第二條直線 Ax + By + C = 0
-        A2, B2, C2,S2 = L2  # 直線2的係數
+    # def FindCrossPoint(self, L1,L2):
+    #     # 定義兩條直線的一般方程式
+    #     # 第一條直線 Ax + By + C = 0
+    #     A1, B1, C1,S1 = L1  # 直線1的係數
+    #     # 第二條直線 Ax + By + C = 0
+    #     A2, B2, C2,S2 = L2  # 直線2的係數
 
-        # 使用 numpy 解決線性方程式
-        # 建立係數矩陣
-        coefficients = np.array([[A1, B1], [A2, B2]])
-        # 建立常數項
-        constants = np.array([-C1, -C2])
-        # 求解交點
-        solution = np.linalg.solve(coefficients, constants)
-        # 輸出交點
-        print(solution)
-        return solution
+    #     # 使用 numpy 解決線性方程式
+    #     # 建立係數矩陣
+    #     coefficients = np.array([[A1, B1], [A2, B2]])
+    #     # 建立常數項
+    #     constants = np.array([-C1, -C2])
+    #     # 求解交點
+    #     solution = np.linalg.solve(coefficients, constants)
+    #     # 輸出交點
+    #     print(solution)
+    #     return solution
+    
+    def FindCrossPoint(self,path):
+        imagePic = cv2.imread(path)
+
+        # 將影像轉換為灰度圖像
+        gray = cv2.cvtColor(imagePic, cv2.COLOR_BGR2GRAY)
+
+        # 對灰度圖像進行閾值處理
+        _, thresh = cv2.threshold(gray, 254, 255, cv2.THRESH_BINARY)
+
+        # 找到輪廓
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # 假設白色矩形是最大的輪廓
+        contour = max(contours, key=cv2.contourArea)
+
+        # 獲取最小外接矩形
+        rect = cv2.minAreaRect(contour)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+
+        # 繪製矩形（可選）
+        cv2.drawContours(imagePic, [box], 0, (0, 0, 255), 2)
+
+        # 獲取四個頂點座標
+        points = [(point[0], point[1]) for point in box]
+
+        # 輸出四個頂點座標
+        print("左下角:", points[0])
+        print("左上角:", points[1])
+        print("右上角:", points[2])
+        print("右下角:", points[3])
+        
+        return points
 
     def lineEquation(self, x1,y1,x2,y2):
         # 計算斜率
@@ -616,23 +656,37 @@ class imageCalibration():
                       
         return leftLine, rightLine,intercept_Y
 
-    def poleEdgeFider(self, imagePixel,Y_value1,Y_value2,threadValue):
+    def poleEquation(self, imagePixel,Y_value1,Y_value2):
         data1 = []
         data2 = []
         for x in range(imagePixel.shape[1]):  # 列
                 # 確保像素值為無符號 8 位整數
                 pixel_value1 = int(imagePixel[Y_value1, x])  # 轉換為整數
                 pixel_value2 = int(imagePixel[Y_value2, x])  # 轉換為整數
-                if pixel_value1 <= threadValue:
-                    pixel_value1 = 1
+                if pixel_value1 == 0:
+                    # pixel_value1 = 1
                     data1.append([x,Y_value1])
-                if pixel_value2 <= threadValue:
-                    pixel_value2 = 1
+                if pixel_value2 == 0:
+                    # pixel_value2 = 1
                     data2.append([x, Y_value2])
         leftLine = self.lineEquation(data1[0][0],data1[0][1],data2[0][0],data2[0][1])   
         rightLine = self.lineEquation(data1[-1][0],data1[-1][1],data2[-1][0],data2[-1][1])
                 
-        return leftLine, rightLine,data1
+        return leftLine, rightLine
+    
+    def poleEdgeFinder(self, imagePixel, Y_value1, Y_value2, threadValue):
+        data1 = []
+        data2 = []
+        for x in range(imagePixel.shape[1]):
+            pixel_value1 = int(imagePixel[Y_value1,x])
+            pixel_value2 = int(imagePixel[Y_value2,x])
+            if pixel_value1 <= threadValue:
+                data1.append([x,Y_value1])
+            if pixel_value2 <= threadValue:
+                data2.append([x,Y_value2])
+        
+        return data1, data2
+                
 
     def findAngle(self,slope):
         theta_rad = math.atan(slope)  # 反正切，得到弧度值
@@ -664,8 +718,80 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         self.initProgress = 0
         self.bStop = False
         
-        self.cameraCali_Front = imageCalibration(0)
-        # self.cameraCali_Side = imageCalibration(1)
+        global entry
+        global target
+        
+        entry = 0
+        target = 0
+        # print(self.get_camera_list())
+        
+        # frontCamera_ID = 0
+        frontCamera_ID = 0
+        sideCamera_ID = 1
+        
+        self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+        
+        # cameraCheck = False
+        # while cameraCheck == False:
+        #     cameraCheck = self.cameraID_check(self.cameraCali_Front)
+        #     if cameraCheck == False:
+        #         self.cameraCali_Front.cameraLogOut()
+        #         self.cameraCali_Side.cameraLogOut()
+        #         frontCamera_ID = 1
+        #         sideCamera_ID = 0
+        #         self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        #         self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+
+    # 獲取相機列表並列印序列號
+    def get_camera_list(self):
+        num_cameras = ueye.int()
+        ueye.is_GetNumberOfCameras(num_cameras)
+        camera_list = ueye.UEYE_CAMERA_LIST()
+        ueye.is_GetCameraList(camera_list)
+        cameras = []
+        for i in range(camera_list.nCameras):
+            serial_number = camera_list.uci[i].SerNo.decode('utf-8')
+            cameras.append(serial_number)
+        return cameras
+
+    def cameraID_check(self, camera):
+        ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
+        sleep(1)  # 等待攝影完成
+
+        # 取得影像數據
+        image_data = ueye.get_data(camera.mem_ptr, camera.original_width, \
+            camera.original_height, 8, camera.original_width, copy=True)
+
+        # 確保無符號 8 位整數
+        image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
+
+        # 縮放圖像至原始尺寸的一半
+        self.scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
+        self.scaled_width = camera.original_width // 2
+        self.scaled_height = camera.original_height // 2
+        
+        cv2.imwrite("imageFront.jpg",self.scaled_image)
+        
+        points = camera.FindCrossPoint('imageFront.jpg')
+
+        CalibrationResult = camera.CameraCalibration(self.scaled_image,points[1],points[2],points[0],points[3])
+        corrected_image = CalibrationResult[0]
+        
+        cv2.imwrite("imageFront_cal.jpg",corrected_image)
+        
+        # 修改成adaptive threshold image
+        src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+        dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
+        cv2.imwrite("imageFrontAdaptive.jpg",dst)
+        
+        src = cv2.imread("imageFrontAdaptive.jpg", cv2.IMREAD_GRAYSCALE)
+        imageSize = src.size
+        
+        if imageSize < 150000:
+            return False
+        else:
+            return True
         
         
     def sti_init(self):
@@ -1035,8 +1161,8 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
             self.DisplaySafe()
         return True
     
-    def poleCalibration_rotate(self,camera,corrected_image,caliStatus):
-        leftLine, rightLine,data = camera.poleEdgeFider(corrected_image,20,70,140)
+    def RollCalibration(self,camera,corrected_image,caliStatus):
+        leftLine, rightLine= camera.poleEquation(corrected_image,20,180)
         if leftLine[3] == True or rightLine[3] == True:
             try:
                 caliAngle = camera.findAngle(((leftLine[0])+(rightLine[0]))/2)
@@ -1065,14 +1191,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         
         return caliStatus
     
-    def poleCalibration_movement(self,camera, corrected_image,imageWidth,caliStatus):
-        leftLine, rightLine, data = camera.poleEdgeFider(corrected_image,50,100,140)
-        poleWidth = abs(leftLine[2] - rightLine[2])
-        edgeX = data[0][0]
-        pole_midLine = edgeX + poleWidth
+    def YawCalibration(self,camera, corrected_image,imageWidth,caliStatus):
+        leftLine, rightLine= camera.poleEdgeFinder(corrected_image,50,100,50)
+        poleWidth = abs(leftLine[1][0] - rightLine[-1][0])
+        pole_midLine = leftLine[1][0] + poleWidth/2
         diff_distance = (imageWidth/2 - pole_midLine)*(138/605)
         print(diff_distance)
-        if abs(diff_distance) >= 1 and abs(diff_distance) < 100:
+        if abs(diff_distance) >= 0.5 and abs(diff_distance) < 100:
             diff_angle = math.asin(diff_distance/robotInitialLength)
             caliAngle = diff_angle*180/math.pi
             RotationCount_axis3 = float(caliAngle*(RotationMotorCountPerLoop*RotateGearRatio)/360)
@@ -1080,12 +1205,32 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
             self.FLDC_Down.bMoveRelativeEnable()
             while self.FLDC_Down.fbMoveRelative() != True:
                 caliStatus = False
-        elif abs(diff_distance) >= 100:
-            caliStatus = False
         else:
             caliStatus = True   
             
-        return caliStatus                 
+        return caliStatus   
+    
+    def PitchCalibration(self,camera, corrected_image):
+        caliStatus = False
+        upperData, lowerData = camera.poleEdgeFinder(corrected_image,30,130,50)
+        diff_distance = (upperData[2][0]-lowerData[2][0])*(138/605)
+        print(diff_distance)
+        if diff_distance > 0.1 :
+            LinearCount_axis2 = diff_distance*LinearMotorCountPerLoop
+            self.BLDC_Up.MoveRelativeSetting(LinearCount_axis2, 100)
+            self.BLDC_Up.bMoveRelativeEnable()
+            while self.BLDC_Up.fbMoveRelative() != True:
+                caliStatus = False
+        elif diff_distance < -0.1:
+            LinearCount_axis4 = diff_distance*LinearMotorCountPerLoop
+            self.BLDC_Down.MoveRelativeSetting(LinearCount_axis4, 100)
+            self.BLDC_Down.bMoveRelativeEnable()
+            while self.BLDC_Down.fbMoveRelative() != True:
+                caliStatus = False            
+        else:
+            caliStatus = True
+            
+        return caliStatus               
     
     def imageCalibraionProcess_front(self,camera):
         caliStatus = False
@@ -1110,42 +1255,40 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
             
             cv2.imwrite("imageFront.jpg",self.scaled_image)
             
-            
-            
-            # value = self.scaled_image[196,196]
-            # print(value)
-            horizentalLine = camera.edgeFinder_intercept_X(self.scaled_image,100,500,255)
-            verticalLine = camera.edgeFinder_intercept_Y(self.scaled_image,100,400,255)
-            
-            CrossP1 = camera.FindCrossPoint(horizentalLine[0],verticalLine[0])
-            CrossP2 = camera.FindCrossPoint(horizentalLine[0],verticalLine[1])
-            CrossP3 = camera.FindCrossPoint(horizentalLine[1],verticalLine[0])
-            CrossP4 = camera.FindCrossPoint(horizentalLine[1],verticalLine[1])
+            points = camera.FindCrossPoint('imageFront.jpg')
 
-            CalibrationResult = camera.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[1],points[2],points[0],points[3])
             corrected_image = CalibrationResult[0]
             imageWidth = CalibrationResult[1]
             
-            cv2.imwrite("imageFront.jpg",corrected_image)
-            # 如果需要繪製紅線，則將灰階圖像轉換為彩色
-            # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+            cv2.imwrite("imageFront_cal.jpg",corrected_image)
+            
+            # 修改成adaptive threshold image
+            src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+            dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
+            cv2.imwrite("imageFrontAdaptive.jpg",dst)
 
             # 計算校正桿的傾斜角度
             # 取得邊界pixel
             if caliStatus_rotate_camera1 == False:
-                caliStatus_rotate_camera1 = self.poleCalibration_rotate(camera,corrected_image,caliStatus_rotate_camera1)
+                caliStatus_rotate_camera1 = self.RollCalibration(camera,dst,caliStatus_rotate_camera1)
                 print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+                cv2.imwrite("imageFront_calAngle.jpg",dst)
             elif caliStatus_movement_camera1 == False:
-                caliStatus_movement_camera1 = self.poleCalibration_movement(camera,corrected_image,imageWidth,caliStatus_movement_camera1)
+                src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+                ret, dst = cv2.threshold(src,240,255,cv2.THRESH_BINARY)
+                cv2.imwrite("imageFrontThreshold.jpg",dst)
+                caliStatus_movement_camera1 = self.YawCalibration(camera,dst,imageWidth,caliStatus_movement_camera1)
                 print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
                 if caliStatus_movement_camera1 == True:
                     caliStatus = True
                     self.cameraCali_Front.releaseCamera()
+        cv2.imwrite("imageFront_done.jpg",corrected_image)
                     
     def imageCalibraionProcess_side(self,camera):
         caliStatus = False
         caliStatus_rotate_camera1 = False
-        caliStatus_movement_camera1 = False
+        # caliStatus_movement_camera1 = False
         while caliStatus == False:
             # 開始攝影
             ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
@@ -1163,113 +1306,38 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
             self.scaled_width = camera.original_width // 2
             self.scaled_height = camera.original_height // 2
             
-            horizentalLine = camera.edgeFinder_intercept_X(self.scaled_image,100,500,170)
-            verticalLine = camera.edgeFinder_intercept_Y(self.scaled_image,100,400,170)
-            
-            CrossP1 = camera.FindCrossPoint(horizentalLine[0],verticalLine[0])
-            CrossP2 = camera.FindCrossPoint(horizentalLine[0],verticalLine[1])
-            CrossP3 = camera.FindCrossPoint(horizentalLine[1],verticalLine[0])
-            CrossP4 = camera.FindCrossPoint(horizentalLine[1],verticalLine[1])
-
-            CalibrationResult = camera.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
-            corrected_image = CalibrationResult[0]
-            imageWidth = CalibrationResult[1]
-            
             cv2.imwrite("imageSide.jpg",self.scaled_image)
-            # 如果需要繪製紅線，則將灰階圖像轉換為彩色
-            # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
+                    
+            points = camera.FindCrossPoint("imageSide.jpg")
+
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[0],points[1],points[3],points[2])
+            corrected_image = CalibrationResult[0]
+            # imageWidth = CalibrationResult[1]
+            
+            cv2.imwrite("imageSide_cal.jpg",corrected_image)
+            
+            # 修改成adaptive threshold image
+            src = cv2.imread("imageSide_cal.jpg", cv2.IMREAD_GRAYSCALE)
+            dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,3,5)
+            cv2.imwrite("imageSideAdaptive.jpg",dst)
 
             # 計算校正桿的傾斜角度
             # 取得邊界pixel
             if caliStatus_rotate_camera1 == False:
-                caliStatus_rotate_camera1 = self.poleCalibration_rotate(camera,corrected_image,caliStatus_rotate_camera1)
+                caliStatus_rotate_camera1 = self.PitchCalibration(camera,dst)
                 print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
-            elif caliStatus_movement_camera1 == False:
-                caliStatus_movement_camera1 = self.poleCalibration_movement(camera,corrected_image,imageWidth,caliStatus_movement_camera1)
-                print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
-                if caliStatus_movement_camera1 == True:
-                    caliStatus = True
-                    self.cameraCali_Front.releaseCamera()
+            else:
+                caliStatus = True
         
     def HomeProcessing_image(self):
+        self.HomeProcessing()
+        self.P2P(entry_full_1, target_full_1, entry_halt_1, target_halt_1)
+        self.P2P(entry_full_2, target_full_2, entry_halt_2, target_halt_2)
         #先執行一般HomeProcessing
         # self.HomeProcessing()
-        self.imageCalibraionProcess_front(self.cameraCali_Front)
-        self.imageCalibraionProcess_side(self.cameraCali_Side)
-        pass
-        #透過視覺微校正
-        # # 相機視覺校正
-        # caliStatus = False
-        # caliStatus_rotate_camera1 = False
-        # caliStatus_movement_camera1 = False
-        # while caliStatus == False:
-        #     # 開始攝影
-        #     ueye.is_CaptureVideo(self.cameraCali_Front.camera, ueye.IS_WAIT)
-        #     sleep(1)  # 等待攝影完成
-
-        #     # 取得影像數據
-        #     image_data = ueye.get_data(self.cameraCali_Front.mem_ptr, self.cameraCali_Front.original_width, \
-        #         self.cameraCali_Front.original_height, 8, self.cameraCali_Front.original_width, copy=True)
-
-        #     # 確保無符號 8 位整數
-        #     image = np.array(image_data, dtype=np.uint8).reshape((self.cameraCali_Front.original_height, self.cameraCali_Front.original_width))
-
-        #     # 縮放圖像至原始尺寸的一半
-        #     self.scaled_image = cv2.resize(image, (self.cameraCali_Front.original_width // 2, self.cameracameraCali_FrontCali.original_height // 2))
-        #     self.scaled_width = self.cameraCali_Front.original_width // 2
-        #     self.scaled_height = self.cameraCali_Front.original_height // 2
-            
-        #     horizentalLine = self.cameraCali_Front.edgeFinder_intercept_X(self.scaled_image,100,500,170)
-        #     verticalLine = self.cameraCali_Front.edgeFinder_intercept_Y(self.scaled_image,100,400,170)
-            
-        #     CrossP1 = self.cameraCali_Front.FindCrossPoint(horizentalLine[0],verticalLine[0])
-        #     CrossP2 = self.cameraCali_Front.FindCrossPoint(horizentalLine[0],verticalLine[1])
-        #     CrossP3 = self.cameraCali_Front.FindCrossPoint(horizentalLine[1],verticalLine[0])
-        #     CrossP4 = self.cameraCali_Front.FindCrossPoint(horizentalLine[1],verticalLine[1])
-
-        #     CalibrationResult = self.cameraCali_Front.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
-        #     corrected_image = CalibrationResult[0]
-        #     imageWidth = CalibrationResult[1]
-            
-        #     # 如果需要繪製紅線，則將灰階圖像轉換為彩色
-        #     # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
-
-        #     # 計算校正桿的傾斜角度
-        #     # 取得邊界pixel
-        #     if caliStatus_rotate_camera1 == False:
-        #         caliStatus_rotate_camera1 = self.poleCalibration_rotate(corrected_image,caliStatus_rotate_camera1)
-        #         print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
-        #     elif caliStatus_movement_camera1 == False:
-        #         caliStatus_movement_camera1 = self.poleCalibration_movement(corrected_image,imageWidth,caliStatus_movement_camera1)
-        #         print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
-        #         if caliStatus_movement_camera1 == True:
-        #             caliStatus = True
-        #             self.cameraCali_Front.releaseCamera()
-
-            # if horizentalLine[2] == True and verticalLine[2] == True:
-            #     CrossP1 = self.cameraCali.FindCrossPoint(horizentalLine[0],verticalLine[0])
-            #     CrossP2 = self.cameraCali.FindCrossPoint(horizentalLine[0],verticalLine[1])
-            #     CrossP3 = self.cameraCali.FindCrossPoint(horizentalLine[1],verticalLine[0])
-            #     CrossP4 = self.cameraCali.FindCrossPoint(horizentalLine[1],verticalLine[1])
-
-            #     CalibrationResult = self.cameraCali.CameraCalibration(self.scaled_image,CrossP1,CrossP2,CrossP3,CrossP4)
-            #     corrected_image = CalibrationResult[0]
-            #     imageWidth = CalibrationResult[1]
-            #     imageheight = CalibrationResult[2]
-                
-            #     # 如果需要繪製紅線，則將灰階圖像轉換為彩色
-            #     # color_image = cv2.cvtColor(self.scaled_image, cv2.COLOR_GRAY2BGR)
-
-            #     # 計算校正桿的傾斜角度
-            #     # 取得邊界pixel
-            #     if caliStatus_rotate_camera1 == False:
-            #         caliStatus_rotate_camera1 = self.poleCalibration_rotate(corrected_image,caliStatus_rotate_camera1)
-            #         print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
-            #     elif caliStatus_movement_camera1 == False:
-            #         caliStatus_movement_camera1 = self.poleCalibration_movement(corrected_image,caliStatus_movement_camera1)
-            # else:
-            #     print("Cali Done")
-        
+        # self.imageCalibraionProcess_front(self.cameraCali_Front)
+        # self.imageCalibraionProcess_side(self.cameraCali_Side)
+        pass       
         
         return True
 
@@ -1360,11 +1428,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         
         return realTimeEntry, realTimeTarget
 
-    def CapturePoint(self):
-        entry_full = np.array([5,20.93392833,-85.62637816])
-        target_full = np.array([ 35,80.55959477,-126.77388984])
-        entry_halt = np.array([5,10.93381232,-85.61114631])
-        target_halt = np.array([ 20,72.57378253,-127.63668602])
+    def CapturePoint(self, entry_full, target_full, entry_halt, target_halt):
         pointTemp = np.array(
             [entry_full, target_full, entry_halt, target_halt])
         # pointTemp = self.PlanningPath
@@ -1387,6 +1451,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         reachTarget = False
         while reachTarget == False:
             Release = self.plc.read_by_name(self.SupportMove)
+            Release = True
             if Release == True:
                 "obtain upper point"
                 # print(f"Entry point is {self.entryPoint}")
@@ -1471,13 +1536,65 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         self.targetPoint = self.movingPoint[1]
         print(f"RTentryPoint is {self.entryPoint}")
         print(f"RTtargetPoint is {self.targetPoint}")
+        
+    
+    def reachable_check(self, entry_full, target_full, entry_halt, target_halt):
+        movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
+        self.entryPoint = movingPoint[0]  # from robot to entry point
+        self.targetPoint = movingPoint[1] # from robot to target point
+        "obtain upper point"
+        # print(f"Entry point is {self.entryPoint}")
+        t_upper = (upperHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        upperPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t_upper
+        upperPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t_upper
 
+        "obtain lower point"
+        t = (lowerHigh - self.entryPoint[2]) / \
+            (self.targetPoint[2]-self.entryPoint[2])
+        lowerPointX = self.entryPoint[0] + \
+            (self.targetPoint[0]-self.entryPoint[0])*t
+        lowerPointY = self.entryPoint[1] + \
+            (self.targetPoint[1]-self.entryPoint[1])*t
 
-    def P2P(self):
+        "Calculate rotation and movement of upper layer"
+        upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
+        lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+
+        "robot motion"
+        "rotation command"
+        RotationCount_axis3 = float(
+            lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
+        RotationCount_axis1 = float(
+            upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+        "Linear motion command"
+        LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
+        LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+        
+        reachable = True
+        if abs(RotationCount_axis1 - RotationCount_axis3) >= 9000:
+            reachable = False
+        if LinearCount_axis2 >= max_linear_count or LinearCount_axis4 >= max_linear_count:
+            reachable = False
+        if abs(LinearCount_axis2 - LinearCount_axis4) >= max_linearDiffCount_1:
+            reachable = False
+        if abs(LinearCount_axis4 - LinearCount_axis2) >= max_linearDiffCount_2:
+            reachable = False
+        
+        if reachable is False:
+            print("Cannot reach to the target point!")
+            
+        return reachable
+            
+               
+    def P2P(self,entry_full, target_full, entry_halt, target_halt):
         "obtain entry point and target point"
-        self.movingPoint = self.CapturePoint()
+        self.movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
         self.entryPoint = self.movingPoint[0]  # from robot to entry point
         self.targetPoint = self.movingPoint[1] # from robot to target point
+        # self.absolutePosition()
         self.MoveToPoint()
         
     def breathingCompensation(self):
