@@ -42,6 +42,7 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 from FunctionLib_Robot.logger import logger
 
 from ._subFunction import *
+from scipy.spatial.transform import Rotation as R
 
 # import vtk.numpy_interface.dataset_adapter as dsa
 
@@ -122,6 +123,30 @@ class DICOM(QObject):
         self.rescaleSlope = None
         self.rescaleIntercept = None
         self.currentSeries = {}
+        
+    def _RotateImage(self, images:_ArrayLike, spacing:_ArrayLike, axis:str, turns:int):
+        if turns == 0:
+            return
+        
+        if axis == 'x':
+            # rotate x axis
+            images = np.rot90(images, turns, (0, 1))
+            if turns % 2 == 1:
+                spacing[1:] = spacing[1:][::-1]
+            
+        elif axis == 'y':
+            # rotate y axis
+            images = np.rot90(images, turns, (0, 2))
+            if turns % 2 == 1:
+                spacing[::2] = spacing[::2][::-1]
+            
+        elif axis == 'z':
+            #rotate z axis
+            images = np.rot90(images, turns, (1, 2))
+            if turns % 2 == 1:
+                spacing[:2] = spacing[:2][::-1]
+                
+        return images, spacing
         
     def GetTotalFiles(self, path:str):
         files = os.listdir(path)
@@ -209,9 +234,10 @@ class DICOM(QObject):
                 # (0018, 0050) 和 (0018, 0088)兩個tag都不存在，判斷此檔案應該略過
                 # 可能有兩種都不存在但仍然可後判讀的情況
                 # 例如透過(0020, 0032) Image Position去計算差值
-                elemSpacingBetweenSlices = self.FindTag(fileData, (0x18, 0x88))
-                elemImagePosition = self.FindTag(fileData, (0x20, 0x32))
-                if elemSpacingBetweenSlices is None and elemImagePosition is None:
+                # elemSpacingBetweenSlices = self.FindTag(fileData, (0x18, 0x88))
+                # elemImagePosition = self.FindTag(fileData, (0x20, 0x32))
+                elemSpacingXY = self.FindTag(fileData, (0x28, 0x30))
+                if elemSpacingXY is None:
                     skipCount += 1
                     continue
             
@@ -261,92 +287,99 @@ class DICOM(QObject):
         for patient in dicPatient.values():
             for study in patient.values():
                 for series in study.values():
-                    # for slice in series['data']:
-                        # imagePosition = self.FindTag(slice, (0x20, 0x32))
-                        
-                        # if imagePosition is not None:
-                        #     print(f'slice pos = {imagePosition}, file = {slice.filename}')
-                        #     count += 1
+                    
                     slices:list = series['data']
                     slice = series['data'][0]
-                    # destDir = f'database\\{slice.SeriesInstanceUID}'
-                    # self.CreateDir(destDir)
                     
-                    if hasattr(slice, 'InstanceNumber'):
-                        slices.sort(key = lambda x:x.InstanceNumber)
-                        # 讀取DTI 試作
-                        # DGO = self.FindTag(slices[0], (0x18,0x9089))
-                        # if DGO:
-                        #     newList = []
-                        #     for img in slices:
-                        #         elem = self.FindTag(img, (0x18,0x9089))
-                        #         if elem and elem == DGO:
-                        #             BValue = self.FindTag(img, (0x18, 0x9087))
-                        #             if BValue:
-                        #                 print(f'B Value = {BValue}')
-                        #                 newList.append(img)
-                        #             print(f'Diffusion Gradient Orientation = {elem}')
-                            
-                        #     series['data'] = newList
-                                
-                            
-                            
+                    # 讀取DTI 試作
+                    # DGO = self.FindTag(slices[0], (0x18,0x9089))
+                    # if DGO:
+                    #     newList = []
+                    #     for img in slices:
+                    #         elem = self.FindTag(img, (0x18,0x9089))
+                    #         if elem and elem == DGO:
+                    #             BValue = self.FindTag(img, (0x18, 0x9087))
+                    #             if BValue:
+                    #                 print(f'B Value = {BValue}')
+                    #                 newList.append(img)
+                    #             print(f'Diffusion Gradient Orientation = {elem}')
+                        
+                    #     series['data'] = newList
                     #     # shutil.copy(str(img.filename), destDir)
+                    
+                        
+                    # get image orientation
+                    imageOrientation = self.FindTag(slice, (0x20, 0x37))
+                    if imageOrientation:
+                        imageOrientation = np.array(imageOrientation)
+                        series['orientation'] = imageOrientation
+                        
+                        # orientationMatrix = np.reshape(imageOrientation, (3, 2), order = 'F')
+                        # orientationMatrix = orientationMatrix[:, ::-1]
+                        
+                        # 計算dicom affine matrix
+                        # affine_matrix = np.zeros((4, 4), dtype = np.float32)
+                        # affine_matrix[:3, 0] = orientationMatrix[:, 0] * series['spacingXY'][0]
+                        # affine_matrix[:3, 1] = orientationMatrix[:, 1] * series['spacingXY'][1]
+                        # affine_matrix[:3, 2] = k
+                        # affine_matrix[:3, 3] = firstImagePosition
+                        # affine_matrix[3, 3] = 1.0
+                        # series['affine_matrix'] = affine_matrix
+                        
+                    
+                    if hasattr(slice, 'ImagePositionPatient'):
+                        imagePosition = slice.ImagePositionPatient
+                        # calculate z direction
+                        # sort by z direction
+                        x = imageOrientation[:3]
+                        y = imageOrientation[3:]
+                        z = np.cross(x, y)
+                        direct_idx = np.argmax(np.abs(z))
+                        bReverse = z[direct_idx] < 0
+                        logger.debug(f'Reverse sorted: {bReverse}')
+                        slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
                     else:
-                        if hasattr(slice, 'ImagePositionPatient'):
-                            slices.sort(key = lambda x:x.ImagePositionPatient[2])
-                            # for img in slices:
-                            #     tagImagePos = self.FindTag(img, (0x20, 0x32))
-                            #     if tagImagePos:
-                            #         print(f'image position = {tagImagePos}, InstanceNumber = {img.InstanceNumber}')
-                        else:
-                            logger.warning(f'missing:ImagePositionPatient')
-                            elem = self.FindTag(slice, (0x20, 0x32))
-                            if elem:
-                                logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
+                        logger.warning(f'missing:ImagePositionPatient')
+                        elem = self.FindTag(slice, (0x20, 0x32))
+                        if elem:
+                            logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
+                            
+                    slicesNum = len(series['data'])
+                    if slicesNum > 3:
+                        firstImagePosition = self.FindTag(series['data'][0], (0x20, 0x32))
+                        lastImagePosition = self.FindTag(series['data'][-1], (0x20, 0x32))
+                        if firstImagePosition and lastImagePosition:
+                            k = (np.array(lastImagePosition) - np.array(firstImagePosition)) / (slicesNum - 1)
+                            thickness = np.linalg.norm(np.array(lastImagePosition) - np.array(firstImagePosition))
+                            if not np.isnan(thickness):
+                                thickness /= (slicesNum - 1)
+                                series['spacingZ'] = thickness
+                            else:
+                                sopID = series['sopID']
+                                logger.warning(f'series[{sopID}] could have wrong spacing between slices')
                         
                     # 讀取X, Y spacing
                     elem = self.FindTag(slice, (0x28, 0x30))
                     if elem:
                         series['spacingXY'] = list(elem)
                     
-                        
                     # 讀取Z spacing
-                    elem = self.FindTag(slice, (0x18, 0x50))
-                    if elem is None:
-                        elemSpacingBetweenSlices = self.FindTag(slice, (0x18, 0x88))
-                        if elemSpacingBetweenSlices:
-                            series['spacingZ'] = elemSpacingBetweenSlices
+                    spacingZ = series.get('spacingZ')
+                    if spacingZ is None:
+                        elem = self.FindTag(slice, (0x18, 0x50))
+                        if elem is None:
+                            elemSpacingBetweenSlices = self.FindTag(slice, (0x18, 0x88))
+                            if elemSpacingBetweenSlices:
+                                series['spacingZ'] = elemSpacingBetweenSlices
+                                    
                         else:
-                            # 如果兩(0018, 0050)和(0018, 0088)都不存在，逐一計算(0020, 0032)的差值
-                            slicesNum = len(series['data'])
-                            if slicesNum > 3:
-                                slice_1 = series['data'][0]
-                                elemImagePosition1 = self.FindTag(slice_1, (0x20, 0x32))
+                            series['spacingZ'] = elem
                                 
-                                slice_2 = series['data'][1]
-                                elemImagePosition2 = self.FindTag(slice_2, (0x20, 0x32))
-                                
-                                thickness = np.round(abs(elemImagePosition1[2] - elemImagePosition2[2]), 2)
-                                bSameOfThickness = True
-                                for i in range(1, slicesNum - 1):
-                                    slice_1 = series['data'][i]
-                                    elemImagePosition1 = self.FindTag(slice_1, (0x20, 0x32))
-                                    
-                                    slice_2 = series['data'][i + 1]
-                                    elemImagePosition2 = self.FindTag(slice_2, (0x20, 0x32))
-                                    
-                                    if thickness != np.round(abs(elemImagePosition1[2] - elemImagePosition2[2]), 2):
-                                        logger.warning(f'thickness between slice {i} and slice {i + 1} is different')
-                                        bSameOfThickness = False
-                                        break
-                                if bSameOfThickness:
-                                    series['spacingZ'] = thickness
-                            else:
-                                logger.warning(f'Invalid series')
-                                
-                    else:
-                        series['spacingZ'] = elem
+                        
+                    elemPatientPosition = self.FindTag(slice, (0x18, 0x5100))
+                    if elemPatientPosition:
+                        series['patientPosition'] = elemPatientPosition
+                        
                         
                     # 讀取Acquisition dateTime
                     elem = self.FindTag(slice, (0x8, 0x2A))
@@ -385,7 +418,6 @@ class DICOM(QObject):
                         dimension = np.append(dimension, dimX)
                         
                     series['dimension'] = dimension
-        
                                 
         self.signalProcess.emit(1.0, '')
                         
@@ -585,12 +617,51 @@ class DICOM(QObject):
         if len(images.shape) > 3:
             logger.info(f'this is multi-frame dicom')
             images = images[0] 
-        else:
-            # 不是muti frame dicom，就必須反轉Z、Y方向
-            # images = images[::-1, ::-1, :]
-            images = images[:, ::-1, :]
-        # print(f'slices shape = {images.shape}')
-        # print(f'image spacing = {spacing}')
+        
+            
+        # images = images[::-1, :, :]
+        # images = images[:, :, ::-1]
+        # images = images[:, ::-1, :]
+        # images = np.flip(images)
+        
+        imageOrientation = series.get('orientation')
+        rotate_matrix = np.identity(3)
+        if imageOrientation is not None:
+            bGantryTilt = False
+            for angle in imageOrientation:
+                if abs(angle - round(angle)) > 0.001:
+                    logger.warning('dicom have a gantry tilt')
+                    bGantryTilt = True
+                
+            if not bGantryTilt:     
+                imageOrientation = np.round(imageOrientation)
+                row_cosines = np.array(imageOrientation[:3])
+                col_cosines = np.array(imageOrientation[3:])
+                
+                z_axis = np.cross(row_cosines, col_cosines)
+                z_axis /= np.linalg.norm(z_axis)
+                
+                rotate_matrix = np.array([row_cosines, col_cosines, z_axis]).T
+                rotate_matrix = np.linalg.inv(rotate_matrix)
+                
+                r = R.from_matrix(rotate_matrix)
+                rot_times = (r.as_euler('zxz', True) / 90).astype(int)
+                logger.debug(f'image orientation is {imageOrientation}')
+                
+                axis_vector = np.identity(3)
+                
+                if rot_times[2] != 0:
+                    #rotate z axis
+                    images, spacing = self._RotateImage(images, spacing, 'z', rot_times[2])
+                
+                if rot_times[1] != 0:
+                    # rotate x axis
+                    images, spacing = self._RotateImage(images, spacing, 'x', rot_times[1])
+                
+                if rot_times[0] != 0:
+                    # rotate z axis
+                    images, spacing = self._RotateImage(images, spacing, 'z', rot_times[0])
+                    
         self.arrImage = images.copy()
         
         importer = vtk.vtkImageImport()
@@ -600,20 +671,14 @@ class DICOM(QObject):
         importer.SetDataExtentToWholeExtent()
         importer.SetDataSpacing(spacing)
         importer.SetDataOrigin(0, 0, 0)
-        # importer.SetImportVoidPointer(images)
         images = images.flatten()
-        # reverse = np.ascontiguousarray(images[::-1])
         importer.CopyImportVoidPointer(images.data, images.nbytes)
-        # importer.CopyImportVoidPointer(reverse.data, reverse.nbytes)
         importer.Update()
         self.importer = importer
         
         imageData:vtk.vtkImageData = importer.GetOutput()
         
-        return imageData, spacing, listSeries
-        # return self.importer.GetOutput()
-    
-        # print(f'slices shape = {np.array(imageSlices).shape}')
+        return imageData, spacing, rotate_matrix
             
     def FindTag(self, dataSet:pydicom.Dataset, tag:tuple, layer = 0):
         if tag in dataSet:
@@ -3383,6 +3448,8 @@ class RendererObj(vtkRenderer):
         self.camera = vtkCamera()
         self.orientation = None
         self.textActor = vtk.vtkTextActor()
+        
+        self.extentMask = np.zeros(6, dtype = bool)
                
         #reslice image
         self.dicomGrayscaleRange = None
@@ -3582,20 +3649,13 @@ class RendererObj(vtkRenderer):
                 
         else:
             if self.orientation == VIEW_AXIAL: 
-                # self.target[2] = value * self.pixel2Mm[2]
-                # self.imagePosition[2] = value
-                value = max(0, min(self.imageDimensions[2] - 1, value))
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[2] - 1}')
             elif self.orientation == VIEW_CORONAL: 
-                # self.target[1] = value * self.pixel2Mm[1]
-                # self.imagePosition[1] = value
                 value = max(0, min(self.imageDimensions[1] - 1, value))
                 self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[1] - 1}')
             elif self.orientation == VIEW_SAGITTAL: 
-                # self.target[0] = value * self.pixel2Mm[0]
-                # self.imagePosition[0] = value
                 value = max(0, min(self.imageDimensions[0] - 1, value))
                 self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[0] - 1}')
@@ -4051,22 +4111,21 @@ class RendererObj(vtkRenderer):
         # orientation = orientation.lower()
         if orientation == VIEW_SAGITTAL:
             
-            self.camera.SetViewUp(0, 0, -1)
+            self.camera.SetViewUp(0, 0, 1)
             self.camera.SetPosition(1, 0, 0)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(center[0], center[0], 0, self.imageDimensions[1], 0, self.imageDimensions[2])
             self.textActor.SetInput(f'{center[0]}/{self.imageDimensions[0] - 1}')
         elif orientation == VIEW_CORONAL:
             
-            self.camera.SetViewUp(0, 0, -1)
-            self.camera.SetPosition(0, 1, 0)
+            self.camera.SetViewUp(0, 0, 1)
+            self.camera.SetPosition(0, -1, 0)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(0, self.imageDimensions[0], center[1], center[1], 0, self.imageDimensions[2])
             self.textActor.SetInput(f'{center[1]}/{self.imageDimensions[1] - 1}')
         elif orientation == VIEW_AXIAL:
-        
-            self.camera.SetViewUp(0, 1, 0)
-            self.camera.SetPosition(0, 0, 1)
+            self.camera.SetViewUp(0, -1, 0)
+            self.camera.SetPosition(0, 0, -1)
             
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             self.actorImage.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], center[2], center[2])
@@ -4208,8 +4267,8 @@ class RendererObj3D(RendererObj):
     def SetCamera(self, *args):
         self.orientation = args[0]
                
-        self.camera.SetViewUp(0, 1, 0)
-        self.camera.SetPosition(0.8, 0.3, 1)
+        self.camera.SetViewUp(0, 0, 1)
+        self.camera.SetPosition(0.0, 1, 0)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.ComputeViewPlaneNormal()
         self.camera.ParallelProjectionOn()
@@ -5307,6 +5366,8 @@ class DISPLAY(QObject):
         self.target = np.zeros(3)
         self.pcoord = np.zeros(3) #image voxel to image index的補正值，0~1
         self.imagePosition = np.zeros(3, dtype = int)
+        
+        self._imageOrientation = [1, 0, 0, 0, 1, 0]
     def Reset(self):
         if hasattr(self, 'rendererList'):
             for renderer in self.rendererList.values():
@@ -5323,7 +5384,7 @@ class DISPLAY(QObject):
     def CountOfTrajectory(self):
         return DISPLAY.trajectory.count()
             
-    def LoadImage(self, image):
+    def LoadImage(self, image, imageOrientation:_ArrayLike = None):
         """load image
            use VTK
            for diocm display
@@ -5336,6 +5397,9 @@ class DISPLAY(QObject):
             imageVTK (_numpy.array_): image array in VTK
         """
         "init"
+        if imageOrientation is not None:
+            self._imageOrientation = np.array(imageOrientation)
+            
         self.radius = 3.5
         ## 建立好load dicom 所需的 VTK 物件 ############################################################################################
         # self.reader = vtkDICOMImageReader()

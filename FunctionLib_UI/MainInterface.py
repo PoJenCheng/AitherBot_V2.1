@@ -292,6 +292,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.setHidden(True)
         self.btnRobotBackTarget.setHidden(True)
         
+        widget:QWidget = self.toolBox.widget(1)
+        self.toolBox.removeItem(1)
+        widget.close()
+        del widget
+        
+        widget:QWidget = self.toolTrajectory.widget(1)
+        self.toolTrajectory.removeItem(1)
+        widget.close()
+        del widget
+        
         self.init_ui()
         
         # self._SaveAnotherImages('image\\msgbox\\down_right_side\\dark', 'image\\msgbox\\temp')
@@ -666,8 +676,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            self.stkScene.setCurrentWidget(self.pgPositionRobot)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgPositionRobot)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -1195,16 +1205,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ############################################################################################
         ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
         "VTK stage"
-        self.vtkImageLow, spacing, listSeries = self.reader.GetData(index = 0)
+        self.vtkImageLow, spacing, orientation = self.reader.GetData(index = 0)
         self.imageL = self.reader.arrImage
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
             MessageBox.ShowCritical('ERROR', 'image error')
+            logger.critical('import dicom error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
-        self.dicomLow.LoadImage(self.vtkImageLow)
+        self.dicomLow.LoadImage(self.vtkImageLow, orientation)
         dicomTag = self.SetDicomData(self.dicomLow, 'LOW')
         
         if not dicomTag:
@@ -1213,7 +1224,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = listSeries
+        self.currentTag['image_orientation'] = orientation
             
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_L():
@@ -1242,7 +1253,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def ImportDicom_H(self):
         "VTK stage"
         # self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
-        self.vtkImageHigh, spacing, listSeries = self.reader.GetData(index = 1)
+        self.vtkImageHigh, spacing, orientation = self.reader.GetData(index = 1)
         self.imageH = self.reader.arrImage
         
         if self.vtkImageHigh is None:
@@ -1251,7 +1262,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
-        self.dicomHigh.LoadImage(self.vtkImageHigh)
+        self.dicomHigh.LoadImage(self.vtkImageHigh, orientation)
         dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH')
         
         if not dicomTag:
@@ -1261,7 +1272,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = listSeries
+        self.currentTag['image_orientation'] = orientation
         
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_H():
