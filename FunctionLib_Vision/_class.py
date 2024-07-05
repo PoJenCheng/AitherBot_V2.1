@@ -40,10 +40,15 @@ from vtkmodules.vtkRenderingCore import (
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 from FunctionLib_Robot.logger import logger
+from FunctionLib_Robot.__init__ import *
+from FunctionLib_Robot.__init__ import *
 
 from ._subFunction import *
 from scipy.spatial.transform import Rotation as R
-
+from scipy.ndimage import label, zoom
+from skimage.measure import regionprops
+from scipy.ndimage import label, zoom
+from skimage.measure import regionprops
 # import vtk.numpy_interface.dataset_adapter as dsa
 
 
@@ -313,19 +318,6 @@ class DICOM(QObject):
                     if imageOrientation:
                         imageOrientation = np.array(imageOrientation)
                         series['orientation'] = imageOrientation
-                        
-                        # orientationMatrix = np.reshape(imageOrientation, (3, 2), order = 'F')
-                        # orientationMatrix = orientationMatrix[:, ::-1]
-                        
-                        # 計算dicom affine matrix
-                        # affine_matrix = np.zeros((4, 4), dtype = np.float32)
-                        # affine_matrix[:3, 0] = orientationMatrix[:, 0] * series['spacingXY'][0]
-                        # affine_matrix[:3, 1] = orientationMatrix[:, 1] * series['spacingXY'][1]
-                        # affine_matrix[:3, 2] = k
-                        # affine_matrix[:3, 3] = firstImagePosition
-                        # affine_matrix[3, 3] = 1.0
-                        # series['affine_matrix'] = affine_matrix
-                        
                     
                     if hasattr(slice, 'ImagePositionPatient'):
                         imagePosition = slice.ImagePositionPatient
@@ -336,7 +328,6 @@ class DICOM(QObject):
                         z = np.cross(x, y)
                         direct_idx = np.argmax(np.abs(z))
                         bReverse = z[direct_idx] < 0
-                        logger.debug(f'Reverse sorted: {bReverse}')
                         slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
                     else:
                         logger.warning(f'missing:ImagePositionPatient')
@@ -344,10 +335,16 @@ class DICOM(QObject):
                         if elem:
                             logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
                             
+                    # 讀取X, Y spacing
+                    elem = self.FindTag(slice, (0x28, 0x30))
+                    if elem:
+                        series['spacingXY'] = list(elem)
+                            
                     slicesNum = len(series['data'])
                     if slicesNum > 3:
                         firstImagePosition = self.FindTag(series['data'][0], (0x20, 0x32))
                         lastImagePosition = self.FindTag(series['data'][-1], (0x20, 0x32))
+                        
                         if firstImagePosition and lastImagePosition:
                             k = (np.array(lastImagePosition) - np.array(firstImagePosition)) / (slicesNum - 1)
                             thickness = np.linalg.norm(np.array(lastImagePosition) - np.array(firstImagePosition))
@@ -357,11 +354,19 @@ class DICOM(QObject):
                             else:
                                 sopID = series['sopID']
                                 logger.warning(f'series[{sopID}] could have wrong spacing between slices')
-                        
-                    # 讀取X, Y spacing
-                    elem = self.FindTag(slice, (0x28, 0x30))
-                    if elem:
-                        series['spacingXY'] = list(elem)
+                                
+                            
+                            orientationMatrix = np.reshape(imageOrientation, (3, 2), order = 'F')
+                            orientationMatrix = orientationMatrix[:, ::-1]
+                            
+                            #計算dicom affine matrix
+                            affine_matrix = np.zeros((4, 4), dtype = np.float32)
+                            affine_matrix[:3, 0] = orientationMatrix[:, 0] * series['spacingXY'][0]
+                            affine_matrix[:3, 1] = orientationMatrix[:, 1] * series['spacingXY'][1]
+                            affine_matrix[:3, 2] = k
+                            affine_matrix[:3, 3] = firstImagePosition
+                            affine_matrix[3, 3] = 1.0
+                            series['affine_matrix'] = affine_matrix
                     
                     # 讀取Z spacing
                     spacingZ = series.get('spacingZ')
@@ -586,7 +591,7 @@ class DICOM(QObject):
             QMessageBox.critical(None, 'DICOM TAG MISSING', 'missing tag [Spacing]')
             return None
         spacing:list = spacingXY[:]
-        spacing.append(spacingZ)
+        spacing = np.append(spacing, spacingZ)
         # print(f'spacingXY = {spacingXY}, spacingZ = {spacingZ}')
             
         elem = self.FindTag(dataSet, (0x28, 0x1050))
@@ -618,12 +623,6 @@ class DICOM(QObject):
             logger.info(f'this is multi-frame dicom')
             images = images[0] 
         
-            
-        # images = images[::-1, :, :]
-        # images = images[:, :, ::-1]
-        # images = images[:, ::-1, :]
-        # images = np.flip(images)
-        
         imageOrientation = series.get('orientation')
         rotate_matrix = np.identity(3)
         if imageOrientation is not None:
@@ -649,20 +648,28 @@ class DICOM(QObject):
                 logger.debug(f'image orientation is {imageOrientation}')
                 
                 axis_vector = np.identity(3)
+                bChanged = False
                 
                 if rot_times[2] != 0:
                     #rotate z axis
+                    bChanged = True
                     images, spacing = self._RotateImage(images, spacing, 'z', rot_times[2])
                 
                 if rot_times[1] != 0:
                     # rotate x axis
+                    bChanged = True
                     images, spacing = self._RotateImage(images, spacing, 'x', rot_times[1])
                 
                 if rot_times[0] != 0:
                     # rotate z axis
+                    bChanged = True
                     images, spacing = self._RotateImage(images, spacing, 'z', rot_times[0])
                     
+                if bChanged:
+                    pass
+                    
         self.arrImage = images.copy()
+        dimension = np.array(images.shape)[::-1] # z,y,x to x,y,z
         
         importer = vtk.vtkImageImport()
         importer.SetDataScalarTypeToShort()
@@ -678,7 +685,7 @@ class DICOM(QObject):
         
         imageData:vtk.vtkImageData = importer.GetOutput()
         
-        return imageData, spacing, rotate_matrix
+        return imageData, spacing, dimension, listSeries
             
     def FindTag(self, dataSet:pydicom.Dataset, tag:tuple, layer = 0):
         if tag in dataSet:
@@ -896,6 +903,7 @@ class DICOM(QObject):
 class REGISTRATION(QObject):
     signalProgress = pyqtSignal(float, str)
     
+    index = 0
     def __init__(self):
         super().__init__()
         self.PlanningPath = []
@@ -1020,7 +1028,7 @@ class REGISTRATION(QObject):
         ### 公式6
         imagesHuThr = []
         PIXEL_MAX = 4096-1
-        down_ = -800
+        down_ = 100
         up_ = 300      ## 300~ -800變成白色
         "numpy.array type"
         try:
@@ -1064,10 +1072,17 @@ class REGISTRATION(QObject):
         ratio = 3
         low_threshold = 15
         "Radius range: [3mm ~ (21/2)+3mm]"
-        minRadius=int(3)
         maxRadius=int(21/2)+3
         
         "find circle, radius and center of circle in each DICOM image"
+        # 輸出輪廓測試
+        # path = os.path.join(os.getcwd(), 'output', str(REGISTRATION.index))
+        # try:
+        #     os.makedirs(path)
+        # except FileExistsError:
+        #     pass
+        # REGISTRATION.index += 1
+        
         for z in range(src_tmp.shape[0]):
             ## 找輪廓與質心 ############################################################################################
             ### 公式8
@@ -1090,13 +1105,19 @@ class REGISTRATION(QObject):
                         centroid.append((Cx,Cy))
                         tmpContours.append(c)
             cv2.drawContours(black_image_2,tmpContours,-1,(256/2, 0, 0),1)
+            
+            
+            # filename = f'{z:02}.jpg'
+            # filepath = os.path.join(path, filename)
+            # cv2.imwrite(filepath, black_image_2, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            
             ############################################################################################
             ### 公式12
             ## 用Hough Circles找球心跟半徑 ############################################################################################
             "use Hough Circles to find radius and center of circle"
             circles = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
                                         param1=low_threshold*ratio, param2=low_threshold,
-                                        minRadius=minRadius, maxRadius=maxRadius)
+                                        minRadius=MIN_RADIUS, maxRadius=maxRadius)
             ############################################################################################
             ## 質心與球心平面距離不超過2的留下當作候選人 ############################################################################################
             if circles is not None and centroid is not None:
@@ -1106,12 +1127,13 @@ class REGISTRATION(QObject):
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
-                        if distance < 2:
-                            Px = i[0]
-                            Py = i[1]
-                            Pz = z
-                            Pr = j[2]
-                            resultCentroid_xy.append([Px,Py,Pz,Pr])
+                        if distance < IDENTIFY_MARKER_TOLERENCE:
+                                Px = i[0]
+                                Py = i[1]
+                                Pz = z
+                                Pr = j[2]
+                                resultCentroid_xy.append([Px,Py,Pz,Pr])
+                            
             
             cv2.destroyAllWindows()
             ############################################################################################
@@ -1162,7 +1184,7 @@ class REGISTRATION(QObject):
             for key in dictionaryTmp.keys():
                 P1 = tmp
                 P2 = key
-                distanceXY = math.sqrt(numpy.square(P1[0]-P2[0])+numpy.square(P1[1]-P2[1]))
+                distanceXY = math.sqrt(np.square(P1[0]-P2[0])+np.square(P1[1]-P2[1]))
                 # distanceXY = np.linalg.norm(P1[:2]-P2[:2])
                 dz = abs(P1[2]-P2[2])
                 if distanceXY < 5 and dz < 31:
@@ -1239,7 +1261,6 @@ class REGISTRATION(QObject):
         ratio = 3
         low_threshold = 15
         "Radius range: [3mm ~ (21/2)+3mm]"
-        minRadius=int(3)
         maxRadius=int(21/2)+3
         
         "find circle, radius and center of circle in each DICOM image"
@@ -1270,7 +1291,7 @@ class REGISTRATION(QObject):
             "use Hough Circles to find radius and center of circle"
             circles = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
                                         param1=low_threshold*ratio, param2=low_threshold,
-                                        minRadius=minRadius, maxRadius=maxRadius)
+                                        minRadius=MIN_RADIUS, maxRadius=maxRadius)
             ############################################################################################
             ## 質心與球心平面距離不超過2的留下當作候選人 ############################################################################################
             if circles is not None and centroid is not None:
@@ -1280,7 +1301,7 @@ class REGISTRATION(QObject):
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
-                        if distance < 2:
+                        if distance < IDENTIFY_MARKER_TOLERENCE:
                             Px = x
                             Py = i[0]
                             Pz = i[1]
@@ -1344,7 +1365,6 @@ class REGISTRATION(QObject):
         ratio = 3
         low_threshold = 15
         "Radius range: [3mm ~ (21/2)+3mm]"
-        minRadius=int(3)
         maxRadius=int(21/2)+3
         
         "find circle, radius and center of circle in each DICOM image"
@@ -1375,7 +1395,7 @@ class REGISTRATION(QObject):
             "use Hough Circles to find radius and center of circle"
             circles = cv2.HoughCircles(black_image_2, cv2.HOUGH_GRADIENT, 1, 10,
                                         param1=low_threshold*ratio, param2=low_threshold,
-                                        minRadius=minRadius, maxRadius=maxRadius)
+                                        minRadius=MIN_RADIUS, maxRadius=maxRadius)
             ############################################################################################
             ## 質心與球心平面距離不超過2的留下當作候選人 ############################################################################################
             if circles is not None and centroid is not None:
@@ -1385,7 +1405,7 @@ class REGISTRATION(QObject):
                 for i in centroid:
                     for j in circles[0, :]:
                         distance = math.sqrt((i[0]-j[0])**2+(i[1]-j[1])**2)
-                        if distance < 2:
+                        if distance < IDENTIFY_MARKER_TOLERENCE:
                             Px = i[0]
                             Py = y
                             Pz = i[1]
@@ -1543,6 +1563,84 @@ class REGISTRATION(QObject):
                         tmpDic.update({tuple(p3):result})
         ############################################################################################
         return tmpDic
+    def GetBallAuto2(self, imageHu, pixel2Mm):
+        ## resize imageHu, 變成每個 pixel 相距 1 mm ############################################################################################
+        
+        # image = zoom(imageHu, pixel2Mm[::-1])
+        interpolation_method = None
+        if pixel2Mm[0] < 1 and pixel2Mm[1] < 1:
+            interpolation_method = cv2.INTER_AREA
+        elif pixel2Mm[0] > 1 and pixel2Mm[1] > 1:
+            interpolation_method = cv2.INTER_CUBIC
+        elif pixel2Mm[0] != 1 and pixel2Mm[0] != 1:
+            interpolation_method = cv2.INTER_LINEAR
+            
+        if interpolation_method is not None:
+            imageHuMm_tmp_xyz = [
+                cv2.resize(imageHu[z, :, :], dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[1], interpolation=interpolation_method)
+                for z in range(imageHu.shape[0])
+            ]
+            
+        self.signalProgress.emit(0.05, 'registrator identifying...')
+        
+        image = np.array(imageHuMm_tmp_xyz)
+        del imageHuMm_tmp_xyz
+        
+        if pixel2Mm[2] < 1:
+            interpolation_method = cv2.INTER_AREA
+        elif pixel2Mm[2] > 1:
+            interpolation_method = cv2.INTER_CUBIC
+        else:
+            interpolation_method = None
+            
+        if interpolation_method is not None:
+            imageHuMm_tmp = [
+                cv2.resize(image[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation = interpolation_method)
+                for y in range(image.shape[1])
+            ]
+            image = np.array(imageHuMm_tmp)
+            del imageHuMm_tmp
+            
+        # 創建一個空白的二值影像數組
+        binary_image = np.zeros_like(image, dtype=np.uint8)
+
+        # 將範圍內的像素設置為白色
+        binary_image[(image >= -800) & (image <= 300)] = 1
+        
+        output_image = np.stack((binary_image, ) * 3, axis = -1, dtype = np.uint8)
+        for i, region in enumerate(output_image):
+            path = os.path.join(os.getcwd(), 'output', '2', f'{i:03}.jpg')
+            cv2.imwrite(path, region, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        
+        # 標記連通區域
+        labeled_image, num_features = label(binary_image)
+
+        
+        
+        # 提取區域特徵
+        regions = regionprops(labeled_image)
+        
+        # 篩選球狀物體並找出其球心
+        target_radius = 10
+        radius_tolerance = 2  # 調整容許的半徑誤差
+        target_volume = 4/3 * np.pi * (target_radius ** 3)
+        volume_tolerance = 0.1 * target_volume
+        spherical_objects = []
+
+        for region in regions:
+            # 獲取該區域的邊界框
+            min_point = np.array(region.bbox[:3])
+            max_point = np.array(region.bbox[3:])
+            region_radius = (max_point - min_point) / 2
+            
+            if region.area > target_volume and np.abs(region.area - target_volume) <= target_volume:
+                # 檢查是否近似於球體
+                logger.debug(region.area)
+            
+        # 獲取球心
+        for obj in spherical_objects:
+            centroid = obj.centroid
+            print(f"球心坐標: {centroid}")
             
     def GetBallAuto(self, imageHu, pixel2Mm, imageTag):
         """auto get ball center
@@ -1557,44 +1655,39 @@ class REGISTRATION(QObject):
             ball (_dictionary_): ball center, key(Px,Py,Pz,Pr):numpy.array([[Px,Py,Pz,Pr]...])
         """
         ## resize imageHu, 變成每個 pixel 相距 1 mm ############################################################################################
-        imageHuMm_tmp_xyz = []
-        if pixel2Mm[0] < 1 and pixel2Mm[1] < 1:
-            for z in range(imageHu.shape[0]):
-                src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_AREA)
-                imageHuMm_tmp_xyz.append(src_tmp)
-        elif pixel2Mm[0] > 1 and pixel2Mm[1] > 1:
-            for z in range(imageHu.shape[0]):
-                src_tmp = cv2.resize(imageHu[z,:,:],dsize=None,fx=pixel2Mm[0],fy=pixel2Mm[1],interpolation=cv2.INTER_CUBIC)
-                imageHuMm_tmp_xyz.append(src_tmp)
-        else:
-            pass
         
+        interpolation_method = None
+        if pixel2Mm[0] < 1 and pixel2Mm[1] < 1:
+            interpolation_method = cv2.INTER_AREA
+        elif pixel2Mm[0] > 1 and pixel2Mm[1] > 1:
+            interpolation_method = cv2.INTER_CUBIC
+        elif pixel2Mm[0] != 1 and pixel2Mm[0] != 1:
+            interpolation_method = cv2.INTER_LINEAR
+            
+        if interpolation_method is not None:
+            imageHuMm_tmp_xyz = [
+                cv2.resize(imageHu[z, :, :], dsize=None, fx=pixel2Mm[0], fy=pixel2Mm[1], interpolation=interpolation_method)
+                for z in range(imageHu.shape[0])
+            ]
+            
         self.signalProgress.emit(0.05, 'registrator identifying...')
         
-        imageHuMm_tmp_xyz = numpy.array(imageHuMm_tmp_xyz)
-        imageHuMm_tmp = []
+        imageHuMm = np.array(imageHuMm_tmp_xyz)
         
         if pixel2Mm[2] < 1:
-            for y in range(imageHuMm_tmp_xyz.shape[1]):
-                src_tmp = cv2.resize(imageHuMm_tmp_xyz[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation=cv2.INTER_AREA)
-                imageHuMm_tmp.append(src_tmp)
-            imageHuMm_tmp = numpy.array(imageHuMm_tmp)
-            imageHuMm = []
-            for z in range(imageHuMm_tmp.shape[1]):
-                imageHuMm.append(imageHuMm_tmp[:,z,:])
-            imageHuMm = numpy.array(imageHuMm)
+            interpolation_method = cv2.INTER_AREA
         elif pixel2Mm[2] > 1:
-            for y in range(imageHuMm_tmp_xyz.shape[2]):
-                src_tmp = cv2.resize(imageHuMm_tmp_xyz[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation=cv2.INTER_CUBIC)
-                imageHuMm_tmp.append(src_tmp)
-            imageHuMm_tmp = numpy.array(imageHuMm_tmp)
-            imageHuMm = []
-            for z in range(imageHuMm_tmp.shape[1]):
-                imageHuMm.append(imageHuMm_tmp[:,z,:])
-            imageHuMm = numpy.array(imageHuMm)
+            interpolation_method = cv2.INTER_CUBIC
         else:
-            imageHuMm = imageHuMm_tmp_xyz
-            imageHuMm = numpy.array(imageHuMm)
+            interpolation_method = None
+            
+        if interpolation_method is not None:
+            imageHuMm_tmp = [
+                cv2.resize(imageHuMm[:,y,:],dsize=None,fx=1,fy=pixel2Mm[2],interpolation = interpolation_method)
+                for y in range(imageHuMm.shape[1])
+            ]
+            imageHuMm = np.array(imageHuMm_tmp)
+        
             
         self.signalProgress.emit(0.1, 'registrator identifying...')
         ############################################################################################
@@ -1612,9 +1705,9 @@ class REGISTRATION(QObject):
         dictionaryPoint = self.__ClassifyPointXZ(resultCentroid_xz, dictionaryPoint)
         self.signalProgress.emit(0.99, 'registrator identify completed')
         
-        pointMatrixSorted_xy = numpy.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
-        pointMatrixSorted_yz = numpy.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
-        pointMatrixSorted_xz = numpy.array(sorted(resultCentroid_xz, key=lambda tmp: (int(tmp[0]), int(tmp[2]), int(tmp[1]))))
+        pointMatrixSorted_xy = np.array(sorted(resultCentroid_xy, key=lambda tmp: (int(tmp[0]), int(tmp[1]), int(tmp[2]))))
+        pointMatrixSorted_yz = np.array(sorted(resultCentroid_yz, key=lambda tmp: (int(tmp[1]), int(tmp[2]), int(tmp[0]))))
+        pointMatrixSorted_xz = np.array(sorted(resultCentroid_xz, key=lambda tmp: (int(tmp[0]), int(tmp[2]), int(tmp[1]))))
         
         averagePoint = self.__AveragePoint(dictionaryPoint)
         ############################################################################################
@@ -1627,45 +1720,51 @@ class REGISTRATION(QObject):
         nStep = 1 / count
         nProgress = 0
         self.signalProgress.emit(0, 'calculating registrator position...')
-        for p in averagePoint:
-            try:
-                pTmp1 = [(p[0]),(p[1]),int(p[2])]
-                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
+        # for p in averagePoint:
+        #     try:
+        #         pTmp1 = [(p[0]),(p[1]),int(p[2])]
+        #         tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
                 
-                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
-                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
+        #         pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
+        #         tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-                X1 = int(p[2])
-                X2 = int(p[2])+1
-                Y1 = tmpPoint1[2]
-                Y2 = tmpPoint2[2]
-                X = p[2]
-                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
-                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+        #         X1 = int(p[2])
+        #         X2 = int(p[2])+1
+        #         Y1 = tmpPoint1[2]
+        #         Y2 = tmpPoint2[2]
+        #         X = p[2]
+        #         Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
+        #         resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 
-                nProgress = min(nProgress + nStep, 0.9)
-                self.signalProgress.emit(nProgress, 'calculating registrator position...')
-            except:
-                pass
+        #         nProgress = min(nProgress + nStep, 0.9)
+        #         self.signalProgress.emit(nProgress, 'calculating registrator position...')
+        #     except:
+        #         pass
+        
         self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
         try:
-            ball = self.IdentifyPoint(numpy.array(resultPoint))
+            # markers = self.IdentifyPoint(np.array(resultPoint))
+            markers = self.IdentifyPoint(averagePoint)
             self.signalProgress.emit(1, 'registration completed')
         except:
-            ball = []
+            markers = None
         # print("-------------------------------------------------------------------")
         # print("ball: \n", ball)
         # print("-------------------------------------------------------------------")
         ############################################################################################
         ## 如果 IdentifyPoint 失敗, return 候選人, 為了手動註冊 ############################################################################################
         pointMatrixSorted = numpy.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
-        if ball == {}:
+        if not markers:
             return False, pointMatrixSorted
-        elif ball == []:
-            return False, pointMatrixSorted
+        # elif ball == []:
+        #     return False, pointMatrixSorted
         else:
-            return True, ball
+            logger.info(f'registration balls =')
+            for balls in markers.values():
+                for ball in balls:
+                    logger.info(f'{ball}')
+            return True, markers
         ############################################################################################
     ### 公式10
     def TransformPointVTK(self, imageTag, point):
@@ -5188,7 +5287,7 @@ class Trajectory():
             return None
         else:
             index = min(num - 1, max(-num, index))
-            return np.asarray(self._listTrajectory[index])
+            return np.array(self._listTrajectory[index])
         
     def _assertPoint(self, point):
         assert(
