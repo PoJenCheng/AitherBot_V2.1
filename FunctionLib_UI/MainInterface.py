@@ -292,6 +292,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotFix.setHidden(True)
         self.btnRobotBackTarget.setHidden(True)
         
+        widget:QWidget = self.toolBox.widget(1)
+        self.toolBox.removeItem(1)
+        widget.close()
+        del widget
+        
+        widget:QWidget = self.toolTrajectory.widget(1)
+        self.toolTrajectory.removeItem(1)
+        widget.close()
+        del widget
+        
         self.init_ui()
         
         # self._SaveAnotherImages('image\\msgbox\\down_right_side\\dark', 'image\\msgbox\\temp')
@@ -666,8 +676,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            self.stkScene.setCurrentWidget(self.pgPositionRobot)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgPositionRobot)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -1201,6 +1211,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
             MessageBox.ShowCritical('ERROR', 'image error')
+            logger.critical('import dicom error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):

@@ -1320,7 +1320,7 @@ QPushButton:pressed{
 }</string>
           </property>
           <property name="currentIndex">
-           <number>9</number>
+           <number>15</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
            <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0" columnstretch="2,1">
@@ -4722,7 +4722,7 @@ QTabBar::tab:selected{
                <attribute name="title">
                 <string>Planning</string>
                </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_4" stretch="3,2">
+               <layout class="QVBoxLayout" name="verticalLayout_4" stretch="4,6">
                 <property name="spacing">
                  <number>0</number>
                 </property>
@@ -4817,8 +4817,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>222</width>
-                     <height>312</height>
+                     <width>283</width>
+                     <height>305</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4878,7 +4878,7 @@ QToolBox QPushButton:disabled{
                          </size>
                         </property>
                         <property name="text">
-                         <string>Low</string>
+                         <string>Inhale</string>
                         </property>
                         <property name="checkable">
                          <bool>true</bool>
@@ -4900,7 +4900,7 @@ QToolBox QPushButton:disabled{
                          </size>
                         </property>
                         <property name="text">
-                         <string>High</string>
+                         <string>Exhale</string>
                         </property>
                         <property name="checkable">
                          <bool>true</bool>
@@ -4943,19 +4943,6 @@ QToolBox QPushButton:disabled{
                       </property>
                      </widget>
                     </item>
-                    <item>
-                     <spacer name="verticalSpacer_8">
-                      <property name="orientation">
-                       <enum>Qt::Vertical</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>20</width>
-                        <height>40</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
                    </layout>
                   </widget>
                   <widget class="QWidget" name="pgTrajectory">
@@ -4963,20 +4950,114 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>243</width>
-                     <height>451</height>
+                     <width>300</width>
+                     <height>294</height>
                     </rect>
                    </property>
                    <attribute name="label">
                     <string>Trajectory</string>
                    </attribute>
-                   <layout class="QVBoxLayout" name="verticalLayout_3">
-                    <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_3"/>
+                  </widget>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolBox" name="toolTrajectory">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QToolBox{
+background-color: rgb(93, 161, 209);
+}
+
+QToolBox QWidget{
+background-color: rgb(93, 161, 209);
+}
+
+QToolBox::tab{
+	background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,
+						stop:0 rgba(176, 180, 200, 255),
+						 stop:0.5 rgba(200, 200, 255, 255),
+						stop:1 rgba(176, 180, 200, 255));
+	border:1px solid #c0c0c0;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border-bottom: none;
+	padding-left: 15px;
+}
+
+QToolBox::tab:selected{
+	background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,
+						stop:0 rgba(206, 210, 230, 255),
+						stop:0.4 rgba(255, 255, 255, 255),
+						 stop:0.6 rgba(230, 230, 255, 255),
+						stop:1 rgba(206, 210, 230, 255));
+	color: rgb(66, 138, 255);
+}
+
+QToolBox QPushButton{
+	background-color:rgb(109, 190, 247);
+	border-top:1px solid #ddd;
+	border-left:1px solid #ddd;
+	border-bottom:2px solid #444;
+	border-right:2px solid #444;
+}
+
+QToolBox QPushButton:checked{
+	border-bottom:1px solid #ddd;
+	border-right:1px solid #ddd;
+	border-top:2px solid #444;
+	border-left:2px solid #444;
+}
+
+QToolBox QPushButton:pressed{
+	border-bottom:1px solid #ddd;
+	border-right:1px solid #ddd;
+	border-top:2px solid #444;
+	border-left:2px solid #444;
+}
+
+QToolBox QPushButton:disabled{
+	background-color:#666;
+}
+
+QLabel{
+	font: 16px &quot;Arial&quot;;
+}
+</string>
+                  </property>
+                  <property name="currentIndex">
+                   <number>0</number>
+                  </property>
+                  <widget class="QWidget" name="page">
+                   <property name="geometry">
+                    <rect>
+                     <x>0</x>
+                     <y>0</y>
+                     <width>300</width>
+                     <height>490</height>
+                    </rect>
+                   </property>
+                   <attribute name="label">
+                    <string>Trajectory</string>
+                   </attribute>
+                   <layout class="QGridLayout" name="gridLayout_44">
+                    <item row="0" column="0">
                      <widget class="QTreeWidget" name="treeTrajectory">
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>200</height>
+                        <height>150</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -5053,7 +5134,7 @@ QTreeWidget::item:selected{
                       </column>
                      </widget>
                     </item>
-                    <item>
+                    <item row="1" column="0">
                      <widget class="QPushButton" name="btnAddTrajectory">
                       <property name="minimumSize">
                        <size>
@@ -5073,7 +5154,7 @@ border-radius:10px;</string>
                       </property>
                      </widget>
                     </item>
-                    <item>
+                    <item row="2" column="0">
                      <layout class="QHBoxLayout" name="horizontalLayout_14">
                       <item>
                        <widget class="QPushButton" name="btnSetEntry">
@@ -5109,14 +5190,7 @@ border-radius:10px;</string>
                       </item>
                      </layout>
                     </item>
-                    <item>
-                     <widget class="QLabel" name="label_15">
-                      <property name="text">
-                       <string>Trajectory</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
+                    <item row="3" column="0">
                      <layout class="QHBoxLayout" name="horizontalLayout_13">
                       <item>
                        <widget class="QPushButton" name="btnToEntry">
@@ -5178,7 +5252,7 @@ font: 12px Arial;</string>
                       </item>
                      </layout>
                     </item>
-                    <item>
+                    <item row="4" column="0">
                      <layout class="QHBoxLayout" name="horizontalLayout_24">
                       <item>
                        <widget class="QLabel" name="label_24">
@@ -5196,35 +5270,22 @@ font: 12px Arial;</string>
                       </item>
                      </layout>
                     </item>
-                    <item>
-                     <spacer name="verticalSpacer_9">
-                      <property name="orientation">
-                       <enum>Qt::Vertical</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>20</width>
-                        <height>40</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
                    </layout>
                   </widget>
+                  <widget class="QWidget" name="page_2">
+                   <property name="geometry">
+                    <rect>
+                     <x>0</x>
+                     <y>0</y>
+                     <width>300</width>
+                     <height>490</height>
+                    </rect>
+                   </property>
+                   <attribute name="label">
+                    <string>Page 2</string>
+                   </attribute>
+                  </widget>
                  </widget>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_7">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </widget>
