@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>dlgExportLog</class>
+ <widget class="QDialog" name="dlgExportLog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>723</width>
+    <height>617</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Export Log</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QPushButton{
+	font: 48px &quot;Arial&quot;;
+	color: qradialgradient(spread:pad, cx:0.5, cy:1.7, radius:1.7, fx:0.5, fy:1.7, stop:0 rgba(170, 255, 255, 255), stop:0.7 rgba(170, 255, 255, 255), stop:0.71 rgba(0, 0, 255, 255), stop:1 rgba(0, 0, 255, 255));
+	background-color: qradialgradient(spread:pad, cx:0.5, cy:1.5, radius:1, fx:0.5, fy:1, stop:0 rgba(0, 0, 255, 255), stop:0.3 rgba(0, 40, 255, 255), stop:0.7 rgba(40, 85, 255, 255), stop:1 rgba(90, 170, 255, 255));
+	border-radius:10px;
+	border-top:1px solid #ddd;
+	border-left:1px solid #ddd;
+	border-right:2px solid #666;
+	border-bottom:2px solid #666;
+}
+
+QPushButton:pressed{
+	border-top:2px solid #666;
+	border-left:2px solid #666;
+	border-right:1px solid #ddd;
+	border-bottom:1px solid #ddd;
+}
+
+QCalendarWidget QPushButton{
+	font: 24px &quot;Arial&quot;;
+	color:rgba(170, 255, 255, 255);
+}</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="lblFrom">
+     <property name="text">
+      <string>From</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QLabel" name="lblTo">
+     <property name="text">
+      <string>To</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QDateTimeEdit" name="dateEdit">
+     <property name="minimumDateTime">
+      <datetime>
+       <hour>0</hour>
+       <minute>0</minute>
+       <second>0</second>
+       <year>2024</year>
+       <month>5</month>
+       <day>20</day>
+      </datetime>
+     </property>
+     <property name="calendarPopup">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QCustomCalendarWidget" name="calendarFrom"/>
+   </item>
+   <item row="3" column="1" colspan="2">
+    <widget class="QPushButton" name="btnExport">
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>80</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>Export</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomCalendarWidget</class>
+   <extends>QCalendarWidget</extends>
+   <header location="global">FunctionLib_UI.WidgetButton.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

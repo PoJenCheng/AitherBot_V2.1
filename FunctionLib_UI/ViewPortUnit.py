@@ -30,6 +30,8 @@ class ViewPortUnit(QObject):
     signalFocus         = pyqtSignal(np.ndarray)
     signalSetSliceValue = pyqtSignal(np.ndarray)
     
+    _bLockTarget3D = False
+    
     def __init__(self, mainWidget, dicom:DISPLAY, vtkWidget:QVTKRenderWindowInteractor, orientation:str, uiScrollSlice:QScrollBar, uiCbxOrientation:QComboBox):
         
         super().__init__()
@@ -138,8 +140,8 @@ class ViewPortUnit(QObject):
         
         if self.bFocusMode:
             if hasattr(self, 'renderer') and \
+                (self.orientation != VIEW_3D or ViewPortUnit._bLockTarget3D) and \
                 self.orientation != VIEW_CROSS_SECTION:
-                # self.orientation != VIEW_3D and \
                 if pos is None:
                     pos = self.renderer.target
                 self.renderer.SetCameraToTarget(pos)
@@ -772,6 +774,12 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
                 
             if isValidActor == True:
                 self.currentTag["pickPoint"] = self.currentDicom.target
+                dimension = self.currentTag.get('dimension')
+                spacing = self.currentTag.get('spacing')
+                if dimension is not None and spacing is not None:
+                    target = self.currentDicom.target
+                    logger.debug(f'target point = {target}')
+                
         else:
             logger.warning("no objects be picked")
        
