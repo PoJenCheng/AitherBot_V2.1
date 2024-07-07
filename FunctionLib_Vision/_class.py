@@ -41,12 +41,9 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 from FunctionLib_Robot.logger import logger
 from FunctionLib_Robot.__init__ import *
-from FunctionLib_Robot.__init__ import *
 
 from ._subFunction import *
 from scipy.spatial.transform import Rotation as R
-from scipy.ndimage import label, zoom
-from skimage.measure import regionprops
 from scipy.ndimage import label, zoom
 from skimage.measure import regionprops
 # import vtk.numpy_interface.dataset_adapter as dsa
