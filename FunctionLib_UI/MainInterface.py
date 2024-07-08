@@ -841,7 +841,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         "automatic find registration ball center"
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
-            self.regFn.GetBallAuto2(image, spacing)
+            # self.regFn.GetBallAuto2(image, spacing)
             flag, answer = self.regFn.GetBallAuto(image, spacing, series)
             ############################################################################################
         except Exception as e:
