@@ -2381,7 +2381,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 312))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 283, 305))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -2433,16 +2433,88 @@ class Ui_MainWindow(object):
         self.sldWindowWidth.setOrientation(QtCore.Qt.Horizontal)
         self.sldWindowWidth.setObjectName("sldWindowWidth")
         self.verticalLayout_2.addWidget(self.sldWindowWidth)
-        spacerItem43 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem43)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 243, 451))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 294))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.treeTrajectory = QtWidgets.QTreeWidget(self.pgTrajectory)
-        self.treeTrajectory.setMinimumSize(QtCore.QSize(0, 200))
+        self.toolBox.addItem(self.pgTrajectory, "")
+        self.verticalLayout_4.addWidget(self.toolBox)
+        self.toolTrajectory = QtWidgets.QToolBox(self.tabPlanning)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.toolTrajectory.sizePolicy().hasHeightForWidth())
+        self.toolTrajectory.setSizePolicy(sizePolicy)
+        self.toolTrajectory.setMinimumSize(QtCore.QSize(0, 0))
+        self.toolTrajectory.setStyleSheet("QToolBox{\n"
+"background-color: rgb(93, 161, 209);\n"
+"}\n"
+"\n"
+"QToolBox QWidget{\n"
+"background-color: rgb(93, 161, 209);\n"
+"}\n"
+"\n"
+"QToolBox::tab{\n"
+"    background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,\n"
+"                        stop:0 rgba(176, 180, 200, 255),\n"
+"                         stop:0.5 rgba(200, 200, 255, 255),\n"
+"                        stop:1 rgba(176, 180, 200, 255));\n"
+"    border:1px solid #c0c0c0;\n"
+"    border-top-left-radius: 10px;\n"
+"    border-top-right-radius: 10px;\n"
+"    border-bottom: none;\n"
+"    padding-left: 15px;\n"
+"}\n"
+"\n"
+"QToolBox::tab:selected{\n"
+"    background:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,\n"
+"                        stop:0 rgba(206, 210, 230, 255),\n"
+"                        stop:0.4 rgba(255, 255, 255, 255),\n"
+"                         stop:0.6 rgba(230, 230, 255, 255),\n"
+"                        stop:1 rgba(206, 210, 230, 255));\n"
+"    color: rgb(66, 138, 255);\n"
+"}\n"
+"\n"
+"QToolBox QPushButton{\n"
+"    background-color:rgb(109, 190, 247);\n"
+"    border-top:1px solid #ddd;\n"
+"    border-left:1px solid #ddd;\n"
+"    border-bottom:2px solid #444;\n"
+"    border-right:2px solid #444;\n"
+"}\n"
+"\n"
+"QToolBox QPushButton:checked{\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"    border-top:2px solid #444;\n"
+"    border-left:2px solid #444;\n"
+"}\n"
+"\n"
+"QToolBox QPushButton:pressed{\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"    border-top:2px solid #444;\n"
+"    border-left:2px solid #444;\n"
+"}\n"
+"\n"
+"QToolBox QPushButton:disabled{\n"
+"    background-color:#666;\n"
+"}\n"
+"\n"
+"QLabel{\n"
+"    font: 16px \"Arial\";\n"
+"}\n"
+"")
+        self.toolTrajectory.setObjectName("toolTrajectory")
+        self.page = QtWidgets.QWidget()
+        self.page.setGeometry(QtCore.QRect(0, 0, 300, 490))
+        self.page.setObjectName("page")
+        self.gridLayout_44 = QtWidgets.QGridLayout(self.page)
+        self.gridLayout_44.setObjectName("gridLayout_44")
+        self.treeTrajectory = QtWidgets.QTreeWidget(self.page)
+        self.treeTrajectory.setMinimumSize(QtCore.QSize(0, 150))
         self.treeTrajectory.setStyleSheet("QHeaderView:section{\n"
 "    background:rgb(7, 81, 255);\n"
 "    color:rgb(197, 255, 246);\n"
@@ -2472,8 +2544,8 @@ class Ui_MainWindow(object):
         self.treeTrajectory.header().setMinimumSectionSize(0)
         self.treeTrajectory.header().setSortIndicatorShown(False)
         self.treeTrajectory.header().setStretchLastSection(True)
-        self.verticalLayout_3.addWidget(self.treeTrajectory)
-        self.btnAddTrajectory = QtWidgets.QPushButton(self.pgTrajectory)
+        self.gridLayout_44.addWidget(self.treeTrajectory, 0, 0, 1, 1)
+        self.btnAddTrajectory = QtWidgets.QPushButton(self.page)
         self.btnAddTrajectory.setMinimumSize(QtCore.QSize(0, 48))
         self.btnAddTrajectory.setStyleSheet("background-image:url(image/plus.png);\n"
 "background-repeat:no-repeat;\n"
@@ -2482,26 +2554,23 @@ class Ui_MainWindow(object):
 "border-radius:10px;")
         self.btnAddTrajectory.setText("")
         self.btnAddTrajectory.setObjectName("btnAddTrajectory")
-        self.verticalLayout_3.addWidget(self.btnAddTrajectory)
+        self.gridLayout_44.addWidget(self.btnAddTrajectory, 1, 0, 1, 1)
         self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_14.setObjectName("horizontalLayout_14")
-        self.btnSetEntry = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnSetEntry = QtWidgets.QPushButton(self.page)
         self.btnSetEntry.setEnabled(False)
         self.btnSetEntry.setMinimumSize(QtCore.QSize(0, 40))
         self.btnSetEntry.setObjectName("btnSetEntry")
         self.horizontalLayout_14.addWidget(self.btnSetEntry)
-        self.btnSetTarget = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnSetTarget = QtWidgets.QPushButton(self.page)
         self.btnSetTarget.setEnabled(False)
         self.btnSetTarget.setMinimumSize(QtCore.QSize(0, 40))
         self.btnSetTarget.setObjectName("btnSetTarget")
         self.horizontalLayout_14.addWidget(self.btnSetTarget)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_14)
-        self.label_15 = QtWidgets.QLabel(self.pgTrajectory)
-        self.label_15.setObjectName("label_15")
-        self.verticalLayout_3.addWidget(self.label_15)
+        self.gridLayout_44.addLayout(self.horizontalLayout_14, 2, 0, 1, 1)
         self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_13.setObjectName("horizontalLayout_13")
-        self.btnToEntry = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnToEntry = QtWidgets.QPushButton(self.page)
         self.btnToEntry.setMinimumSize(QtCore.QSize(50, 40))
         self.btnToEntry.setMaximumSize(QtCore.QSize(50, 16777215))
         self.btnToEntry.setStyleSheet("border-top-left-radius:20px;\n"
@@ -2509,12 +2578,12 @@ class Ui_MainWindow(object):
 "font: 12px Arial;")
         self.btnToEntry.setObjectName("btnToEntry")
         self.horizontalLayout_13.addWidget(self.btnToEntry)
-        self.sldTrajectory = QtWidgets.QSlider(self.pgTrajectory)
+        self.sldTrajectory = QtWidgets.QSlider(self.page)
         self.sldTrajectory.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.sldTrajectory.setOrientation(QtCore.Qt.Horizontal)
         self.sldTrajectory.setObjectName("sldTrajectory")
         self.horizontalLayout_13.addWidget(self.sldTrajectory)
-        self.btnToTarget = QtWidgets.QPushButton(self.pgTrajectory)
+        self.btnToTarget = QtWidgets.QPushButton(self.page)
         self.btnToTarget.setMinimumSize(QtCore.QSize(50, 40))
         self.btnToTarget.setMaximumSize(QtCore.QSize(50, 16777215))
         self.btnToTarget.setStyleSheet("border-top-right-radius:20px;\n"
@@ -2522,25 +2591,25 @@ class Ui_MainWindow(object):
 "font: 12px Arial;")
         self.btnToTarget.setObjectName("btnToTarget")
         self.horizontalLayout_13.addWidget(self.btnToTarget)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_13)
+        self.gridLayout_44.addLayout(self.horizontalLayout_13, 3, 0, 1, 1)
         self.horizontalLayout_24 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_24.setObjectName("horizontalLayout_24")
-        self.label_24 = QtWidgets.QLabel(self.pgTrajectory)
+        self.label_24 = QtWidgets.QLabel(self.page)
         self.label_24.setObjectName("label_24")
         self.horizontalLayout_24.addWidget(self.label_24)
-        self.lblDistanceToTarget = QtWidgets.QLabel(self.pgTrajectory)
+        self.lblDistanceToTarget = QtWidgets.QLabel(self.page)
         self.lblDistanceToTarget.setText("")
         self.lblDistanceToTarget.setObjectName("lblDistanceToTarget")
         self.horizontalLayout_24.addWidget(self.lblDistanceToTarget)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_24)
-        spacerItem44 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_3.addItem(spacerItem44)
-        self.toolBox.addItem(self.pgTrajectory, "")
-        self.verticalLayout_4.addWidget(self.toolBox)
-        spacerItem45 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem45)
-        self.verticalLayout_4.setStretch(0, 3)
-        self.verticalLayout_4.setStretch(1, 2)
+        self.gridLayout_44.addLayout(self.horizontalLayout_24, 4, 0, 1, 1)
+        self.toolTrajectory.addItem(self.page, "")
+        self.page_2 = QtWidgets.QWidget()
+        self.page_2.setGeometry(QtCore.QRect(0, 0, 300, 490))
+        self.page_2.setObjectName("page_2")
+        self.toolTrajectory.addItem(self.page_2, "")
+        self.verticalLayout_4.addWidget(self.toolTrajectory)
+        self.verticalLayout_4.setStretch(0, 4)
+        self.verticalLayout_4.setStretch(1, 6)
         self.tabWidget.addTab(self.tabPlanning, "")
         self.tabGuidance = QtWidgets.QWidget()
         self.tabGuidance.setObjectName("tabGuidance")
@@ -2550,8 +2619,8 @@ class Ui_MainWindow(object):
         self.btnDriveTo.setMinimumSize(QtCore.QSize(0, 50))
         self.btnDriveTo.setObjectName("btnDriveTo")
         self.gridLayout_32.addWidget(self.btnDriveTo, 1, 0, 1, 1)
-        spacerItem46 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_32.addItem(spacerItem46, 2, 0, 1, 1)
+        spacerItem43 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_32.addItem(spacerItem43, 2, 0, 1, 1)
         self.horizontalLayout_23 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_23.setObjectName("horizontalLayout_23")
         self.stkSignalLight = QtWidgets.QStackedWidget(self.tabGuidance)
@@ -2650,8 +2719,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_15 = QtWidgets.QHBoxLayout(self.wdgBottom)
         self.horizontalLayout_15.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_15.setObjectName("horizontalLayout_15")
-        spacerItem47 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_15.addItem(spacerItem47)
+        spacerItem44 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_15.addItem(spacerItem44)
         self.btnUnlockRobot_2 = QtWidgets.QPushButton(self.wdgBottom)
         self.btnUnlockRobot_2.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
@@ -2756,8 +2825,8 @@ class Ui_MainWindow(object):
 "}")
         self.btnDriveConfirm.setObjectName("btnDriveConfirm")
         self.horizontalLayout_15.addWidget(self.btnDriveConfirm)
-        spacerItem48 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_15.addItem(spacerItem48)
+        spacerItem45 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_15.addItem(spacerItem45)
         self.gridLayout_37.addWidget(self.wdgBottom, 3, 0, 1, 2)
         self.gridLayout_37.setColumnStretch(0, 4)
         self.gridLayout_37.setColumnStretch(1, 1)
@@ -3009,8 +3078,8 @@ class Ui_MainWindow(object):
         self.label_23 = QtWidgets.QLabel(self.pgSterileStep3)
         self.label_23.setObjectName("label_23")
         self.gridLayout_30.addWidget(self.label_23, 1, 1, 1, 1)
-        spacerItem49 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem49, 0, 2, 1, 1)
+        spacerItem46 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem46, 0, 2, 1, 1)
         self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_22.setSpacing(0)
         self.horizontalLayout_22.setObjectName("horizontalLayout_22")
@@ -3029,8 +3098,8 @@ class Ui_MainWindow(object):
         self.lblJoint2.setObjectName("lblJoint2")
         self.horizontalLayout_22.addWidget(self.lblJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_22, 2, 1, 1, 1)
-        spacerItem50 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_30.addItem(spacerItem50, 0, 0, 1, 1)
+        spacerItem47 = QtWidgets.QSpacerItem(480, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_30.addItem(spacerItem47, 0, 0, 1, 1)
         self.horizontalLayout_21 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_21.setContentsMargins(0, 0, -1, 0)
         self.horizontalLayout_21.setSpacing(0)
@@ -3101,8 +3170,8 @@ class Ui_MainWindow(object):
         self.stkJoint2.addWidget(self.pgJoint2Pass)
         self.horizontalLayout_21.addWidget(self.stkJoint2)
         self.gridLayout_30.addLayout(self.horizontalLayout_21, 3, 1, 1, 1)
-        spacerItem51 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_30.addItem(spacerItem51, 4, 1, 1, 1)
+        spacerItem48 = QtWidgets.QSpacerItem(20, 500, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_30.addItem(spacerItem48, 4, 1, 1, 1)
         self.stkScene.addWidget(self.pgSterileStep3)
         self.pgInstallAdaptor = QtWidgets.QWidget()
         self.pgInstallAdaptor.setObjectName("pgInstallAdaptor")
@@ -3119,10 +3188,10 @@ class Ui_MainWindow(object):
         self.wdgMediaSetAdaptor.setMinimumSize(QtCore.QSize(800, 600))
         self.wdgMediaSetAdaptor.setObjectName("wdgMediaSetAdaptor")
         self.gridLayout_7.addWidget(self.wdgMediaSetAdaptor, 1, 1, 1, 1)
-        spacerItem52 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem52, 1, 0, 1, 1)
-        spacerItem53 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_7.addItem(spacerItem53, 1, 3, 1, 1)
+        spacerItem49 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem49, 1, 0, 1, 1)
+        spacerItem50 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem50, 1, 3, 1, 1)
         self.label_title_11 = QtWidgets.QLabel(self.pgInstallAdaptor)
         self.label_title_11.setMinimumSize(QtCore.QSize(0, 100))
         self.label_title_11.setMaximumSize(QtCore.QSize(16777215, 100))
@@ -3181,12 +3250,13 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(4)
-        self.stkScene.setCurrentIndex(9)
+        self.stkScene.setCurrentIndex(15)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxRightBottom.setCurrentIndex(3)
         self.cbxLeftBottom.setCurrentIndex(2)
         self.tabWidget.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
+        self.toolTrajectory.setCurrentIndex(0)
         self.stkSignalLight.setCurrentIndex(0)
         self.stkJoint1.setCurrentIndex(1)
         self.stkJoint2.setCurrentIndex(1)
@@ -3321,20 +3391,21 @@ class Ui_MainWindow(object):
         self.cbxLeftTop.setItemText(2, _translate("MainWindow", "Sagittal View"))
         self.cbxLeftTop.setItemText(3, _translate("MainWindow", "Coronal View"))
         self.label_25.setText(_translate("MainWindow", "Reload Dicom"))
-        self.btnDicomLow.setText(_translate("MainWindow", "Low"))
-        self.btnDicomHigh.setText(_translate("MainWindow", "High"))
+        self.btnDicomLow.setText(_translate("MainWindow", "Inhale"))
+        self.btnDicomHigh.setText(_translate("MainWindow", "Exhale"))
         self.label_16.setText(_translate("MainWindow", "Window Level"))
         self.label_17.setText(_translate("MainWindow", "Window Width"))
         self.toolBox.setItemText(self.toolBox.indexOf(self.pgImage), _translate("MainWindow", "Image"))
+        self.toolBox.setItemText(self.toolBox.indexOf(self.pgTrajectory), _translate("MainWindow", "Trajectory"))
         self.treeTrajectory.headerItem().setText(1, _translate("MainWindow", "Trajectory Name"))
         self.treeTrajectory.headerItem().setText(2, _translate("MainWindow", "Color"))
         self.btnSetEntry.setText(_translate("MainWindow", "Set Entry"))
         self.btnSetTarget.setText(_translate("MainWindow", "SetTarget"))
-        self.label_15.setText(_translate("MainWindow", "Trajectory"))
         self.btnToEntry.setText(_translate("MainWindow", "Entry"))
         self.btnToTarget.setText(_translate("MainWindow", "Target"))
         self.label_24.setText(_translate("MainWindow", "Distance to target："))
-        self.toolBox.setItemText(self.toolBox.indexOf(self.pgTrajectory), _translate("MainWindow", "Trajectory"))
+        self.toolTrajectory.setItemText(self.toolTrajectory.indexOf(self.page), _translate("MainWindow", "Trajectory"))
+        self.toolTrajectory.setItemText(self.toolTrajectory.indexOf(self.page_2), _translate("MainWindow", "Page 2"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPlanning), _translate("MainWindow", "Planning"))
         self.btnDriveTo.setText(_translate("MainWindow", "Drive To Entry Point"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabGuidance), _translate("MainWindow", "Guidance"))

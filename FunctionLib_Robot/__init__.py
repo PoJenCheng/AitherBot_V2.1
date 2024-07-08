@@ -82,7 +82,8 @@ DEVICE_ROBOT = 1
 DEVICE_LASER = 2
 DEVICE_ALL = 3
 
-DEVICE_ENABLED = DEVICE_ALL
+# 設定啟動的設備，正常是DEVICE_ALL，要個別測試就選擇robot或是laser
+DEVICE_ENABLED = DEVICE_ROBOT
 
 # foot pedal action
 NUM_OF_ACTION = 4
@@ -107,6 +108,7 @@ IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
 
+# 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
 SKIP_REGISTRATION = False
 
 entry_full_1 = np.array([5,20.93392833,-85.62637816])
@@ -123,3 +125,6 @@ max_linear_count = 36000
 max_linearDiffCount_1 = 5000 # motor axis 2 - motor axis 4
 max_linearDiffCount_2 = 10000 # motor axis 4 - motor axis 2
 max_rotateDiffCount = 9000 # motor axis 1 -motor axis 3
+# Registration parameter
+IDENTIFY_MARKER_TOLERENCE = 5
+MIN_RADIUS = 3

@@ -1,16 +1,241 @@
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QMouseEvent, QPaintEvent
+from PyQt5.QtCore import (
+                            QEvent,
+                            QObject,
+                            QRect,
+                            Qt, 
+                            pyqtSignal, 
+                            QTimer, 
+                            QDate, 
+                            QLocale
+                        )
+from PyQt5.QtGui import (
+                            QCloseEvent,
+                            QMouseEvent, 
+                            QPaintEvent, 
+                            QColor, 
+                            QImage, 
+                            QPainter,
+                            QTextCharFormat,
+                            QFont,
+                            QFontMetrics
+                        )
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWidgets import QWidget
-from datetime import datetime
+from datetime import date, datetime
+
+from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
+from FunctionLib_Robot.logger import logger
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
 TYPE_ROBOTARM = 2
+
+class QCustomStyle(QProxyStyle):
+    def __init__(self, parent:QWidget):
+        super().__init__()
+        self.setParent(parent)
+        
+    def drawPrimitive(
+        self, element: QStyle.PrimitiveElement, 
+        option: QStyleOption | None, 
+        painter: QPainter | None, 
+        widget: QWidget | None
+        ):
+        if element == QStyle.PE_FrameFocusRect:
+            return
+        super().drawPrimitive(element, option, painter, widget)
+
+class QCustomCalendarWidget(QCalendarWidget):
+    signalSetCalendarTime = pyqtSignal(QDate)
+    
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        
+        self._bConfirm = False
+        self._exceptDate = []
+        self._lastSelectedDate = None
+        
+        self.layout().setSizeConstraint(QLayout.SetFixedSize)
+        self.setLocale(QLocale(QLocale.Chinese))
+        self.setNavigationBarVisible(False)
+        self.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+        self.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
+        self.setStyle(QCustomStyle(self))
+        
+        fmt = QTextCharFormat()
+        fmt.setForeground(QColor(80, 80, 80))
+        fmt.setBackground(QColor(255, 255, 255))
+        fmt.setFontFamily('Arial')
+        
+        self.setHeaderTextFormat(fmt)
+        self.setWeekdayTextFormat(Qt.Monday, fmt)
+        self.setWeekdayTextFormat(Qt.Tuesday, fmt)
+        self.setWeekdayTextFormat(Qt.Wednesday, fmt)
+        self.setWeekdayTextFormat(Qt.Thursday, fmt)
+        self.setWeekdayTextFormat(Qt.Friday, fmt)
+        
+        fmt.setForeground(QColor(255, 0, 0))
+        fmt.setBackground(QColor(255, 255, 255))
+        self.setWeekdayTextFormat(Qt.Saturday, fmt)
+        self.setWeekdayTextFormat(Qt.Sunday, fmt)
+        
+        self._InitTopWidget()
+        self._InitBottomWidget()
+        
+        self.currentPageChanged.connect(self._SetDataLabelTimeText)
+        # self.clicked.connect(self._OnClicked)
+        self.update()
+        
+    def closeEvent(self, event: QCloseEvent | None):
+        if not self._bConfirm:
+            return
+        super().closeEvent(event)
+        
+    def paintCell(self, painter: QPainter, rect: QRect, date: QDate | date):
+        if date == self.selectedDate():
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(0, 145, 255))
+            
+            painter.drawRoundedRect(rect.x(), rect.y() + 3, rect.width(), rect.height() - 6, 3, 3)
+            painter.setPen(QColor(255, 255, 255))
+            
+            painter.drawText(rect, Qt.AlignCenter, str(date.day()))
+            painter.restore()
+        elif date == QDate.currentDate():
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(0, 161, 255))
+            
+            painter.drawRoundedRect(rect.x(), rect.y() + 3, rect.width(), rect.height() - 6, 3, 3)
+            painter.setBrush(QColor(255, 255, 255))
+            painter.drawRoundedRect(rect.x() + 1, rect.y() + 4, rect.width() - 2, rect.height() - 8, 2, 2)
+            
+            painter.setPen(QColor(0, 161, 255))
+            painter.drawText(rect, Qt.AlignCenter, str(date.day()))
+            painter.restore()
+        elif date < self.minimumDate() or date > self.maximumDate() or date in self._exceptDate:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(249, 249, 249))
+            
+            painter.drawRoundedRect(rect.x(), rect.y() + 3, rect.width(), rect.height() - 6, 3, 3)
+            painter.setPen(QColor(220, 220, 220))
+            
+            painter.drawText(rect, Qt.AlignCenter, str(date.day()))
+            painter.restore()
+        else:
+            super().paintCell(painter, rect, date)
+        
+        
+    def _InitTopWidget(self):
+        topWidget = QWidget(self)
+        topWidget.setObjectName('wdgCalendarTop')
+        topWidget.setFixedHeight(40)
+        topWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        
+        hBoxLayout = QHBoxLayout()
+        hBoxLayout.setContentsMargins(12, 0, 12, 0)
+        hBoxLayout.setSpacing(4)
+        
+        self._btnLeftYear = QPushButton(self)
+        self._btnLeftMonth = QPushButton(self)
+        self._btnRightYear = QPushButton(self)
+        self._btnRightMonth = QPushButton(self)
+        self._dataLabel = QLabel(self)
+        
+        self._btnLeftYear.setObjectName('btnLeftYear')
+        self._btnLeftMonth.setObjectName('btnLeftMonth')
+        self._btnRightYear.setObjectName('btnRightYear')
+        self._btnRightMonth.setObjectName('btnRightMonth')
+        self._dataLabel.setObjectName('dataLabel')
+        
+        self._btnLeftYear.setFixedSize(16, 16)
+        self._btnLeftMonth.setFixedSize(16, 16)
+        self._btnRightYear.setFixedSize(16, 16)
+        self._btnRightMonth.setFixedSize(16, 16)
+        
+        hBoxLayout.addWidget(self._btnLeftYear)
+        hBoxLayout.addWidget(self._btnLeftMonth)
+        hBoxLayout.addStretch()
+        hBoxLayout.addWidget(self._dataLabel)
+        hBoxLayout.addStretch()
+        hBoxLayout.addWidget(self._btnRightMonth)
+        hBoxLayout.addWidget(self._btnRightYear)
+        topWidget.setLayout(hBoxLayout)
+        
+        vBodyLayout = self.layout()
+        vBodyLayout.insertWidget(0, topWidget)
+        
+        self._btnLeftYear.clicked.connect(self._OnBtnClicked)
+        self._btnLeftMonth.clicked.connect(self._OnBtnClicked)
+        self._btnRightYear.clicked.connect(self._OnBtnClicked)
+        self._btnRightMonth.clicked.connect(self._OnBtnClicked)
+        
+        self._SetDataLabelTimeText(self.selectedDate().year(), self.selectedDate().month())
+    
+    def _InitBottomWidget(self):
+        bottomWidget = QWidget(self)
+        bottomWidget.setObjectName('wdgCalendarBottom')
+        bottomWidget.setFixedHeight(52)
+        bottomWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        
+        hBoxLayout = QHBoxLayout()
+        hBoxLayout.setContentsMargins(12, 12, 12, 0)
+        hBoxLayout.setSpacing(6)
+        
+        self._btnEnsure = QPushButton(self)
+        self._btnEnsure.setObjectName('btnCalendarEnsure')
+        self._btnEnsure.setFixedSize(100, 40)
+        self._btnEnsure.setText('Confirm')
+        
+        self._btnToday = QPushButton(self)
+        self._btnToday.setObjectName('btnCalendarToday')
+        self._btnToday.setFixedSize(100, 40)
+        self._btnToday.setText('Today')
+        
+        hBoxLayout.addStretch()
+        hBoxLayout.addWidget(self._btnToday)
+        hBoxLayout.addWidget(self._btnEnsure)
+        bottomWidget.setLayout(hBoxLayout)
+        
+        vBodyLayout = self.layout()
+        vBodyLayout.addWidget(bottomWidget)
+        
+        self._btnEnsure.clicked.connect(lambda:self.signalSetCalendarTime.emit(self.selectedDate()))
+        
+        self._btnToday.clicked.connect(lambda:self.showToday())
+        
+        
+    
+    def _SetDataLabelTimeText(self, year, month):
+        self._dataLabel.setText(f'{year}年{month:02}月')
+        
+    def _OnBtnClicked(self):
+        btnSender = self.sender()
+        if btnSender == self._btnLeftYear:
+            self.showPreviousYear()
+        elif btnSender == self._btnRightYear:
+            self.showNextYear()
+        elif btnSender == self._btnLeftMonth:
+            self.showPreviousMonth()
+        elif btnSender == self._btnRightMonth:
+            self.showNextMonth()
+            
+    def _OnClicked(self, _date:QDate|date):
+        if _date in self._exceptDate:
+            self.setSelectedDate(QDate(2024, 6, 5))
+            self.showSelectedDate()
+            logger.debug(f'selected date = {self.selectedDate()}')
+        else:
+            self._lastSelectedDate = _date
+            
+    def SetExceptDate(self, dates:list|tuple):
+        self._exceptDate = dates
+        
 
 class WidgetButton(QWidget):
     clicked = pyqtSignal()

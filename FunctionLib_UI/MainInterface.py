@@ -42,6 +42,7 @@ from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
+from FunctionLib_UI.Ui_DlgExportLog import *
 from FunctionLib_Vision.lungSegmentation import LungSegmentation
 
 mpl.use('QT5Agg')
@@ -291,6 +292,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 暫時隱藏之後考慮刪除的button
         self.btnRobotFix.setHidden(True)
         self.btnRobotBackTarget.setHidden(True)
+        
+        widget:QWidget = self.toolBox.widget(1)
+        self.toolBox.removeItem(1)
+        widget.close()
+        del widget
+        
+        widget:QWidget = self.toolTrajectory.widget(1)
+        self.toolTrajectory.removeItem(1)
+        widget.close()
+        del widget
         
         self.init_ui()
         
@@ -666,8 +677,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         else:
             self.stkMain.setCurrentWidget(self.pgScene)
-            # self.stkScene.setCurrentWidget(self.pgImportDicom)
-            self.stkScene.setCurrentWidget(self.pgPositionRobot)
+            self.stkScene.setCurrentWidget(self.pgImportDicom)
+            # self.stkScene.setCurrentWidget(self.pgPositionRobot)
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -730,6 +741,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.sldTrajectory.setValue(0)
             
             self.currentTag['trajectoryLength'] = int(length)
+            self.currentTag['trajectory'] = trajectory
             # if dicom == self.dicomLow:
             
             for view in self.viewport_L.values():
@@ -829,6 +841,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         "automatic find registration ball center"
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
+            # self.regFn.GetBallAuto2(image, spacing)
             flag, answer = self.regFn.GetBallAuto(image, spacing, series)
             ############################################################################################
         except Exception as e:
@@ -838,6 +851,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
             logger.critical(e)
+            self.dlgSystemProcessing.close()
             return False
         
         if flag == True:
@@ -848,6 +862,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # self.logUI.info(tmp)
                 i += 1
             self.currentTag.update({"candidateBallVTK": answer})
+            self.ShowRegistrationDifference()
             ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
             # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
@@ -863,6 +878,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # QMessageBox.critical(self, "error", "get candidate ball error")
             MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
+            self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
             # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
@@ -1195,12 +1211,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ############################################################################################
         ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
         "VTK stage"
-        self.vtkImageLow, spacing, listSeries = self.reader.GetData(index = 0)
+        self.vtkImageLow, spacing, dimension, series = self.reader.GetData(index = 0)
         self.imageL = self.reader.arrImage
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
             MessageBox.ShowCritical('ERROR', 'image error')
+            logger.critical('import dicom error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
@@ -1212,15 +1229,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
         
+        self.currentTag['dimension'] = dimension
         self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = listSeries
+        self.currentTag['series'] = series
             
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_L():
                 # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
                 MessageBox.ShowCritical('ERROR', 'Registration Failed')
                 return False
-        
             
         ############################################################################################
         ## 顯示 dicom 到 ui 上 ############################################################################################
@@ -1242,7 +1259,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def ImportDicom_H(self):
         "VTK stage"
         # self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
-        self.vtkImageHigh, spacing, listSeries = self.reader.GetData(index = 1)
+        self.vtkImageHigh, spacing, dimension, series = self.reader.GetData(index = 1)
         self.imageH = self.reader.arrImage
         
         if self.vtkImageHigh is None:
@@ -1260,8 +1277,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
+        self.currentTag['dimension'] = dimension
         self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = listSeries
+        self.currentTag['series'] = series
         
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_H():
@@ -1462,7 +1480,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             item.setData(0, ROLE_DICOM, self.currentTag['name'])
             
-            self.currentTag['trajectory'].append(item)
+            # self.currentTag['trajectory'].append(item)
                 
             
             
@@ -2272,8 +2290,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def MainSceneChanged(self, index):
         if self.stkMain.currentWidget() == self.page_loading:
-            # self.enableDevice(DEVICE_LASER)
-            self.enableDevice(DEVICE_ROBOT)
+            self.StopVedio()
+            self.idEnabledDevice = DEVICE_ENABLED
+            self._EnableDevice(DEVICE_ENABLED)
+        elif self.stkMain.currentWidget() == self.pgInstallSupportArm:
+            self._PlayVedio(self.wdgInstallSupportArm, 'video/patient_install_support_arm.mp4')
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -2681,7 +2702,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         """
         return self._Registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
     
-    def ShowRegistrationDifference_L(self):
+    def ShowRegistrationDifference(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
            calculate error/difference of relative distance
         """
@@ -3003,8 +3024,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         MessageBox.ShowInformation('Robot Stop')
         
     def RobotRun(self):
+        # 路徑轉換
+        dicomInhale = list(self.dicDicom.values())[0]
+        dicomExhale = list(self.dicDicom.values())[1]
+        pathInhale = dicomInhale.get('trajectory')
+        pathExhale = dicomExhale.get('trajectory')
+        if pathInhale is not None and pathExhale is not None:
+            regBallInhale = dicomInhale.get('regBall')
+            regBallExhale = dicomExhale.get('regBall')
+            regMatrixInhale = dicomInhale.get('regMatrix')
+            regMatrixExhale = dicomExhale.get('regMatrix')
+            
+            try:
+                pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
+                pathExhale = self.regFn.GetPlanningPath(regBallExhale[0], pathExhale, regMatrixExhale)
+                pathInhale = [p * [1, 1, -1] for p in pathInhale]
+                pathExhale = [p * [1, 1, -1] for p in pathExhale]
+                logger.debug(pathInhale)
+                logger.debug(pathExhale)
+                
+            except Exception as msg:
+                logger.error(msg)
+                
+            
+        
         if self.homeStatus is True:
-            self.robot.P2P(entry_full_1, target_full_1, entry_halt_1, target_halt_1)
+            self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
             print("Robot run processing is done!")
             # QMessageBox.information(self, "information", "Robot run processing is done!")
             
@@ -4304,6 +4349,43 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
             sleep(0.5)
             self.player.play()
             
+class DlgExportLog(QDialog, Ui_dlgExportLog):
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        self.dateEdit.setContextMenuPolicy(Qt.NoContextMenu)
+        
+        # read log folder
+        logPath = os.path.join(os.getcwd(), 'logs')
+        lstTime = []
+        for _, dirNames, _ in os.walk(logPath):
+            for dirName in dirNames:
+                try:
+                    timeStamp = datetime.strptime(dirName, '%Y-%m-%d')
+                    lstTime.append(timeStamp)
+                except ValueError:
+                    # 忽略非日期的目錄
+                    continue
+        if lstTime:     
+            minDate = min(lstTime)
+            maxDate = max(lstTime)
+                        
+            currentDate = minDate
+            expectDate = []
+            while currentDate <= maxDate:
+                if currentDate not in lstTime:
+                    expectDate.append(currentDate)
+                currentDate += timedelta(days = 1)
+            self.dateEdit.setDate(minDate)
+            self.dateEdit.setMinimumDate(minDate)
+            self.dateEdit.setMaximumDate(maxDate)
+            
+            self.calendarFrom.setSelectedDate(minDate)
+            self.calendarFrom.setMinimumDate(minDate)
+            self.calendarFrom.setMaximumDate(maxDate)
+            self.calendarFrom.SetExceptDate(expectDate)
+        # calendarWidget.signalSetCalendarTime.connect(lambda data:self.dateEdit.setDate(data))
 class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
     
     def __init__(self, parent: QWidget = None):
