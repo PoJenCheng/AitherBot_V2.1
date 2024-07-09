@@ -644,26 +644,20 @@ class DICOM(QObject):
                 rot_times = (r.as_euler('zxz', True) / 90).astype(int)
                 logger.debug(f'image orientation is {imageOrientation}')
                 
-                axis_vector = np.identity(3)
-                bChanged = False
+                # if rot_times[2] != 0:
+                #     #rotate z axis
+                #     bChanged = True
+                #     images, spacing = self._RotateImage(images, spacing, 'z', rot_times[2])
                 
-                if rot_times[2] != 0:
-                    #rotate z axis
-                    bChanged = True
-                    images, spacing = self._RotateImage(images, spacing, 'z', rot_times[2])
+                # if rot_times[1] != 0:
+                #     # rotate x axis
+                #     bChanged = True
+                #     images, spacing = self._RotateImage(images, spacing, 'x', rot_times[1])
                 
-                if rot_times[1] != 0:
-                    # rotate x axis
-                    bChanged = True
-                    images, spacing = self._RotateImage(images, spacing, 'x', rot_times[1])
-                
-                if rot_times[0] != 0:
-                    # rotate z axis
-                    bChanged = True
-                    images, spacing = self._RotateImage(images, spacing, 'z', rot_times[0])
-                    
-                if bChanged:
-                    pass
+                # if rot_times[0] != 0:
+                #     # rotate z axis
+                #     bChanged = True
+                #     images, spacing = self._RotateImage(images, spacing, 'z', rot_times[0])
                     
         self.arrImage = images.copy()
         dimension = np.array(images.shape)[::-1] # z,y,x to x,y,z
@@ -1717,32 +1711,32 @@ class REGISTRATION(QObject):
         nStep = 1 / count
         nProgress = 0
         self.signalProgress.emit(0, 'calculating registrator position...')
-        # for p in averagePoint:
-        #     try:
-        #         pTmp1 = [(p[0]),(p[1]),int(p[2])]
-        #         tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
+        for p in averagePoint:
+            try:
+                pTmp1 = [(p[0]),(p[1]),int(p[2])]
+                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
                 
-        #         pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
-        #         tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
+                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
+                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-        #         X1 = int(p[2])
-        #         X2 = int(p[2])+1
-        #         Y1 = tmpPoint1[2]
-        #         Y2 = tmpPoint2[2]
-        #         X = p[2]
-        #         Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
-        #         resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
+                X1 = int(p[2])
+                X2 = int(p[2])+1
+                Y1 = tmpPoint1[2]
+                Y2 = tmpPoint2[2]
+                X = p[2]
+                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
+                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 
-        #         nProgress = min(nProgress + nStep, 0.9)
-        #         self.signalProgress.emit(nProgress, 'calculating registrator position...')
-        #     except:
-        #         pass
+                nProgress = min(nProgress + nStep, 0.9)
+                self.signalProgress.emit(nProgress, 'calculating registrator position...')
+            except:
+                pass
         
         self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
         try:
-            # markers = self.IdentifyPoint(np.array(resultPoint))
-            markers = self.IdentifyPoint(averagePoint)
+            markers = self.IdentifyPoint(np.array(resultPoint))
+            # markers = self.IdentifyPoint(averagePoint)
             self.signalProgress.emit(1, 'registration completed')
         except:
             markers = None
@@ -1751,7 +1745,7 @@ class REGISTRATION(QObject):
         # print("-------------------------------------------------------------------")
         ############################################################################################
         ## 如果 IdentifyPoint 失敗, return 候選人, 為了手動註冊 ############################################################################################
-        pointMatrixSorted = numpy.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
+        pointMatrixSorted = np.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         if not markers:
             return False, pointMatrixSorted
         # elif ball == []:
@@ -1786,7 +1780,7 @@ class REGISTRATION(QObject):
         Y = ImagePositionPatient[1] + x * RowVector[1] + y * ColumnVector[1]
         Z = ImagePositionPatient[2] + x * RowVector[2] + y * ColumnVector[2]
         ############################################################################################
-        return numpy.array([X,Y,Z])
+        return np.array([X,Y,Z])
     
     def GetBallManual(self, candidateBall, pixel2Mm, answer, imageTag):
         """manually get ball center
