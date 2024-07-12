@@ -366,6 +366,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.buttonGroup.buttonToggled.connect(self.OnToggled_buttonGroup)
         self.btgDicom.buttonToggled.connect(self.OnToggled_btgDIcom)
+        self.btnGroup_ref.buttonToggled.connect(self.OnToggled_btnGroup_ref)
+        self.btnGroup_ref.setId(self.btnRef1, 0)
+        self.btnGroup_ref.setId(self.btnRef2, 1)
+        self.btnGroup_ref.setId(self.btnRef3, 2)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         
@@ -842,7 +846,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
             # self.regFn.GetBallAuto2(image, spacing)
-            flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            # flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            flag, answer = self.regFn.GetBallAuto2(image, spacing)
+            
             ############################################################################################
         except Exception as e:
             # self.ui_SP.close()
@@ -1230,7 +1236,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
+        self.currentTag['spacing'] = np.abs(spacing)
+        self.currentTag['spacing_rotated'] = spacing
         self.currentTag['series'] = series
             
         if not SKIP_REGISTRATION:
@@ -1278,7 +1285,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
+        self.currentTag['spacing'] = np.abs(spacing)
+        self.currentTag['spacing_rotated'] = spacing
         self.currentTag['series'] = series
         
         if not SKIP_REGISTRATION:
@@ -2119,6 +2127,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     dlg.show()
                     if self.stepDicom == 2:
                         self.stepDicom += 1
+                        
+    def OnToggled_btnGroup_ref(self, button:QAbstractButton, bChecked:bool):
+        if bChecked:
+            reference = np.array(*list(self.currentTag['candidateBallVTK'].values()))
+            renderer = self.viewport_L['LT'].renderer
+            idx = self.btnGroup_ref.id(button)
+            renderer.SetTarget(reference[idx][:3])
+            self.UpdateTarget()
+            self.UpdateView()
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
@@ -2657,12 +2674,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageL, self.currentTag.get('spacing_rotated'), self.currentTag.get('series'))
     
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageH, self.currentTag.get('spacing_rotated'), self.currentTag.get('series'))
     
     def ShowRegistrationDifference(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)

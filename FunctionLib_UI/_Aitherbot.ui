@@ -4816,9 +4816,9 @@ QToolBox QPushButton:disabled{
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>0</y>
+                     <y>-20</y>
                      <width>283</width>
-                     <height>305</height>
+                     <height>314</height>
                     </rect>
                    </property>
                    <property name="maximumSize">
@@ -4874,7 +4874,7 @@ QToolBox QPushButton:disabled{
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>100</height>
+                          <height>50</height>
                          </size>
                         </property>
                         <property name="text">
@@ -4896,7 +4896,7 @@ QToolBox QPushButton:disabled{
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>100</height>
+                          <height>50</height>
                          </size>
                         </property>
                         <property name="text">
@@ -4942,6 +4942,70 @@ QToolBox QPushButton:disabled{
                        <enum>Qt::Horizontal</enum>
                       </property>
                      </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_31">
+                      <property name="spacing">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QPushButton" name="btnRef1">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>50</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>ball 1</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_ref</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnRef2">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>50</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>ball 2</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_ref</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnRef3">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>50</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>ball 3</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_ref</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </widget>
@@ -5045,7 +5109,7 @@ QLabel{
                      <x>0</x>
                      <y>0</y>
                      <width>300</width>
-                     <height>490</height>
+                     <height>482</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -5057,7 +5121,7 @@ QLabel{
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>150</height>
+                        <height>100</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -5278,7 +5342,7 @@ font: 12px Arial;</string>
                      <x>0</x>
                      <y>0</y>
                      <width>300</width>
-                     <height>490</height>
+                     <height>482</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -6820,5 +6884,6 @@ margin-right:0px;
  <buttongroups>
   <buttongroup name="btgDicom"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="btnGroup_ref"/>
  </buttongroups>
 </ui>
