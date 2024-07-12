@@ -1,25 +1,6 @@
 
-from PyQt5.QtCore import (
-                            QEvent,
-                            QObject,
-                            QRect,
-                            Qt, 
-                            pyqtSignal, 
-                            QTimer, 
-                            QDate, 
-                            QLocale
-                        )
-from PyQt5.QtGui import (
-                            QCloseEvent,
-                            QMouseEvent, 
-                            QPaintEvent, 
-                            QColor, 
-                            QImage, 
-                            QPainter,
-                            QTextCharFormat,
-                            QFont,
-                            QFontMetrics
-                        )
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
 
@@ -56,7 +37,7 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._lastSelectedDate = None
         
         self.layout().setSizeConstraint(QLayout.SetFixedSize)
-        self.setLocale(QLocale(QLocale.Chinese))
+        self.setLocale(QLocale.Chinese)
         self.setNavigationBarVisible(False)
         self.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
         self.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
