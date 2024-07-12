@@ -366,6 +366,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.buttonGroup.buttonToggled.connect(self.OnToggled_buttonGroup)
         self.btgDicom.buttonToggled.connect(self.OnToggled_btgDIcom)
+        self.btnGroup_ref.buttonToggled.connect(self.OnToggled_btnGroup_ref)
+        self.btnGroup_ref.setId(self.btnRef1, 0)
+        self.btnGroup_ref.setId(self.btnRef2, 1)
+        self.btnGroup_ref.setId(self.btnRef3, 2)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         
@@ -841,7 +845,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         "automatic find registration ball center"
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
-            flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            # self.regFn.GetBallAuto2(image, spacing)
+            # flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            flag, answer = self.regFn.GetBallAuto2(image, spacing)
+            
             ############################################################################################
         except Exception as e:
             # self.ui_SP.close()
@@ -1532,13 +1539,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def OnClicked_btnSetEntry(self):
         
-        if self.currentTag.get("pickPoint") is None:
+        currentDicom:DISPLAY = self.currentTag.get("display")
+        if currentDicom is None:
             return
-        
-        pickPoint = self.currentTag.get("pickPoint").copy()
-        currentDicom = self.currentTag.get('display')
+
+        pickPoint = currentDicom.target.copy()
         # pickPoint = currentDicom.target.copy()
-        if pickPoint is not None and currentDicom is not None:
+        if pickPoint is not None:
             currentDicom.DrawPoint(pickPoint, 1)      
             # currentDicom.entryPoint = pickPoint
             idx = self._GetCurrentTrajectory()
@@ -1559,14 +1566,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     
     def OnClicked_btnSetTarget(self):
-        
-        if self.currentTag.get("pickPoint") is None:
+
+        currentDicom:DISPLAY = self.currentTag.get("display")
+        if currentDicom is None:
             return
-        
-        pickPoint = self.currentTag.get("pickPoint").copy()
-        currentDicom = self.currentTag.get('display')
+
+        pickPoint = currentDicom.target.copy()
         # pickPoint = currentDicom.target.copy()
-        if pickPoint is not None and currentDicom is not None:
+        if pickPoint is not None:
             currentDicom.DrawPoint(pickPoint, 2)
             # currentDicom.targetPoint = pickPoint
             idx = self._GetCurrentTrajectory()
@@ -1595,20 +1602,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         entryPoint = DISPLAY.trajectory.getEntry()
         if entryPoint is not None:
             bHasCrossSection = False
-            self.sldTrajectory.setValue(self.sldTrajectory.maximum())
-            # for view in self.viewport_L.values():
-            #     if view.orientation == VIEW_AXIAL or \
-            #         view.orientation == VIEW_CORONAL or \
-            #         view.orientation == VIEW_SAGITTAL:
-                        
-            #         view.MapPositionToImageSlice(entryPoint)
-            #         if bHasCrossSection == True:
-            #             break
-            #     elif view.orientation == VIEW_CROSS_SECTION:
-            #         bHasCrossSection = True
-            #         view.uiScrollSlice.blockSignals(True)
-            #         view.uiScrollSlice.setValue(view.uiScrollSlice.maximum())
-            #         view.uiScrollSlice.blockSignals(False)
+            nTrajectoryValue = self.sldTrajectory.maximum()
+            self.sldTrajectory.blockSignals(True)
+            self.sldTrajectory.setValue(nTrajectoryValue)
+            self.sldTrajectory.blockSignals(False)
+            self.OnValueChanged_sldTrajectory(nTrajectoryValue)
     
     def OnClicked_btnToTarget(self):
         currentDicom = self.currentTag.get('display')
@@ -1619,20 +1617,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         targetPoint = DISPLAY.trajectory.getTarget()
         if targetPoint is not None:
             bHasCrossSection = False
+            self.sldTrajectory.blockSignals(True)
             self.sldTrajectory.setValue(0)
-            # for view in self.viewport_L.values():
-            #     if view.orientation == VIEW_AXIAL or \
-            #         view.orientation == VIEW_CORONAL or \
-            #         view.orientation == VIEW_SAGITTAL:
-                        
-            #         view.MapPositionToImageSlice(targetPoint)
-            #         if bHasCrossSection == True:
-            #             break
-            #     elif view.orientation == VIEW_CROSS_SECTION:
-            #         bHasCrossSection = True
-            #         view.uiScrollSlice.blockSignals(True)
-            #         view.uiScrollSlice.setValue(view.uiScrollSlice.minimum())
-            #         view.uiScrollSlice.blockSignals(False)
+            self.sldTrajectory.blockSignals(False)
+            self.OnValueChanged_sldTrajectory(0)
             
     def OnClicked_btnDicomLow(self):
         # self.stkScene.setCurrentWidget(self.pgImportDicom)
@@ -1818,26 +1806,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         break
                 self.UpdateTarget()
                 self.UpdateView()
-        # self.renderer.ChangeView(value)
-        # # 還沒改完..
         
-        # self.signalSetSliceValue.emit(self.dicom.imagePosition)
-        
-        # if self.orientation == VIEW_CROSS_SECTION:
-        #     self.signalUpdateExcept.emit(VIEW_CROSS_SECTION)
-        # else:
-        #     self.signalUpdateAll.emit()
-        # self.UpdateTarget(pos = newTarget)
-        
-        
-        # for view in self.viewport_L.values():
-        #     if (orientation is None) or (orientation != view.orientation):
-                
-        #         # print(f'orientation = {orientation}, view.orientation = {view.orientation}')
-        #         if bFocus == True:
-        #             view.Focus()
-        #         view.renderer.SetTarget(pos)
-        #         view.UpdateView()
             
     def OnChanged_sldWindowWidth(self, value):
         """set window width and show changed DICOM to ui
@@ -2156,6 +2125,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     dlg.show()
                     if self.stepDicom == 2:
                         self.stepDicom += 1
+                        
+    def OnToggled_btnGroup_ref(self, button:QAbstractButton, bChecked:bool):
+        if bChecked:
+            reference = np.array(*list(self.currentTag['candidateBallVTK'].values()))
+            renderer = self.viewport_L['LT'].renderer
+            idx = self.btnGroup_ref.id(button)
+            renderer.SetTarget(reference[idx][:3])
+            self.UpdateTarget()
+            self.UpdateView()
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:

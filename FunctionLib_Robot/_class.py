@@ -16,7 +16,7 @@ from FunctionLib_Robot.__init__ import *
 from FunctionLib_Vision._class import REGISTRATION
 from FunctionLib_Robot._subFunction import lowPass
 from ._globalVar import *
-# from pyueye import ueye
+from pyueye import ueye
 # from FunctionLib_UI.ui_matplotlib_pyqt import *
 
 import matplotlib
@@ -421,7 +421,7 @@ class RobotSupportArm(QObject):
         return self.TargetEn1, self.TargetEn2
     
     def CaliEncoder1(self):
-        caliStatus  = True   # test, 預設False
+        caliStatus  = False   
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
@@ -436,7 +436,7 @@ class RobotSupportArm(QObject):
                     winsound.Beep(self.frequency, self.duration)
                     
     def CaliEncoder2(self):
-        caliStatus  = True   # test, 預設False
+        caliStatus  = False   
         while caliStatus is False:
             RealTimePos = self.ReadEncoder()
             footController = self.plc.read_by_name(self.SupportMove)
