@@ -1772,7 +1772,7 @@ class REGISTRATION(QObject):
         shortSide = 30
         longSide = 65
         hypotenuse = math.sqrt(np.square(shortSide) + np.square(longSide))
-        error = 1.5
+        error = 2
         "計算三個點之間的距離"
         for p1, p2, p3 in itertools.combinations(point, 3):
             result = []
@@ -2164,7 +2164,7 @@ class REGISTRATION(QObject):
         planningPath = []
         
         for p in selectedPoint:
-            planningPath.append(np.dot(regMatrix,(p-originPoint)) + originPoint)
+            planningPath.append(np.dot(regMatrix,(p-originPoint)))
         
         return planningPath
 class TracerStyle(vtk.vtkInteractorStyleImage):

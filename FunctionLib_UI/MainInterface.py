@@ -1487,8 +1487,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             item.setData(0, ROLE_DICOM, self.currentTag['name'])
             
             # self.currentTag['trajectory'].append(item)
-                
-            
             
             self.treeTrajectory.blockSignals(True)
             self.treeTrajectory.setCurrentItem(item)
