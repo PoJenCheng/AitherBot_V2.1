@@ -17,11 +17,14 @@ from numpy._typing import _ArrayLike
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkCommonDataModel import vtkImageData
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkSphereSource
-from vtkmodules.vtkImagingCore import vtkImageMapToColors, vtkImageReslice
+from vtkmodules.vtkImagingCore import vtkImageMapToColors, vtkImageReslice, vtkImageBlend
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
 from vtkmodules.vtkRenderingCore import (
     vtkActor, 
@@ -895,7 +898,7 @@ class DICOM(QObject):
 "registration function"
 class REGISTRATION(QObject):
     signalProgress = pyqtSignal(float, str)
-    
+    matrixFromExhaleToInhalePath = np.eye(4)
     index = 0
     def __init__(self):
         super().__init__()
@@ -2162,12 +2165,21 @@ class REGISTRATION(QObject):
         Returns:
             planningPath (_list_): planning path result
         """
+        
         planningPath = []
-        
         for p in selectedPoint:
-            planningPath.append(np.dot(regMatrix,(p-originPoint)))
-        
+            offset = p-originPoint
+            planningPath.append(np.matmul(regMatrix, offset))
+            
         return planningPath
+    
+    def GetMatrixTo(dicomDst:str = 'exhale'):
+        if dicomDst.lower() == 'exhale':
+            return REGISTRATION.matrixFromExhaleToInhalePath.copy()
+        elif dicomDst.lower() == 'inhale':
+            inv = np.linalg.inv(REGISTRATION.matrixFromExhaleToInhalePath)
+            return inv.copy()
+            
 class TracerStyle(vtk.vtkInteractorStyleImage):
     
     def __init__(self):
@@ -5754,6 +5766,10 @@ class DISPLAY(QObject):
     _lstRenderer3D        = []
     _lstRendererCrossSection = []
     
+    lstDisplayObj = []
+    inputImage1 = None
+    inputImage2 = None
+    
     def __init__(self):
         super().__init__()
         self.targetPoint = np.zeros(3)
@@ -5765,34 +5781,7 @@ class DISPLAY(QObject):
         self.target = np.zeros(3)
         self.pcoord = np.zeros(3) #image voxel to image index的補正值，0~1
         self.imagePosition = np.zeros(3, dtype = int)
-    def Reset(self):
-        if hasattr(self, 'rendererList'):
-            for renderer in self.rendererList.values():
-                renderer.RemoveAllViewProps()
-                
-                
-        self.targetPoint = np.zeros(3)
-        self.entryPoint  = np.zeros(3)        
-        self.target[:] = np.zeros(3)
-        self.pcoord[:] = np.zeros(3)
-        self.irenList = {}
-        self.rendererList = {}
         
-    def CountOfTrajectory(self):
-        return DISPLAY.trajectory.count()
-            
-    def LoadImage(self, image):
-        """load image
-           use VTK
-           for diocm display
-           and image array in VTK
-
-        Args:
-            folderPath (_string_): dir + folder name (==folderDir)
-
-        Returns:
-            imageVTK (_numpy.array_): image array in VTK
-        """
         "init"
         self.radius = 3.5
         ## 建立好load dicom 所需的 VTK 物件 ############################################################################################
@@ -5830,12 +5819,6 @@ class DISPLAY(QObject):
         self.rendererList['Axial'] = self.rendererAxial
         self.rendererList['Cross-Section'] = self.rendererCrossSection
         
-        
-        # self.rendererSagittal = vtkRenderer()
-        # self.rendererCoronal = vtkRenderer()
-        # self.rendererAxial = vtkRenderer()
-        # self.renderer3D = vtkRenderer()
-        # self.rendererCrossSection = vtkRenderer()
         "planningPointCenter"
         self.actorPointEntry = vtkActor()
         self.actorPointTarget = vtkActor()
@@ -5845,13 +5828,112 @@ class DISPLAY(QObject):
         self.actorBallGreen = vtkActor()
         self.actorBallRed = vtkActor()
         
-        # self.actorTarget = [vtkActor2D() for _ in range(3)]
-        # self.actorTargetCS = [vtkActor2D() for _ in range(2)]
-        # self.actorTarget3D = vtkAssembly()
+        DISPLAY.lstDisplayObj.append(self)
         
-        # self.signalProgress.emit(0.2)
-        # self.reader.SetDirectoryName(folderPath)
-        # self.reader.Update()
+    def _TransformImage(self, image, matrix):
+        if matrix is None or not isinstance(matrix, (np.ndarray, list)):
+            return None
+        
+        vtk_matrix = vtkMatrix4x4()
+        for i in range(4):
+            for j in range(4):
+                vtk_matrix.SetElement(i, j, matrix[i, j])
+                
+        transform = vtkTransform()
+        transform.SetMatrix(vtk_matrix)
+        
+        # 應用轉換矩陣到第二幅影像
+        reslice = vtkImageReslice()
+        reslice.SetInputData(image)
+        reslice.SetResliceTransform(transform)
+        reslice.SetInterpolationModeToLinear()
+        reslice.SetBackgroundLevel(-1024)
+        reslice.Update()
+        
+        # 創建影像融合對象
+        blend = vtkImageBlend()
+        # blend.AddInputData(vtkImageInput1)
+        blend.AddInputData(reslice.GetOutput())
+        blend.SetOpacity(0, 1)  # 設定第一幅影像的透明度
+        # blend.SetOpacity(1, 0.5)  # 設定第二幅影像的透明度
+        blend.Update()
+        
+        self.LoadImage(blend.GetOutput())
+        
+    def Reset(self):
+        if hasattr(self, 'rendererList'):
+            for renderer in self.rendererList.values():
+                renderer.RemoveAllViewProps()
+                
+                
+        self.targetPoint = np.zeros(3)
+        self.entryPoint  = np.zeros(3)        
+        self.target[:] = np.zeros(3)
+        self.pcoord[:] = np.zeros(3)
+        self.irenList = {}
+        self.rendererList = {}
+        
+    def CountOfTrajectory(self):
+        return DISPLAY.trajectory.count()
+            
+    def LoadImage(self, image):
+        """load image
+           use VTK
+           for diocm display
+           and image array in VTK
+
+        Args:
+            folderPath (_string_): dir + folder name (==folderDir)
+
+        Returns:
+            imageVTK (_numpy.array_): image array in VTK
+        """
+        # "init"
+        # self.radius = 3.5
+        # ## 建立好load dicom 所需的 VTK 物件 ############################################################################################
+        # # self.reader = vtkDICOMImageReader()
+        # self.windowLevelLookup = vtkWindowLevelLookupTable()
+        # self.mapColors = vtkImageMapToColors()
+        # self.mapColorReslice = vtkImageMapToColors()
+        
+        # self.cameraSagittal = vtkCamera()
+        # self.cameraCoronal = vtkCamera()
+        # self.cameraAxial = vtkCamera()
+        # self.camera3D = vtkCamera()
+        
+        # self.actorSagittal = vtkImageActor()
+        # self.actorCoronal = vtkImageActor()
+        # self.actorAxial = vtkImageActor()
+        # self.actorCrossSection = vtkImageActor()
+        
+        # self.rendererSagittal = RendererObj()
+        # self.rendererCoronal = RendererObj()
+        # self.rendererAxial = RendererObj()
+        # self.renderer3D = RendererObj3D()
+        # self.rendererCrossSection = RendererCrossSectionObj()
+        
+        # DISPLAY._lstRendererAxial.append(self.rendererAxial)
+        # DISPLAY._lstRendererCoronal.append(self.rendererCoronal)
+        # DISPLAY._lstRendererSagittal.append(self.rendererSagittal)
+        # DISPLAY._lstRenderer3D.append(self.renderer3D)
+        # DISPLAY._lstRendererCrossSection.append(self.rendererCrossSection)
+        
+        # self.rendererList = {}
+        # self.rendererList['3D'] = self.renderer3D
+        # self.rendererList['Sagittal'] = self.rendererSagittal
+        # self.rendererList['Coronal'] = self.rendererCoronal
+        # self.rendererList['Axial'] = self.rendererAxial
+        # self.rendererList['Cross-Section'] = self.rendererCrossSection
+        
+        # "planningPointCenter"
+        # self.actorPointEntry = vtkActor()
+        # self.actorPointTarget = vtkActor()
+        # # self.actorLine = vtkActor()
+        # self.actorLine = vtkActor2D()
+        # self.actorTube = vtkActor()
+        # self.actorBallGreen = vtkActor()
+        # self.actorBallRed = vtkActor()
+        
         self.signalProgress.emit(0.5)
         
         
@@ -6094,6 +6176,17 @@ class DISPLAY(QObject):
         self.renderer3D.ResetCamera(self.dicomBoundsRange)
         ############################################################################################
         return
+    
+    def UpdateImage(self, image:vtkImageData):
+        self.vtkImage = vtkImageData()
+        self.vtkImage.DeepCopy(image)
+        self.imageOrigin = vtkImageData()
+        self.imageOrigin.DeepCopy(self.vtkImage)
+        
+        # 這邊的target和各個renderer中的target是同一個實體
+        # 只是建立連結關係
+        for renderer in self.rendererList.values():
+            renderer.SetImage(self.vtkImage, self.imageOrigin, self.target, self.imagePosition)
     
     def UpdateTarget(self, pos = None, posCS =None, pcoord = None):
         for key, renderer in self.rendererList.items():
@@ -6619,3 +6712,57 @@ class DISPLAY(QObject):
         transform.MultiplyPoint(position, out)        
         
         return out[:3]
+    
+    
+    def SetBlendImages(ratio:float):
+        ratio = min(1.0, max(ratio, 0.0))
+         # 創建影像融合對象
+        blend = vtkImageBlend()
+        blend.AddInputData(DISPLAY.inputImage1)
+        blend.AddInputData(DISPLAY.inputImage2)
+        blend.SetOpacity(0, ratio)  # 設定第一幅影像的透明度
+        blend.SetOpacity(1, 1 - ratio)  # 設定第二幅影像的透明度
+        blend.Update()
+        
+        DISPLAY.lstDisplayObj[0].UpdateImage(blend.GetOutput())
+    
+    def SetTransformImage(matrix):
+        if matrix is None or not isinstance(matrix, (np.ndarray, list)):
+            return None
+        
+        vtkImageInput1 = DISPLAY.lstDisplayObj[0].vtkImage
+        vtkImageInput2 = DISPLAY.lstDisplayObj[1].vtkImage
+        
+        if vtkImageInput1 is None or vtkImageInput2 is None:
+            return None
+        
+        vtk_matrix = vtkMatrix4x4()
+        for i in range(4):
+            for j in range(4):
+                vtk_matrix.SetElement(i, j, matrix[i, j])
+                
+        transform = vtkTransform()
+        transform.SetMatrix(vtk_matrix)
+
+        
+        # 應用轉換矩陣到第二幅影像
+        reslice = vtkImageReslice()
+        reslice.SetInputData(vtkImageInput2)
+        reslice.SetResliceTransform(transform)
+        reslice.SetInterpolationModeToLinear()
+        reslice.SetBackgroundLevel(-1024)
+        reslice.Update()
+        
+        DISPLAY.inputImage1 = vtkImageInput1
+        DISPLAY.inputImage2 = reslice.GetOutput()
+        
+        # 創建影像融合對象
+        blend = vtkImageBlend()
+        blend.AddInputData(vtkImageInput1)
+        blend.AddInputData(reslice.GetOutput())
+        blend.SetOpacity(0, 0.5)  # 設定第一幅影像的透明度
+        blend.SetOpacity(1, 0.5)  # 設定第二幅影像的透明度
+        blend.Update()
+        
+        DISPLAY.lstDisplayObj[0].LoadImage(blend.GetOutput())
+        
