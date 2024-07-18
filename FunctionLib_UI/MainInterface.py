@@ -387,6 +387,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnToTarget.clicked.connect(self.OnClicked_btnToTarget)
         self.sldTrajectory.valueChanged.connect(self.OnValueChanged_sldTrajectory)
         
+        self.btnCloseToEntry.clicked.connect(self.OnClicked_btnCloseToEntry)
+        self.btnCloseToTarget.clicked.connect(self.OnClicked_btnCloseToTarget)
+        
         self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
         self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
         
@@ -1378,6 +1381,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetUIEnable_Trajectory(self, bEnable):
         self.btnToEntry.setEnabled(bEnable)
         self.btnToTarget.setEnabled(bEnable)
+        self.btnCloseToEntry.setEnabled(bEnable)
+        self.btnCloseToTarget.setEnabled(bEnable)
+        self.ledOffset.setEnabled(bEnable)
         self.sldTrajectory.setEnabled(bEnable)
     
     def ShowDicom(self):
@@ -1468,9 +1474,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if trajectoryValue and trajectoryLength:
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
-        self._ResumeStored()
-        # self.UpdateTarget()
-        self.UpdateView()
+        
+        # self._ResumeStored()
+        # # self.UpdateTarget()
+        # self.UpdateView()
         
     def SwitchDicom(self, blendRatio:float):
         """show low dicom to ui
@@ -1577,6 +1584,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.treeTrajectory.setCurrentItem(item)
             self.prevSelection_trajectory = item
             self.treeTrajectory.blockSignals(False)
+            
+            self.SetUIEnable_Trajectory(False)
         
         self.btnSetEntry.setEnabled(True)
         self.btnSetTarget.setEnabled(True)
@@ -1618,6 +1627,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def OnClicked_btnCancel(self):
         self.stkScene.setCurrentIndex(self.indexPrePage)
+        
+    def OnClicked_btnCloseToEntry(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = min(currentValue + offset, self.sldTrajectory.maximum())
+            self.sldTrajectory.setValue(currentValue)
+            
+    def OnClicked_btnCloseToTarget(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = max(currentValue - offset, 0)
+            self.sldTrajectory.setValue(currentValue)
         
     def OnClicked_btnSetEntry(self):
         
@@ -1815,9 +1838,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self._ModifyTrajectory(idx, display)
                 self.sldTrajectory.blockSignals(False)
                 display.SetCurrentTrajectory(idx)
-                # _, target = display.trajectory[idx]
-                # self.UpdateTarget(pos = target)
-                # self.UpdateView()
+                self.SetUIEnable_Trajectory(True)
+            else:
+                self.SetUIEnable_Trajectory(False)
             self.prevSelection_trajectory = item
             self.UpdateView()
         else:
@@ -2328,6 +2351,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
             
         # if dicomName == self.btnDicomLow.objectName():
+        
+        idxFrom = 0 # inhale
+        idxTo = 1   # exhale
+        if dicomName == self.btnDicomLow.objectName():
+            idxFrom = 1
+            idxTo = 0
+        DISPLAY.CopyCamera(idxFrom, idxTo)
+            
         self.ShowDicom()
         
         display = self.currentTag.get('display')
@@ -3087,13 +3118,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 路徑轉換
         dicomInhale = list(self.dicDicom.values())[0]
         dicomExhale = list(self.dicDicom.values())[1]
-        pathInhale = dicomInhale.get('trajectory')
-        pathExhale = dicomExhale.get('trajectory')
+        # pathInhale = dicomInhale.get('trajectory')
+        # pathExhale = dicomExhale.get('trajectory')
+        
+        idx = self._GetCurrentTrajectory()
+        idx = min(DISPLAY.trajectory.count() - 1, idx)
+        pathInhale = DISPLAY.trajectory[idx]
+        pathExhale = pathInhale
+        
         if pathInhale is not None and pathExhale is not None:
             regBallInhale = dicomInhale.get('regBall')
-            regBallExhale = dicomExhale.get('regBall')
+            # regBallExhale = dicomExhale.get('regBall')
             regMatrixInhale = dicomInhale.get('regMatrix')
-            regMatrixExhale = dicomExhale.get('regMatrix')
+            # regMatrixExhale = dicomExhale.get('regMatrix')
             # invMatrix = np.linalg.inv(regMatrixExhale)
             # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
             

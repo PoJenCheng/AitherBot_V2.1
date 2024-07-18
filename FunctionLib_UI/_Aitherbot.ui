@@ -5014,8 +5014,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>100</width>
-                     <height>30</height>
+                     <width>300</width>
+                     <height>294</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -5115,13 +5115,34 @@ QLabel{
                    <attribute name="label">
                     <string>Trajectory</string>
                    </attribute>
-                   <layout class="QGridLayout" name="gridLayout_44">
+                   <layout class="QGridLayout" name="gridLayout_45">
+                    <property name="leftMargin">
+                     <number>7</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>7</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="spacing">
+                     <number>3</number>
+                    </property>
                     <item row="0" column="0">
                      <widget class="QTreeWidget" name="treeTrajectory">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>100</height>
+                        <height>40</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -5255,66 +5276,204 @@ border-radius:10px;</string>
                      </layout>
                     </item>
                     <item row="3" column="0">
-                     <layout class="QHBoxLayout" name="horizontalLayout_13">
-                      <item>
-                       <widget class="QPushButton" name="btnToEntry">
-                        <property name="minimumSize">
-                         <size>
-                          <width>50</width>
-                          <height>40</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>50</width>
-                          <height>16777215</height>
-                         </size>
-                        </property>
-                        <property name="styleSheet">
-                         <string notr="true">border-top-left-radius:20px;
+                     <widget class="QGroupBox" name="gbxOffset">
+                      <property name="title">
+                       <string>Along Trajectory Movement</string>
+                      </property>
+                      <layout class="QGridLayout" name="gridLayout_44">
+                       <property name="leftMargin">
+                        <number>3</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>3</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>3</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>3</number>
+                       </property>
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <item row="0" column="0">
+                        <layout class="QHBoxLayout" name="horizontalLayout_13">
+                         <property name="spacing">
+                          <number>3</number>
+                         </property>
+                         <item>
+                          <widget class="QPushButton" name="btnToEntry">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>50</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>50</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-left-radius:20px;
 border-bottom-left-radius:20px;
 font: 12px Arial;</string>
-                        </property>
-                        <property name="text">
-                         <string>Entry</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QSlider" name="sldTrajectory">
-                        <property name="layoutDirection">
-                         <enum>Qt::RightToLeft</enum>
-                        </property>
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QPushButton" name="btnToTarget">
-                        <property name="minimumSize">
-                         <size>
-                          <width>50</width>
-                          <height>40</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>50</width>
-                          <height>16777215</height>
-                         </size>
-                        </property>
-                        <property name="styleSheet">
-                         <string notr="true">border-top-right-radius:20px;
+                           </property>
+                           <property name="text">
+                            <string>Entry</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="btnCloseToEntry">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">image:url(image/arrow-left.png)</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QSlider" name="sldTrajectory">
+                           <property name="layoutDirection">
+                            <enum>Qt::RightToLeft</enum>
+                           </property>
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="btnCloseToTarget">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">image:url(image/arrow-right.png)</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="btnToTarget">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>50</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>50</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-right-radius:20px;
 border-bottom-right-radius:20px;
 font: 12px Arial;</string>
-                        </property>
-                        <property name="text">
-                         <string>Target</string>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
+                           </property>
+                           <property name="text">
+                            <string>Target</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item row="1" column="0">
+                        <layout class="QHBoxLayout" name="horizontalLayout_32">
+                         <item>
+                          <widget class="QLabel" name="lblOffset">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="text">
+                            <string>offset unit:</string>
+                           </property>
+                           <property name="alignment">
+                            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLineEdit" name="ledOffset">
+                           <property name="enabled">
+                            <bool>false</bool>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>50</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="inputMask">
+                            <string>90</string>
+                           </property>
+                           <property name="text">
+                            <string>1</string>
+                           </property>
+                           <property name="maxLength">
+                            <number>2</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="lblUnit">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="text">
+                            <string>mm</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                      </layout>
+                     </widget>
                     </item>
                     <item row="4" column="0">
                      <layout class="QHBoxLayout" name="horizontalLayout_24">
@@ -5341,8 +5500,8 @@ font: 12px Arial;</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>100</width>
-                     <height>30</height>
+                     <width>300</width>
+                     <height>482</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -6883,7 +7042,7 @@ margin-right:0px;
  </slots>
  <buttongroups>
   <buttongroup name="btgDicom"/>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

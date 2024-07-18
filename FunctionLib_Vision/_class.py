@@ -3868,6 +3868,9 @@ class RendererObj(vtkRenderer):
         for actor in actors:
             if isinstance(actor, TargetObj):
                 self.lstTargetObj.append(actor)
+                
+    def CopyCameraProperty(self, renderer):
+        self.camera.DeepCopy(renderer.camera)
         
     def GetWorldToView(self, pos:_ArrayLike):
         self.SetWorldPoint(np.append(pos, 1))
@@ -4678,8 +4681,8 @@ class RendererObj3D(RendererObj):
     def SetCamera(self, *args):
         self.orientation = args[0]
                
-        self.camera.SetViewUp(0, 0, 1)
-        self.camera.SetPosition(0.0, 1, 0)
+        self.camera.SetViewUp(0, -1, 0)
+        self.camera.SetPosition(1, -1, 1)
         self.camera.SetFocalPoint(0, 0, 0)
         self.camera.ComputeViewPlaneNormal()
         self.camera.ParallelProjectionOn()
@@ -5596,9 +5599,12 @@ class Trajectory():
         num = len(self._listTrajectory)
         if num == 0:
             return None
-        else:
-            index = min(num - 1, max(-num, index))
+        
+        try:
+            # index = min(num - 1, max(-num, index))
             return np.array(self._listTrajectory[index])
+        except:
+            return None
         
     def _assertPoint(self, point):
         assert(
@@ -6713,6 +6719,9 @@ class DISPLAY(QObject):
         
         return out[:3]
     
+    def CopyCamera(idxFrom:int, idxTo:int):
+        rendererSrc = DISPLAY._lstRenderer3D[idxFrom]
+        DISPLAY._lstRenderer3D[idxTo].CopyCameraProperty(rendererSrc)
     
     def SetBlendImages(ratio:float):
         ratio = min(1.0, max(ratio, 0.0))
