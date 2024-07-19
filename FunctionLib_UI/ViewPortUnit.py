@@ -778,7 +778,6 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
                 spacing = self.currentTag.get('spacing')
                 if dimension is not None and spacing is not None:
                     target = self.currentDicom.target
-                    logger.debug(f'target point = {target}')
                 
         else:
             logger.warning("no objects be picked")

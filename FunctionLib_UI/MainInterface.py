@@ -387,6 +387,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnToTarget.clicked.connect(self.OnClicked_btnToTarget)
         self.sldTrajectory.valueChanged.connect(self.OnValueChanged_sldTrajectory)
         
+        self.btnCloseToEntry.clicked.connect(self.OnClicked_btnCloseToEntry)
+        self.btnCloseToTarget.clicked.connect(self.OnClicked_btnCloseToTarget)
+        
         self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
         self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
         
@@ -571,6 +574,55 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     for combobox in self.listViewSelectorH.values():
         #         if combobox.findText(viewName) == -1:
         #             combobox.addItem(viewName)
+        
+    def _CalculateExhaleToInhaleMatrix(self):
+        dicomInhale = list(self.dicDicom.values())[0]
+        dicomExhale = list(self.dicDicom.values())[1]
+        regBallInhale = dicomInhale.get('regBall')
+        regBallExhale = dicomExhale.get('regBall')
+        regMatrixInhale = dicomInhale.get('regMatrix')
+        regMatrixExhale = dicomExhale.get('regMatrix')
+        
+        if  regBallInhale is None or \
+            regBallExhale is None or \
+            regMatrixInhale is None or \
+            regMatrixExhale is None:
+                return False
+        
+        try:
+            # 注意！這裡的regMatrix是改變座標系，而不會改變點在原世界座標系中的位置
+            # 如需要進行真實的位置變換，regMatrix需要進行轉置(transpose)
+            
+            # 計算exhale原點偏移量translate
+            mat_translate = np.eye(4)
+            mat_translate[:3, 3] = -regBallExhale[0]
+            matExhale = mat_translate
+            
+            # 從exhale 轉換到 inhale的矩陣
+            rot_fromExhaleToInhale = np.eye(4)
+            invExhale = np.linalg.inv(regMatrixExhale.T)
+            rot_fromExhaleToInhale[:3, :3] = np.matmul(regMatrixInhale.T, invExhale)
+            matExhale = np.matmul(rot_fromExhaleToInhale, matExhale)
+            
+            # 映射到inhale local coordinate(世界座標位置不變，只改變座標軸)
+            mat_mapToInhale = np.eye(4)
+            mat_mapToInhale[:3, :3] = regMatrixInhale
+            matExhaleToInhalePath = np.matmul(mat_mapToInhale, matExhale)
+            
+            # 儲存矩陣，這個矩陣是應用於trajectory 轉換上的
+            REGISTRATION.matrixFromExhaleToInhalePath = matExhaleToInhalePath
+            
+            # 計算exhale 對應於 inhale空間的位置，世界座標系
+            mat_translate[:3, 3] = regBallInhale[0]
+            matExhale = np.matmul(mat_translate, matExhale)
+            
+            dicomInhale['matrix'] = np.linalg.inv(matExhale)
+            dicomExhale['matrix'] = matExhale
+        except Exception as msg:
+            logger.error(msg)
+            return None
+        
+        return dicomInhale['matrix']
                 
     def _CheckChildAlterParent(self, item:QStandardItem):
                 
@@ -785,7 +837,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
-    def _Registration(self, image, spacing, series):
+    def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
         # self.ui_SP = SystemProcessing()
@@ -806,7 +858,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
             # self.ui_SP.close()
             # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
+            reply = MessageBox.ShowInformation("already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
             # if reply == QMessageBox.Yes:
             if reply == 0:
@@ -1228,16 +1280,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
         self.dicomLow.LoadImage(self.vtkImageLow)
-        dicomTag = self.SetDicomData(self.dicomLow, 'LOW')
+        grayscaleRange = self.vtkImageLow.GetScalarRange()
+        dicomTag = self.SetDicomData(self.dicomLow, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
             # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
             MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
         
-        self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = series
+        # self.currentTag['dimension'] = dimension
+        # self.currentTag['spacing'] = spacing
+        # self.currentTag['series'] = series
             
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_L():
@@ -1245,26 +1298,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 MessageBox.ShowCritical('ERROR', 'Registration Failed')
                 return False
             
-        ############################################################################################
-        ## 顯示 dicom 到 ui 上 ############################################################################################
+        
         self.ShowDicom()
-        self.bDicomChanged = False
-        ## 啟用 ui ############################################################################################
-        "Enable ui"
-        # self.Slider_WW_L.setEnabled(True)
-        # self.Slider_WL_L.setEnabled(True)
-        # self.SliceSelect_Axial_L.setEnabled(True)
-        # self.SliceSelect_Sagittal_L.setEnabled(True)
-        # self.SliceSelect_Coronal_L.setEnabled(True)
-        # self.Button_Registration_L.setEnabled(True)
-        # self.tabWidget.setCurrentWidget(self.tabWidget_Low)
-        # ############################################################################################
-        # self.ui_SP.close()
+        # self.bDicomChanged = False
+        
         return True
     
     def ImportDicom_H(self):
         "VTK stage"
-        # self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
         self.vtkImageHigh, spacing, dimension, series = self.reader.GetData(index = 1)
         self.imageH = self.reader.arrImage
         
@@ -1273,9 +1314,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
-        # if self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
-        self.dicomHigh.LoadImage(self.vtkImageHigh)
-        dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH')
+        # self.dicomHigh.LoadImage(self.vtkImageHigh)
+        
+        grayscaleRange = self.vtkImageHigh.GetScalarRange()
+        dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
             # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
@@ -1283,27 +1325,41 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
-        self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = series
+        
+        # thresholdValue = int(((grayscaleRange[1] - grayscaleRange[0]) / 6) + grayscaleRange[0])
+        # self.currentTag['ww'] = abs(thresholdValue * 2)
+        # self.currentTag['wl'] = thresholdValue
+        # self.currentTag['dimension'] = dimension
+        # self.currentTag['spacing'] = spacing
+        # self.currentTag['series'] = series
         
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_H():
                 # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
                 MessageBox.ShowCritical('ERROR', 'Registration Failed')
                 return False
-        ############################################################################################
-        ## 顯示 dicom 到 ui 上 ############################################################################################
+        
+        matrix = self._CalculateExhaleToInhaleMatrix()
+        if matrix is not None:
+            # transform image
+            self.dicomHigh._TransformImage(self.vtkImageHigh, matrix)
+        else:
+            self.dicomHigh.LoadImage(self.vtkImageHigh)
+            
         self.ShowDicom()
-        self.bDicomChanged = False
-        ## 啟用 ui ############################################################################################
-        "Enable ui"
+        # self.bDicomChanged = False
         return True
     
     
         
-    def SetDicomData(self, dicom:DISPLAY, type:str):
-        thresholdValue = int(((dicom.dicomGrayscaleRange[1] - dicom.dicomGrayscaleRange[0]) / 6) + dicom.dicomGrayscaleRange[0])
+    def SetDicomData(
+        self, 
+        dicom:DISPLAY, 
+        type:str, 
+        grayscaleRange:_ArrayLike, 
+        dimension:_ArrayLike,
+        spacing:_ArrayLike
+        ):
         
         if type.upper() == 'LOW':
             tag = self.dicDicom.get(self.btnDicomLow.objectName())
@@ -1311,10 +1367,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tag = self.dicDicom.get(self.btnDicomHigh.objectName())
             
         if tag is not None:
+            tag['display'] = dicom
+            thresholdValue = int(((grayscaleRange[1] - grayscaleRange[0]) / 6) + grayscaleRange[0])
             tag['ww'] = abs(thresholdValue * 2)
             tag['wl'] = thresholdValue
-            tag['display'] = dicom
-            
+            tag['dimension'] = dimension
+            tag['spacing'] = spacing
+            # tag['series'] = series
             self.currentTag = tag
             return tag
         
@@ -1322,6 +1381,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetUIEnable_Trajectory(self, bEnable):
         self.btnToEntry.setEnabled(bEnable)
         self.btnToTarget.setEnabled(bEnable)
+        self.btnCloseToEntry.setEnabled(bEnable)
+        self.btnCloseToTarget.setEnabled(bEnable)
+        self.ledOffset.setEnabled(bEnable)
         self.sldTrajectory.setEnabled(bEnable)
     
     def ShowDicom(self):
@@ -1412,8 +1474,38 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if trajectoryValue and trajectoryLength:
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
-        self._ResumeStored()
-        self.UpdateTarget()
+        
+        # self._ResumeStored()
+        # # self.UpdateTarget()
+        # self.UpdateView()
+        
+    def SwitchDicom(self, blendRatio:float):
+        """show low dicom to ui
+        """
+        #Initialize window level / window width
+        #Dicom Low
+        self.sldWindowWidth.blockSignals(True)
+        self.sldWindowWidth.setMinimum(0)
+        # self.sldWindowWidth.setMaximum(int(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1]))
+        display = self.currentTag.get('display')
+        if display is None:
+            return
+        
+        self.sldWindowWidth.setMaximum(int(abs(display.dicomGrayscaleRange[0]) + display.dicomGrayscaleRange[1]))
+        self.sldWindowWidth.setValue(self.currentTag.get('ww'))
+        self.sldWindowWidth.blockSignals(False)
+        
+        "WindowCenter / WindowLevel"
+        self.sldWindowLevel.blockSignals(True)
+        self.sldWindowLevel.setMinimum(int(display.dicomGrayscaleRange[0]))
+        self.sldWindowLevel.setMaximum(int(display.dicomGrayscaleRange[1]))
+        self.sldWindowLevel.setValue(self.currentTag.get('wl'))
+        self.sldWindowLevel.blockSignals(False)
+        
+        DISPLAY.SetBlendImages(blendRatio)
+        
+        # self._ResumeStored()
+        # self.UpdateTarget()
         self.UpdateView()
         
     def UpdateView(self):
@@ -1487,17 +1579,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             item.setData(0, ROLE_DICOM, self.currentTag['name'])
             
             # self.currentTag['trajectory'].append(item)
-                
-            
             
             self.treeTrajectory.blockSignals(True)
             self.treeTrajectory.setCurrentItem(item)
             self.prevSelection_trajectory = item
             self.treeTrajectory.blockSignals(False)
+            
+            self.SetUIEnable_Trajectory(False)
         
         self.btnSetEntry.setEnabled(True)
         self.btnSetTarget.setEnabled(True)
-        
         
     def OnClicked_btnPlanning(self):
         logger.debug('planning')
@@ -1536,6 +1627,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def OnClicked_btnCancel(self):
         self.stkScene.setCurrentIndex(self.indexPrePage)
+        
+    def OnClicked_btnCloseToEntry(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = min(currentValue + offset, self.sldTrajectory.maximum())
+            self.sldTrajectory.setValue(currentValue)
+            
+    def OnClicked_btnCloseToTarget(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = max(currentValue - offset, 0)
+            self.sldTrajectory.setValue(currentValue)
         
     def OnClicked_btnSetEntry(self):
         
@@ -1733,9 +1838,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self._ModifyTrajectory(idx, display)
                 self.sldTrajectory.blockSignals(False)
                 display.SetCurrentTrajectory(idx)
-                # _, target = display.trajectory[idx]
-                # self.UpdateTarget(pos = target)
-                # self.UpdateView()
+                self.SetUIEnable_Trajectory(True)
+            else:
+                self.SetUIEnable_Trajectory(False)
             self.prevSelection_trajectory = item
             self.UpdateView()
         else:
@@ -1816,19 +1921,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # selectedDicomName = self.buttonGroup.checkedButton().objectName()
-        # self.dicDicom[selectedDicomName]['ww'] = value
         self.currentTag['ww'] = value
-        
-        # wl = self.Slider_WL_L.value()
-        # ww = self.Slider_WW_L.value()
-        # compositeOpacity = vtk.vtkPiecewiseFunction()
-        # compositeOpacity.AddPoint(wl - ww, 0.0)
-        # compositeOpacity.AddPoint( wl, 0.8)
-        # compositeOpacity.AddPoint( wl + ww, 1.0)
-        # volumeProperty.SetScalarOpacity(compositeOpacity)
-        
-        # self.dicomLow.ChangeWindowWidthView(value)
         currentDicom.ChangeWindowWidthView(value)
         self.UpdateView()
         
@@ -1840,19 +1933,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # selectedDicomName = self.buttonGroup.checkedButton().objectName()
-        # self.dicDicom[selectedDicomName]['wl'] = value
         self.currentTag['wl'] = value
-        
-        # wl = self.Slider_WL_L.value()
-        # ww = self.Slider_WW_L.value()
-        # compositeOpacity = vtk.vtkPiecewiseFunction()
-        # compositeOpacity.AddPoint(wl - ww, 0.0)
-        # compositeOpacity.AddPoint( wl, 0.8)
-        # compositeOpacity.AddPoint( wl + ww, 1.0)
-        # volumeProperty.SetScalarOpacity(compositeOpacity)
-        
-        # self.dicomLow.ChangeWindowLevelView(value)
         currentDicom.ChangeWindowLevelView(value)
         self.UpdateView()
         
@@ -2194,9 +2275,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 self.bDicomChanged = True
                 self.btnImport.setEnabled(False)
+                
                 if not self.ImportDicom_L():
                     return
-                self.ImportDicom_H()
+                
+                if not self.ImportDicom_H():
+                    return
+               
+                # self.SwitchDicom(0.5)
+                self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+                
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
                 self.stkScene.setCurrentWidget(self.pgModelBuilding)
@@ -2243,6 +2331,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkScene.setCurrentIndex(index)
         
     def ChangeCurrentDicom(self, dicomName:str):
+        # 取得原本的target point(十字標線交差點)
+        display:DISPLAY = self.currentTag.get('display')
+        # matrix = self.currentTag.get('matrix')
+        crosshair = None
+        if display:
+            crosshair = display.target.copy()
+            
+        # if matrix is not None:
+        #     crosshair = np.matmul(matrix, np.append(crosshair, 1))
+            
         tag = self.dicDicom.get(dicomName)
         if tag is None:
             # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
@@ -2250,10 +2348,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag = tag
+        
+            
         # if dicomName == self.btnDicomLow.objectName():
+        
+        idxFrom = 0 # inhale
+        idxTo = 1   # exhale
+        if dicomName == self.btnDicomLow.objectName():
+            idxFrom = 1
+            idxTo = 0
+        DISPLAY.CopyCamera(idxFrom, idxTo)
+            
         self.ShowDicom()
-        # elif dicomName == self.btnDicomHigh.objectName():
-        #     self.ShowDicom_H()
+        
+        display = self.currentTag.get('display')
+        if display and crosshair is not None:
+            display.target[:] = crosshair[:3]
+            
+        self.UpdateTarget()
+        self.UpdateView()
+            
         return True
         
     def ChangeTrajectorySlider(self, value:int):
@@ -2672,12 +2786,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageL, self.currentTag.get('spacing'))
     
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageH, self.currentTag.get('spacing'))
     
     def ShowRegistrationDifference(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
@@ -3004,21 +3118,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 路徑轉換
         dicomInhale = list(self.dicDicom.values())[0]
         dicomExhale = list(self.dicDicom.values())[1]
-        pathInhale = dicomInhale.get('trajectory')
-        pathExhale = dicomExhale.get('trajectory')
+        # pathInhale = dicomInhale.get('trajectory')
+        # pathExhale = dicomExhale.get('trajectory')
+        
+        idx = self._GetCurrentTrajectory()
+        idx = min(DISPLAY.trajectory.count() - 1, idx)
+        pathInhale = DISPLAY.trajectory[idx]
+        pathExhale = pathInhale
+        
         if pathInhale is not None and pathExhale is not None:
             regBallInhale = dicomInhale.get('regBall')
-            regBallExhale = dicomExhale.get('regBall')
+            # regBallExhale = dicomExhale.get('regBall')
             regMatrixInhale = dicomInhale.get('regMatrix')
-            regMatrixExhale = dicomExhale.get('regMatrix')
+            # regMatrixExhale = dicomExhale.get('regMatrix')
+            # invMatrix = np.linalg.inv(regMatrixExhale)
+            # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
             
             try:
+                # inhale和exhale dicome在完成註冊時，已轉換成同一座標，故原點和矩陣使用inhale的參數即可
                 pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
-                pathExhale = self.regFn.GetPlanningPath(regBallExhale[0], pathExhale, regMatrixExhale)
+                pathExhale = self.regFn.GetPlanningPath(regBallInhale[0], pathExhale, regMatrixInhale)
+                    
+                logger.debug(f'inhale path = {pathInhale}')
+                logger.debug(f'exhale path = {pathExhale}')
+                
                 pathInhale = [p * [1, 1, -1] for p in pathInhale]
                 pathExhale = [p * [1, 1, -1] for p in pathExhale]
-                logger.debug(pathInhale)
-                logger.debug(pathExhale)
                 
             except Exception as msg:
                 logger.error(msg)
