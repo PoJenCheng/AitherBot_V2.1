@@ -2014,6 +2014,8 @@ class REGISTRATION(QObject):
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
                 tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
+            except:
+                pass
         for p in averagePoint:
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
@@ -2045,8 +2047,6 @@ class REGISTRATION(QObject):
                 pass
                 nProgress = min(nProgress + nStep, 0.9)
                 self.signalProgress.emit(nProgress, 'calculating registrator position...')
-            except:
-                pass
         
         self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
@@ -2185,7 +2185,8 @@ class REGISTRATION(QObject):
         planningPath = []
         
         for p in selectedPoint:
-            planningPath.append(np.dot(regMatrix,(p-originPoint)) + originPoint)
+            offset = (p-originPoint)
+            planningPath.append(np.dot(regMatrix, offset))
         
         return planningPath
 class TracerStyle(vtk.vtkInteractorStyleImage):

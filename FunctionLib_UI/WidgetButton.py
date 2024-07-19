@@ -18,9 +18,9 @@ class QCustomStyle(QProxyStyle):
         
     def drawPrimitive(
         self, element: QStyle.PrimitiveElement, 
-        option: QStyleOption | None, 
-        painter: QPainter | None, 
-        widget: QWidget | None
+        option: QStyleOption, 
+        painter: QPainter, 
+        widget: QWidget
         ):
         if element == QStyle.PE_FrameFocusRect:
             return
@@ -67,12 +67,12 @@ class QCustomCalendarWidget(QCalendarWidget):
         # self.clicked.connect(self._OnClicked)
         self.update()
         
-    def closeEvent(self, event: QCloseEvent | None):
+    def closeEvent(self, event: QCloseEvent):
         if not self._bConfirm:
             return
         super().closeEvent(event)
         
-    def paintCell(self, painter: QPainter, rect: QRect, date: QDate | date):
+    def paintCell(self, painter: QPainter, rect: QRect, date: QDate):
         if date == self.selectedDate():
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
@@ -206,7 +206,7 @@ class QCustomCalendarWidget(QCalendarWidget):
         elif btnSender == self._btnRightMonth:
             self.showNextMonth()
             
-    def _OnClicked(self, _date:QDate|date):
+    def _OnClicked(self, _date:QDate):
         if _date in self._exceptDate:
             self.setSelectedDate(QDate(2024, 6, 5))
             self.showSelectedDate()
@@ -214,7 +214,7 @@ class QCustomCalendarWidget(QCalendarWidget):
         else:
             self._lastSelectedDate = _date
             
-    def SetExceptDate(self, dates:list|tuple):
+    def SetExceptDate(self, dates:list):
         self._exceptDate = dates
         
 
