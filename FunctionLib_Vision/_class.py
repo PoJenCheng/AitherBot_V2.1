@@ -21,10 +21,19 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonDataModel import vtkImageData
+from vtkmodules.vtkCommonExecutionModel import vtkImageAlgorithm
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkFiltersCore import vtkTubeFilter
+from vtkmodules.vtkFiltersGeneral import vtkCursor2D, vtkCursor3D
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkSphereSource
-from vtkmodules.vtkImagingCore import vtkImageMapToColors, vtkImageReslice, vtkImageBlend
+from vtkmodules.vtkImagingCore import (
+    vtkImageMapToColors, 
+    vtkImageReslice, 
+    vtkImageBlend, 
+    vtkImageResample,
+    vtkImageConstantPad,
+    vtkImageExtractComponents
+)
 from vtkmodules.vtkIOImage import vtkDICOMImageReader
 from vtkmodules.vtkRenderingCore import (
     vtkActor, 
@@ -38,10 +47,19 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
     vtkVolume, 
     vtkVolumeProperty,
-    vtkWindowLevelLookupTable
+    vtkWindowLevelLookupTable,
+    vtkImageMapper,
+    vtkCellPicker,
+    vtkPropCollection
 )
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
-
+from vtkmodules.vtkInteractionWidgets import (
+    vtkRectilinearWipeWidget, 
+    vtkRectilinearWipeRepresentation,
+    vtkAffineWidget,
+    vtkAffineRepresentation2D
+)
+from vtkmodules.vtkImagingHybrid import vtkImageRectilinearWipe
 from FunctionLib_Robot.logger import logger
 from FunctionLib_Robot.__init__ import *
 
@@ -898,11 +916,12 @@ class DICOM(QObject):
 "registration function"
 class REGISTRATION(QObject):
     signalProgress = pyqtSignal(float, str)
-    matrixFromExhaleToInhalePath = np.eye(4)
+    matrixFromExhaleToInhalePath = np.identity(4)
     index = 0
     def __init__(self):
         super().__init__()
         self.PlanningPath = []
+        self.rms = [0, 0, 0]
     
     def TransformationMatrix(self, ballCenterMm):
         """calculate registration transformation matrix
@@ -925,6 +944,7 @@ class REGISTRATION(QObject):
         vectorZ = np.array(np.cross(ball_vector_x, ball_vector_y))
         vectorX = np.array(ball_vector_x)
         vectorY = np.array(np.cross(vectorZ,vectorX))
+        # 注意，這個放置方式是逆矩陣 (正交矩陣的轉置)
         new_vector = np.array([vectorX,vectorY,vectorZ])
         ############################################################################################
         ### 公式5
@@ -967,7 +987,7 @@ class REGISTRATION(QObject):
         ############################################################################################
         return np.array([showAxis, showSlice])
     
-    def GetError(self,ball):
+    def GetError(self,ball = None):
         """get rigistration error/difference
 
         Args:
@@ -977,18 +997,20 @@ class REGISTRATION(QObject):
             [numpy.min(error),numpy.max(error),numpy.mean(error)] (_list_): [min error, max error, mean error]
         """
         ## 計算球心距離與設計值距離的誤差 ############################################################################################
-        error = []
-        shortSide = 30
-        longSide = 65
-        hypotenuse = math.sqrt(np.square(shortSide) + np.square(longSide))
-        # error.append(abs(self.__GetNorm(ball[1]-ball[2])-hypotenuse))
-        # error.append(abs(self.__GetNorm(ball[0]-ball[1])-shortSide))
-        # error.append(abs(self.__GetNorm(ball[0]-ball[2])-longSide))
-        error.append(abs(np.linalg.norm(ball[1]-ball[2])-hypotenuse))
-        error.append(abs(np.linalg.norm(ball[0]-ball[1])-shortSide))
-        error.append(abs(np.linalg.norm(ball[0]-ball[2])-longSide))
-        ############################################################################################
-        return [np.min(error),np.max(error),np.mean(error)]
+        if ball is not None:
+            error = []
+            shortSide = 30
+            longSide = 65
+            hypotenuse = math.sqrt(np.square(shortSide) + np.square(longSide))
+            # error.append(abs(self.__GetNorm(ball[1]-ball[2])-hypotenuse))
+            # error.append(abs(self.__GetNorm(ball[0]-ball[1])-shortSide))
+            # error.append(abs(self.__GetNorm(ball[0]-ball[2])-longSide))
+            error.append(abs(np.linalg.norm(ball[1]-ball[2])-hypotenuse))
+            error.append(abs(np.linalg.norm(ball[0]-ball[1])-shortSide))
+            error.append(abs(np.linalg.norm(ball[0]-ball[2])-longSide))
+            self.rms = [np.min(error),np.max(error),np.mean(error)]
+        
+        return self.rms
     
     def __GetNorm(self, V):
         """get norm
@@ -2189,9 +2211,631 @@ class TracerStyle(vtk.vtkInteractorStyleImage):
         
     def OnLeftButtonPress(self, obj, event):
         pass
+class AffineWidget(vtkAffineWidget):
+    def __init__(self):
+        super().__init__()
+        self.AddObserver('InteractionEvent', self.Execute)
+        self.AddObserver('EndInteractionEvent', self.Execute)
+        
+    def SetInput(self, renderer:'RendererObj'):
+        
+        self.renderer = renderer
+        iren = renderer.GetRenderWindow().GetInteractor()
+        self.iStyle = iren.GetInteractorStyle()
+        iren.SetInteractorStyle(None)
+        self.actor = renderer.actorImage
+        
+        self.CreateDefaultRepresentation()
+        self.rep = self.GetAffineRepresentation()
+        # self.rep = vtkAffineRepresentation2D()
+        self.rep.SetBoxWidth(100)
+        self.rep.SetCircleWidth(75)
+        self.rep.SetAxesWidth(60)
+        self.rep.DisplayTextOn()
+        self.rep.PlaceWidget(self.actor.GetBounds())
+        
+        # self.SetRepresentation(self.rep)
+        
+        self.SetInteractor(iren)
+        iren.Initialize()
+        iren.Render()
+        self.On()
+        
+        self.iren = iren
+        
+        
+    def Execute(self, obj, event):
+        transform = vtkTransform()
+        self.rep.GetTransform(transform)
+        self.actor.SetUserTransform(transform)
+        
+        # if event == 'EndInteractionEvent':
+        # transform = vtkTransform()
+        # transform.Translate(1, 0, 0)
+        
+        # reslice = vtkImageReslice()
+        # reslice.SetInputData(self.renderer.image)
+        # reslice.SetResliceTransform(transform)
+        # reslice.SetInterpolationModeToLinear()
+        # reslice.SetBackgroundLevel(-1024)
+        # reslice.Update()
+        
+        # self.renderer.image.DeepCopy(reslice.GetOutput())
+            
+        
     
+class InteractorStyleWipe(vtkInteractorStyleImage):
+    MODE_WIPE       = 0
+    MODE_BLEND      = 1
+    ACTION_PAN      = 1
+    ACTION_MOVE     = 2
+    ACTION_ROTATE   = 3
+    ACTION_ZOOM     = 4
+    ACTION_WL       = 5
+    ACTION_SLICE    = 6
+    IMAGE_INHALE    = 0
+    IMAGE_EXHALE    = 1
     
+    lstIren = []
+    action = ACTION_PAN
+    imageId = IMAGE_INHALE
+    _transform  = vtkTransform() # 共用的transform
+    wipePosition = np.zeros(3)
+    image1Filter = None
     
+    lookupTable   = [vtkWindowLevelLookupTable() for _ in range(2)]
+    
+    signalUpdate = QSignalObject()
+    
+    def __init__(self, orientation:str = VIEW_AXIAL):
+        super().__init__()
+        self.matrix = vtkTransform()
+        self.AddObserver('KeyPressEvent', self.OnChar)
+        self.AddObserver('MouseMoveEvent', self.OnMouseMoveEvent)
+        self.AddObserver('LeftButtonPressEvent', self.OnLeftButtonPressEvent)
+        self.AddObserver('LeftButtonReleaseEvent', self.OnLeftButtonReleaseEvent)
+        self.AddObserver('MiddleButtonPressEvent', self.OnMiddleButtonPressEvent)
+        self.AddObserver('MiddleButtonReleaseEvent', self.OnMiddleButtonReleaseEvent)
+        self.AddObserver('RightButtonPressEvent', self.OnRightButtonPressEvent)
+        self.AddObserver('RightButtonReleaseEvent', self.OnRightButtonReleaseEvent)
+        self.AddObserver('MouseWheelBackwardEvent', self.OnMouseWheelBackwardEvent)
+        self.AddObserver('MouseWheelForwardEvent', self.OnMouseWheelForwardEvent)
+        
+        
+        self.mode = self.MODE_WIPE
+        self.imageRectWipe  = None
+        self.imageBlend     = None
+        self.imagePort2     = None
+        self.wipeWidget     = None
+        self.ren1           = None
+        self.ren2           = None
+        self.actorImage     = None
+        self.mapColor       = None
+        self.iren           = None
+        self.posRefence     = None
+        self.orientation    = orientation
+        self.bLeftPressed   = False
+        self.bMiddlePressed = False
+        self.bRightPressed  = False
+        
+        self._idxAxis       = []
+        self._currentPos    = None
+        self._lastPos       = None
+        self._currentPos2D  = None
+        self._lastPos2D     = None
+        
+        self.lookupTable[0].Build()
+        self.lookupTable[0].SetWindow(1000)
+        self.lookupTable[0].SetLevel(200)
+        
+        self.lookupTable[1].Build()
+        self.lookupTable[1].SetWindow(1000)
+        self.lookupTable[1].SetLevel(200)
+        
+        
+    def _GetCurrentPosition(self):
+        # renderers = self.GetInteractor().GetRenderWindow().GetRenderers()
+        pos = self.GetInteractor().GetEventPosition()
+        
+        self._currentPos2D = np.array(pos)
+        
+        if self._lastPos2D is None:
+            self._lastPos2D = self._currentPos2D
+        
+        picker = vtkCellPicker()
+        # renderers.InitTraversal()
+        pickPos, obj = None, None
+        # for _ in range(renderers.GetNumberOfItems()):
+            # renderer = renderers.GetNextItem()
+        picker.Pick(pos[0], pos[1], 0, self.ren1)
+        pickPos = picker.GetPickPosition()
+        obj = picker.GetProp3D()
+            
+        if pickPos is None:
+            return None, None
+    
+            
+        self._currentPos = np.array(pickPos)
+        
+        if self._lastPos is None:
+            self._lastPos = self._currentPos
+            
+        return self._currentPos, obj
+    
+    def _GetDragVector(self):
+        pos, obj = self._GetCurrentPosition()
+        
+        if all(x is not None for x in (pos, obj)):
+            dragVector = pos - self._lastPos
+            return dragVector, obj
+        else:
+            return np.zeros(3), obj
+        
+    def _GetDiff(self):
+        diff, obj = self._GetDragVector()
+        self._lastPos = self._currentPos
+        
+        return diff, obj
+    
+    def _GetDiff2D(self):
+        self._GetCurrentPosition()
+        diff2D = self._currentPos2D - self._lastPos2D
+        self._lastPos2D = self._currentPos2D
+        
+        return diff2D
+    
+    def _GetAngle(self, center:np.ndarray):
+        _, obj = self._GetCurrentPosition()
+        
+        try:
+            # 取得中心點在切面上的投影
+            self.ren1.SetWorldPoint(np.append(center, 1))
+            self.ren1.WorldToDisplay()
+            pos = self.ren1.GetDisplayPoint()
+            picker = vtkCellPicker()
+            picker.Pick(pos[0], pos[1], 0, self.ren1)
+            centerPos = picker.GetPickPosition()
+            
+            v1 = self._currentPos - centerPos
+            v2 = self._lastPos - centerPos
+            d1 = np.linalg.norm(v1)
+            d2 = np.linalg.norm(v2)
+            v1 = v1 / d1
+            v2 = v2 / d2
+            
+            angle = np.rad2deg(np.arccos(np.dot(v1, v2)))
+            
+            # view plane normal
+            normal = self.ren1.camera.GetViewPlaneNormal()
+            crossVector = np.cross(v1, v2)
+            crossVector = crossVector / np.linalg.norm(crossVector)
+            dotNormal = np.dot(crossVector, normal)
+            if dotNormal < 0:
+                angle *= -1
+                
+            self._lastPos = self._currentPos
+            return angle, obj
+        except Exception as msg:
+            logger.error(msg)
+            return None, None
+        
+    def _GetWipePosition(self) -> np.ndarray:
+        try:
+            pos = self.imageRectWipe.GetPosition()
+            return pos
+        except Exception as msg:
+            logger.error(msg)
+            return None
+    
+    def _UpdateWipePosition(self):
+        pos = self._GetWipePosition()
+        if pos is not None:
+            InteractorStyleWipe.wipePosition[self._idxAxis] = pos
+            
+        self._SyncWipePosition()
+            
+    def _SyncWipePosition(self):
+         # 同步rectilinearWipeWidget
+        for iren in InteractorStyleWipe.lstIren:
+            iStyle = iren.GetInteractorStyle()
+            if isinstance(iStyle, InteractorStyleWipe):
+                pos2D = InteractorStyleWipe.wipePosition[iStyle._idxAxis]
+                iStyle.wipeWidget.Off()
+                iStyle.imageRectWipe.SetPosition(pos2D)
+                # 強制更新Representation 似乎沒其他方法可強制更新？
+                iStyle.wipeWidget.On()
+                
+            iren.Render()
+    def _RestoreActor(self):
+        if None not in (self.ren1, self.actorImage):
+            self.ren1.RemoveActor(self.ren1.actorImage)
+            self.ren1.mapColor.SetInputData(self.ren1.image)
+            self.actorImage.GetMapper().SetInputConnection(self.ren1.mapColor.GetOutputPort())
+            self.actorImage.SetVisibility(True)
+            self.ren1.actorImage = self.actorImage
+        else:
+            self.ren1.actorImage.GetMapper().SetInputConnection(self.ren1.mapColor.GetOutputPort())
+            
+        if self.wipeWidget:
+            self.wipeWidget.Off()
+            self.wipeWidget = None
+            
+    def _Rotate(self, angle:float):
+        normal = self.ren1.camera.GetViewPlaneNormal()
+        center = np.array(self.ren1.image.GetCenter())
+        
+        self._transform.Translate(center)
+        self._transform.RotateWXYZ(angle, normal)
+        self._transform.Translate(-center)
+        
+        return self._transform
+            
+    def _TransformImage(self, transform:vtkTransform):
+        reslice = vtkImageReslice()
+        reslice.SetInputData(self.ren1.imageOrigin)
+        reslice.SetResliceTransform(transform)
+        reslice.SetInterpolationModeToLinear()
+        reslice.SetBackgroundLevel(-1024)
+        # reslice.Update()
+        
+        # self.ren1.image.DeepCopy(reslice.GetOutput())
+        self.image1Filter.SetInputConnection(reslice.GetOutputPort())
+        self._Update()
+        
+    def _Slice(self, value:int):
+        indexes = np.arange(3)
+        idx, = np.setdiff1d(indexes, self._idxAxis)
+        sliceNo = np.asarray(self.ren1.imagePosition)[idx]
+        dimMax = self.ren1.imageDimensions[idx]
+        sliceNo = max(0, min(sliceNo + value, dimMax - 1))
+        self.ren1.ChangeView(sliceNo)
+        self.ren1.imagePosition[idx] = sliceNo
+        
+        self.iren.Render()
+        
+    def _OnStartAction(self, action:int = None):
+        pos, _ = self._GetCurrentPosition()
+        self._lastPos = pos
+        
+        if action is None:
+            action = self.action
+            
+        if action in [InteractorStyleWipe.ACTION_WL, InteractorStyleWipe.ACTION_SLICE]:
+            self._lastPos2D = self._currentPos2D
+            
+    def _OnAction(self, action:int = None):
+        if action is None:
+            action = self.action
+            
+        if action == InteractorStyleWipe.ACTION_WL:
+            diffVector = self._GetDiff2D()
+            window = self.lookupTable[self.imageId].GetWindow()
+            level = self.lookupTable[self.imageId].GetLevel()
+            window += diffVector[0] * 5
+            level += diffVector[1] * 5
+            self.lookupTable[self.imageId].SetWindow(window)
+            self.lookupTable[self.imageId].SetLevel(level)
+        
+        self._Update()
+                
+    def _Update(self):
+        for iren in self.lstIren:
+            iren.Render()
+            
+    def _Zoom(self):
+        zoomScale = self.ren1.camera.GetParallelScale()
+        for iren in InteractorStyleWipe.lstIren:
+            iStyle = iren.GetInteractorStyle()
+            if isinstance(iStyle, InteractorStyleWipe):
+                iStyle.ren1.camera.SetParallelScale(zoomScale)
+                iren.Render()
+        
+    def Close(self):
+        # restore imageActor
+        self._RestoreActor()
+        
+    def Slice(self):
+        logger.debug('slicing')
+        super().Slice()
+        
+    def OnChar(self, obj, event):
+        
+        if not self.ren1:
+            return
+        
+        rwi = self.GetInteractor()
+        keyCode = rwi.GetKeyCode()
+        transform = vtkTransform()
+        if keyCode == 'w':
+            transform.Translate(0, 1, 0)
+        elif keyCode == 'a':
+            transform.Translate(1, 0, 0)
+        elif keyCode == 's':
+            transform.Translate(0, -1, 0)
+        elif keyCode == 'd':
+            transform.Translate(-1, 0, 0)
+        elif keyCode == 'q':
+            transform.Translate( 0, 0, 1)
+        elif keyCode == 'e':
+            transform.Translate( 0, 0,-1)
+        
+        self.matrix.Concatenate(transform)
+        
+        reslice = vtkImageReslice()
+        reslice.SetInputData(self.ren1.image)
+        reslice.SetResliceTransform(transform)
+        reslice.SetInterpolationModeToLinear()
+        reslice.SetBackgroundLevel(-1024)
+        reslice.Update()
+        
+        self.ren1.image.DeepCopy(reslice.GetOutput())
+        
+        self.iren.Render()
+        
+    def OnInteractionEvent(self, obj, event, callData = None):
+        if isinstance(obj, vtkRectilinearWipeWidget):
+            self._UpdateWipePosition()
+            
+    def OnMouseMoveEvent(self, obj, event):
+        # blend mode
+        # if self.mode == self.MODE_BLEND:
+        if self.bRightPressed:
+            self._Zoom()
+        elif self.bMiddlePressed:
+            self._OnAction(InteractorStyleWipe.ACTION_WL)
+        elif self.action == InteractorStyleWipe.ACTION_MOVE:
+            diffVector, dragObj = self._GetDiff()
+            
+            # if isinstance(dragObj, vtkImageActor):
+            #     iren.GetRenderWindow().SetCurrentCursor(vtk.VTK_CURSOR_SIZEALL)
+            # else:
+            #     iren.GetRenderWindow().SetCurrentCursor(vtk.VTK_CURSOR_DEFAULT)
+            # left mouse button pressed
+            if self.bLeftPressed:
+                if isinstance(dragObj, vtkImageActor):
+                    self._transform.Translate(-diffVector)
+                    
+                    self._TransformImage(self._transform)
+        elif self.action == InteractorStyleWipe.ACTION_ROTATE:
+            if self.bLeftPressed:
+                angle, _ = self._GetAngle(self.ren1.image.GetCenter())
+                
+                transform = self._Rotate(angle)
+                self._TransformImage(transform)
+        elif self.action == InteractorStyleWipe.ACTION_ZOOM:
+            self._Zoom()
+        elif self.action == InteractorStyleWipe.ACTION_WL:
+            if self.bLeftPressed:
+                self._OnAction()
+        elif self.action == InteractorStyleWipe.ACTION_SLICE:
+            if self.bLeftPressed:
+                diffVector = self._GetDiff2D()
+                self._Slice(diffVector[1])
+                
+        super().OnMouseMove()
+                
+    def OnLeftButtonPressEvent(self, obj, event):
+        self.bLeftPressed = True
+        
+        if self.action == InteractorStyleWipe.ACTION_PAN:
+            super().OnMiddleButtonDown()
+        elif self.action == InteractorStyleWipe.ACTION_ZOOM:
+            super().OnRightButtonDown()
+        # elif self.action == InteractorStyleWipe.ACTION_SLICE:
+        #     self.SetInteractionModeToImageSlicing()
+        #     super().OnLeftButtonDown()
+        else:
+            self._OnStartAction()
+    
+    def OnLeftButtonReleaseEvent(self, obj, event):
+        self.bLeftPressed = False
+        if self.action == InteractorStyleWipe.ACTION_PAN:     
+            super().OnMiddleButtonUp()
+        elif self.action == InteractorStyleWipe.ACTION_ZOOM:
+            super().OnRightButtonUp()
+        # elif self.action == InteractorStyleWipe.ACTION_SLICE:
+        #     super().OnLeftButtonUp()
+        
+    def OnMiddleButtonPressEvent(self, obj, event):
+        self.bMiddlePressed = True
+        self._OnStartAction(InteractorStyleWipe.ACTION_WL)
+        
+    def OnMiddleButtonReleaseEvent(self, obj, event):
+        self.bMiddlePressed = False
+        
+    def OnRightButtonPressEvent(self, obj, event):
+        self.bRightPressed = True
+        super().OnRightButtonDown()
+        
+    def OnRightButtonReleaseEvent(self, obj, event):
+        self.bRightPressed = False
+        super().OnRightButtonUp()
+        
+    def OnMouseWheelBackwardEvent(self, obj, event):
+        super().OnMouseWheelBackward()
+        self._Zoom()
+        
+    def OnMouseWheelForwardEvent(self, obj, event):
+        super().OnMouseWheelForward()
+        self._Zoom()
+        
+    def SetInput(self, dicom1:'DISPLAY', dicom2:'DISPLAY'):
+        idxAxis = [0, 1]
+        if self.orientation == VIEW_AXIAL:
+            self.ren1 = dicom1.rendererAxial
+            self.ren2 = dicom2.rendererAxial
+        elif self.orientation == VIEW_CORONAL:
+            self.ren1 = dicom1.rendererCoronal
+            self.ren2 = dicom2.rendererCoronal
+            idxAxis = [0, 2]
+        elif self.orientation == VIEW_SAGITTAL:
+            self.ren1 = dicom1.rendererSagittal
+            self.ren2 = dicom2.rendererSagittal
+            idxAxis = [1, 2]
+            
+        self._idxAxis = idxAxis
+        
+        self.SwitchMode(self.mode)
+        
+    def SetAction(self, action:int):
+        self.action = action
+        
+    def SliceUp(self):
+        self._Slice(1)
+        
+    def SliceDown(self):
+        self._Slice(-1)
+        
+    def SwitchMode(self, mode:int):
+        self._RestoreActor()
+        
+        renWin = self.ren1.GetRenderWindow()
+        image1 = self.ren1.image
+        image2 = self.ren2.image
+        extent = image1.GetExtent()
+        spacing = image1.GetSpacing()
+        
+        resample = vtkImageResample()
+        resample.SetInputData(image2)
+        for i in range(3):
+            resample.SetAxisOutputSpacing(i, spacing[i]) 
+        resample.SetInterpolationModeToLinear()
+        
+        pad = vtkImageConstantPad()
+        pad.SetInputConnection(resample.GetOutputPort())
+        pad.SetOutputWholeExtent(extent)
+        pad.SetConstant(-1024)
+        
+        self.imagePort2 = pad.GetOutputPort()
+        
+        if InteractorStyleWipe.image1Filter is None:
+            InteractorStyleWipe.image1Filter = vtkImageConstantPad()
+            InteractorStyleWipe.image1Filter.SetInputData(image1)
+        
+        mapColor1 = vtkImageMapToColors()
+        mapColor1.SetInputConnection(self.image1Filter.GetOutputPort())
+        mapColor1.SetLookupTable(self.lookupTable[0])
+        
+        mapColor2 = vtkImageMapToColors()
+        mapColor2.SetInputConnection(pad.GetOutputPort())
+        mapColor2.SetLookupTable(self.lookupTable[1])
+        
+        outputPort = None
+        if mode == InteractorStyleWipe.MODE_WIPE:
+            self.imageRectWipe = vtkImageRectilinearWipe()
+            # self.imageRectWipe.SetInputConnection(0, self.image1Filter.GetOutputPort())
+            # self.imageRectWipe.SetInputConnection(1, self.imagePort2)
+            self.imageRectWipe.SetInputConnection(0, mapColor1.GetOutputPort())
+            self.imageRectWipe.SetInputConnection(1, mapColor2.GetOutputPort())
+            
+            self.posRefence = self.ren1.target.copy()
+            position = np.array(self.ren1.imagePosition, dtype = np.int64)
+            InteractorStyleWipe.wipePosition = position
+            self.imageRectWipe.SetPosition(position[self._idxAxis[0]], position[self._idxAxis[1]])
+            self.imageRectWipe.SetWipeToQuad()
+            self.imageRectWipe.SetAxis(self._idxAxis[0], self._idxAxis[1])
+            
+            outputPort = self.imageRectWipe.GetOutputPort()
+        elif mode == InteractorStyleWipe.MODE_BLEND:
+            self.imageBlend = vtkImageBlend()
+            # self.imageBlend.AddInputConnection(self.image1Filter.GetOutputPort())
+            # self.imageBlend.AddInputConnection(self.imagePort2)
+            self.imageBlend.AddInputConnection(mapColor1.GetOutputPort())
+            self.imageBlend.AddInputConnection(mapColor2.GetOutputPort())
+            self.imageBlend.SetOpacity(0, 0.6)
+            self.imageBlend.SetOpacity(1, 0.4)
+            
+            outputPort = self.imageBlend.GetOutputPort()
+        if outputPort is None:
+            logger.critical('image outputPort failed')
+            return
+       
+        # self.actorImage = self.ren1.actorImage
+        # self.actorImage.SetVisibility(False)
+        
+        # actorImage = vtkImageActor()
+        # self.ren1.actorImage = actorImage
+        # self.ren1.mapColor.SetInputConnection(outputPort)
+        # self.ren1.SetCamera(self.ren1.orientation)
+        self.ren1.actorImage.GetMapper().SetInputConnection(outputPort)
+        
+        if self.iren is None:
+            self.iren = renWin.GetInteractor()
+            InteractorStyleWipe.lstIren.append(self.iren)
+            self.iren.SetInteractorStyle(self) 
+            
+        self.iren.Initialize()
+        
+        if mode == InteractorStyleWipe.MODE_WIPE:
+            self.wipeWidget = vtkRectilinearWipeWidget()
+            self.wipeWidget.AddObserver('InteractionEvent', self.OnInteractionEvent)
+            
+            wipeWidgetRep:vtkRectilinearWipeRepresentation = self.wipeWidget.GetRepresentation()
+            # wipeWidgetRep.SetImageActor(actorImage)
+            wipeWidgetRep.SetImageActor(self.ren1.actorImage)
+            wipeWidgetRep.SetRectilinearWipe(self.imageRectWipe)
+            wipeWidgetRep.GetProperty().SetLineWidth(1.0)
+            wipeWidgetRep.GetProperty().SetColor(1, 0, 0.8)
+            wipeWidgetRep.GetProperty().SetOpacity(0.75)
+            wipeWidgetRep.VisibilityOn()
+            
+            self.wipeWidget.SetInteractor(self.iren)
+            self.wipeWidget.On()
+        
+        self.mode = mode
+        self.iren.Start()
+        self.iren.Render()
+        
+    def MoveUp(self):
+        up = np.array(self.ren1.camera.GetViewUp())
+        self._transform.Translate(-up)
+            
+        self._TransformImage(self._transform)
+        
+    def MoveDown(self):
+        up = self.ren1.camera.GetViewUp()
+        self._transform.Translate(up)
+            
+        self._TransformImage(self._transform)
+        
+    def MoveLeft(self):
+        matrix:vtkMatrix4x4 = self.ren1.camera.GetViewTransformMatrix()
+        rightVector = np.zeros(3)
+        rightVector[0] = matrix.GetElement(0, 0)
+        rightVector[1] = matrix.GetElement(0, 1)
+        rightVector[2] = matrix.GetElement(0, 2)
+        
+        self._transform.Translate(rightVector)
+        self._TransformImage(self._transform)
+        
+    def MoveRight(self):
+        matrix:vtkMatrix4x4 = self.ren1.camera.GetViewTransformMatrix()
+        rightVector = np.zeros(3)
+        rightVector[0] = matrix.GetElement(0, 0)
+        rightVector[1] = matrix.GetElement(0, 1)
+        rightVector[2] = matrix.GetElement(0, 2)
+        
+        self._transform.Translate(-rightVector)
+        self._TransformImage(self._transform)
+        
+    def RotateL(self):
+        transform = self._Rotate(-1)
+        self._TransformImage(transform)
+        
+    def RotateR(self):
+        transform = self._Rotate(1)
+        self._TransformImage(transform)
+        
+    def Reset(self):
+        self.ren1.image.DeepCopy(self.ren1.imageOrigin)
+        self.ren1.SetTarget(self.posRefence)
+        self._transform.Identity()
+        self.signalUpdate.EmitUpdateView()
+        self._Update()
+        if self.mode == InteractorStyleWipe.MODE_WIPE:
+            InteractorStyleWipe.wipePosition = np.array(self.ren1.imagePosition)
+            self._SyncWipePosition()
+            
 class ContourInteractorStyle(vtk.vtkInteractorStyle):
     
     def __init__(self, widget:vtk.vtkContourWidget):
@@ -3101,7 +3745,8 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
         direct = np.array(camera.GetDirectionOfProjection())
         
         numOfPoints = len(self.pts)
-        vertex = np.array([i for i in range(numOfPoints + 1)], dtype = int)
+        # vertex = np.array([i for i in range(numOfPoints + 1)], dtype = int)
+        vertex = np.arange(numOfPoints + 1, dtype = int)
         vertex[numOfPoints] = 0
         
         lines = vtk.vtkCellArray()
@@ -4440,8 +5085,8 @@ class RendererObj(vtkRenderer):
                 pos = self.target
         else:
             self.target[:] = np.array(pos)
-                
-        imagePos = np.round(pos / self.voxelSize)
+        
+        self.imagePosition[:] = np.round(pos / self.voxelSize)
         
         if not self.bFocusMode:
             if self.isInitialize == False:
@@ -4523,6 +5168,9 @@ class RendererObj(vtkRenderer):
         # center = np.zeros(3).astype(int)
         
         # orientation = orientation.lower()
+        self.camera.ParallelProjectionOn()
+        self.camera.SetFocalPoint(0, 0, 0)
+        
         if orientation == VIEW_SAGITTAL:
             
             self.camera.SetViewUp(0, 0, 1)
@@ -4549,9 +5197,9 @@ class RendererObj(vtkRenderer):
             self.camera.SetPosition(0, 0, 1)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             
-        self.camera.SetFocalPoint(0, 0, 0)
+        
         self.camera.ComputeViewPlaneNormal()
-        self.camera.ParallelProjectionOn()
+        
         self.orientation = orientation
 
         # self.textActor.SetAlignmentPoint(2)
@@ -4571,7 +5219,6 @@ class RendererObj(vtkRenderer):
         self.SetActiveCamera(self.camera)
         self.ResetCamera(self.dicomBoundsRange)
         self.camera.Zoom(1.8)
-        
         
     
 class RendererObj3D(RendererObj):
@@ -5155,7 +5802,82 @@ class RendererCrossSectionObj(RendererObj):
             self.targetObj.SetInViewportCenter()
             
         self.SetFocusMode(self.bFocusMode)
+        
+# class RendererWipe(RendererObj):
+#     def __init__(self):
+#         super().__init__()
                 
+#     def SetImage(self, image:vtk.vtkImageData, imageOrigin, target, imagePosition):
+#         self.dicomGrayscaleRange = image.GetScalarRange()
+#         self.dicomBoundsRange = image.GetBounds()
+#         self.imageDimensions = image.GetDimensions()
+#         self.voxelSize = image.GetSpacing()
+#         self.image = image
+#         self.imageOrigin = imageOrigin
+#         self.target = target
+#         self.imagePosition = imagePosition
+        
+#     def SetInput(self, renderer1:RendererObj, renderer2:RendererObj):
+#         self.dicomGrayscaleRange = renderer1.dicomGrayscaleRange
+#         self.dicomBoundsRange = renderer1.dicomBoundsRange
+#         self.imageDimensions = renderer1.imageDimensions
+#         self.voxelSize = np.array(renderer1.voxelSize)
+        
+#         self.imageRectWipe = vtkImageRectilinearWipe()
+#         self.imageRectWipe.SetInputConnection(0, renderer1.mapColor.GetOutputPort())
+#         self.imageRectWipe.SetInputConnection(1, renderer2.mapColor.GetOutputPort())
+#         self.imageRectWipe.SetPosition(256, 256)
+#         self.actorImage.GetMapper().SetInputConnection(self.imageRectWipe.GetOutputPort())
+        
+#     def SetInteractor(self, iren:vtk.vtkRenderWindowInteractor):
+#         self.iren = iren
+        
+#         iStyle = InteractorStyleWipe()
+#         iStyle.SetWipe(self.imageRectWipe)
+#         self.iren.SetInteractorStyle(iStyle) 
+        
+#         self.wipeWidget = vtkRectilinearWipeWidget()
+#         self.wipeWidget.SetInteractor(self.iren)
+        
+#         self.wipeWidgetRep:vtkRectilinearWipeRepresentation = self.wipeWidget.GetRepresentation()
+#         self.wipeWidgetRep.SetImageActor(self.actorImage)
+#         self.wipeWidgetRep.SetRectilinearWipe(self.imageRectWipe)
+#         self.wipeWidgetRep.GetProperty().SetLineWidth(2.0)
+#         self.wipeWidget.On()
+        
+#     def SetCamera(self, orientation:str):
+#         if not isinstance(orientation, str):
+#             logger.debug(f'parameter "orientation" is not str type')
+#             return
+        
+#         center = np.array(self.imageDimensions).astype(float) * 0.5
+#         center = center.astype(int)
+       
+#         self.camera.SetViewUp(0, -1, 0)
+#         self.camera.SetPosition(0, 0, -1)
+            
+#         self.camera.SetFocalPoint(0, 0, 0)
+#         self.camera.ComputeViewPlaneNormal()
+#         self.camera.ParallelProjectionOn()
+#         self.orientation = orientation
+
+#         # self.textActor.SetAlignmentPoint(2)
+#         self.textActor.SetTextScaleModeToNone()  # 避免文字縮放
+#         self.textActor.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
+#         self.textActor.SetPosition(0.98, 0.95)  # 設定文字位置 (右上角)
+#         self.textActor.GetTextProperty().SetJustificationToRight()
+#         self.textActor.GetTextProperty().SetFontSize(16)
+#         self.textActor.GetTextProperty().SetColor(1.0, 1.0, 0.0)  # 設定文字顏色
+        
+#         self.AddActor(self.textActor)
+        
+#         "render"
+#         "Sagittal"
+#         self.SetBackground(0, 0, 0)
+#         self.AddActor(self.actorImage)
+#         self.SetActiveCamera(self.camera)
+#         self.ResetCamera(self.dicomBoundsRange)
+#         self.camera.Zoom(1.8)
 class TargetObj():
     bVisible = True
     
@@ -5857,14 +6579,14 @@ class DISPLAY(QObject):
         reslice.Update()
         
         # 創建影像融合對象
-        blend = vtkImageBlend()
-        # blend.AddInputData(vtkImageInput1)
-        blend.AddInputData(reslice.GetOutput())
-        blend.SetOpacity(0, 1)  # 設定第一幅影像的透明度
-        # blend.SetOpacity(1, 0.5)  # 設定第二幅影像的透明度
-        blend.Update()
+        # blend = vtkImageBlend()
+        # # blend.AddInputData(vtkImageInput1)
+        # blend.AddInputData(reslice.GetOutput())
+        # blend.SetOpacity(0, 1)  # 設定第一幅影像的透明度
+        # # blend.SetOpacity(1, 0.5)  # 設定第二幅影像的透明度
+        # blend.Update()
         
-        self.LoadImage(blend.GetOutput())
+        self.LoadImage(reslice.GetOutput())
         
     def Reset(self):
         if hasattr(self, 'rendererList'):
@@ -5882,7 +6604,7 @@ class DISPLAY(QObject):
     def CountOfTrajectory(self):
         return DISPLAY.trajectory.count()
             
-    def LoadImage(self, image):
+    def LoadImage(self, image, image2 = None):
         """load image
            use VTK
            for diocm display
@@ -5955,7 +6677,6 @@ class DISPLAY(QObject):
         self.target = np.zeros(3)
         for renderer in self.rendererList.values():
             renderer.SetImage(self.vtkImage, self.imageOrigin, self.target, self.imagePosition)
-            
         
         self.dicomGrayscaleRange = self.vtkImage.GetScalarRange()
         self.dicomBoundsRange = self.vtkImage.GetBounds()

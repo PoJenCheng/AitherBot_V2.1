@@ -4483,6 +4483,1435 @@ QScrollBar::add-page:vertical {   /* 设置滑动条下侧区域样式*/
     background: none;
 }</string>
               </property>
+              <property name="currentIndex">
+               <number>0</number>
+              </property>
+              <widget class="QWidget" name="pgCheckFusion">
+               <property name="styleSheet">
+                <string notr="true">QWidget{
+	background-color: rgb(61, 61, 147);
+	font: 24px &quot;Arial&quot;;
+	color:rgb(230, 230, 255);
+}
+
+#widget_2, #wdg_fusionTool{
+	background-color: rgb(106, 106, 255);
+}
+
+#widget_2 &gt; QWidget, #wdg_fusionTool  QWidget{
+	background-color: rgb(106, 106, 255);
+}
+
+QPushButton,  #wdg_fusionTool  QPushButton{
+	background-color: rgb(48, 42, 107);
+}
+
+QPushButton{
+	border-radius:5px;
+	border-left:1px solid #aaa;
+	border-top:1px solid #aaa;
+	border-right:2px solid #777;
+	border-bottom:2px solid #777;
+}
+
+QPushButton:pressed,  #wdg_fusionTool  QPushButton:pressed{
+	background-color: rgb(78, 72, 107);
+	border-left:2px solid #777;
+	border-top:2px solid #777;
+	border-right:1px solid #aaa;
+	border-bottom:1px solid #aaa;
+}
+
+QPushButton:checked{
+	background-color: rgb(78, 72, 107);
+	border-left:2px solid #777;
+	border-top:2px solid #777;
+	border-right:1px solid #aaa;
+	border-bottom:1px solid #aaa;
+}
+
+#btnRotationLA, #btnRotationLS, #btnRotationLC{
+	background-color: rgb(48, 42, 107);
+	color: rgb(223, 223, 223);
+	border-top-left-radius:20px;
+	border-bottom-left-radius:20px;
+	border-top-right-radius:0px;
+	border-bottom-right-radius:0px;
+	border-left:1px solid #aaa;
+	border-top:1px solid #aaa;
+	border-right:0px solid #777;
+	border-bottom:2px solid #777;
+}
+
+#btnRotationLA:pressed, #btnRotationLS:pressed, #btnRotationLC:pressed{
+	background-color: rgb(78, 72, 107);
+	border-left:2px solid #777;
+	border-top:2px solid #777;
+	border-right:0px solid #aaa;
+	border-bottom:1px solid #aaa;
+}
+
+#btnRotationRA, #btnRotationRS,  #btnRotationRC{
+	background-color:  rgb(48, 42, 107);
+	color: rgb(223, 223, 223);
+	border-top-left-radius:0px;
+	border-bottom-left-radius:0px;
+	border-top-right-radius:20px;
+	border-bottom-right-radius:20px;
+	border-left:0px solid #aaa;
+	border-top:1px solid #aaa;
+	border-right:2px solid #777;
+	border-bottom:2px solid #777;
+}
+
+#btnRotationRA:pressed, #btnRotationRS:pressed, #btnRotationRS:pressed{
+	background-color: rgb(78, 72, 107);
+	border-left:0px solid #777;
+	border-top:2px solid #777;
+	border-right:1px solid #aaa;
+	border-bottom:1px solid #aaa;
+}</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_46" rowstretch="0,1,0,0">
+                <property name="leftMargin">
+                 <number>5</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>5</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <property name="horizontalSpacing">
+                 <number>0</number>
+                </property>
+                <property name="verticalSpacing">
+                 <number>3</number>
+                </property>
+                <item row="0" column="0" colspan="6">
+                 <widget class="QWidget" name="widget_2" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_40">
+                   <property name="spacing">
+                    <number>5</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>10</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QGroupBox" name="groupBox_2">
+                     <property name="title">
+                      <string>tool</string>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_39">
+                      <property name="rightMargin">
+                       <number>11</number>
+                      </property>
+                      <item>
+                       <widget class="QPushButton" name="btnActionPan">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_hand.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnActionSlice">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_slice.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnActionMove">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_move.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnActionRotate">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_rotate.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnActionZoom">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_zoom.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnActionWindowLevel">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/action_brightness.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_tool</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QGroupBox" name="groupBox">
+                     <property name="title">
+                      <string>merge mode</string>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_34">
+                      <item>
+                       <widget class="QPushButton" name="btnModeWipe">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/fusion_wipe.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_fusion</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnModeBlend">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/fusion_blend.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_fusion</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QGroupBox" name="groupBox_4">
+                     <property name="styleSheet">
+                      <string notr="true"/>
+                     </property>
+                     <property name="title">
+                      <string>Window / Level Applying</string>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_42">
+                      <item>
+                       <widget class="QPushButton" name="btnLungsInhale">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="toolTip">
+                         <string>Inhale image</string>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/lungs_inhale.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_Lung</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="btnLungsExhale">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="toolTip">
+                         <string>exhale image</string>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/lungs_exhale.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_Lung</string>
+                        </attribute>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_9">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgFusionView1"/>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QScrollBar" name="sbrFusion1">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgFusionView2"/>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QScrollBar" name="sbrFusion2">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="4">
+                 <widget class="QVTKRenderWindowInteractor" name="wdgFusionView3"/>
+                </item>
+                <item row="1" column="5">
+                 <widget class="QScrollBar" name="sbrFusion3">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" colspan="6">
+                 <widget class="QWidget" name="wdg_fusionTool" native="true">
+                  <property name="minimumSize">
+                   <size>
+                    <width>300</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_41">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QGroupBox" name="groupBox_3">
+                     <property name="title">
+                      <string>Micro Move</string>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_35">
+                      <property name="spacing">
+                       <number>0</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>5</number>
+                      </property>
+                      <item>
+                       <widget class="QWidget" name="wdgToolAxial" native="true">
+                        <layout class="QGridLayout" name="gridLayout_49">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="spacing">
+                          <number>0</number>
+                         </property>
+                         <item row="0" column="3">
+                          <widget class="QWidget" name="wdgRotation" native="true">
+                           <layout class="QHBoxLayout" name="horizontalLayout_36">
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationLA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_anticlockwise.png);
+</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationRA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_clockwise.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="2">
+                          <spacer name="horizontalSpacer_41">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="0">
+                          <spacer name="horizontalSpacer_40">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="4">
+                          <spacer name="horizontalSpacer_37">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="1">
+                          <widget class="QWidget" name="wdgDirection" native="true">
+                           <layout class="QGridLayout" name="gridLayout_48">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <item row="0" column="1">
+                             <widget class="QPushButton" name="btnMoveUpA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_up.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="2">
+                             <widget class="QPushButton" name="btnMoveRightA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_right.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="1">
+                             <widget class="QPushButton" name="btnResetA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/icon_reset.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="2" column="1">
+                             <widget class="QPushButton" name="btnMoveDownA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_down.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="0">
+                             <widget class="QPushButton" name="btnMoveLeftA">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_left.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QWidget" name="wdgToolSagittal" native="true">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <layout class="QGridLayout" name="gridLayout_51">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="spacing">
+                          <number>0</number>
+                         </property>
+                         <item row="0" column="0">
+                          <spacer name="horizontalSpacer_42">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>65</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="1">
+                          <widget class="QWidget" name="wdgDirection_2" native="true">
+                           <layout class="QGridLayout" name="gridLayout_50">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <item row="2" column="1">
+                             <widget class="QPushButton" name="btnMoveDownS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_down.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="1">
+                             <widget class="QPushButton" name="btnMoveUpS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_up.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="2">
+                             <widget class="QPushButton" name="btnMoveRightS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_right.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="1">
+                             <widget class="QPushButton" name="btnResetS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/icon_reset.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="0">
+                             <widget class="QPushButton" name="btnMoveLeftS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_left.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="2">
+                          <spacer name="horizontalSpacer_43">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>65</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="3">
+                          <widget class="QWidget" name="wdgRotation_2" native="true">
+                           <layout class="QHBoxLayout" name="horizontalLayout_37">
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationLS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_anticlockwise.png);
+</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationRS">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_clockwise.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="4">
+                          <spacer name="horizontalSpacer_44">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>65</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QWidget" name="wdgToolCoronal" native="true">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <layout class="QGridLayout" name="gridLayout_53">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="spacing">
+                          <number>0</number>
+                         </property>
+                         <item row="0" column="0">
+                          <spacer name="horizontalSpacer_45">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>65</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="1">
+                          <widget class="QWidget" name="wdgDirection_3" native="true">
+                           <layout class="QGridLayout" name="gridLayout_52">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <item row="0" column="1">
+                             <widget class="QPushButton" name="btnMoveUpC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_up.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="2">
+                             <widget class="QPushButton" name="btnMoveRightC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_right.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="1">
+                             <widget class="QPushButton" name="btnResetC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/icon_reset.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="2" column="1">
+                             <widget class="QPushButton" name="btnMoveDownC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_down.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="0">
+                             <widget class="QPushButton" name="btnMoveLeftC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>48</width>
+                                <height>48</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/arrow_left.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="2">
+                          <spacer name="horizontalSpacer_46">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>66</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item row="0" column="3">
+                          <widget class="QWidget" name="wdgRotation_3" native="true">
+                           <layout class="QHBoxLayout" name="horizontalLayout_38">
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationLC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_anticlockwise.png);
+</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QPushButton" name="btnRotationRC">
+                              <property name="minimumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>60</width>
+                                <height>96</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">image:url(image/action_clockwise.png)</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="4">
+                          <spacer name="horizontalSpacer_47">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>65</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item row="3" column="0" colspan="6">
+                 <layout class="QHBoxLayout" name="horizontalLayout_33">
+                  <item>
+                   <widget class="QPushButton" name="btnConfirmFusion">
+                    <property name="enabled">
+                     <bool>true</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>324</width>
+                      <height>150</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}
+
+QPushButton:disabled{
+	color:#bbb;
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
+}</string>
+                    </property>
+                    <property name="text">
+                     <string>Confirm Fusion</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
               <widget class="QWidget" name="pg4View">
                <layout class="QGridLayout" name="gridLayout_6">
                 <property name="leftMargin">
@@ -5108,8 +6537,8 @@ QLabel{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>310</width>
+                     <height>465</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -7043,6 +8472,9 @@ margin-right:0px;
  <buttongroups>
   <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btnGroup_tool"/>
+  <buttongroup name="btnGroup_fusion"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="btnGroup_Lung"/>
  </buttongroups>
 </ui>

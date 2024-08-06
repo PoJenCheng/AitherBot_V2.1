@@ -10,6 +10,7 @@ lang = mi.LAN_EN
 if len(sys.argv) > 1: 
     strLang = ''
     if int(sys.argv[-1]) == mi.LAN_CN:
+        
         strLang = 'language/Aitherbot_tw.qm'
         lang = int(sys.argv[-1])
         
