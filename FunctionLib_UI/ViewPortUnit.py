@@ -32,7 +32,7 @@ class ViewPortUnit(QObject):
     
     _bLockTarget3D = False
     
-    def __init__(self, mainWidget, dicom:DISPLAY, vtkWidget:QVTKRenderWindowInteractor, orientation:str, uiScrollSlice:QScrollBar, uiCbxOrientation:QComboBox):
+    def __init__(self, mainWidget, dicom:DISPLAY, vtkWidget:QVTKRenderWindowInteractor, orientation:str, uiScrollSlice:QScrollBar, uiCbxOrientation:QComboBox = None):
         
         super().__init__()
         
@@ -43,15 +43,19 @@ class ViewPortUnit(QObject):
     
         self.parentWidget       = mainWidget
         self.dicom              = dicom
-        self.uiCbxOrientation   = uiCbxOrientation
+        self.uiCbxOrientation   = None
+        self.currentIndex       = -1
         self.vtkWidget          = vtkWidget
         self.uiScrollSlice      = uiScrollSlice
         self.orientation        = orientation
-        self.currentIndex       = uiCbxOrientation.currentIndex()
         self.uiScrollSlice.valueChanged.connect(self.OnValueChanged_ViewScroll)
         self.uiScrollSlice.setMinimum(0)
         self.renderWindow       = vtkWidget.GetRenderWindow()
         self.iren               = self.renderWindow.GetInteractor()
+        
+        if uiCbxOrientation:
+            self.uiCbxOrientation   = uiCbxOrientation
+            self.currentIndex       = uiCbxOrientation.currentIndex()
         
         if not dicom:
             iStyle = MyInteractorStyle(mainWidget, VIEW_3D)
@@ -459,7 +463,8 @@ class SynchronInteractorStyle(vtkInteractorStyleTrackballCamera):
             # else:
             if view.orientation in self.listOrientation:
                 iStyle = view.iren.GetInteractorStyle()
-                iStyle.CallMouseWheelForward()
+                if hasattr(iStyle, 'CallMouseWheelForward'):
+                    iStyle.CallMouseWheelForward()
         obj.parent.UpdateTarget(bFocus = False)
         obj.parent.UpdateView()
         
@@ -467,7 +472,8 @@ class SynchronInteractorStyle(vtkInteractorStyleTrackballCamera):
         for view in self.viewport.values():
             if view.orientation in self.listOrientation:
                 iStyle = view.iren.GetInteractorStyle()
-                iStyle.CallMouseWheelBackward()
+                if hasattr(iStyle, 'CallMouseWheelBackward'):
+                    iStyle.CallMouseWheelBackward()
         obj.parent.UpdateTarget(bFocus = False)
         obj.parent.UpdateView()
     
@@ -778,7 +784,6 @@ class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
                 spacing = self.currentTag.get('spacing')
                 if dimension is not None and spacing is not None:
                     target = self.currentDicom.target
-                    logger.debug(f'target point = {target}')
                 
         else:
             logger.warning("no objects be picked")

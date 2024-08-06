@@ -33,6 +33,7 @@ import FunctionLib_UI.Ui_DlgRobotMoving
 import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
@@ -43,7 +44,7 @@ from FunctionLib_UI.Ui_step import *
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgExportLog import *
-from FunctionLib_Vision.lungSegmentation import LungSegmentation
+import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
 
@@ -88,6 +89,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     uiHoming = None
     laserFigure = None
     currentRenderer = None
+    viewport   = None
     viewport_L = None
     viewport_H = None
     currentDicom = None
@@ -150,11 +152,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgShowHint = None
         self.dlgSystemProcessing = None
         
+        # interactors
+        self.lstInteractorWipe = []
+        
         self.ui = Ui_MainWindow()
-    
         self.dicomLow = DISPLAY()
         self.dicomHigh = DISPLAY()
-        
         self.modelHide = QStandardItemModel()
         
         self.regFn = REGISTRATION()
@@ -162,31 +165,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicView['RT'] = self.wdgRightTop
         self.dicView['LB'] = self.wdgLeftBottom
         self.dicView['RB'] = self.wdgRightBottom
-        
-        # self.dicView_H['LT'] = self.wdgLeftTop
-        # self.dicView_H['RT'] = self.wdgRightTop
-        # self.dicView_H['LB'] = self.wdgLeftBottom
-        # self.dicView_H['RB'] = self.wdgRightBottom
+        self.dicView['Fusion1'] = self.wdgFusionView1
+        self.dicView['Fusion2'] = self.wdgFusionView2
+        self.dicView['Fusion3'] = self.wdgFusionView3
         
         self.dicSliceScroll_L['LT'] = self.sbrLeftTop
         self.dicSliceScroll_L['RT'] = self.sbrRightTop
         self.dicSliceScroll_L['LB'] = self.sbrLeftBottom
         self.dicSliceScroll_L['RB'] = self.sbrRightBottom
         
-        # self.dicSliceScroll_H['LT'] = self.sbrLeftTop
-        # self.dicSliceScroll_H['RT'] = self.sbrRightTop
-        # self.dicSliceScroll_H['LB'] = self.sbrLeftBottom
-        # self.dicSliceScroll_H['RB'] = self.sbrRightBottom
-        
         self.dicViewSelector_L['LT'] = self.cbxLeftTop
         self.dicViewSelector_L['RT'] = self.cbxRightTop
         self.dicViewSelector_L['LB'] = self.cbxLeftBottom
         self.dicViewSelector_L['RB'] = self.cbxRightBottom
         
-        # self.dicViewSelector_H['LT'] = self.cbxViewSelection1_H
-        # self.dicViewSelector_H['RT'] = self.cbxViewSelection2_H
-        # self.dicViewSelector_H['LB'] = self.cbxViewSelection3_H
-        # self.dicViewSelector_H['RB'] = self.cbxViewSelection4_H
+        self.floatingBox = [WidgetToolBox() for _ in range(3)]
         
         self.currentDicom = self.buttonGroup.checkedButton().objectName()
         dicomL = self.btnDicomLow.objectName()
@@ -371,6 +364,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_ref.setId(self.btnRef2, 1)
         self.btnGroup_ref.setId(self.btnRef3, 2)
         
+        self.btnGroup_fusion.buttonToggled.connect(self.OnToggled_btnGroup_fusion)
+        self.btnGroup_fusion.setId(self.btnModeWipe, 0)
+        self.btnGroup_fusion.setId(self.btnModeBlend, 1)
+        
+        self.btnGroup_tool.idToggled.connect(self.OnToggled_btnGroup_tool)
+        self.btnGroup_tool.setId(self.btnActionPan, InteractorStyleWipe.ACTION_PAN)
+        self.btnGroup_tool.setId(self.btnActionMove, InteractorStyleWipe.ACTION_MOVE)
+        self.btnGroup_tool.setId(self.btnActionRotate, InteractorStyleWipe.ACTION_ROTATE)
+        self.btnGroup_tool.setId(self.btnActionZoom, InteractorStyleWipe.ACTION_ZOOM)
+        self.btnGroup_tool.setId(self.btnActionWindowLevel, InteractorStyleWipe.ACTION_WL)
+        self.btnGroup_tool.setId(self.btnActionSlice, InteractorStyleWipe.ACTION_SLICE)
+        
+        self.btnGroup_Lung.idToggled.connect(self.OnToggled_btgGroup_Lung)
+        self.btnGroup_Lung.setId(self.btnLungsInhale, InteractorStyleWipe.IMAGE_INHALE)
+        self.btnGroup_Lung.setId(self.btnLungsExhale, InteractorStyleWipe.IMAGE_EXHALE)
+        
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         
         self.tbsCTScan.selectionChanged.connect(self.OnSelection)
@@ -386,6 +395,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnToEntry.clicked.connect(self.OnClicked_btnToEntry)
         self.btnToTarget.clicked.connect(self.OnClicked_btnToTarget)
         self.sldTrajectory.valueChanged.connect(self.OnValueChanged_sldTrajectory)
+        
+        self.btnCloseToEntry.clicked.connect(self.OnClicked_btnCloseToEntry)
+        self.btnCloseToTarget.clicked.connect(self.OnClicked_btnCloseToTarget)
         
         self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
         self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
@@ -454,6 +466,38 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnRobotResume.clicked.connect(self.Robot_BackToTarget)
         
         self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
+        
+        self.btnConfirmFusion.clicked.connect(self.OnClicked_btnConfirmFusion)
+        
+        # fusion Axial view
+        self.btnMoveUpA.clicked.connect(self.OnClicked_btnMoveUp)
+        self.btnMoveDownA.clicked.connect(self.OnClicked_btnMoveDown)
+        self.btnMoveLeftA.clicked.connect(self.OnClicked_btnMoveLeft)
+        self.btnMoveRightA.clicked.connect(self.OnClicked_btnMoveRight)
+        self.btnResetA.clicked.connect(self.OnClicked_btnReset)
+        
+        self.btnRotationLA.clicked.connect(self.OnClicked_btnRotationL)
+        self.btnRotationRA.clicked.connect(self.OnClicked_btnRotationR)
+        
+        # fusion Sagittal view
+        self.btnMoveUpS.clicked.connect(self.OnClicked_btnMoveUpS)
+        self.btnMoveDownS.clicked.connect(self.OnClicked_btnMoveDownS)
+        self.btnMoveLeftS.clicked.connect(self.OnClicked_btnMoveLeftS)
+        self.btnMoveRightS.clicked.connect(self.OnClicked_btnMoveRightS)
+        self.btnResetS.clicked.connect(self.OnClicked_btnResetS)
+        
+        self.btnRotationLS.clicked.connect(self.OnClicked_btnRotationLS)
+        self.btnRotationRS.clicked.connect(self.OnClicked_btnRotationRS)
+        
+        # fusion Coronal view
+        self.btnMoveUpC.clicked.connect(self.OnClicked_btnMoveUpC)
+        self.btnMoveDownC.clicked.connect(self.OnClicked_btnMoveDownC)
+        self.btnMoveLeftC.clicked.connect(self.OnClicked_btnMoveLeftC)
+        self.btnMoveRightC.clicked.connect(self.OnClicked_btnMoveRightC)
+        self.btnResetC.clicked.connect(self.OnClicked_btnResetC)
+        
+        self.btnRotationLC.clicked.connect(self.OnClicked_btnRotationLC)
+        self.btnRotationRC.clicked.connect(self.OnClicked_btnRotationRC)
         
         self.wdgAnimate = AnimationWidget('image/foot_pedal_press_hint.png')
         self.lstAnimateWidget.append(self.wdgAnimate)
@@ -571,6 +615,55 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     for combobox in self.listViewSelectorH.values():
         #         if combobox.findText(viewName) == -1:
         #             combobox.addItem(viewName)
+        
+    def _CalculateExhaleToInhaleMatrix(self):
+        dicomInhale = list(self.dicDicom.values())[0]
+        dicomExhale = list(self.dicDicom.values())[1]
+        regBallInhale = dicomInhale.get('regBall')
+        regBallExhale = dicomExhale.get('regBall')
+        regMatrixInhale = dicomInhale.get('regMatrix')
+        regMatrixExhale = dicomExhale.get('regMatrix')
+        
+        if  regBallInhale is None or \
+            regBallExhale is None or \
+            regMatrixInhale is None or \
+            regMatrixExhale is None:
+                return None
+        
+        try:
+            # 注意！這裡的regMatrix是改變座標系，而不會改變點在原世界座標系中的位置
+            # 如需要進行真實的位置變換，regMatrix需要進行轉置(transpose)
+            
+            # 計算exhale原點偏移量translate
+            mat_translate = np.identity(4)
+            mat_translate[:3, 3] = -regBallExhale[0]
+            matExhale = mat_translate
+            
+            # 從exhale 轉換到 inhale的矩陣
+            rot_fromExhaleToInhale = np.identity(4)
+            invExhale = regMatrixExhale # 等於 np.linalg.inv(regMatrixExhale.T)
+            rot_fromExhaleToInhale[:3, :3] = np.matmul(regMatrixInhale.T, invExhale)
+            matExhale = np.matmul(rot_fromExhaleToInhale, matExhale)
+            
+            # 映射到inhale local coordinate(世界座標位置不變，只改變座標軸)
+            mat_mapToInhale = np.identity(4)
+            mat_mapToInhale[:3, :3] = regMatrixInhale
+            matExhaleToInhalePath = np.matmul(mat_mapToInhale, matExhale)
+            
+            # 儲存矩陣，這個矩陣是應用於trajectory 轉換上的
+            REGISTRATION.matrixFromExhaleToInhalePath = matExhaleToInhalePath
+            
+            # 計算exhale 對應於 inhale空間的位置，世界座標系
+            mat_translate[:3, 3] = regBallInhale[0]
+            matExhale = np.matmul(mat_translate, matExhale)
+            
+            dicomInhale['matrix'] = np.linalg.inv(matExhale)
+            dicomExhale['matrix'] = matExhale
+        except Exception as msg:
+            logger.error(msg)
+            return None
+        
+        return dicomInhale['matrix']
                 
     def _CheckChildAlterParent(self, item:QStandardItem):
                 
@@ -785,7 +878,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
-    def _Registration(self, image, spacing, series):
+    def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
         # self.ui_SP = SystemProcessing()
@@ -804,9 +897,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
-            # self.ui_SP.close()
-            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            reply = MessageBox.ShowInformation("information", "already registration, reset now?", 'Yes', 'No')
+            
+            reply = MessageBox.ShowInformation("already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
             # if reply == QMessageBox.Yes:
             if reply == 0:
@@ -1227,17 +1319,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
+        
         self.dicomLow.LoadImage(self.vtkImageLow)
-        dicomTag = self.SetDicomData(self.dicomLow, 'LOW')
+        grayscaleRange = self.vtkImageLow.GetScalarRange()
+        dicomTag = self.SetDicomData(self.dicomLow, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
             # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
             MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
             return False
         
-        self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = series
+        # self.currentTag['dimension'] = dimension
+        # self.currentTag['spacing'] = spacing
+        # self.currentTag['series'] = series
             
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_L():
@@ -1245,26 +1339,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 MessageBox.ShowCritical('ERROR', 'Registration Failed')
                 return False
             
-        ############################################################################################
-        ## 顯示 dicom 到 ui 上 ############################################################################################
+        
         self.ShowDicom()
-        self.bDicomChanged = False
-        ## 啟用 ui ############################################################################################
-        "Enable ui"
-        # self.Slider_WW_L.setEnabled(True)
-        # self.Slider_WL_L.setEnabled(True)
-        # self.SliceSelect_Axial_L.setEnabled(True)
-        # self.SliceSelect_Sagittal_L.setEnabled(True)
-        # self.SliceSelect_Coronal_L.setEnabled(True)
-        # self.Button_Registration_L.setEnabled(True)
-        # self.tabWidget.setCurrentWidget(self.tabWidget_Low)
-        # ############################################################################################
-        # self.ui_SP.close()
+        # self.bDicomChanged = False
+        
         return True
     
     def ImportDicom_H(self):
         "VTK stage"
-        # self.vtkImageHigh = self.reader.GetDataFromIndex(0, 0, -1)
         self.vtkImageHigh, spacing, dimension, series = self.reader.GetData(index = 1)
         self.imageH = self.reader.arrImage
         
@@ -1273,9 +1355,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             MessageBox.ShowCritical('ERROR', 'image error')
             return False
         
-        # if self.currentTag == self.dicDicom.get(self.btnDicomHigh.objectName()):
-        self.dicomHigh.LoadImage(self.vtkImageHigh)
-        dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH')
+        # self.dicomHigh.LoadImage(self.vtkImageHigh)
+        
+        grayscaleRange = self.vtkImageHigh.GetScalarRange()
+        dicomTag = self.SetDicomData(self.dicomHigh, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
             # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
@@ -1283,27 +1366,41 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
-        self.currentTag['dimension'] = dimension
-        self.currentTag['spacing'] = spacing
-        self.currentTag['series'] = series
+        
+        # thresholdValue = int(((grayscaleRange[1] - grayscaleRange[0]) / 6) + grayscaleRange[0])
+        # self.currentTag['ww'] = abs(thresholdValue * 2)
+        # self.currentTag['wl'] = thresholdValue
+        # self.currentTag['dimension'] = dimension
+        # self.currentTag['spacing'] = spacing
+        # self.currentTag['series'] = series
         
         if not SKIP_REGISTRATION:
             if not self.SetRegistration_H():
                 # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
                 MessageBox.ShowCritical('ERROR', 'Registration Failed')
                 return False
-        ############################################################################################
-        ## 顯示 dicom 到 ui 上 ############################################################################################
+        
+        matrix = self._CalculateExhaleToInhaleMatrix()
+        if matrix is not None:
+            # transform image
+            self.dicomHigh._TransformImage(self.vtkImageHigh, matrix)
+        else:
+            self.dicomHigh.LoadImage(self.vtkImageHigh)
+            
         self.ShowDicom()
-        self.bDicomChanged = False
-        ## 啟用 ui ############################################################################################
-        "Enable ui"
+        # self.bDicomChanged = False
         return True
     
     
         
-    def SetDicomData(self, dicom:DISPLAY, type:str):
-        thresholdValue = int(((dicom.dicomGrayscaleRange[1] - dicom.dicomGrayscaleRange[0]) / 6) + dicom.dicomGrayscaleRange[0])
+    def SetDicomData(
+        self, 
+        dicom:DISPLAY, 
+        type:str, 
+        grayscaleRange:_ArrayLike, 
+        dimension:_ArrayLike,
+        spacing:_ArrayLike
+        ):
         
         if type.upper() == 'LOW':
             tag = self.dicDicom.get(self.btnDicomLow.objectName())
@@ -1311,10 +1408,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tag = self.dicDicom.get(self.btnDicomHigh.objectName())
             
         if tag is not None:
+            tag['display'] = dicom
+            thresholdValue = int(((grayscaleRange[1] - grayscaleRange[0]) / 6) + grayscaleRange[0])
             tag['ww'] = abs(thresholdValue * 2)
             tag['wl'] = thresholdValue
-            tag['display'] = dicom
-            
+            tag['dimension'] = dimension
+            tag['spacing'] = spacing
+            # tag['series'] = series
             self.currentTag = tag
             return tag
         
@@ -1322,11 +1422,81 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetUIEnable_Trajectory(self, bEnable):
         self.btnToEntry.setEnabled(bEnable)
         self.btnToTarget.setEnabled(bEnable)
+        self.btnCloseToEntry.setEnabled(bEnable)
+        self.btnCloseToTarget.setEnabled(bEnable)
+        self.ledOffset.setEnabled(bEnable)
         self.sldTrajectory.setEnabled(bEnable)
-    
+        
+    def ShowFusion(self):
+        # setUI to Fusion page
+        self.stkViewer.setCurrentWidget(self.pgCheckFusion)
+        self.tabWidget.setHidden(True)
+        
+        self.ResetView()
+        
+        lstOrientation = [VIEW_AXIAL, VIEW_SAGITTAL, VIEW_CORONAL]
+        self.viewport_L = {}
+        self.viewport_L["Fusion1"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView1, lstOrientation[0], self.sbrFusion1)
+        self.viewport_L["Fusion2"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView2, lstOrientation[1], self.sbrFusion2)
+        self.viewport_L["Fusion3"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView3, lstOrientation[2], self.sbrFusion3)
+        MainInterface.viewport = self.viewport_L
+        
+        # self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
+        self.currentRenderer = self.viewport_L['Fusion1'].renderer
+        
+        self.dicomLow.rendererAxial.SetTargetVisible(False)
+        self.dicomLow.rendererSagittal.SetTargetVisible(False)
+        self.dicomLow.rendererCoronal.SetTargetVisible(False)
+        
+        for view in self.viewport_L.values():
+            iStyle = view.iren.GetInteractorStyle()
+            if isinstance(iStyle, MyInteractorStyle):
+                iStyle.signalObject.ConnectUpdateView(self.UpdateView)
+            
+            view.signalUpdateSlice.connect(self.ChangeSlice_L)
+            view.signalUpdateAll.connect(self.UpdateTarget)
+            view.signalUpdateExcept.connect(self.UpdateTarget)
+            view.signalFocus.connect(self.Focus)
+            view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
+        
+        self.lstInteractorWipe = []
+        
+        for orientation in lstOrientation:
+            interactorWipe = InteractorStyleWipe(orientation)
+            interactorWipe.signalUpdate.ConnectUpdateView(self.UpdateTarget)
+            self.lstInteractorWipe.append(interactorWipe)
+        
+        balls = list(self.dicDicom.values())[0].get('candidateBallVTK')
+        if balls:
+            reference = np.array(*list(balls.values()))
+            self.currentRenderer.SetTarget(reference[0][:3])
+            
+        # add toolbox widget to Views
+        views = [self.wdgFusionView1, self.wdgFusionView2, self.wdgFusionView3]
+        for i in range(3):
+            layoutView = QGridLayout(views[i])
+            layoutView.addItem(QSpacerItem(0, 0, vPolicy = QSizePolicy.Expanding), 0, 1)
+            layoutView.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding), 1, 0)
+            layoutView.addWidget(self.floatingBox[i], 1, 1)
+            self.floatingBox[i].setVisible(False)
+            
+            self.floatingBox[i].signalSliceUp.connect(self.lstInteractorWipe[i].SliceUp)
+            self.floatingBox[i].signalSliceDown.connect(self.lstInteractorWipe[i].SliceDown)
+            views[i].GetRenderWindow().GetInteractor().AddObserver('MouseMoveEvent', self.OnMouseMove_views)
+            
+        for wipe in self.lstInteractorWipe:
+            wipe.SetInput(self.dicomLow, self.dicomHigh)
+        
+        
+        self.UpdateTarget()
+        self.UpdateView()
+            
     def ShowDicom(self):
         """show low dicom to ui
         """
+        self.stkViewer.setCurrentWidget(self.pg4View)
+        self.tabWidget.setHidden(False)
+        
         #Initialize window level / window width
         #Dicom Low
         self.sldWindowWidth.blockSignals(True)
@@ -1382,6 +1552,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.viewport_L["RT"] = ViewPortUnit(self, display, self.wdgRightTop, orientationRT, self.sbrRightTop, self.cbxRightTop)
         self.viewport_L["LB"] = ViewPortUnit(self, display, self.wdgLeftBottom, orientationLB, self.sbrLeftBottom, self.cbxLeftBottom)
         self.viewport_L["RB"] = ViewPortUnit(self, display, self.wdgRightBottom, orientationRB, self.sbrRightBottom, self.cbxRightBottom)
+        MainInterface.viewport = self.viewport_L
         self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
         self.currentRenderer = self.viewport_L['LT'].renderer
         self.currentRenderer.SetSelectedOn()
@@ -1392,9 +1563,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         for view in self.viewport_L.values():
             iStyle = view.iren.GetInteractorStyle()
-            iStyle.signalObject.ConnectUpdateView(self.UpdateView)
-            # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
-            iStyle.signalObject.ConnectGetRenderer(self.GetCurrentRendererCallback)
+            if isinstance(iStyle, MyInteractorStyle):
+                iStyle.signalObject.ConnectUpdateView(self.UpdateView)
+                # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
+                iStyle.signalObject.ConnectGetRenderer(self.GetCurrentRendererCallback)
             
             # view.SetFocusMode(False)
             view.signalUpdateSlice.connect(self.ChangeSlice_L)
@@ -1412,15 +1584,44 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # if trajectoryValue and trajectoryLength:
         #     self.sldTrajectory.setMaximum(trajectoryLength)
         #     self.sldTrajectory.setValue(trajectoryValue)
-        self._ResumeStored()
-        self.UpdateTarget()
+        
+        # self._ResumeStored()
+        # # self.UpdateTarget()
+        # self.UpdateView()
+        
+    def SwitchDicom(self, blendRatio:float):
+        """show low dicom to ui
+        """
+        #Initialize window level / window width
+        #Dicom Low
+        self.sldWindowWidth.blockSignals(True)
+        self.sldWindowWidth.setMinimum(0)
+        # self.sldWindowWidth.setMaximum(int(abs(self.dicomLow.dicomGrayscaleRange[0]) + self.dicomLow.dicomGrayscaleRange[1]))
+        display = self.currentTag.get('display')
+        if display is None:
+            return
+        
+        self.sldWindowWidth.setMaximum(int(abs(display.dicomGrayscaleRange[0]) + display.dicomGrayscaleRange[1]))
+        self.sldWindowWidth.setValue(self.currentTag.get('ww'))
+        self.sldWindowWidth.blockSignals(False)
+        
+        "WindowCenter / WindowLevel"
+        self.sldWindowLevel.blockSignals(True)
+        self.sldWindowLevel.setMinimum(int(display.dicomGrayscaleRange[0]))
+        self.sldWindowLevel.setMaximum(int(display.dicomGrayscaleRange[1]))
+        self.sldWindowLevel.setValue(self.currentTag.get('wl'))
+        self.sldWindowLevel.blockSignals(False)
+        
+        DISPLAY.SetBlendImages(blendRatio)
+        
+        # self._ResumeStored()
+        # self.UpdateTarget()
         self.UpdateView()
         
     def UpdateView(self):
-        for view in self.dicView.values():
-            iren = view.GetRenderWindow().GetInteractor()
-            iren.Initialize()
-            iren.Start()
+        viewport = self.GetViewPort()
+        for view in viewport.values():
+            view.iren.Render()
         
         if self.currentTag is not None:
             wl = self.currentTag.get('wl')
@@ -1430,7 +1631,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             ww = self.currentTag.get('ww')
             if ww is not None:
                 self.sldWindowWidth.setValue(ww)
-            
+                
     def UpdateTarget(
         self, 
         orientation:str = None, 
@@ -1492,10 +1693,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.treeTrajectory.setCurrentItem(item)
             self.prevSelection_trajectory = item
             self.treeTrajectory.blockSignals(False)
+            
+            self.SetUIEnable_Trajectory(False)
         
         self.btnSetEntry.setEnabled(True)
         self.btnSetTarget.setEnabled(True)
-        
         
     def OnClicked_btnPlanning(self):
         logger.debug('planning')
@@ -1514,26 +1716,34 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
         else:
             self._Robot_driveTo()
-            
-            # self.stkScene.setCurrentWidget(self.pgPlaceHolder)
-            
-            # if self.language == LAN_CN:
-            #     translator = QTranslator()
-            #     translator.load('FunctionLib_UI/Ui_dlgInstallAdaptor_tw.qm')
-            #     QCoreApplication.installTranslator(translator)
-                
-            # self.Laser_OnTracking()
-            
-            # dlgDriveTo = DlgInstallAdaptor()
-            # dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
-            # dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
-            # dlgDriveTo.setModal(True)
-            
-            # dlgDriveTo.exec_()
-            # self.listSubDialog.append(dlgDriveTo)
         
     def OnClicked_btnCancel(self):
         self.stkScene.setCurrentIndex(self.indexPrePage)
+        
+        DlgHintBox.Clear()
+        
+    def OnClicked_btnCloseToEntry(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = min(currentValue + offset, self.sldTrajectory.maximum())
+            self.sldTrajectory.setValue(currentValue)
+            
+    def OnClicked_btnCloseToTarget(self):
+        offset = int(self.ledOffset.text())
+        if offset is not None:
+            currentValue = self.sldTrajectory.value()
+            currentValue = max(currentValue - offset, 0)
+            self.sldTrajectory.setValue(currentValue)
+            
+    def OnClicked_btnConfirmFusion(self):
+        for wipe in self.lstInteractorWipe:
+            wipe.Close()
+        self.lstInteractorWipe = []
+        self.dicomLow.rendererAxial.SetTargetVisible(True)
+        self.dicomLow.rendererSagittal.SetTargetVisible(True)
+        self.dicomLow.rendererCoronal.SetTargetVisible(True)
+        self.ShowDicom()
         
     def OnClicked_btnSetEntry(self):
         
@@ -1706,6 +1916,111 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._Robot_driveTo()
             # self.stkScene.setCurrentWidget(self.pgImageView)
             
+    def OnClicked_btnMoveUp(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveUp()
+    
+    def OnClicked_btnMoveDown(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveDown()
+    
+    def OnClicked_btnMoveLeft(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveLeft()
+    
+    def OnClicked_btnMoveRight(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveRight()
+    
+    def OnClicked_btnReset(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.Reset()
+    
+    def OnClicked_btnRotationL(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateL()
+    
+    def OnClicked_btnRotationR(self):
+        iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateR()
+            
+    def OnClicked_btnMoveUpS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveUp()
+    
+    def OnClicked_btnMoveDownS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveDown()
+    
+    def OnClicked_btnMoveLeftS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveLeft()
+    
+    def OnClicked_btnMoveRightS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveRight()
+    
+    def OnClicked_btnResetS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.Reset()
+    
+    def OnClicked_btnRotationLS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateL()
+    
+    def OnClicked_btnRotationRS(self):
+        iStyle = self.viewport_L['Fusion2'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateR()
+            
+    def OnClicked_btnMoveUpC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveUp()
+    
+    def OnClicked_btnMoveDownC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveDown()
+    
+    def OnClicked_btnMoveLeftC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveLeft()
+    
+    def OnClicked_btnMoveRightC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.MoveRight()
+    
+    def OnClicked_btnResetC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.Reset()
+    
+    def OnClicked_btnRotationLC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateL()
+    
+    def OnClicked_btnRotationRC(self):
+        iStyle = self.viewport_L['Fusion3'].iren.GetInteractorStyle()
+        if isinstance(iStyle, InteractorStyleWipe):
+            iStyle.RotateR()
+            
     def OnItemClicked(self, item:QTreeWidgetItem, column):
         if column == 0:
             bVisible = not item.data(0, ROLE_VISIBLE)
@@ -1731,9 +2046,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self._ModifyTrajectory(idx, display)
                 self.sldTrajectory.blockSignals(False)
                 display.SetCurrentTrajectory(idx)
-                # _, target = display.trajectory[idx]
-                # self.UpdateTarget(pos = target)
-                # self.UpdateView()
+                self.SetUIEnable_Trajectory(True)
+            else:
+                self.SetUIEnable_Trajectory(False)
             self.prevSelection_trajectory = item
             self.UpdateView()
         else:
@@ -1762,6 +2077,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 item.setIcon(0, QIcon(icon))
                 item.setData(0, ROLE_VISIBLE, bVisible)
                 self._SetTrajectoryVisible(i, bVisible)
+                
+    def OnMouseMove_views(self, obj, event, callData = None):
+        views = [self.wdgFusionView1, self.wdgFusionView2, self.wdgFusionView3]
+        if isinstance(obj, vtk.vtkRenderWindowInteractor):
+            for i, view in enumerate(views):
+                if obj == view.GetRenderWindow().GetInteractor():
+                    self.floatingBox[i].setVisible(True)
+                else:
+                    self.floatingBox[i].setVisible(False)
     
     def OnValueChanged_spin(self, value:int):
         fValue = value * 0.001
@@ -1814,19 +2138,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # selectedDicomName = self.buttonGroup.checkedButton().objectName()
-        # self.dicDicom[selectedDicomName]['ww'] = value
         self.currentTag['ww'] = value
-        
-        # wl = self.Slider_WL_L.value()
-        # ww = self.Slider_WW_L.value()
-        # compositeOpacity = vtk.vtkPiecewiseFunction()
-        # compositeOpacity.AddPoint(wl - ww, 0.0)
-        # compositeOpacity.AddPoint( wl, 0.8)
-        # compositeOpacity.AddPoint( wl + ww, 1.0)
-        # volumeProperty.SetScalarOpacity(compositeOpacity)
-        
-        # self.dicomLow.ChangeWindowWidthView(value)
         currentDicom.ChangeWindowWidthView(value)
         self.UpdateView()
         
@@ -1838,19 +2150,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not currentDicom:
             return
         
-        # selectedDicomName = self.buttonGroup.checkedButton().objectName()
-        # self.dicDicom[selectedDicomName]['wl'] = value
         self.currentTag['wl'] = value
-        
-        # wl = self.Slider_WL_L.value()
-        # ww = self.Slider_WW_L.value()
-        # compositeOpacity = vtk.vtkPiecewiseFunction()
-        # compositeOpacity.AddPoint(wl - ww, 0.0)
-        # compositeOpacity.AddPoint( wl, 0.8)
-        # compositeOpacity.AddPoint( wl + ww, 1.0)
-        # volumeProperty.SetScalarOpacity(compositeOpacity)
-        
-        # self.dicomLow.ChangeWindowLevelView(value)
         currentDicom.ChangeWindowLevelView(value)
         self.UpdateView()
         
@@ -2126,12 +2426,40 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
     def OnToggled_btnGroup_ref(self, button:QAbstractButton, bChecked:bool):
         if bChecked:
-            reference = np.array(*list(self.currentTag['candidateBallVTK'].values()))
-            renderer = self.viewport_L['LT'].renderer
-            idx = self.btnGroup_ref.id(button)
-            renderer.SetTarget(reference[idx][:3])
+            balls = self.currentTag.get('candidateBallVTK')
+            if balls:
+                reference = np.array(*list(balls.values()))
+                renderer = self.viewport_L['LT'].renderer
+                idx = self.btnGroup_ref.id(button)
+                renderer.SetTarget(reference[idx][:3])
+            
             self.UpdateTarget()
             self.UpdateView()
+            
+    def OnToggled_btnGroup_fusion(self, button:QAbstractButton, bChecked:bool):
+        if bChecked:
+            if button == self.btnModeWipe:
+                for i in range(1, 4):
+                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
+                    if isinstance(iStyle, InteractorStyleWipe):
+                        iStyle.SwitchMode(InteractorStyleWipe.MODE_WIPE)
+                        
+            elif button == self.btnModeBlend:
+                for i in range(1, 4):
+                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
+                    if isinstance(iStyle, InteractorStyleWipe):
+                        iStyle.SwitchMode(InteractorStyleWipe.MODE_BLEND)
+                        
+            self.UpdateTarget()
+            self.UpdateView()
+            
+    def OnToggled_btnGroup_tool(self, actionId:int, bChecked:bool):
+        if bChecked:
+            InteractorStyleWipe.action = actionId
+            
+    def OnToggled_btgGroup_Lung(self, imageId:int, bChecked:bool):
+        if bChecked:
+            InteractorStyleWipe.imageId = imageId
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
@@ -2192,9 +2520,31 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 self.bDicomChanged = True
                 self.btnImport.setEnabled(False)
+                
                 if not self.ImportDicom_L():
                     return
-                self.ImportDicom_H()
+                
+                if not self.ImportDicom_H():
+                    return
+               
+                self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+                self.ShowFusion()
+                
+                # self.dlgSystemProcessing = SystemProcessing(2)
+                # self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+                # self.dlgSystemProcessing.setWindowTitle('Segmentation')
+                # self.dlgSystemProcessing.label_Processing.setText('Lung volume calculating...')
+                # self.dlgSystemProcessing.show()
+                
+                # tag = list(self.dicDicom.values())
+                
+                # lung.ShowImage(
+                #     arrImage = self.imageL, 
+                #     spacing = tag[0]['spacing'], 
+                #     downSample = 256,
+                #     signalCallback = self.dlgSystemProcessing.UpdateProgress
+                # )
+                # return
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
                 self.stkScene.setCurrentWidget(self.pgModelBuilding)
@@ -2241,6 +2591,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkScene.setCurrentIndex(index)
         
     def ChangeCurrentDicom(self, dicomName:str):
+        # 取得原本的target point(十字標線交差點)
+        display:DISPLAY = self.currentTag.get('display')
+        # matrix = self.currentTag.get('matrix')
+        crosshair = None
+        if display:
+            crosshair = display.target.copy()
+            
+        # if matrix is not None:
+        #     crosshair = np.matmul(matrix, np.append(crosshair, 1))
+            
         tag = self.dicDicom.get(dicomName)
         if tag is None:
             # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
@@ -2248,10 +2608,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         self.currentTag = tag
+        
+            
         # if dicomName == self.btnDicomLow.objectName():
+        
+        idxFrom = 0 # inhale
+        idxTo = 1   # exhale
+        if dicomName == self.btnDicomLow.objectName():
+            idxFrom = 1
+            idxTo = 0
+        DISPLAY.CopyCamera(idxFrom, idxTo)
+            
         self.ShowDicom()
-        # elif dicomName == self.btnDicomHigh.objectName():
-        #     self.ShowDicom_H()
+        
+        display = self.currentTag.get('display')
+        if display and crosshair is not None:
+            display.target[:] = crosshair[:3]
+            
+        self.UpdateTarget()
+        self.UpdateView()
+            
         return True
         
     def ChangeTrajectorySlider(self, value:int):
@@ -2670,12 +3046,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def SetRegistration_L(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageL, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageL, self.currentTag.get('spacing'))
     
     def SetRegistration_H(self):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        return self._Registration(self.imageH, self.currentTag.get('spacing'), self.currentTag.get('series'))
+        return self._Registration(self.imageH, self.currentTag.get('spacing'))
     
     def ShowRegistrationDifference(self):
         """map/pair/match ball center between auto(candidateBall) and manual(selectedBall)
@@ -2703,10 +3079,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             ## 計算定位誤差 ############################################################################################
             "calculate error/difference of relative distance"
             error = self.regFn.GetError(self.currentTag.get("regBall"))
-            logStr = 'registration error of inhale/Low DICOM (min, max, mean): ' + str(error)
-            # self.logUI.info(logStr)
-            # self.label_Error_L.setText('Registration difference: {:.2f} mm'.format(error[2]))
-            # QMessageBox.information(None, 'Result', f'RMS：{error[2]:.3f} mm')
+            logStr = f'registration RMS: {str(error[2]):.2} mm'
+            logger.info(logStr)
+            # MessageBox.ShowInformation(logStr)
             ############################################################################################
             ## 計算轉換矩陣 ############################################################################################
             "calculate transformation matrix"
@@ -3002,21 +3377,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 路徑轉換
         dicomInhale = list(self.dicDicom.values())[0]
         dicomExhale = list(self.dicDicom.values())[1]
-        pathInhale = dicomInhale.get('trajectory')
-        pathExhale = dicomExhale.get('trajectory')
+        # pathInhale = dicomInhale.get('trajectory')
+        # pathExhale = dicomExhale.get('trajectory')
+        
+        idx = self._GetCurrentTrajectory()
+        idx = min(DISPLAY.trajectory.count() - 1, idx)
+        pathInhale = DISPLAY.trajectory[idx]
+        pathExhale = pathInhale
+        
         if pathInhale is not None and pathExhale is not None:
             regBallInhale = dicomInhale.get('regBall')
-            regBallExhale = dicomExhale.get('regBall')
+            # regBallExhale = dicomExhale.get('regBall')
             regMatrixInhale = dicomInhale.get('regMatrix')
-            regMatrixExhale = dicomExhale.get('regMatrix')
+            # regMatrixExhale = dicomExhale.get('regMatrix')
+            # invMatrix = np.linalg.inv(regMatrixExhale)
+            # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
             
             try:
+                # inhale和exhale dicome在完成註冊時，已轉換成同一座標，故原點和矩陣使用inhale的參數即可
                 pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
-                pathExhale = self.regFn.GetPlanningPath(regBallExhale[0], pathExhale, regMatrixExhale)
+                pathExhale = self.regFn.GetPlanningPath(regBallInhale[0], pathExhale, regMatrixInhale)
+                    
+                logger.debug(f'inhale path = {pathInhale}')
+                logger.debug(f'exhale path = {pathExhale}')
+                
                 pathInhale = [p * [1, 1, -1] for p in pathInhale]
                 pathExhale = [p * [1, 1, -1] for p in pathExhale]
-                logger.debug(pathInhale)
-                logger.debug(pathExhale)
                 
             except Exception as msg:
                 logger.error(msg)
@@ -4044,6 +4430,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         except Exception as e:
             logger.critical(e)
             logger.error("close Laser error")
+            
+    def Update(pos:np.ndarray = None):
+        viewport = MainInterface.viewport
+        for view in viewport.values():
+            view.Focus()
+                
+            view.renderer.SetTarget(pos)
+            view.ChangeSliceView()
+            view.iren.Render()
         
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
@@ -5040,6 +5435,22 @@ class WidgetStep(QWidget):
         self.nCurrentStep -= 1
         self.GotoStep(self.nCurrentStep)
         return self.nCurrentStep
+    
+class WidgetToolBox(QWidget, Ui_FormToolBar):
+    signalSliceUp   = pyqtSignal()
+    signalSliceDown = pyqtSignal()
+    
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        self.btnSliceUp.clicked.connect(lambda:self.signalSliceUp.emit())
+        self.btnSliceDown.clicked.connect(lambda:self.signalSliceDown.emit())
+        
+        
 # class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
 #     def __init__(self, dcmTag, dicom, answer):
 #         super(CoordinateSystemManual, self).__init__()
