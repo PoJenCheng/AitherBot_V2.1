@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 from FunctionLib_Robot.logger import logger
+import numpy as np
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
@@ -17,11 +18,12 @@ class QCustomStyle(QProxyStyle):
         self.setParent(parent)
         
     def drawPrimitive(
-        self, element: QStyle.PrimitiveElement, 
-        option: QStyleOption | None, 
-        painter: QPainter | None, 
-        widget: QWidget | None
-        ):
+        self, 
+        element: QStyle.PrimitiveElement, 
+        option: QStyleOption = None, 
+        painter: QPainter = None, 
+        widget: QWidget = None
+    ):
         if element == QStyle.PE_FrameFocusRect:
             return
         super().drawPrimitive(element, option, painter, widget)
@@ -36,11 +38,11 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._exceptDate = []
         self._lastSelectedDate = None
         
-        self.layout().setSizeConstraint(QLayout.SetFixedSize)
-        self.setLocale(QLocale.Chinese)
+        # self.layout().setSizeConstraint(QLayout.SetFixedSize)
+        # self.setLocale(QLocale.Chinese)
         self.setNavigationBarVisible(False)
         self.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
-        self.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
+        self.setHorizontalHeaderFormat(QCalendarWidget.ShortDayNames)
         self.setStyle(QCustomStyle(self))
         
         fmt = QTextCharFormat()
@@ -64,15 +66,15 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._InitBottomWidget()
         
         self.currentPageChanged.connect(self._SetDataLabelTimeText)
-        # self.clicked.connect(self._OnClicked)
+        self.clicked.connect(self._OnClicked)
         self.update()
         
-    def closeEvent(self, event: QCloseEvent | None):
+    def closeEvent(self, event: QCloseEvent = None):
         if not self._bConfirm:
             return
         super().closeEvent(event)
         
-    def paintCell(self, painter: QPainter, rect: QRect, date: QDate | date):
+    def paintCell(self, painter: QPainter, rect: QRect, date: QDate):
         if date == self.selectedDate():
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
@@ -134,10 +136,21 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._btnRightMonth.setObjectName('btnRightMonth')
         self._dataLabel.setObjectName('dataLabel')
         
-        self._btnLeftYear.setFixedSize(16, 16)
-        self._btnLeftMonth.setFixedSize(16, 16)
-        self._btnRightYear.setFixedSize(16, 16)
-        self._btnRightMonth.setFixedSize(16, 16)
+        # self._btnLeftYear.setFixedSize(24, 24)
+        # self._btnLeftMonth.setFixedSize(24, 24)
+        # self._btnRightYear.setFixedSize(24, 24)
+        # self._btnRightMonth.setFixedSize(24, 24)
+        self._btnLeftYear.setFixedSize(32, 32)
+        self._btnLeftMonth.setFixedSize(32, 32)
+        self._btnRightYear.setFixedSize(32, 32)
+        self._btnRightMonth.setFixedSize(32, 32)
+        
+        topWidget.setStyleSheet('QPushButton{border-radius:5px;}')
+        
+        self._btnLeftYear.setStyleSheet('image:url(image/calendar_last_year.png)')
+        self._btnLeftMonth.setStyleSheet('image:url(image/calendar_last_month.png)')
+        self._btnRightYear.setStyleSheet('image:url(image/calendar_next_year.png)')
+        self._btnRightMonth.setStyleSheet('image:url(image/calendar_next_month.png)')
         
         hBoxLayout.addWidget(self._btnLeftYear)
         hBoxLayout.addWidget(self._btnLeftMonth)
@@ -206,15 +219,30 @@ class QCustomCalendarWidget(QCalendarWidget):
         elif btnSender == self._btnRightMonth:
             self.showNextMonth()
             
-    def _OnClicked(self, _date:QDate|date):
+    def _OnClicked(self, _date:QDate):
         if _date in self._exceptDate:
-            self.setSelectedDate(QDate(2024, 6, 5))
+            dayOffset = 1
+            dateL = QDate(_date)
+            dateR = QDate(_date)
+            
+            while all(_date in self._exceptDate for _date in [dateL, dateR]):
+                dateL = dateL.addDays(-dayOffset)
+                dateR = dateR.addDays( dayOffset)
+            
+            if dateL not in self._exceptDate:
+                self.setSelectedDate(dateL)
+                self._lastSelectedDate = dateL
+            else:
+                self.setSelectedDate(dateR)
+                self._lastSelectedDate = dateR
+                
             self.showSelectedDate()
-            logger.debug(f'selected date = {self.selectedDate()}')
         else:
             self._lastSelectedDate = _date
             
-    def SetExceptDate(self, dates:list|tuple):
+        self.signalSetCalendarTime.emit(self._lastSelectedDate)
+            
+    def SetExceptDate(self, dates:list):
         self._exceptDate = dates
         
 
@@ -834,7 +862,7 @@ class MessageBox(QMessageBox):
                 # item.setCenterButtons(True)
         font = QFont()
         font.setFamily('Arial')
-        font.setPointSize(24)
+        font.setPointSize(36)
         
         fontMetrics = QFontMetrics(font)
         widthWidget = min(fontMetrics.width(self.context) + 50, 900)

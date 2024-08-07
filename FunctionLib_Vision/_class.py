@@ -2267,6 +2267,7 @@ class AffineWidget(vtkAffineWidget):
 class InteractorStyleWipe(vtkInteractorStyleImage):
     MODE_WIPE       = 0
     MODE_BLEND      = 1
+    ACTION_POINTER  = 0
     ACTION_PAN      = 1
     ACTION_MOVE     = 2
     ACTION_ROTATE   = 3
@@ -2277,7 +2278,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
     IMAGE_EXHALE    = 1
     
     lstIren = []
-    action = ACTION_PAN
+    action = ACTION_POINTER
     imageId = IMAGE_INHALE
     _transform  = vtkTransform() # 共用的transform
     wipePosition = np.zeros(3)
@@ -2485,7 +2486,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
     def _Slice(self, value:int):
         indexes = np.arange(3)
         idx, = np.setdiff1d(indexes, self._idxAxis)
-        sliceNo = np.asarray(self.ren1.imagePosition)[idx]
+        sliceNo = self.ren1.GetImagePosition()[idx]
         dimMax = self.ren1.imageDimensions[idx]
         sliceNo = max(0, min(sliceNo + value, dimMax - 1))
         self.ren1.ChangeView(sliceNo)
@@ -2621,9 +2622,12 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             super().OnMiddleButtonDown()
         elif self.action == InteractorStyleWipe.ACTION_ZOOM:
             super().OnRightButtonDown()
-        # elif self.action == InteractorStyleWipe.ACTION_SLICE:
-        #     self.SetInteractionModeToImageSlicing()
-        #     super().OnLeftButtonDown()
+        elif self.action == InteractorStyleWipe.ACTION_POINTER:
+            pos, pickObj = self._GetCurrentPosition()
+            if isinstance(pickObj, vtkImageActor):
+                self.ren1.SetTarget(pos)
+                InteractorStyleWipe.wipePosition = self.ren1.GetImagePosition()
+                self._SyncWipePosition()
         else:
             self._OnStartAction()
     
@@ -2729,7 +2733,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             self.imageRectWipe.SetInputConnection(1, mapColor2.GetOutputPort())
             
             self.posRefence = self.ren1.target.copy()
-            position = np.array(self.ren1.imagePosition, dtype = np.int64)
+            position = self.ren1.GetImagePosition()
             InteractorStyleWipe.wipePosition = position
             self.imageRectWipe.SetPosition(position[self._idxAxis[0]], position[self._idxAxis[1]])
             self.imageRectWipe.SetWipeToQuad()
@@ -2833,7 +2837,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
         self.signalUpdate.EmitUpdateView()
         self._Update()
         if self.mode == InteractorStyleWipe.MODE_WIPE:
-            InteractorStyleWipe.wipePosition = np.array(self.ren1.imagePosition)
+            InteractorStyleWipe.wipePosition = self.ren1.GetImagePosition()
             self._SyncWipePosition()
             
 class ContourInteractorStyle(vtk.vtkInteractorStyle):
@@ -4752,6 +4756,12 @@ class RendererObj(vtkRenderer):
         
     def GetSelectedOn(self):
         return self.bSelected
+    
+    def GetImagePosition(self):
+        if self.imagePosition is None:
+            return None
+        
+        return np.array(self.imagePosition)
     
     def SetImage(self, image:vtk.vtkImageData, imageOrigin, target, imagePosition):
         self.dicomGrayscaleRange = image.GetScalarRange()

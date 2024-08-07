@@ -33,31 +33,48 @@ class Ui_dlgExportLog(object):
 "    border-bottom:1px solid #ddd;\n"
 "}\n"
 "\n"
+"QPushButton:disabled{\n"
+"    color: qradialgradient(spread:pad, cx:0.5, cy:1.7, radius:1.7, fx:0.5, fy:1.7, stop:0 rgba(255, 255, 255, 255), stop:0.7 rgba(255, 255, 255, 255), stop:0.71 rgba(100, 100, 100, 255), stop:1 rgba(100, 100, 100, 255));\n"
+"    background-color: qradialgradient(spread:pad, cx:0.5, cy:1.5, radius:1, fx:0.5, fy:1, stop:0 rgba(40, 40, 40, 255), stop:0.3 rgba(40, 40, 40, 255), stop:0.7 rgba(100, 100, 100, 255), stop:1 rgba(200, 200, 200, 255));\n"
+"}\n"
+"\n"
 "QCalendarWidget QPushButton{\n"
 "    font: 24px \"Arial\";\n"
 "    color:rgba(170, 255, 255, 255);\n"
 "}")
         self.gridLayout = QtWidgets.QGridLayout(dlgExportLog)
         self.gridLayout.setObjectName("gridLayout")
-        self.lblFrom = QtWidgets.QLabel(dlgExportLog)
-        self.lblFrom.setObjectName("lblFrom")
-        self.gridLayout.addWidget(self.lblFrom, 0, 0, 1, 1)
-        self.lblTo = QtWidgets.QLabel(dlgExportLog)
-        self.lblTo.setObjectName("lblTo")
-        self.gridLayout.addWidget(self.lblTo, 0, 2, 1, 1)
-        self.dateEdit = QtWidgets.QDateTimeEdit(dlgExportLog)
-        self.dateEdit.setMinimumDateTime(QtCore.QDateTime(QtCore.QDate(2024, 5, 20), QtCore.QTime(0, 0, 0)))
-        self.dateEdit.setCalendarPopup(False)
-        self.dateEdit.setObjectName("dateEdit")
-        self.gridLayout.addWidget(self.dateEdit, 1, 0, 1, 2)
-        self.calendarFrom = QCustomCalendarWidget(dlgExportLog)
-        self.calendarFrom.setObjectName("calendarFrom")
-        self.gridLayout.addWidget(self.calendarFrom, 2, 0, 1, 2)
+        self.btnDateFrom = QtWidgets.QPushButton(dlgExportLog)
+        self.btnDateFrom.setMinimumSize(QtCore.QSize(0, 80))
+        self.btnDateFrom.setStyleSheet("font: 36px \"Arial\";")
+        self.btnDateFrom.setObjectName("btnDateFrom")
+        self.gridLayout.addWidget(self.btnDateFrom, 0, 0, 1, 1)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
         self.btnExport = QtWidgets.QPushButton(dlgExportLog)
+        self.btnExport.setEnabled(False)
         self.btnExport.setMinimumSize(QtCore.QSize(200, 80))
         self.btnExport.setStyleSheet("")
         self.btnExport.setObjectName("btnExport")
-        self.gridLayout.addWidget(self.btnExport, 3, 1, 1, 2)
+        self.horizontalLayout.addWidget(self.btnExport)
+        self.gridLayout.addLayout(self.horizontalLayout, 2, 0, 1, 2)
+        self.btnDateTo = QtWidgets.QPushButton(dlgExportLog)
+        self.btnDateTo.setMinimumSize(QtCore.QSize(0, 80))
+        self.btnDateTo.setStyleSheet("font: 36px \"Arial\";")
+        self.btnDateTo.setObjectName("btnDateTo")
+        self.gridLayout.addWidget(self.btnDateTo, 0, 1, 1, 1)
+        self.calendarTo = QCustomCalendarWidget(dlgExportLog)
+        self.calendarTo.setObjectName("calendarTo")
+        self.gridLayout.addWidget(self.calendarTo, 1, 1, 1, 1)
+        self.calendarFrom = QCustomCalendarWidget(dlgExportLog)
+        self.calendarFrom.setObjectName("calendarFrom")
+        self.gridLayout.addWidget(self.calendarFrom, 1, 0, 1, 1)
+        self.pbrProgress = QtWidgets.QProgressBar(dlgExportLog)
+        self.pbrProgress.setProperty("value", 0)
+        self.pbrProgress.setObjectName("pbrProgress")
+        self.gridLayout.addWidget(self.pbrProgress, 3, 0, 1, 2)
+        self.gridLayout.setColumnStretch(0, 1)
+        self.gridLayout.setColumnStretch(1, 1)
 
         self.retranslateUi(dlgExportLog)
         QtCore.QMetaObject.connectSlotsByName(dlgExportLog)
@@ -65,7 +82,7 @@ class Ui_dlgExportLog(object):
     def retranslateUi(self, dlgExportLog):
         _translate = QtCore.QCoreApplication.translate
         dlgExportLog.setWindowTitle(_translate("dlgExportLog", "Export Log"))
-        self.lblFrom.setText(_translate("dlgExportLog", "From"))
-        self.lblTo.setText(_translate("dlgExportLog", "To"))
+        self.btnDateFrom.setText(_translate("dlgExportLog", "Select From Date"))
         self.btnExport.setText(_translate("dlgExportLog", "Export"))
+        self.btnDateTo.setText(_translate("dlgExportLog", "Select To Date"))
 from FunctionLib_UI.WidgetButton import QCustomCalendarWidget
