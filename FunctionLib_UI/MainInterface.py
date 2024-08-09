@@ -927,8 +927,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
-            # self.ui_SP.close()
-            # reply = QMessageBox.information(self, "information", "already registration, reset now?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            
             reply = MessageBox.ShowInformation("already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
             # if reply == QMessageBox.Yes:

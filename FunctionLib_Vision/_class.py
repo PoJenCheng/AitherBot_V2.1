@@ -663,7 +663,6 @@ class DICOM(QObject):
                 rotate_matrix = np.linalg.inv(rotate_matrix)
                 
                 r = R.from_matrix(rotate_matrix)
-                spacing_rotated = np.matmul(r.as_matrix(), spacing)
                 rot_times = (r.as_euler('zxz', True) / 90).astype(int)
                 logger.debug(f'image orientation is {imageOrientation}')
                 
