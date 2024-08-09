@@ -32,59 +32,82 @@ QPushButton:pressed{
 	border-bottom:1px solid #ddd;
 }
 
+QPushButton:disabled{
+	color: qradialgradient(spread:pad, cx:0.5, cy:1.7, radius:1.7, fx:0.5, fy:1.7, stop:0 rgba(255, 255, 255, 255), stop:0.7 rgba(255, 255, 255, 255), stop:0.71 rgba(100, 100, 100, 255), stop:1 rgba(100, 100, 100, 255));
+	background-color: qradialgradient(spread:pad, cx:0.5, cy:1.5, radius:1, fx:0.5, fy:1, stop:0 rgba(40, 40, 40, 255), stop:0.3 rgba(40, 40, 40, 255), stop:0.7 rgba(100, 100, 100, 255), stop:1 rgba(200, 200, 200, 255));
+}
+
 QCalendarWidget QPushButton{
 	font: 24px &quot;Arial&quot;;
 	color:rgba(170, 255, 255, 255);
 }</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,1">
    <item row="0" column="0">
-    <widget class="QLabel" name="lblFrom">
-     <property name="text">
-      <string>From</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
-    <widget class="QLabel" name="lblTo">
-     <property name="text">
-      <string>To</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QDateTimeEdit" name="dateEdit">
-     <property name="minimumDateTime">
-      <datetime>
-       <hour>0</hour>
-       <minute>0</minute>
-       <second>0</second>
-       <year>2024</year>
-       <month>5</month>
-       <day>20</day>
-      </datetime>
-     </property>
-     <property name="calendarPopup">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QCustomCalendarWidget" name="calendarFrom"/>
-   </item>
-   <item row="3" column="1" colspan="2">
-    <widget class="QPushButton" name="btnExport">
+    <widget class="QPushButton" name="btnDateFrom">
      <property name="minimumSize">
       <size>
-       <width>200</width>
+       <width>0</width>
        <height>80</height>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">font: 36px &quot;Arial&quot;;</string>
      </property>
      <property name="text">
-      <string>Export</string>
+      <string>Select From Date</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="btnExport">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="1">
+    <widget class="QPushButton" name="btnDateTo">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>80</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 36px &quot;Arial&quot;;</string>
+     </property>
+     <property name="text">
+      <string>Select To Date</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QCustomCalendarWidget" name="calendarTo"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QCustomCalendarWidget" name="calendarFrom"/>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QProgressBar" name="pbrProgress">
+     <property name="value">
+      <number>0</number>
      </property>
     </widget>
    </item>

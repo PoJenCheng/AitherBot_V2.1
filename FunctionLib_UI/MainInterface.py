@@ -3,6 +3,7 @@ import math
 import os
 import subprocess
 import sys
+import shutil
 import threading
 import time
 from datetime import datetime, timedelta
@@ -44,6 +45,7 @@ from FunctionLib_UI.Ui_step import *
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgExportLog import *
+from FunctionLib_UI.Ui_formFluoroSlider import *
 import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
@@ -151,6 +153,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.setupUi(self)
         self.dlgShowHint = None
         self.dlgSystemProcessing = None
+        self.widgetSlider = None
         
         # interactors
         self.lstInteractorWipe = []
@@ -364,11 +367,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_ref.setId(self.btnRef2, 1)
         self.btnGroup_ref.setId(self.btnRef3, 2)
         
-        self.btnGroup_fusion.buttonToggled.connect(self.OnToggled_btnGroup_fusion)
-        self.btnGroup_fusion.setId(self.btnModeWipe, 0)
-        self.btnGroup_fusion.setId(self.btnModeBlend, 1)
+        self.btnGroup_fusion.idToggled.connect(self.OnToggled_btnGroup_fusion)
+        self.btnGroup_fusion.setId(self.btnModeWipe, InteractorStyleWipe.MODE_WIPE)
+        self.btnGroup_fusion.setId(self.btnModeBlend, InteractorStyleWipe.MODE_BLEND)
+        self.btnGroup_fusion.setId(self.btnModeFluoro, InteractorStyleWipe.MODE_FLUORO)
         
         self.btnGroup_tool.idToggled.connect(self.OnToggled_btnGroup_tool)
+        self.btnGroup_tool.setId(self.btnActionPointer, InteractorStyleWipe.ACTION_POINTER)
         self.btnGroup_tool.setId(self.btnActionPan, InteractorStyleWipe.ACTION_PAN)
         self.btnGroup_tool.setId(self.btnActionMove, InteractorStyleWipe.ACTION_MOVE)
         self.btnGroup_tool.setId(self.btnActionRotate, InteractorStyleWipe.ACTION_ROTATE)
@@ -436,6 +441,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         header = self.treeDicomFilter.header()
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
         
+        self.installEventFilter(self)
         self.treeDicom.selectionModel().selectionChanged.connect(self.OnSelectionChanged_treeDicom)
         self.treeDicom.entered.connect(self.OnEntered_treeDicom)
         # self.treeDicom.installEventFilter(self)
@@ -530,10 +536,34 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.treeTrajectory.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         
         self.btnAddTrajectory.clicked.connect(self.OnClicked_btnAddTrajectory)
+        self.setFocus()
     
     def eventFilter(self, obj, event):
-        if obj == self.treeDicom:
-            # if event.type() == QEvent.MouseButtonPress:
+        if not hasattr(self, 'hiddenCodes'):
+            self.hiddenCodes = []
+            self.ans = [
+                        Qt.Key_Up, 
+                        Qt.Key_Up, 
+                        Qt.Key_Down, 
+                        Qt.Key_Down, 
+                        Qt.Key_Left, 
+                        Qt.Key_Right, 
+                        Qt.Key_Left, 
+                        Qt.Key_Right,
+                        Qt.Key_A,
+                        Qt.Key_B
+                        ]
+        if event.type() == QEvent.KeyPress:
+            if event.key() != Qt.Key_Return:
+                self.hiddenCodes.append(event.key())
+            else:
+                if self.hiddenCodes == self.ans:
+                    dlg = DlgExportLog(self)
+                    dlg.exec_()
+                self.hiddenCodes = []
+                
+        elif obj == self.treeDicom:
+            # if eventad.type() == QEvent.MouseButtonPress:
             #     self.stepDicom += 1
             # print(f'other event [{event.type()}] is been triggle')
             return False
@@ -2436,19 +2466,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.UpdateTarget()
             self.UpdateView()
             
-    def OnToggled_btnGroup_fusion(self, button:QAbstractButton, bChecked:bool):
+    def OnToggled_btnGroup_fusion(self, actionId:int, bChecked:bool):
         if bChecked:
-            if button == self.btnModeWipe:
-                for i in range(1, 4):
-                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
-                    if isinstance(iStyle, InteractorStyleWipe):
-                        iStyle.SwitchMode(InteractorStyleWipe.MODE_WIPE)
-                        
-            elif button == self.btnModeBlend:
-                for i in range(1, 4):
-                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
-                    if isinstance(iStyle, InteractorStyleWipe):
-                        iStyle.SwitchMode(InteractorStyleWipe.MODE_BLEND)
+            for i in range(1, 4):
+                iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
+                if isinstance(iStyle, InteractorStyleWipe):
+                    iStyle.SwitchMode(actionId)
+                    
+            if actionId == InteractorStyleWipe.MODE_FLUORO:
+                if not self.widgetSlider:
+                    self.widgetSlider = widgetFluoroSlider(self.btnModeFluoro)
+                    self.widgetSlider.signalValueChange.connect(InteractorStyleWipe.SetFluoroSize)
+                    self.listSubDialog.append(self.widgetSlider)
+                
+                self.widgetSlider.SetValue(InteractorStyleWipe.sizeFluoro)
+                self.widgetSlider.show()
+            else:
+                if self.widgetSlider:
+                    self.widgetSlider.close()
                         
             self.UpdateTarget()
             self.UpdateView()
@@ -4724,7 +4759,7 @@ class DlgExportLog(QDialog, Ui_dlgExportLog):
         super().__init__(parent)
         self.setupUi(self)
         
-        self.dateEdit.setContextMenuPolicy(Qt.NoContextMenu)
+        # self.dateEdit.setContextMenuPolicy(Qt.NoContextMenu)
         
         # read log folder
         logPath = os.path.join(os.getcwd(), 'logs')
@@ -4737,6 +4772,9 @@ class DlgExportLog(QDialog, Ui_dlgExportLog):
                 except ValueError:
                     # 忽略非日期的目錄
                     continue
+        self.selectedDateFrom = None
+        self.selectedDateTo = None
+        
         if lstTime:     
             minDate = min(lstTime)
             maxDate = max(lstTime)
@@ -4747,15 +4785,97 @@ class DlgExportLog(QDialog, Ui_dlgExportLog):
                 if currentDate not in lstTime:
                     expectDate.append(currentDate)
                 currentDate += timedelta(days = 1)
-            self.dateEdit.setDate(minDate)
-            self.dateEdit.setMinimumDate(minDate)
-            self.dateEdit.setMaximumDate(maxDate)
+            # self.dateEdit.setDate(minDate)
+            # self.dateEdit.setMinimumDate(minDate)
+            # self.dateEdit.setMaximumDate(maxDate)
             
             self.calendarFrom.setSelectedDate(minDate)
             self.calendarFrom.setMinimumDate(minDate)
             self.calendarFrom.setMaximumDate(maxDate)
             self.calendarFrom.SetExceptDate(expectDate)
-        # calendarWidget.signalSetCalendarTime.connect(lambda data:self.dateEdit.setDate(data))
+            # self.calendarFrom.setHidden(True)
+            
+            self.calendarTo.setSelectedDate(minDate)
+            self.calendarTo.setMinimumDate(minDate)
+            self.calendarTo.setMaximumDate(maxDate)
+            self.calendarTo.SetExceptDate(expectDate)
+            # self.calendarTo.setHidden(True)
+            
+        self.btnDateFrom.clicked.connect(self.OnClick_btnDateFrom)
+        self.btnDateTo.clicked.connect(self.OnClick_btnDateTo)
+        self.btnExport.clicked.connect(self.OnClick_btnExport)
+            
+        self.calendarFrom.signalSetCalendarTime.connect(self.OnSetFromDate)
+        self.calendarTo.signalSetCalendarTime.connect(self.OnSetToDate)
+        
+        self.btnExport.setEnabled(False)
+        
+    def OnClick_btnDateFrom(self):
+        self.calendarFrom.setHidden(False)
+        
+    def OnClick_btnDateTo(self):
+        self.calendarTo.setHidden(False)
+        
+    def OnClick_btnExport(self):
+        currentPath = os.getcwd()
+                
+        dlg = QFileDialog()
+        dlg.setDirectory(currentPath)
+        dlg.setFileMode(QFileDialog.Directory)
+        dlg.setFilter(QDir.Files)
+
+        lstExportFilepath = []
+        
+        if dlg.exec_():
+            logPath = os.path.join(os.getcwd(), 'logs')
+            for _, dirNames, _ in os.walk(logPath):
+                for dirName in dirNames:
+                    try:
+                        t = datetime.strptime(dirName, '%Y-%m-%d')
+                        if t >= self.selectedDateFrom and t <= self.selectedDateTo:
+                            # path = os.path.join(logPath, dirName)
+                            lstExportFilepath.append(dirName)
+                            
+                    except ValueError:
+                        # 忽略非日期的目錄
+                        continue
+                
+            outFilePath = dlg.selectedFiles()[0]
+            
+            self.pbrProgress.setMaximum(len(lstExportFilepath))
+            nValue = 0
+            for dirname in lstExportFilepath:
+                pathSrc = os.path.join(logPath, dirname)
+                pathDst = os.path.join(outFilePath, dirname)
+                shutil.copytree(pathSrc, pathDst)
+                
+                nValue += 1
+                self.pbrProgress.setValue(nValue)
+            MessageBox.ShowInformation('log export finished')
+            self.close()
+    def OnSetFromDate(self, date:QDate):
+        self.btnDateFrom.setText(f'From:{date.year()}/{date.month()}/{date.day()}')
+        
+        self.selectedDateFrom = date
+        if self.selectedDateTo is not None and self.selectedDateTo < date:
+            self.OnSetToDate(date)
+            self.calendarTo.setSelectedDate(date)
+            
+        # self.calendarFrom.setHidden(True)
+        if None not in [self.selectedDateFrom, self.selectedDateTo]:
+            self.btnExport.setEnabled(True)
+        
+    def OnSetToDate(self, date:QDate):
+        self.btnDateTo.setText(f'To:{date.year()}/{date.month()}/{date.day()}')
+        
+        self.selectedDateTo = date
+        if self.selectedDateFrom is not None and self.selectedDateFrom > date:
+            self.OnSetFromDate(date)
+            self.calendarFrom.setSelectedDate(date)
+        
+        # self.calendarTo.setHidden(True)
+        if None not in [self.selectedDateFrom, self.selectedDateTo]:
+            self.btnExport.setEnabled(True)
 class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
     
     def __init__(self, parent: QWidget = None):
@@ -5449,6 +5569,29 @@ class WidgetToolBox(QWidget, Ui_FormToolBar):
         
         self.btnSliceUp.clicked.connect(lambda:self.signalSliceUp.emit())
         self.btnSliceDown.clicked.connect(lambda:self.signalSliceDown.emit())
+        
+class widgetFluoroSlider(QWidget, Ui_formSliderFluoroSize):
+    signalValueChange = pyqtSignal(int)
+    def __init__(self, parent: QWidget):
+        super().__init__()
+        self.setupUi(self)
+        
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.slider.valueChanged.connect(lambda value:self.signalValueChange.emit(value))
+        self.SetPosition(parent)
+        
+    def SetPosition(self, parent:QWidget):
+        width = self.width()
+        x = (parent.width() - width) // 2
+        pos = QPoint(x, parent.height())
+        pos = parent.mapToGlobal(pos)
+        
+        self.move(pos)
+        
+    def SetValue(self, value:int):
+        self.blockSignals(True)
+        self.slider.setValue(value)
+        self.blockSignals(False)
         
         
 # class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
