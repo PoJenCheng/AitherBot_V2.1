@@ -4912,6 +4912,37 @@ QPushButton:checked{
                         </attribute>
                        </widget>
                       </item>
+                      <item>
+                       <widget class="QPushButton" name="btnModeFluoro">
+                        <property name="minimumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>64</width>
+                          <height>64</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">image:url(image/fusion_fluoro.png)</string>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>false</bool>
+                        </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">btnGroup_fusion</string>
+                        </attribute>
+                       </widget>
+                      </item>
                      </layout>
                     </widget>
                    </item>
@@ -8501,11 +8532,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
+  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btnGroup_tool"/>
+  <buttongroup name="buttonGroup"/>
   <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_ref"/>
-  <buttongroup name="btnGroup_tool"/>
   <buttongroup name="btnGroup_fusion"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="btnGroup_Lung"/>
  </buttongroups>
 </ui>

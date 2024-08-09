@@ -45,6 +45,7 @@ from FunctionLib_UI.Ui_step import *
 from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgExportLog import *
+from FunctionLib_UI.Ui_formFluoroSlider import *
 import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
@@ -152,6 +153,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.setupUi(self)
         self.dlgShowHint = None
         self.dlgSystemProcessing = None
+        self.widgetSlider = None
         
         # interactors
         self.lstInteractorWipe = []
@@ -365,9 +367,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_ref.setId(self.btnRef2, 1)
         self.btnGroup_ref.setId(self.btnRef3, 2)
         
-        self.btnGroup_fusion.buttonToggled.connect(self.OnToggled_btnGroup_fusion)
-        self.btnGroup_fusion.setId(self.btnModeWipe, 0)
-        self.btnGroup_fusion.setId(self.btnModeBlend, 1)
+        self.btnGroup_fusion.idToggled.connect(self.OnToggled_btnGroup_fusion)
+        self.btnGroup_fusion.setId(self.btnModeWipe, InteractorStyleWipe.MODE_WIPE)
+        self.btnGroup_fusion.setId(self.btnModeBlend, InteractorStyleWipe.MODE_BLEND)
+        self.btnGroup_fusion.setId(self.btnModeFluoro, InteractorStyleWipe.MODE_FLUORO)
         
         self.btnGroup_tool.idToggled.connect(self.OnToggled_btnGroup_tool)
         self.btnGroup_tool.setId(self.btnActionPointer, InteractorStyleWipe.ACTION_POINTER)
@@ -2464,19 +2467,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.UpdateTarget()
             self.UpdateView()
             
-    def OnToggled_btnGroup_fusion(self, button:QAbstractButton, bChecked:bool):
+    def OnToggled_btnGroup_fusion(self, actionId:int, bChecked:bool):
         if bChecked:
-            if button == self.btnModeWipe:
-                for i in range(1, 4):
-                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
-                    if isinstance(iStyle, InteractorStyleWipe):
-                        iStyle.SwitchMode(InteractorStyleWipe.MODE_WIPE)
-                        
-            elif button == self.btnModeBlend:
-                for i in range(1, 4):
-                    iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
-                    if isinstance(iStyle, InteractorStyleWipe):
-                        iStyle.SwitchMode(InteractorStyleWipe.MODE_BLEND)
+            for i in range(1, 4):
+                iStyle = self.viewport_L[f'Fusion{i}'].iren.GetInteractorStyle()
+                if isinstance(iStyle, InteractorStyleWipe):
+                    iStyle.SwitchMode(actionId)
+                    
+            if actionId == InteractorStyleWipe.MODE_FLUORO:
+                if not self.widgetSlider:
+                    self.widgetSlider = widgetFluoroSlider(self.btnModeFluoro)
+                    self.widgetSlider.signalValueChange.connect(InteractorStyleWipe.SetFluoroSize)
+                    self.listSubDialog.append(self.widgetSlider)
+                
+                self.widgetSlider.SetValue(InteractorStyleWipe.sizeFluoro)
+                self.widgetSlider.show()
+            else:
+                if self.widgetSlider:
+                    self.widgetSlider.close()
                         
             self.UpdateTarget()
             self.UpdateView()
@@ -5562,6 +5570,29 @@ class WidgetToolBox(QWidget, Ui_FormToolBar):
         
         self.btnSliceUp.clicked.connect(lambda:self.signalSliceUp.emit())
         self.btnSliceDown.clicked.connect(lambda:self.signalSliceDown.emit())
+        
+class widgetFluoroSlider(QWidget, Ui_formSliderFluoroSize):
+    signalValueChange = pyqtSignal(int)
+    def __init__(self, parent: QWidget):
+        super().__init__()
+        self.setupUi(self)
+        
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.slider.valueChanged.connect(lambda value:self.signalValueChange.emit(value))
+        self.SetPosition(parent)
+        
+    def SetPosition(self, parent:QWidget):
+        width = self.width()
+        x = (parent.width() - width) // 2
+        pos = QPoint(x, parent.height())
+        pos = parent.mapToGlobal(pos)
+        
+        self.move(pos)
+        
+    def SetValue(self, value:int):
+        self.blockSignals(True)
+        self.slider.setValue(value)
+        self.blockSignals(False)
         
         
 # class CoordinateSystemManual(QWidget, FunctionLib_UI.ui_coordinate_system_manual.Ui_Form, REGISTRATION):
