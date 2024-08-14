@@ -573,6 +573,17 @@ class DICOM(QObject):
     
     def GetNumOfSelectedSeries(self):
         return len(self.currentSeries)
+    
+    def GetSelectedDicomPath(self, index:int) -> str:
+        if self.currentSeries is None:
+            return None
+        
+        series = self.currentSeries.get(index)
+        if series is None:
+            return None
+        
+        path = series.get('path')
+        return path
         
     def GetData(self, series = None, index:int = 0):
         if self.currentSeries is None and series is None:
@@ -6380,6 +6391,9 @@ class TrajectoryVTKObj():
         self.stippleLine.setVisibility(bVisbleAndNotCurrent)
         self.bVisible = bVisible
 class Trajectory():
+    DICOM_INHALE = 0
+    DICOM_EXHALE = 1
+    
     def __init__(self):
         self.nLimitTrajectory = 8
         self.colors = ['#FFFF00',
@@ -6397,6 +6411,7 @@ class Trajectory():
             self.lstColor.append(fColor)
         
         
+        self._listOwner = []
         self._listTrajectory = []
         self._listVTKObj = []
         # 還沒產生路徑物件時的暫存可視狀態，在物件產生後賦予物件
@@ -6407,6 +6422,7 @@ class Trajectory():
         self.entryPoint = np.zeros(3)
         self.targetPoint = np.zeros(3)
         self.currentIndex = -1
+        
         
     def __getitem__(self, index):
         num = len(self._listTrajectory)
@@ -6424,14 +6440,16 @@ class Trajectory():
             isinstance(point, (tuple, list, np.ndarray)) and len(point) == 3
         ), 'entry or target point type error'
         
-    def _checkAddTrajectory(self):
+    def _checkAddTrajectory(self, owner:str):
         # 檢查並判斷是否加入新路徑
-        if self._pointBeenSetNum == 3 and len(self._listTrajectory) < self.nLimitTrajectory:
+        if self._pointBeenSetNum == 3 and \
+        len(self._listTrajectory) < self.nLimitTrajectory and \
+        owner is not None:
             self._pointBeenSetNum = 0
             nCount = len(self._listTrajectory)
             self._listTrajectory.append([self.entryPoint, self.targetPoint])
             self._listVTKObj.append(TrajectoryVTKObj(self.entryPoint, self.targetPoint, self.lstColor[nCount]))
-            
+            self._listOwner.append(owner)
             # 賦予物件前置可視屬性，然後重置為預設值(可視)
             self._listVTKObj[-1].setVisibility(self._preVisible)
             self._preVisible = True
@@ -6439,19 +6457,19 @@ class Trajectory():
             self.currentIndex = len(self._listTrajectory) - 1
             self.setCurrentIndex(self.currentIndex)
             
-    def addEntry(self, entryPoint):
+    def addEntry(self, entryPoint, owner:str):
         self._assertPoint(entryPoint)
         self.entryPoint = np.array(entryPoint)
         
         self._pointBeenSetNum |= 1
-        self._checkAddTrajectory()
+        self._checkAddTrajectory(owner)
         
-    def addTarget(self, targetPoint):
+    def addTarget(self, targetPoint, owner:str):
         self._assertPoint(targetPoint)
         self.targetPoint = np.array(targetPoint)
         
         self._pointBeenSetNum |= 2
-        self._checkAddTrajectory()
+        self._checkAddTrajectory(owner)
         
     def count(self):
         return len(self._listTrajectory)
@@ -6468,6 +6486,11 @@ class Trajectory():
                 return self._listTrajectory[self.currentIndex][0]
         else:
             return self[index][0]
+        
+    def getOwner(self, idx:int):
+        if idx in range(len(self._listOwner)):
+            return self._listOwner[idx]
+        return None
     
     def getTarget(self, index:int = None):
         if index is None:
@@ -6513,13 +6536,13 @@ class Trajectory():
             else:
                 obj.setCurrent(False)
     
-    def setEntry(self, entryPoint:np.ndarray, index:int = None):
+    def setEntry(self, entryPoint:np.ndarray, index:int = None, owner:str = None):
         self._assertPoint(entryPoint)
         entryPoint = np.array(entryPoint)
         
         if index is None:
             if self.currentIndex == -1:
-                self.addEntry(entryPoint)
+                self.addEntry(entryPoint, owner)
             else:
                 self.entryPoint = np.array(entryPoint)
                 self._listTrajectory[self.currentIndex][0] = self.entryPoint
@@ -6530,15 +6553,19 @@ class Trajectory():
             self._listTrajectory[index][0] = self.entryPoint
             self._listVTKObj[index].setPosition(entryPoint = entryPoint)
         else:
-            self.addEntry(entryPoint)
+            self.addEntry(entryPoint, owner)
+            
+    def setOwner(self, idx:int, owner:str):
+        if idx in range(len(self._listOwner)):
+            self._listOwner[idx] = owner
         
-    def setTarget(self, targetPoint:np.ndarray, index:int = None):
+    def setTarget(self, targetPoint:np.ndarray, index:int = None, owner:str = None):
         self._assertPoint(targetPoint)
         targetPoint = np.array(targetPoint)
         
         if index is None:
             if self.currentIndex == -1:
-                self.addTarget(targetPoint)
+                self.addTarget(targetPoint, owner)
             else:
                 self.targetPoint = np.array(targetPoint)
                 self._listTrajectory[self.currentIndex][1] = self.targetPoint
@@ -6549,7 +6576,7 @@ class Trajectory():
             self._listTrajectory[index][1] = self.targetPoint
             self._listVTKObj[index].setPosition(targetPoint = targetPoint)
         else:
-            self.addTarget(targetPoint)
+            self.addTarget(targetPoint, owner)
             
     def setRenderer(self, index:int, *rendererObjs:list):
         if index in range(0, len(self._listVTKObj)):
@@ -6691,9 +6718,6 @@ class DISPLAY(QObject):
         self.pcoord[:] = np.zeros(3)
         self.irenList = {}
         self.rendererList = {}
-        
-    def CountOfTrajectory(self):
-        return DISPLAY.trajectory.count()
             
     def LoadImage(self, image, image2 = None):
         """load image
@@ -6874,12 +6898,6 @@ class DISPLAY(QObject):
         posCS = posCS[:3]
         
         return posCS
-    
-    def GetTrajectoryColor(self, index:int):
-        nLimit = DISPLAY.trajectory.nLimitTrajectory
-        index = min(nLimit - 1, max(-nLimit, index))
-        return DISPLAY.trajectory.colors[index]
-    
         
     def SetMapColor(self):
         """init window level and window width
@@ -7530,6 +7548,14 @@ class DISPLAY(QObject):
         transform.MultiplyPoint(position, out)        
         
         return out[:3]
+    
+    def CountOfTrajectory():
+        return DISPLAY.trajectory.count()
+    
+    def GetTrajectoryColor(index:int):
+        nLimit = DISPLAY.trajectory.nLimitTrajectory
+        index = min(nLimit - 1, max(-nLimit, index))
+        return DISPLAY.trajectory.colors[index]
     
     def CopyCamera(idxFrom:int, idxTo:int):
         rendererSrc = DISPLAY._lstRenderer3D[idxFrom]

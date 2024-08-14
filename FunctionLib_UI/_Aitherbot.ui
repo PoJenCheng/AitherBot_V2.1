@@ -6530,6 +6530,12 @@ QToolBox QPushButton:disabled{
                     <height>0</height>
                    </size>
                   </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="styleSheet">
                    <string notr="true">QToolBox{
 background-color: rgb(93, 161, 209);
@@ -6599,9 +6605,27 @@ QLabel{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>310</width>
-                     <height>465</height>
+                     <width>300</width>
+                     <height>482</height>
                     </rect>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>250</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
                    </property>
                    <attribute name="label">
                     <string>Trajectory</string>
@@ -6625,7 +6649,7 @@ QLabel{
                     <item row="0" column="0">
                      <widget class="QTreeWidget" name="treeTrajectory">
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -6634,6 +6658,12 @@ QLabel{
                        <size>
                         <width>0</width>
                         <height>40</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16777215</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -6716,6 +6746,12 @@ QTreeWidget::item:selected{
                        <size>
                         <width>0</width>
                         <height>48</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16777215</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -6846,6 +6882,12 @@ font: 12px Arial;</string>
                          </item>
                          <item>
                           <widget class="QSlider" name="sldTrajectory">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="layoutDirection">
                             <enum>Qt::RightToLeft</enum>
                            </property>
@@ -8532,11 +8574,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btnGroup_Lung"/>
-  <buttongroup name="btnGroup_tool"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btgDicom"/>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="btnGroup_Lung"/>
   <buttongroup name="btnGroup_fusion"/>
+  <buttongroup name="btnGroup_tool"/>
  </buttongroups>
 </ui>

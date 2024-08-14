@@ -3039,6 +3039,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.toolTrajectory.sizePolicy().hasHeightForWidth())
         self.toolTrajectory.setSizePolicy(sizePolicy)
         self.toolTrajectory.setMinimumSize(QtCore.QSize(0, 0))
+        self.toolTrajectory.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.toolTrajectory.setStyleSheet("QToolBox{\n"
 "background-color: rgb(93, 161, 209);\n"
 "}\n"
@@ -3100,19 +3101,27 @@ class Ui_MainWindow(object):
 "")
         self.toolTrajectory.setObjectName("toolTrajectory")
         self.page = QtWidgets.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 310, 465))
+        self.page.setGeometry(QtCore.QRect(0, 0, 300, 482))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.page.sizePolicy().hasHeightForWidth())
+        self.page.setSizePolicy(sizePolicy)
+        self.page.setMinimumSize(QtCore.QSize(250, 0))
+        self.page.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.page.setObjectName("page")
         self.gridLayout_45 = QtWidgets.QGridLayout(self.page)
         self.gridLayout_45.setContentsMargins(7, 0, 7, 0)
         self.gridLayout_45.setSpacing(3)
         self.gridLayout_45.setObjectName("gridLayout_45")
         self.treeTrajectory = QtWidgets.QTreeWidget(self.page)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.treeTrajectory.sizePolicy().hasHeightForWidth())
         self.treeTrajectory.setSizePolicy(sizePolicy)
         self.treeTrajectory.setMinimumSize(QtCore.QSize(0, 40))
+        self.treeTrajectory.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.treeTrajectory.setStyleSheet("QHeaderView:section{\n"
 "    background:rgb(7, 81, 255);\n"
 "    color:rgb(197, 255, 246);\n"
@@ -3145,6 +3154,7 @@ class Ui_MainWindow(object):
         self.gridLayout_45.addWidget(self.treeTrajectory, 0, 0, 1, 1)
         self.btnAddTrajectory = QtWidgets.QPushButton(self.page)
         self.btnAddTrajectory.setMinimumSize(QtCore.QSize(0, 48))
+        self.btnAddTrajectory.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.btnAddTrajectory.setStyleSheet("background-image:url(image/plus.png);\n"
 "background-repeat:no-repeat;\n"
 "background-position:center;\n"
@@ -3197,6 +3207,11 @@ class Ui_MainWindow(object):
         self.btnCloseToEntry.setObjectName("btnCloseToEntry")
         self.horizontalLayout_13.addWidget(self.btnCloseToEntry)
         self.sldTrajectory = QtWidgets.QSlider(self.gbxOffset)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sldTrajectory.sizePolicy().hasHeightForWidth())
+        self.sldTrajectory.setSizePolicy(sizePolicy)
         self.sldTrajectory.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.sldTrajectory.setOrientation(QtCore.Qt.Horizontal)
         self.sldTrajectory.setObjectName("sldTrajectory")
