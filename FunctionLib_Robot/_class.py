@@ -417,6 +417,8 @@ class RobotSupportArm(QObject):
     
     def SetTargetPos(self):
         self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
+        self.TargetEn1 = 159322
+        self.TargetEn2 = 205927
         self.bRobotMoveFromTarget = False
         return self.TargetEn1, self.TargetEn2
     
@@ -735,7 +737,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         frontCamera_ID = 0
         sideCamera_ID = 1
         
-        self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        # self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
         # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
         
         # cameraCheck = False
@@ -1338,8 +1340,8 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
     def HomeProcessing_image(self):
         #先執行一般HomeProcessing
         self.HomeProcessing()
-        self.imageCalibraionProcess_front(self.cameraCali_Front)
-        self.imageCalibraionProcess_side(self.cameraCali_Side)     
+        # self.imageCalibraionProcess_front(self.cameraCali_Front)
+        # self.imageCalibraionProcess_side(self.cameraCali_Side)     
         
         return True
 
@@ -1475,16 +1477,20 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
                 "Calculate rotation and movement of upper layer"
                 upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
                 lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+                print(upperMotion)
+                print(lowerMotion)
+                # upperMotion = [38.48377285883819, 7.959463888190757]
+                # lowerMotion = [38.29635404259213, 8.09430240463848]
 
                 "robot motion"
                 "rotation command"
-                RotationCount_axis3 = float(
-                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-                RotationCount_axis1 = float(
-                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+                RotationCount_axis3 = (float(
+                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360))
+                RotationCount_axis1 = ((float(
+                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3))
                 "Linear motion command"
-                LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
-                LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+                LinearCount_axis2 = (upperMotion[0]*LinearMotorCountPerLoop)*2
+                LinearCount_axis4 = (lowerMotion[0]*LinearMotorCountPerLoop)*2
                 self.DisplayRun()
                 self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                         RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)

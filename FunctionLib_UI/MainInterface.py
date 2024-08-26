@@ -5557,7 +5557,7 @@ class DlgInstallAdaptor(QDialog, Ui_dlgInstallAdaptor):
         self.player = QMediaPlayer()
         self.player.mediaStatusChanged.connect(self.statusChanged)
         
-        self.btnConfirm.setEnabled(False)
+        self.btnConfirm.setEnabled(True)
         self.btnConfirm.clicked.connect(self.OnClicked_btnConfirm)
         self.btnConfirm_needle.clicked.connect(lambda: self.close())
         self.stkWidget.currentChanged.connect(self.onCurrentChanged)
