@@ -10,6 +10,7 @@ lang = mi.LAN_EN
 if len(sys.argv) > 1: 
     strLang = ''
     if int(sys.argv[-1]) == mi.LAN_CN:
+        
         strLang = 'language/Aitherbot_tw.qm'
         lang = int(sys.argv[-1])
         
@@ -18,8 +19,6 @@ if len(sys.argv) > 1:
         translator.load(strLang) 
         app.installTranslator(translator)
 
-
-# w = mat.MainWidget()
 w = mi.MainInterface(lang)
 w.show()
 # w.showFullScreen()

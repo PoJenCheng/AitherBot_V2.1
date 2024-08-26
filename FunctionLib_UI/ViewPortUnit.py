@@ -404,20 +404,31 @@ class TreeViewDelegate(QStyledItemDelegate):
                 option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         
         super().paint(painter, option, index)
-class TrajectoryViewDelegate(QStyledItemDelegate):
-    def __init__(self):
         
+class TrajectoryViewDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        self.treeWidget:QTreeWidget = parent
         super().__init__()
         
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
-        super().paint(painter, option, index)
         
+        super().paint(painter, option, index)
         strColor = index.data(ROLE_COLOR)
+        
+        if index.data(ROLE_DROPITEM):
+            pen = QPen(QColor(255, 0, 0), 3)
+            painter.save()
+            painter.setPen(pen)
+            painter.drawRect(option.rect.adjusted(0, 0, -1, -1))
+            painter.restore()
+            
+            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         
         if strColor is not None:
             color = QColor(strColor)
-            
+            painter.save()
             painter.fillRect(option.rect, color)
+            painter.restore()
             option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
         
 # class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
