@@ -3114,7 +3114,7 @@ class Ui_MainWindow(object):
         self.gridLayout_45.setContentsMargins(7, 0, 7, 0)
         self.gridLayout_45.setSpacing(3)
         self.gridLayout_45.setObjectName("gridLayout_45")
-        self.treeTrajectory = QtWidgets.QTreeWidget(self.page)
+        self.treeTrajectory = TreeWidget(self.page)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -4119,5 +4119,5 @@ class Ui_MainWindow(object):
 "is tightened securely"))
         self.label_title_11.setText(_translate("MainWindow", "Install adaptor"))
         self.btnNext_scanCT_4.setText(_translate("MainWindow", "Confirm"))
-from FunctionLib_UI.WidgetButton import WidgetButton
+from FunctionLib_UI.WidgetButton import TreeWidget, WidgetButton
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor

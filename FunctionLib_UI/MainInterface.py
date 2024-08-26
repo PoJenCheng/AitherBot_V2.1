@@ -156,6 +156,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgShowHint = None
         self.dlgSystemProcessing = None
         self.widgetSlider = None
+        self.tempResumeData = {}
         
         # interactors
         self.lstInteractorWipe = []
@@ -529,14 +530,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.treeTrajectory.setIconSize(QSize(32, 32))
         self.treeTrajectory.itemClicked.connect(self.OnItemClicked)
         self.treeTrajectory.itemSelectionChanged.connect(self.OnItemSelectionChanged_treeTrajectory)
+        self.treeTrajectory.itemDoubleClicked.connect(self.OnItemDoubleClicked_treeTrajectory)
+        self.treeTrajectory.signalButtonClicked.connect(self.OnClicked_btnTrajectoryList)
         header:QHeaderView = self.treeTrajectory.header()
         header.setIconSize(QSize(32, 32))
         header.setSectionsClickable(True)
         header.sectionClicked.connect(self.OnHeaderClicked_trajectory)
         self.treeTrajectory.setColumnWidth(0, 48)
         self.treeTrajectory.setColumnWidth(2, 32)
-        self.treeTrajectory.setItemDelegate(TrajectoryViewDelegate())
+        self.treeTrajectory.setItemDelegate(TrajectoryViewDelegate(self.treeTrajectory))
+        self.treeTrajectory.setDragDropMode(QAbstractItemView.InternalMove)
+        self.treeTrajectory.setAcceptDrops(True)
         # self.treeTrajectory.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        
+        
         
         self.btnAddTrajectory.clicked.connect(self.OnClicked_btnAddTrajectory)
         self.setFocus()
@@ -627,7 +634,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             ## 關閉VTK Widget ############################################################################################
             self.CloseView()
             
-            self._XmlModifyTag('status', '0')
+            try:
+                os.remove('temp.xml')
+            except FileNotFoundError:
+                pass
+            # self._XmlModifyTag('status', '0')
             ############################################################################################
             logger.info("remove dicomLow VTk success")
             
@@ -652,34 +663,35 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #             combobox.addItem(viewName)
         
     def _AddTrajectoryTreeItems(self, lstItem:list):
-        countOfTrajectory = self.treeTrajectory.topLevelItemCount()
+        currentIndex = self.treeTrajectory.topLevelItemCount()
+        
+        if lstItem is None or len(lstItem) == 0:
+            return
         
         for i, dicItem in enumerate(lstItem):
-            itemName = f'T {countOfTrajectory + i + 1}'
-            item = QTreeWidgetItem(self.treeTrajectory)
+            itemName = f'T {currentIndex + i + 1}'
+            index = currentIndex + i
+            
+            item = QTreeWidgetItem()
+            owner = dicItem['owner']
             item.setIcon(0, QIcon(IMG_VISIBLE))
             item.setText(1, itemName)
             item.setText(2, '')
-            # item.setData(0, Qt.UserRole + 1, countOfTrajectory + 1)
             item.setData(0, ROLE_VISIBLE, True)
-            self._CheckTrajectoryVisibleItem()
-            
-            index = countOfTrajectory + i
+            item.setData(0, ROLE_TRAJECTORY, index)
             item.setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
+            item.setData(0, ROLE_DICOM, owner)
+            self.treeTrajectory.AddItemToGroup(item)
             
-            button = QPushButton()
-            button.setObjectName(f'btnT{i}')
-            button.setText(dicItem['owner'])
-            button.setMaximumSize(24, 24)
-            button.clicked.connect(self.OnClicked_btnTrajectoryList)
-            
-            item.setData(0, ROLE_DICOM, dicItem['owner'])
-            self.treeTrajectory.setItemWidget(item, 2, button)
+        self.treeTrajectory.SortItems()
         
-            self.treeTrajectory.blockSignals(True)
-            self.treeTrajectory.setCurrentItem(item)
-            self.prevSelection_trajectory = item
-            self.treeTrajectory.blockSignals(False)
+        self._CheckTrajectoryVisibleItem()
+        self.treeTrajectory.blockSignals(True)
+        item = self.treeTrajectory.GetCurrentItem(currentIndex)
+        self.treeTrajectory.setCurrentItem(item)
+        self.prevSelection_trajectory = item
+        self.treeTrajectory.blockSignals(False)
+            
         
     def _CalculateExhaleToInhaleMatrix(self):
         dicomInhale = list(self.dicDicom.values())[0]
@@ -689,11 +701,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         regMatrixInhale = dicomInhale.get('regMatrix')
         regMatrixExhale = dicomExhale.get('regMatrix')
         
-        if  regBallInhale is None or \
-            regBallExhale is None or \
-            regMatrixInhale is None or \
-            regMatrixExhale is None:
-                return None
+        if any(matrix is None for matrix in (
+                                                regBallInhale, 
+                                                regBallExhale, 
+                                                regMatrixInhale, 
+                                                regMatrixExhale
+                                            )):
+            return None
         
         try:
             # 注意！這裡的regMatrix是改變座標系，而不會改變點在原世界座標系中的位置
@@ -781,9 +795,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(statusValue, str) and int(statusValue) != 0:
             ret = MessageBox.ShowWarning('Detected unexpected shutdown, resume it?', 'YES', "NO")
             if ret == 0:
-                self._ResumeFromShutdown()
+                return self._ResumeFromShutdown()
                 
-        
+        return True
+    
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -885,15 +900,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return strText, dimZ
     
     def _GetCurrentTrajectory(self):
-        idx = 0
         try:
-            item = self.treeTrajectory.currentItem()
-            dicomLabel:str = item.data(0, ROLE_DICOM)
-            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            items = self.treeTrajectory.GetCurrentTrajectory()
+            return items
         except Exception as msg:
             logger.critical(msg)
             
-        return idx, dicomLabel
+        return None
     
     def _ModifyTrajectory(
         self, 
@@ -1088,41 +1101,67 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def _ResumeFromShutdown(self):
         # 執行homing process
         
-        dicom = list(self.dicDicom.values())
-        pathInhale = dicom[0].get('path')
-        pathExhale = dicom[1].get('path')
-        
-        if None in (pathInhale, pathExhale):
-            logger.critical('resume dicom data is empty')
-            return
-       
-        QApplication.processEvents()
-        
-        self.reader = DICOM()
-        self.reader.LoadPath(pathInhale)
-        if not self.ImportDicom_L(0, 0, 0):
-            return
-        
-        self.reader.LoadPath(pathExhale)
-        if not self.ImportDicom_H(0, 0, 0):
-            return
-        
-        lstItem = []
-        for i in range(DISPLAY.CountOfTrajectory()):
-            owner = DISPLAY.trajectory.getOwner(i)
+        # resume lost data
+        if len(self.tempResumeData) == 0:
+            logger.error(f'no available resume data')
+            return False
             
-            idx = int(owner == 'E') # I = 0, E = 1
-            # add to renderer
-            self._ModifyTrajectory(i, dicom[idx]['display'])
-            lstItem.append({'owner':owner})
+        try:
+            dicom = list(self.dicDicom.values())
+            pathData = self.tempResumeData['path']
+            dicom[0]['path'] = pathData[0]['text']
+            dicom[1]['path'] = pathData[1]['text']
+                    
+            dataTrajectory = self.tempResumeData.get('trajectory')
+            
+            if dataTrajectory:
+                for data in dataTrajectory:
+                    strTrajectory:str = data['text']
+                    owner = data['owner']
+                    
+                    trajectory = np.array([float(x) for x in strTrajectory.split(',')])
+                    DISPLAY.trajectory.addEntry(trajectory[:3], owner)
+                    DISPLAY.trajectory.addTarget(trajectory[3:], owner)
                 
-        self._AddTrajectoryTreeItems(lstItem)
+            pathInhale = dicom[0].get('path')
+            pathExhale = dicom[1].get('path')
+            
+            if None in (pathInhale, pathExhale):
+                logger.critical('resume dicom data is empty')
+                return
         
-        # self._SaveBootFile()
+            QApplication.processEvents()
+            
+            self.reader = DICOM()
+            self.reader.LoadPath(pathInhale)
+            if not self.ImportDicom_L(0, 0, 0):
+                return
+            
+            self.reader.LoadPath(pathExhale)
+            if not self.ImportDicom_H(0, 0, 0):
+                return
+            
+            lstItem = []
+            for i in range(DISPLAY.CountOfTrajectory()):
+                owner = DISPLAY.trajectory.getOwner(i)
+                
+                idx = int(owner == 'E') # I = 0, E = 1
+                # add to renderer
+                self._ModifyTrajectory(i, dicom[idx]['display'])
+                lstItem.append({'owner':owner})
+                    
+            self._AddTrajectoryTreeItems(lstItem)
+            
+            # self._SaveBootFile()
+            
+            self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            self.ShowFusion()
+            self.stkScene.setCurrentWidget(self.pgImageView)
+        except Exception as msg:
+            logger.critical(msg)
+            return False
         
-        self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-        self.ShowFusion()
-        self.stkScene.setCurrentWidget(self.pgImageView)
+        return True
             
     def _Robot_driveTo(self):
         if self.language == LAN_CN:
@@ -1164,22 +1203,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 dom = xdom.parse('temp.xml')
                 root = dom.documentElement
                 
-                dicom = list(self.dicDicom.values())
                 data = self._XmlGetNode(root, 'dicom')
                 if len(data) > 0:
-                    dicom[0]['path'] = data[0]['text']
-                    dicom[1]['path'] = data[1]['text']
+                    self.tempResumeData['path'] = data
+                    
                     
                 dataTrajectory = self._XmlGetNode(root, 'trajectory')
                 if len(dataTrajectory) > 0:
-                    for data in dataTrajectory:
-                        strTrajectory:str = data['text']
-                        owner = data['owner']
-                        
-                        trajectory = np.array([float(x) for x in strTrajectory.split(',')])
-                        DISPLAY.trajectory.addEntry(trajectory[:3], owner)
-                        DISPLAY.trajectory.addTarget(trajectory[3:], owner)
-                        
+                    self.tempResumeData['trajectory'] = dataTrajectory
                 
                 return dom.getElementsByTagName(tagName)[0].childNodes[0].nodeValue
         except Exception as msg:
@@ -1361,10 +1392,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.error(msg)
                 
     def _SetTrajectoryVisible(self, index:int, bVisible:bool):
-        display = self.currentTag.get('display')
-        if display is not None and isinstance(display, DISPLAY):
-            display.SetTrajectoryVisibility(index, bVisible)
-            self.UpdateView()
+        # display = self.currentTag.get('display')
+        # if display is not None and isinstance(display, DISPLAY):
+        #     display.SetTrajectoryVisibility(index, bVisible)
+        DISPLAY.trajectory.setVisibility(index, bVisible)
+        self.UpdateView()
             
     def _ShowTrajectoryList(self, lstTrajectory:list):
         # 用clear會導致item實體被刪除，如還想保留實體的話不能使用
@@ -1766,6 +1798,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
                 
     def SetUIEnable_Trajectory(self, bEnable):
+        if bEnable:
+            self.btnSetEntry.setEnabled(bEnable)
+            self.btnSetTarget.setEnabled(bEnable)
         self.btnToEntry.setEnabled(bEnable)
         self.btnToTarget.setEnabled(bEnable)
         self.btnCloseToEntry.setEnabled(bEnable)
@@ -2087,7 +2122,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pickPoint = currentDicom.target.copy()
         if pickPoint is not None:
             currentDicom.DrawPoint(pickPoint, 1)    
-            idx, owner = self._GetCurrentTrajectory()
+            output = self._GetCurrentTrajectory()
+            if output is None:
+                return
+            
+            owner, idx = list(output.items())[0]
             if idx > -1:
                 currentDicom.trajectory.setEntry(pickPoint, idx, owner)
                 self.currentTag["entry"] = np.array(pickPoint)
@@ -2111,7 +2150,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         pickPoint = currentDicom.target.copy()
         if pickPoint is not None:
             currentDicom.DrawPoint(pickPoint, 2)
-            idx, owner = self._GetCurrentTrajectory()
+            output = self._GetCurrentTrajectory()
+            if output is None:
+                return
+            
+            owner, idx = list(output.items())[0]
             if idx > -1:
                 DISPLAY.trajectory.setTarget(pickPoint, idx, owner)
                 self.currentTag["target"] = np.array(pickPoint)
@@ -2345,31 +2388,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(iStyle, InteractorStyleWipe):
             iStyle.RotateR()
             
-    def OnClicked_btnTrajectoryList(self):
-        button = self.sender()
-        if not isinstance(button, QPushButton):
-            return
-        
-        owners = np.array(['I', 'E'])
-        objName = button.objectName()
-        if objName:
-            owner, = owners[owners != button.text()]
-            idx = int(objName[4:])
-            item:QTreeWidgetItem = self.treeTrajectory.topLevelItem(idx)
-            item.setData(0, ROLE_DICOM, owner)
-            button.setText(owner)
+    def OnClicked_btnTrajectoryList(self, idx:int, owner:str):
+        # 切換Inhale / Exhale標識
+        # owners = np.array(['I', 'E'])
+        # objName = button.objectName()
+        # if objName:
+        #     owner, = owners[owners != button.text()]
+        #     idx = int(objName[4:])
+        #     item:QTreeWidgetItem = self.treeTrajectory.topLevelItem(idx)
+        #     item.setData(0, ROLE_DICOM, owner)
+        #     button.setText(owner)
             
-            DISPLAY.trajectory.setOwner(idx, owner)
-            
-            self._SaveBootFile()
-            
-        
-        
+        DISPLAY.trajectory.setOwner(idx, owner)
+        self._SaveBootFile()
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
         if column == 0:
             bVisible = not item.data(0, ROLE_VISIBLE)
-            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            # idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            idx = item.data(0, ROLE_TRAJECTORY)
             if not bVisible:
                 item.setIcon(0, QIcon(IMG_HIDDEN))
             else:
@@ -2380,13 +2417,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._CheckTrajectoryVisibleItem()
             self._SetTrajectoryVisible(idx, bVisible)
             
-    def OnItemSelectionChanged_treeTrajectory(self):
+    def OnItemSelectionChanged_treeTrajectory(self, current:QTreeWidgetItem = None, prev:QTreeWidgetItem = None):
         column = self.treeTrajectory.currentColumn()
+        # item = current
         item = self.treeTrajectory.currentItem()
         if column > 0:
-            idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            # idx = self.treeTrajectory.indexOfTopLevelItem(item)
+            idx = item.data(0, ROLE_TRAJECTORY)
             display = self.currentTag.get('display')
-            if display is not None and isinstance(display, DISPLAY) and idx < DISPLAY.CountOfTrajectory():
+            if None not in (idx, display) and isinstance(display, DISPLAY) and idx < DISPLAY.CountOfTrajectory():
                 self.sldTrajectory.blockSignals(True)
                 self._ModifyTrajectory(idx, display)
                 self.sldTrajectory.blockSignals(False)
@@ -2397,10 +2436,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.prevSelection_trajectory = item
             self.UpdateView()
         else:
-            if self.prevSelection_trajectory is not None:
-                self.treeTrajectory.blockSignals(True)
-                self.treeTrajectory.setCurrentItem(self.prevSelection_trajectory)
-                self.treeTrajectory.blockSignals(False)
+            try:
+                if self.prevSelection_trajectory is not None:
+                    self.treeTrajectory.blockSignals(True)
+                    self.treeTrajectory.setCurrentItem(self.prevSelection_trajectory)
+                    self.treeTrajectory.blockSignals(False)
+            except Exception as msg:
+                logger.warning(msg)
+                
+    def OnItemDoubleClicked_treeTrajectory(self, item:QTreeWidgetItem, column:int):
+        self.RobotRun()
                 
     def OnHeaderClicked_trajectory(self, index:int):
         if index == 0:
@@ -2438,12 +2483,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.lblThreshold.setText(str(fValue))
     
     def OnValueChanged_sldTrajectory(self, value):
-        # print(f'value = {value}')
-        # sldValue = self.sldTrajectory.maximum() - value
-        idx, _ = self._GetCurrentTrajectory()
-        # display = self.currentTag.get('display')
+        dicOutput = self._GetCurrentTrajectory()
+        if dicOutput is None:
+            return
         
-        # trajectory = display.trajectory[idx]
+        idx = list(dicOutput.values())[0]
+        
         trajectory = DISPLAY.trajectory[idx]
         if trajectory is not None:
             entry, target  = trajectory
@@ -3732,20 +3777,27 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # pathInhale = dicomInhale.get('trajectory')
         # pathExhale = dicomExhale.get('trajectory')
         
-        idx, _ = self._GetCurrentTrajectory()
-        idx = min(DISPLAY.trajectory.count() - 1, idx)
-        pathInhale = DISPLAY.trajectory[idx]
-        pathExhale = pathInhale
-        
-        if pathInhale is not None and pathExhale is not None:
-            regBallInhale = dicomInhale.get('regBall')
-            # regBallExhale = dicomExhale.get('regBall')
-            regMatrixInhale = dicomInhale.get('regMatrix')
-            # regMatrixExhale = dicomExhale.get('regMatrix')
-            # invMatrix = np.linalg.inv(regMatrixExhale)
-            # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
+        try:
+            dicOutput:dict = self._GetCurrentTrajectory()
+            if dicOutput is None:
+                return
+                
+            if len(dicOutput) < 2:
+                msgMissing = {'I':'Exhale', 'E':'Inhale'}
+                logger.error(f'missing trajectory:{msgMissing[list(dicOutput.keys())[0]]}')
+                return
             
-            try:
+            pathInhale = DISPLAY.trajectory[dicOutput['I']]
+            pathExhale = DISPLAY.trajectory[dicOutput['E']]
+            
+            if pathInhale is not None and pathExhale is not None:
+                regBallInhale = dicomInhale.get('regBall')
+                # regBallExhale = dicomExhale.get('regBall')
+                regMatrixInhale = dicomInhale.get('regMatrix')
+                # regMatrixExhale = dicomExhale.get('regMatrix')
+                # invMatrix = np.linalg.inv(regMatrixExhale)
+                # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
+                
                 # inhale和exhale dicome在完成註冊時，已轉換成同一座標，故原點和矩陣使用inhale的參數即可
                 pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
                 pathExhale = self.regFn.GetPlanningPath(regBallInhale[0], pathExhale, regMatrixInhale)
@@ -3756,10 +3808,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 pathInhale = [p * [1, 1, -1] for p in pathInhale]
                 pathExhale = [p * [1, 1, -1] for p in pathExhale]
                 
-            except Exception as msg:
-                logger.error(msg)
-                
-            
+        except Exception as msg:
+            logger.error(msg)
         
         if self.homeStatus is True:
             self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])

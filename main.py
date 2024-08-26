@@ -19,8 +19,6 @@ if len(sys.argv) > 1:
         translator.load(strLang) 
         app.installTranslator(translator)
 
-
-# w = mat.MainWidget()
 w = mi.MainInterface(lang)
 w.show()
 # w.showFullScreen()

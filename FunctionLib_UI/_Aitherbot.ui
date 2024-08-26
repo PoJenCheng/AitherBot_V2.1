@@ -6647,7 +6647,7 @@ QLabel{
                      <number>3</number>
                     </property>
                     <item row="0" column="0">
-                     <widget class="QTreeWidget" name="treeTrajectory">
+                     <widget class="TreeWidget" name="treeTrajectory">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                         <horstretch>0</horstretch>
@@ -8292,6 +8292,11 @@ margin-right:0px;
    <header location="global">FunctionLib_UI.WidgetButton.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>TreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>FunctionLib_UI.WidgetButton.h</header>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
@@ -8574,11 +8579,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btnGroup_ref"/>
-  <buttongroup name="btgDicom"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="btnGroup_Lung"/>
   <buttongroup name="btnGroup_fusion"/>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="btgDicom"/>
+  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btnGroup_ref"/>
   <buttongroup name="btnGroup_tool"/>
  </buttongroups>
 </ui>
