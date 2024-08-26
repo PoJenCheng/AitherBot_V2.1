@@ -83,7 +83,7 @@ DEVICE_LASER = 2
 DEVICE_ALL = 3
 
 # 設定啟動的設備，正常是DEVICE_ALL，要個別測試就選擇robot或是laser
-DEVICE_ENABLED = DEVICE_ROBOT
+DEVICE_ENABLED = DEVICE_ALL
 
 # foot pedal action
 NUM_OF_ACTION = 4
@@ -99,9 +99,12 @@ HINT_DOWN_RIGHT = 2
 HINT_DOWN_LEFT  = 3
 
 # trajectory item data
-ROLE_VISIBLE = Qt.UserRole + 1
-ROLE_COLOR = Qt.UserRole + 2
-ROLE_DICOM = Qt.UserRole + 3
+ROLE_VISIBLE    = Qt.UserRole + 1
+ROLE_COLOR      = Qt.UserRole + 2
+ROLE_DICOM      = Qt.UserRole + 3
+ROLE_GROUP      = Qt.UserRole + 4
+ROLE_TRAJECTORY = Qt.UserRole + 5
+ROLE_DROPITEM   = Qt.UserRole + 6
 
 
 IMG_VISIBLE = 'image/eye2.png'

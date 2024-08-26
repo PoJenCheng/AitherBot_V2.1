@@ -1,27 +1,444 @@
 
 from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
+from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
 
 from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 from FunctionLib_Robot.logger import logger
+from FunctionLib_Robot.__init__ import *
+from typing import *
+import numpy as np
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
 TYPE_ROBOTARM = 2
 
+def message_handler(mode, context, message):
+    if "QDrag:" not in message:
+        print(message)
+
+# 安装自定义的日志处理器
+qInstallMessageHandler(message_handler)
+
+class MimeData(QMimeData):
+    def __init__(self, item:QTreeWidgetItem):
+        super().__init__()
+        self._item = item
+
+class TreeWidget(QTreeWidget):
+    signalButtonClicked = pyqtSignal(int, str)
+    
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self._dragItem = None
+        self._preSelectedItem = None
+        self._groupTable = []
+        self._groupNumberTable = np.array([], dtype = int)
+        self._groupNumber = 0
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setAcceptDrops(True)
+        self.setDefaultDropAction(Qt.MoveAction)
+        
+    def startDrag(self, supportedActions: Qt.DropActions):
+        item = self.currentItem()
+        if item:
+            drag = QDrag(self)
+            # 如不設置mimeData，底下的自定義圖像不會在拖曳時出現
+            # 這邊自定的圖像只是把拖曳的item變成半透明
+            # 原本預設是不透明
+            mimeData = MimeData(item)
+            drag.setMimeData(mimeData)
+
+            # 暫時隱藏header，後續繪製圖像時就不會有header
+            self.setHeaderHidden(True)
+            # 自定義拖曳圖像尺寸
+            itemRect = self.visualItemRect(item)
+            pixmap = QPixmap(itemRect.size())
+            pixmap.fill(Qt.transparent)
+            
+            painter = QPainter(pixmap)
+            # 計算偏移量
+            offset = (self.indexOfTopLevelItem(item)) * itemRect.height()
+            itemRect.moveTop(offset)
+            # 繪出至pixmap
+            self.render(painter, QPoint(0, 0), QRegion(itemRect))
+            painter.end()
+            self.setHeaderHidden(False)
+            
+            # 設置透明度
+            dragImage = QPixmap(pixmap.size())
+            dragImage.fill(Qt.transparent)
+            painter = QPainter(dragImage)
+            painter.setOpacity(0.5)  
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+
+            drag.setPixmap(dragImage)
+            drag.setHotSpot(dragImage.rect().center())
+            drag.exec_(Qt.MoveAction)
+            
+        super().startDrag(supportedActions)
+        
+    def dragEnterEvent(self, event: QDragEnterEvent = None):
+        if self.currentColumn() == 0:
+            event.ignore()
+        else:
+            event.setDropAction(Qt.MoveAction)
+            event.accept()
+            # super().dragEnterEvent(event)
+            
+        
+    def dragMoveEvent(self, event: QDragMoveEvent = None):
+        for i in range(self.topLevelItemCount()):
+            self.topLevelItem(i).setData(1, ROLE_DROPITEM, False)
+                
+        itemSrc = self.currentItem()
+        itemDst = self.itemAt(event.pos())
+        if self.currentColumn() == 0:
+            event.ignore()
+        elif self._HasSameDicom(itemSrc, itemDst):
+            event.ignore()
+        else:
+            itemDst.setData(1, ROLE_DROPITEM, True)
+            event.setDropAction(Qt.MoveAction)
+            event.accept()
+        self.update()
+        
+    def dropEvent(self, event: QDropEvent = None):
+        
+        if event.source() == self:
+            for i in range(self.topLevelItemCount()):
+                self.topLevelItem(i).setData(1, ROLE_DROPITEM, False)
+                
+            drop_pos = event.pos()
+            dropIndex = self.indexAt(drop_pos)
+            itemDrag = self.currentItem()
+            
+            itemTarget = self.itemAt(drop_pos)
+            
+            # 因為加了mimeData，event會執行兩次
+            # 判斷mimeData是自訂的繼承類別，才是我們要的那一次
+            mimeData = event.mimeData()
+            if itemDrag and itemTarget != itemDrag and isinstance(mimeData, MimeData):
+                item = itemDrag.clone()
+                rect = self.visualItemRect(itemTarget)
+                
+                # 檢查拖放的位置，是在item的上半部或下半部
+                # 上半部會將item移到該項上方，反之，下半部就是移到下方
+                dropRow = dropIndex.row()
+                if drop_pos.y() > rect.top() + rect.height() / 2:
+                    dropRow += 1
+                    
+                if not self._HasSameDicom(itemDrag, itemTarget):
+                    self.insertTopLevelItem(dropRow, item)
+                    self.setItemWidget(item, 2, self.itemWidget(itemDrag, 2))
+                    # self.setItemWidget(itemDrag, 2, QWidget())
+                    # 確保在完成拖曳事件後，才設定拖曳項為current，如果不這麼做，會影響拖曳事件，造成不正常的結果
+                    QTimer.singleShot(0, lambda:self._UpdateCurrentItem(item, itemTarget))
+                    
+                    self.takeTopLevelItem(self.indexOfTopLevelItem(itemDrag))
+                    event.setDropAction(Qt.MoveAction)
+                    event.accept()
+                    
+                else:
+                    logger.debug('ignore')
+                    event.ignore()
+            else:
+                event.ignore()
+                
+    def AddItemToGroup(self, item:QTreeWidgetItem):
+        bFoundGroup = False
+        idx = self.topLevelItemCount()
+        owner = item.data(0, ROLE_DICOM)
+        for i in range(idx):
+            if i != self._groupTable[i]:
+                continue
+            
+            if self.topLevelItem(i).data(0, ROLE_DICOM) != owner:
+                bFoundGroup = True
+                self._groupTable[i] = idx
+                self._groupTable.append(i)
+                self._groupNumberTable = np.append(self._groupNumberTable, self._groupNumberTable[i])
+                break
+                
+        if not bFoundGroup:
+            self._groupNumber += 1
+            self._groupTable.append(idx)
+            self._groupNumberTable = np.append(self._groupNumberTable, self._groupNumber)
+            
+        self.addTopLevelItem(item)
+        
+        wdgMark = QWidget()
+        wdgMark.setObjectName(f'group{idx}')
+        layout = QHBoxLayout(wdgMark)
+        layout.setContentsMargins(5, 0, 0, 0)
+        layout.setSpacing(3)
+        
+        button = QPushButton()
+        button.setObjectName(f'btnT{idx}')
+        button.setText(owner)
+        button.setFixedSize(24, 24)
+        button.clicked.connect(self._OnClicked_btnTrajectory)
+        
+        lblGroup = QLabel(str(self._groupNumberTable[-1]))
+        lblGroup.setFixedSize(24, 24)
+        lblGroup.setAlignment(Qt.AlignCenter)
+        layout.addWidget(lblGroup)
+        layout.addWidget(button)
+        layout.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding))
+        
+        wdgMark.setStyleSheet(f"""
+                                #group{idx}{{
+                                background-color:none
+                                }}
+                                """)
+        
+        self.setItemWidget(item, 2, wdgMark)
+        # groupNumer = 0
+        # bFoundGroup = False
+        # if idxParner not in self._groupTable:
+        #     self._groupNumber += 1
+        #     groupNumer = self._groupNumber
+            
+        #     self._groupTable.append(idxParner)
+        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
+        # elif self._groupTable.index(idxParner) == idxParner:
+                
+        #     self._groupTable[idxParner] = len(self._groupTable)
+        #     groupNumer = self._groupNumberTable[idxParner]
+        #     bFoundGroup = True
+        
+        #     self._groupTable.append(idxParner)
+        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
+            
+        return bFoundGroup
+    
+    def UpdateItemGroup(self, idxParner:int, idx:int):
+        if idx in self._groupTable and idxParner in self._groupTable:
+            table = self._groupTable
+            # change old parner
+            idxParnerOfParner = table.index(idxParner)
+            numberOfParner = self._groupNumberTable[idxParner]
+            
+            idxParnerOfIdx = table.index(idx)
+            numberOfIdx = self._groupNumberTable[idx]
+            
+            # new group
+            table[idxParner], table[idx] = idx, idxParner
+            self._groupNumberTable[idx] = numberOfParner
+            
+            if idxParner == idxParnerOfParner:
+                if idx != idxParnerOfIdx:
+                    table[idxParnerOfIdx] = idxParnerOfIdx
+            elif idx == idxParnerOfIdx:
+                if idxParner != idxParnerOfParner:
+                    table[idxParnerOfParner] = idxParnerOfParner
+                    self._groupNumberTable[idxParnerOfParner] = numberOfIdx
+            else:
+                table[idxParnerOfIdx], table[idxParnerOfParner] = idxParnerOfParner, idxParnerOfIdx
+                self._groupNumberTable[idxParnerOfParner] = numberOfIdx
+        else:
+            try:
+                self._groupTable.index(idx)
+                self._groupTable.index(idxParner)
+            except Exception as msg:
+                logger.error(msg)
+                
+    def GetCurrentItem(self, idx:int):
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item.data(0, ROLE_TRAJECTORY) == idx:
+                return item
+            
+    def GetCurrentTrajectory(self):
+        """
+        get current trajectory and it corresponded one
+
+        Returns:
+            dict: {'I':inhale, 'E':exhale}
+        """
+        item = self.currentItem()
+        idx = item.data(0, ROLE_TRAJECTORY)
+        idxParner = self._groupTable[idx]
+        dicomLabel = item.data(0, ROLE_DICOM)
+        
+        if not dicomLabel:
+            logger.error('missing dicom label:[inhale / exhale]')
+            return None
+        
+        # output order: [inhale, exhale]
+        dicOutput = {'I':idx, 'E':idxParner}
+        
+        if dicomLabel == 'E':
+            dicOutput = {'E':idx, 'I':idxParner}
+            
+        if idx == idxParner: 
+            # 只有一條路徑(缺少inhale或exhale)，只取第一條作為current
+            return dict([list(dicOutput.items())[0]])
+        
+        return dicOutput     
+    
+    def GetGroupNumber(self, idx:int = -1):
+        if idx not in range(len(self._groupNumberTable)):
+            return self._groupNumber
+        else:
+            return self._groupNumberTable[idx]
+        
+    def SortItems(self):
+        # 按照群組號碼重新排序index
+        sortedIndex = np.argsort(self._groupNumberTable)
+        sortedTable = self._groupNumberTable[sortedIndex]
+        
+        sortedTable[sortedTable == np.min(sortedTable)] = 1
+        result = [sortedTable[0]]
+        num = 1
+        for i in range(1, sortedTable.shape[0]):
+            if sortedTable[i] != sortedTable[i - 1]:
+                num += 1
+            result.append(num)
+        
+        sortedTable = result
+        self._groupNumberTable[sortedIndex] = sortedTable
+        
+        itemList = []
+        
+        # 將item和itemWidget儲存
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            widget = self.itemWidget(item, 2)
+            itemList.append([item, widget])
+        
+        # number table是按造實際路徑index排序，所以item需要根據路徑索引排列才會一致
+        itemList.sort(key = lambda item:item[0].data(0, ROLE_TRAJECTORY))
+        # 使用排列後的number table indexes來排列item list
+        itemList = np.array(itemList)[sortedIndex]
+        
+        count = self.topLevelItemCount()
+        # 暫存的item將itemWidget保存起來，不然一旦item從treeWidget中移除
+        # 這些item會被C++移除而造成錯誤
+        # 這裡存的是已經經過排列的itemWidget，與item的排序一致
+        for i in range(count):
+            itemTmp = QTreeWidgetItem(self)
+            self.setItemWidget(itemTmp, 2, itemList[i, 1])
+            
+        # 要重新排列item順序，一定要先移除
+        # 已在treeWidget中的item會無視insert指令
+        for i in range(count):
+            self.takeTopLevelItem(0)
+        
+        # 將排列後的item加回treeWidget，並移除暫存的item
+        for i, (item, widget) in enumerate(itemList):
+            widget = self.itemWidget(self.topLevelItem(0), 2)
+            widget.findChild(QLabel).setText(str(sortedTable[i]))
+            self.addTopLevelItem(item)
+            self.setItemWidget(item, 2, widget)
+            self.takeTopLevelItem(0)
+            
+        
+                
+    def _GetItemWidget(self, *items:QTreeWidgetItem, childType:Optional[Type[QObject]] = None):
+        itemWidgets = [self.itemWidget(item, 2) for item in items]
+            
+        if childType is None or not issubclass(childType, QObject):
+            return itemWidgets
+                
+        return [widget.findChild(childType) if isinstance(widget, QWidget) else None for widget in itemWidgets]
+        
+    def _HasSameDicom(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
+        buttonSrc, buttonDst = self._GetItemWidget(itemSrc, itemDst, childType = QPushButton)
+        if isinstance(buttonDst, QPushButton) and isinstance(buttonSrc, QPushButton):
+            return buttonDst.text() == buttonSrc.text()
+        return False
+    
+    def _OnClicked_btnTrajectory(self):
+        button = self.sender()
+        if isinstance(button, QPushButton):
+            # 切換Inhale / Exhale標識
+            owners = np.array(['I', 'E'])
+            objName = button.objectName()
+            if objName:
+                owner, = owners[owners != button.text()]
+                idx = int(objName[4:])
+                
+                itemList = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
+                itemList.sort(key = lambda item:item.data(0, ROLE_TRAJECTORY))
+                itemList[idx].setData(0, ROLE_DICOM, owner)
+                
+                button.setText(owner)
+                # 如果切換後，造成與parner item的owner相同，則解除群組
+                idxParner = self._groupTable[idx]
+                if idx != idxParner and owner == itemList[idxParner].data(0, ROLE_DICOM):
+                    self._groupTable[idx] = idx
+                    self._groupTable[idxParner] = idxParner
+                    
+                    groupNumber = self._groupNumberTable[idx]
+                    
+                    sortedIndex = np.argsort(self._groupNumberTable)
+                    sortedGroupNumber = np.sort(self._groupNumberTable)
+                    
+                    startIndex = np.argwhere(sortedGroupNumber == groupNumber).flatten()
+                    
+                    result = sortedGroupNumber.copy()
+                    for i in range(startIndex[1], sortedGroupNumber.shape[0]):
+                        result[i] = sortedGroupNumber[i] + 1
+                    
+                    del sortedGroupNumber
+                    self._groupNumberTable[sortedIndex] = result
+                    
+                    for i in range(len(itemList)):
+                        strNum = str(self._groupNumberTable[i])
+                        self.itemWidget(itemList[i], 2).findChild(QLabel).setText(strNum)
+                
+                self.signalButtonClicked.emit(idx, owner)
+                
+    def _ReAssembleItemWidget(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
+        labelSrc, labelDst = self._GetItemWidget(itemSrc, itemDst, childType = QLabel)
+        if isinstance(labelSrc, QLabel) and isinstance(labelDst, QLabel):
+            # 對應DISPLAY.trajectory的index
+            idxItemSrc = itemSrc.data(0, ROLE_TRAJECTORY)
+            idxItemDst = itemDst.data(0, ROLE_TRAJECTORY)
+            
+            # QTreeWidgetItem上的QLabel文字
+            # groupNumSrc = labelSrc.text()
+            # groupNumDst = labelDst.text()
+            
+            # # 改變src item的群組號碼與dst item一致(src與dst item配對)
+            # labelSrc.setText(groupNumDst)
+            
+            # idxItemDstParner = self._groupTable[idxItemDst]
+            # if idxItemDstParner != idxItemDst:
+            #     for i in range(self.topLevelItemCount()):
+            #         item = self.topLevelItem(i)
+            #         if item.data(0, ROLE_TRAJECTORY) == idxItemDstParner:
+            #             self.itemWidget(item, 2).findChild(QLabel).setText(groupNumSrc)
+            #             break
+            
+            self.UpdateItemGroup(idxItemDst, idxItemSrc)
+            self.SortItems()
+        
+    def _RestoreItemWidget(self, widgets:list):
+        for i in range(self.topLevelItemCount()):
+            self.setItemWidget(self.topLevelItem(i), 2, widgets[i])
+            
+    def _UpdateCurrentItem(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
+        self._ReAssembleItemWidget(itemSrc, itemDst)
+        
+        self.setCurrentItem(itemSrc, 1)
 class QCustomStyle(QProxyStyle):
     def __init__(self, parent:QWidget):
         super().__init__()
         self.setParent(parent)
         
     def drawPrimitive(
-        self, element: QStyle.PrimitiveElement, 
-        option: QStyleOption | None, 
-        painter: QPainter | None, 
-        widget: QWidget | None
-        ):
+        self, 
+        element: QStyle.PrimitiveElement, 
+        option: QStyleOption = None, 
+        painter: QPainter = None, 
+        widget: QWidget = None
+    ):
         if element == QStyle.PE_FrameFocusRect:
             return
         super().drawPrimitive(element, option, painter, widget)
@@ -36,11 +453,11 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._exceptDate = []
         self._lastSelectedDate = None
         
-        self.layout().setSizeConstraint(QLayout.SetFixedSize)
-        self.setLocale(QLocale.Chinese)
+        # self.layout().setSizeConstraint(QLayout.SetFixedSize)
+        # self.setLocale(QLocale.Chinese)
         self.setNavigationBarVisible(False)
         self.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
-        self.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
+        self.setHorizontalHeaderFormat(QCalendarWidget.ShortDayNames)
         self.setStyle(QCustomStyle(self))
         
         fmt = QTextCharFormat()
@@ -64,15 +481,15 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._InitBottomWidget()
         
         self.currentPageChanged.connect(self._SetDataLabelTimeText)
-        # self.clicked.connect(self._OnClicked)
+        self.clicked.connect(self._OnClicked)
         self.update()
         
-    def closeEvent(self, event: QCloseEvent | None):
+    def closeEvent(self, event: QCloseEvent = None):
         if not self._bConfirm:
             return
         super().closeEvent(event)
         
-    def paintCell(self, painter: QPainter, rect: QRect, date: QDate | date):
+    def paintCell(self, painter: QPainter, rect: QRect, date: QDate):
         if date == self.selectedDate():
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
@@ -134,10 +551,21 @@ class QCustomCalendarWidget(QCalendarWidget):
         self._btnRightMonth.setObjectName('btnRightMonth')
         self._dataLabel.setObjectName('dataLabel')
         
-        self._btnLeftYear.setFixedSize(16, 16)
-        self._btnLeftMonth.setFixedSize(16, 16)
-        self._btnRightYear.setFixedSize(16, 16)
-        self._btnRightMonth.setFixedSize(16, 16)
+        # self._btnLeftYear.setFixedSize(24, 24)
+        # self._btnLeftMonth.setFixedSize(24, 24)
+        # self._btnRightYear.setFixedSize(24, 24)
+        # self._btnRightMonth.setFixedSize(24, 24)
+        self._btnLeftYear.setFixedSize(32, 32)
+        self._btnLeftMonth.setFixedSize(32, 32)
+        self._btnRightYear.setFixedSize(32, 32)
+        self._btnRightMonth.setFixedSize(32, 32)
+        
+        topWidget.setStyleSheet('QPushButton{border-radius:5px;}')
+        
+        self._btnLeftYear.setStyleSheet('image:url(image/calendar_last_year.png)')
+        self._btnLeftMonth.setStyleSheet('image:url(image/calendar_last_month.png)')
+        self._btnRightYear.setStyleSheet('image:url(image/calendar_next_year.png)')
+        self._btnRightMonth.setStyleSheet('image:url(image/calendar_next_month.png)')
         
         hBoxLayout.addWidget(self._btnLeftYear)
         hBoxLayout.addWidget(self._btnLeftMonth)
@@ -206,15 +634,30 @@ class QCustomCalendarWidget(QCalendarWidget):
         elif btnSender == self._btnRightMonth:
             self.showNextMonth()
             
-    def _OnClicked(self, _date:QDate|date):
+    def _OnClicked(self, _date:QDate):
         if _date in self._exceptDate:
-            self.setSelectedDate(QDate(2024, 6, 5))
+            dayOffset = 1
+            dateL = QDate(_date)
+            dateR = QDate(_date)
+            
+            while all(_date in self._exceptDate for _date in [dateL, dateR]):
+                dateL = dateL.addDays(-dayOffset)
+                dateR = dateR.addDays( dayOffset)
+            
+            if dateL not in self._exceptDate:
+                self.setSelectedDate(dateL)
+                self._lastSelectedDate = dateL
+            else:
+                self.setSelectedDate(dateR)
+                self._lastSelectedDate = dateR
+                
             self.showSelectedDate()
-            logger.debug(f'selected date = {self.selectedDate()}')
         else:
             self._lastSelectedDate = _date
             
-    def SetExceptDate(self, dates:list|tuple):
+        self.signalSetCalendarTime.emit(self._lastSelectedDate)
+            
+    def SetExceptDate(self, dates:list):
         self._exceptDate = dates
         
 
@@ -834,7 +1277,7 @@ class MessageBox(QMessageBox):
                 # item.setCenterButtons(True)
         font = QFont()
         font.setFamily('Arial')
-        font.setPointSize(24)
+        font.setPointSize(36)
         
         fontMetrics = QFontMetrics(font)
         widthWidget = min(fontMetrics.width(self.context) + 50, 900)
