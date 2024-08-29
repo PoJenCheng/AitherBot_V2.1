@@ -2050,10 +2050,25 @@ class REGISTRATION(QObject):
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
                 tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
+            except:
+                pass
+        for p in averagePoint:
+            try:
+                pTmp1 = [(p[0]),(p[1]),int(p[2])]
+                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
                 
                 pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
                 tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
+                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
+                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
+                X1 = int(p[2])
+                X2 = int(p[2])+1
+                Y1 = tmpPoint1[2]
+                Y2 = tmpPoint2[2]
+                X = p[2]
+                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
+                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 X1 = int(p[2])
                 X2 = int(p[2])+1
                 Y1 = tmpPoint1[2]
@@ -2066,10 +2081,14 @@ class REGISTRATION(QObject):
                 self.signalProgress.emit(nProgress, 'calculating registrator position...')
             except:
                 pass
+                nProgress = min(nProgress + nStep, 0.9)
+                self.signalProgress.emit(nProgress, 'calculating registrator position...')
         
         self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
         try:
+            markers = self.IdentifyPoint(np.array(resultPoint))
+            # markers = self.IdentifyPoint(averagePoint)
             markers = self.IdentifyPoint(np.array(resultPoint))
             # markers = self.IdentifyPoint(averagePoint)
             self.signalProgress.emit(1, 'registration completed')
@@ -2080,6 +2099,7 @@ class REGISTRATION(QObject):
         # print("-------------------------------------------------------------------")
         ############################################################################################
         ## 如果 IdentifyPoint 失敗, return 候選人, 為了手動註冊 ############################################################################################
+        pointMatrixSorted = np.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         pointMatrixSorted = np.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         if not markers:
             return False, pointMatrixSorted
@@ -2117,6 +2137,7 @@ class REGISTRATION(QObject):
         Y = ImagePositionPatient[1] + x * RowVector[1] + y * ColumnVector[1]
         Z = ImagePositionPatient[2] + x * RowVector[2] + y * ColumnVector[2]
         ############################################################################################
+        return np.array([X,Y,Z])
         return np.array([X,Y,Z])
     
     def GetBallManual(self, candidateBall, pixel2Mm, answer, imageTag):

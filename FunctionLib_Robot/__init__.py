@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 
 LinearMotorCountPerLoop = 360  # 8192 count per loop in encoder
 LinearGearRatio = 1  # screw pitch is 1
-RotationMotorCountPerLoop = 360
+RotationMotorCountPerLoop = 4096
 RotateGearRatio = 50  # H.D. gear ratio
 PointShift = 10  # Distance between ball coordination and robot center
 L_OrginalToRobot = 47.5  # Length from original point to robot point
@@ -73,8 +73,8 @@ EXHALE_AREA = 20
 BreathingCycle_Slope_Threshold = 0.5
 
 # devices retry time
-TIMEOVER_ROBOT = 10
-TIMEOVER_LASER = 3
+TIMEOVER_ROBOT = 60
+TIMEOVER_LASER = 5
 
 # enabled device setting, default is DEVICE_ALL
 DEVICE_NONE = 0

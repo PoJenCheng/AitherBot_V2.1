@@ -1,4 +1,3 @@
-# import pyads
 import pyads
 import math
 import ctypes as ct
@@ -113,9 +112,10 @@ class MOTORCONTROL(QObject):
             # self.plc = pyads.Connection('5.97.65.198.1.1', pyads.PORT_TC3PLC1)
             # ser = serial.Serial(port='COM5', baudrate=9600, timeout=2)
             self.plc.open()
-            print(f'plc open status : {self.plc.is_open}')
-        except:
+            logger.info(f'plc open status : {self.plc.is_open}')
+        except Exception as msg:
             input("Motor or auduino connect fail. Please check it and press 'Enter'")
+            logger.error(msg)
 
     def MotorInitial(self):
         self.plc.write_by_name(self.bMotorStopLabel, False)
@@ -310,20 +310,8 @@ class OperationLight():
         self.bDisplayLight_RE = 'GVL.DisplayLight_RE'
         self.DynamicCompensationLight = 'GVL.DynamicCompensation'
         self.EnableCompensation = 'GVL.EnableCompensation'
+        self.plc = None
         
-        try:
-            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
-            self.plc.open()
-            print(f'plc open status : {self.plc.is_open}')
-            
-            self.plc.write_by_name(self.bDisplayLight_GR,False)
-            self.plc.write_by_name(self.bDisplayLight_OR,False)
-            self.plc.write_by_name(self.bDisplayLight_RE,False)
-        except:
-            input("Motor or auduino connect fail. Please check it and press 'Enter'")
-            self.plc.write_by_name(self.bDisplayLight_GR,False)
-            self.plc.write_by_name(self.bDisplayLight_OR,False)
-            self.plc.write_by_name(self.bDisplayLight_RE,True)
             
     def DisplayRun(self):
         self.plc.write_by_name(self.bDisplayLight_GR,False)
@@ -349,22 +337,33 @@ class OperationLight():
             self.plc.write_by_name(self.DynamicCompensationLight,False)
             EnableCompensation = self.plc.read_by_name(self.EnableCompensation)
         self.plc.write_by_name(self.DynamicCompensationLight,False)
+        
+    def Initialize(obj:'OperationLight'):
+        try:
+            obj.plc = pyads.Connection('5.97.65.198.1.1', 851)
+            # adsState, deviceState = self.plc.read_state()
+            # logger.info(f'ads state = {adsState}, device state = {deviceState}')
+            obj.plc.open()
+            logger.error(f'plc open status : {obj.plc.is_open}')
+            
+            obj.plc.write_by_name(obj.bDisplayLight_GR,False)
+            obj.plc.write_by_name(obj.bDisplayLight_OR,False)
+            obj.plc.write_by_name(obj.bDisplayLight_RE,False)
+        except Exception as msg:
+            input("Motor or auduino connect fail. Please check it and press 'Enter'")
+            logger.error(msg)
+            obj.plc.write_by_name(obj.bDisplayLight_GR,False)
+            obj.plc.write_by_name(obj.bDisplayLight_OR,False)
+            obj.plc.write_by_name(obj.bDisplayLight_RE,True)
     
 
 class RobotSupportArm(QObject):
     signalPedalPress = pyqtSignal(bool)
     signalTargetArrived = pyqtSignal()
     signalAxisDiff = pyqtSignal(int, float)
-    
+    signalProgress = pyqtSignal(str, int)
     def __init__(self):
-        super().__init__()
-        try:
-            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
-            self.plc.open()
-            print(f'plc open status : {self.plc.is_open}')
-        except:
-            input("Motor or auduino connect fail. Please check it and press 'Enter'")
-            
+        super().__init__()   
         self.RobotArmEn1 = 'GVL.RobotArmEn1'
         self.RobotArmEn2 = 'GVL.RobotArmEn2'
         self.SupportMove = 'GVL.SupportMove'
@@ -379,8 +378,22 @@ class RobotSupportArm(QObject):
         # 是否偏離target
         self.bRobotMoveFromTarget = True
         
-        self.plc.write_by_name(self.EnableSupportEn1,False) 
-        self.plc.write_by_name(self.EnableSupportEn2,False)
+        # self.plc.write_by_name(self.EnableSupportEn1,False) 
+        # self.plc.write_by_name(self.EnableSupportEn2,False)
+        
+    def Initialize(self):
+        try:
+            self.plc = pyads.Connection('5.97.65.198.1.1', 851)
+            self.plc.open()
+            print(f'plc open status : {self.plc.is_open}')
+        except:
+            input("Motor or auduino connect fail. Please check it and press 'Enter'")
+            
+        if self.plc.is_open:
+            self.plc.write_by_name(self.EnableSupportEn1,False) 
+            self.plc.write_by_name(self.EnableSupportEn2,False)
+            
+            self.signalProgress.emit('', 100)
     
     def ReadEncoder(self):
         En1 = self.plc.read_by_name(self.RobotArmEn1)
@@ -417,6 +430,8 @@ class RobotSupportArm(QObject):
     
     def SetTargetPos(self):
         self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
+        self.TargetEn1 = 159322
+        self.TargetEn2 = 205927
         self.bRobotMoveFromTarget = False
         return self.TargetEn1, self.TargetEn2
     
@@ -708,7 +723,7 @@ class imageCalibration():
         ueye.is_FreeImageMem(self.camera, self.mem_ptr, self.mem_id)
         ueye.is_ExitCamera(self.camera)
     
-class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
+class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
@@ -735,7 +750,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         frontCamera_ID = 0
         sideCamera_ID = 1
         
-        self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        # self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
         # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
         
         # cameraCheck = False
@@ -834,10 +849,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         if self.bStop:
             return False
         
-        nStep = int(100 / countOfSteps) + 1
+        nStep = int(95 / countOfSteps) + 1
         if bSucceed:
             msg = '[SUCCEED]' + msg
-            self.initProgress = min(self.initProgress + nStep, 100)
+            self.initProgress = min(self.initProgress + nStep, 95)
         else:
             msg = '[ERROR]' + msg
             
@@ -884,27 +899,33 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
         startTime = time()
         # while robotCheckStatus is False:
         # try:
+        logger.info('start connecting motor')
         "Setting Motor ID"
         # self.signalProgress.emit('connecting motor [FLDC_Up]...', 0)
         self.FLDC_Up = MOTORCONTROL(1)
         if self.setInitProgress('connecting motor [FLDC_Up]...') == False:
             return
+        logger.info('connecting motor [FLDC_Up] pass')
         # self.signalProgress.emit('connecting motor [BLDC_Up]...', 10)
         self.BLDC_Up = MOTORCONTROL(2)
         if self.setInitProgress('connecting motor [BLDC_Up]...') == False:
             return
+        logger.info('connecting motor [BLDC_Up] pass')
         # self.signalProgress.emit('connecting motor [FLDC_Down]...', 20)
         self.FLDC_Down = MOTORCONTROL(3)
         if self.setInitProgress('connecting motor [FLDC_Down]...') == False:
             return
+        logger.info('connecting motor [FLDC_Down] pass')
         # self.signalProgress.emit('connecting motor [BLDC_Down]...', 30)
         self.BLDC_Down = MOTORCONTROL(4)
         if self.setInitProgress('connecting motor [BLDC_Down]...') == False:
             return
+        logger.info('connecting motor [BLDC_Down] pass')
         # self.signalProgress.emit('connecting motor [Robot System]...', 40)
         self.RobotSystem = MOTORCONTROL(5)
         if self.setInitProgress('connecting motor [Robot System]...') == False:
             return
+        logger.info('connecting motor [Robot System] pass')
         
         keyMotor = ['FLDC_Up', 'BLDC_Up', 'FLDC_Down', 'BLDC_Down']
         lstMotor = [self.FLDC_Up, self.BLDC_Up, self.FLDC_Down, self.BLDC_Down]
@@ -917,11 +938,19 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
             if self.setInitProgress(f'Initializing motor [{key}]...', ret) == False:
                 self.signalInitFailed.emit(1)
                 return False
-            
-            ret, msg = self.retryFunc(motor.MotorDriverEnable, startTime, key)
+            logger.info(f'Initializing motor [{key}] succeed')
+            msg = ''
+            ret = self.retryFunc(motor.MotorDriverEnable, startTime, key)
+            if isinstance(ret, tuple) and len(ret) > 1:
+                msg = ret[1]
+                ret = ret[0]
             if self.setInitProgress(msg, ret) == False:
                 self.signalInitFailed.emit(DEVICE_ROBOT)
                 return False
+            logger.info(f'motor [{key}] enabled ')
+        
+        OperationLight.Initialize(self)
+            
         self.DisplaySafe()
         self.setInitProgress('Homing process Completed')
 
@@ -1338,8 +1367,8 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
     def HomeProcessing_image(self):
         #先執行一般HomeProcessing
         self.HomeProcessing()
-        self.imageCalibraionProcess_front(self.cameraCali_Front)
-        self.imageCalibraionProcess_side(self.cameraCali_Side)     
+        # self.imageCalibraionProcess_front(self.cameraCali_Front)
+        # self.imageCalibraionProcess_side(self.cameraCali_Side)     
         
         return True
 
@@ -1475,16 +1504,20 @@ class MOTORSUBFUNCTION(MOTORCONTROL, OperationLight,REGISTRATION, QObject):
                 "Calculate rotation and movement of upper layer"
                 upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
                 lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+                print(upperMotion)
+                print(lowerMotion)
+                # upperMotion = [38.48377285883819, 7.959463888190757]
+                # lowerMotion = [38.29635404259213, 8.09430240463848]
 
                 "robot motion"
                 "rotation command"
-                RotationCount_axis3 = float(
-                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-                RotationCount_axis1 = float(
-                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+                RotationCount_axis3 = (float(
+                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360))
+                RotationCount_axis1 = ((float(
+                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3))
                 "Linear motion command"
-                LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
-                LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+                LinearCount_axis2 = (upperMotion[0]*LinearMotorCountPerLoop)*2
+                LinearCount_axis4 = (lowerMotion[0]*LinearMotorCountPerLoop)*2
                 self.DisplayRun()
                 self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
                                         RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)
@@ -1819,11 +1852,11 @@ class LineLaser(MOTORCONTROL, QObject):
                 self.setProgress('[ERROR]Laser device set profile config ......failed', False)
                 raise ValueError("Error setting profile config: " + str(ret))
         except ValueError as msg:
-            print(msg)
+            logger.error(msg)
             self.signalInitFailed.emit(DEVICE_LASER)
             return
         except ConnectionError as msg:
-            print(msg)
+            logger.error(msg)
             self.signalInitFailed.emit(DEVICE_LASER)
             return
 
