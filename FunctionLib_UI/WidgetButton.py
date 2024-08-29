@@ -137,7 +137,7 @@ class TreeWidget(QTreeWidget):
                     self.setItemWidget(item, 2, self.itemWidget(itemDrag, 2))
                     # self.setItemWidget(itemDrag, 2, QWidget())
                     # 確保在完成拖曳事件後，才設定拖曳項為current，如果不這麼做，會影響拖曳事件，造成不正常的結果
-                    QTimer.singleShot(0, lambda:self._UpdateCurrentItem(item, itemTarget))
+                    QTimer.singleShot(0, lambda:self._ReAssembleItemWidget(item, itemTarget))
                     
                     self.takeTopLevelItem(self.indexOfTopLevelItem(itemDrag))
                     event.setDropAction(Qt.MoveAction)
@@ -247,13 +247,13 @@ class TreeWidget(QTreeWidget):
             except Exception as msg:
                 logger.error(msg)
                 
-    def GetCurrentItem(self, idx:int):
+    def GetItemByIndex(self, idx:int):
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if item.data(0, ROLE_TRAJECTORY) == idx:
                 return item
             
-    def GetCurrentTrajectory(self):
+    def GetCurrentTrajectory(self, bOnlyCurrent = False):
         """
         get current trajectory and it corresponded one
 
@@ -268,6 +268,9 @@ class TreeWidget(QTreeWidget):
         if not dicomLabel:
             logger.error('missing dicom label:[inhale / exhale]')
             return None
+        
+        if bOnlyCurrent:
+            return {dicomLabel:idx}
         
         # output order: [inhale, exhale]
         dicOutput = {'I':idx, 'E':idxParner}
@@ -286,6 +289,49 @@ class TreeWidget(QTreeWidget):
             return self._groupNumber
         else:
             return self._groupNumberTable[idx]
+        
+    def RemoveItem(self, idx:int):
+        if idx >= self.topLevelItemCount():
+            return
+        
+        itemList = []
+        for i in range(self.topLevelItemCount()):
+            itemList.append(self.topLevelItem(i))
+            
+        itemList.sort(key = lambda item:item.data(0, ROLE_TRAJECTORY))
+        for i in range(len(itemList)):
+            if i > idx:
+                itemList[i].setData(0, ROLE_TRAJECTORY, itemList[i].data(0, ROLE_TRAJECTORY) - 1)
+                # widget = self.itemWidget(itemList[i])
+                # if isinstance(widget, QWidget):
+                #     itemList[i].setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
+                    
+        itemIndex = self.indexOfTopLevelItem(itemList[idx])
+        
+        self._groupNumberTable = np.delete(self._groupNumberTable, idx)
+        idxParner = self._groupTable[idx]
+        # 如果刪除目標有配對路徑，將其配對路徑索引指向其自身
+        if idxParner != idx:
+            self._groupTable[idxParner] = idxParner
+        
+        # 將刪除目標的索引值之後的索引，全部遞減 1
+        self._groupTable = np.array(self._groupTable)
+        self._groupTable[self._groupTable > idx] -= 1
+        
+        # 從group table中刪除要移除的對象索引
+        self._groupTable = np.delete(self._groupTable, idx).tolist()
+        
+        # 將current item設為目標索引值的後一個item
+        if idx < self.topLevelItemCount() - 1:
+            idx += 1
+        # 否則為前一個item
+        elif idx > 0:
+            idx -= 1
+        self.setCurrentItem(self.topLevelItem(idx), 1)
+        
+        self.blockSignals(True)
+        self.takeTopLevelItem(itemIndex)
+        self.blockSignals(False)
         
     def SortItems(self):
         # 按照群組號碼重新排序index
@@ -395,38 +441,23 @@ class TreeWidget(QTreeWidget):
                 self.signalButtonClicked.emit(idx, owner)
                 
     def _ReAssembleItemWidget(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
+        ## 將itemSrc與itemDst組成群組
         labelSrc, labelDst = self._GetItemWidget(itemSrc, itemDst, childType = QLabel)
         if isinstance(labelSrc, QLabel) and isinstance(labelDst, QLabel):
             # 對應DISPLAY.trajectory的index
             idxItemSrc = itemSrc.data(0, ROLE_TRAJECTORY)
             idxItemDst = itemDst.data(0, ROLE_TRAJECTORY)
             
-            # QTreeWidgetItem上的QLabel文字
-            # groupNumSrc = labelSrc.text()
-            # groupNumDst = labelDst.text()
-            
-            # # 改變src item的群組號碼與dst item一致(src與dst item配對)
-            # labelSrc.setText(groupNumDst)
-            
-            # idxItemDstParner = self._groupTable[idxItemDst]
-            # if idxItemDstParner != idxItemDst:
-            #     for i in range(self.topLevelItemCount()):
-            #         item = self.topLevelItem(i)
-            #         if item.data(0, ROLE_TRAJECTORY) == idxItemDstParner:
-            #             self.itemWidget(item, 2).findChild(QLabel).setText(groupNumSrc)
-            #             break
-            
             self.UpdateItemGroup(idxItemDst, idxItemSrc)
             self.SortItems()
+            
+        self.setCurrentItem(itemSrc, 1)
         
     def _RestoreItemWidget(self, widgets:list):
         for i in range(self.topLevelItemCount()):
             self.setItemWidget(self.topLevelItem(i), 2, widgets[i])
-            
-    def _UpdateCurrentItem(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
-        self._ReAssembleItemWidget(itemSrc, itemDst)
         
-        self.setCurrentItem(itemSrc, 1)
+        # self.setCurrentItem(itemSrc, 1)
 class QCustomStyle(QProxyStyle):
     def __init__(self, parent:QWidget):
         super().__init__()

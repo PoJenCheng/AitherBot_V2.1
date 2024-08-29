@@ -1,4 +1,5 @@
 
+import nest_asyncio
 import math
 import os
 import subprocess
@@ -51,6 +52,7 @@ from FunctionLib_UI.Ui_formFluoroSlider import *
 import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
+nest_asyncio.apply()
 
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
@@ -262,7 +264,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #Laser =================================================
         self.yellowLightCriteria = yellowLightCriteria_LowAccuracy
         self.greenLightCriteria = greenLightCriteria_LowAccuracy
-        self.showError = None
+        self.showError = False
         self.nLaserErrorCount = 0
         self.lblThreshold.setText('0.004')
         
@@ -410,6 +412,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
         self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
+        
+        self.btnDeleteTrajectory.clicked.connect(self.OnClicked_btnTrajectoryDelete)
+        self.btnLockTrajectory.clicked.connect(self.OnClicked_btnTrajectoryLock)
         
         for combobox in self.dicViewSelector_L.values():
             combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
@@ -683,7 +688,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self._CheckTrajectoryVisibleItem()
         self.treeTrajectory.blockSignals(True)
-        item = self.treeTrajectory.GetCurrentItem(currentIndex)
+        item = self.treeTrajectory.GetItemByIndex(currentIndex)
         self.treeTrajectory.setCurrentItem(item)
         self.prevSelection_trajectory = item
         self.treeTrajectory.blockSignals(False)
@@ -797,19 +802,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
+            logger.debug('ready to initial robot')
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            tRobot = threading.Thread(target = self.robot.Initialize)
-            tRobot.start()
+            logger.debug('ready to start robot thread')
+            # tRobot = threading.Thread(target = self.robot.Initialize)
+            # tRobot.start()
             
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
             self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
-            self.OperationLight = Robot.OperationLight()
+            self.RobotSupportArm.signalProgress.connect(self.Robot_OnLoading)
+            # self.OperationLight = Robot.OperationLight()
             
+            tRobot = threading.Thread(target = self.RobotSystem_Initialize)
+            tRobot.start()
+            
+            logger.debug('ready to initial laser')
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -823,8 +835,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.signalModelCycle.connect(self.Laser_OnSignalUpdateCycle)
             tLaser= threading.Thread(target = self.Laser.Initialize)
             tLaser.start()
-            
-            self.stkScene.setCurrentWidget(self.pgLaser)
         elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -860,8 +870,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgPositionRobot)
-        
-        self._DetectUnexpectedShutdown()
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -895,10 +903,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _GetCurrentTrajectory(self):
+    def _GetCurrentTrajectory(self) -> dict:
         try:
-            items = self.treeTrajectory.GetCurrentTrajectory()
-            return items
+            dicIndex = self.treeTrajectory.GetCurrentTrajectory()
+            return dicIndex
         except Exception as msg:
             logger.critical(msg)
             
@@ -958,11 +966,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             self.videoWidget = videoWidget
         else:
-            videoWidget = layout.itemAt(0).widget()
-            self.player.setVideoOutput(videoWidget)
+            if layout.itemAt(0):
+                videoWidget = layout.itemAt(0).widget()
+                self.player.setVideoOutput(videoWidget)
         
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
+        
+    def _RemoveTrajectoryItem(self):
+        dicTrajectory = self.treeTrajectory.GetCurrentTrajectory(True)
+        if isinstance(dicTrajectory, dict):
+            idx = list(dicTrajectory.values())[0]
+            DISPLAY.trajectory.removeTrajectory(idx)
+        
+            self.treeTrajectory.RemoveItem(idx)
+
+            self.UpdateView()
         
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
@@ -2383,6 +2402,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(iStyle, InteractorStyleWipe):
             iStyle.RotateR()
             
+    def OnClicked_btnTrajectoryDelete(self):
+        self._RemoveTrajectoryItem()
+    
+    def OnClicked_btnTrajectoryLock(self):
+        pass
+            
     def OnClicked_btnTrajectoryList(self, idx:int, owner:str):
         # 切換Inhale / Exhale標識
         # owners = np.array(['I', 'E'])
@@ -3118,6 +3143,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._PlayVedio(self.wdgChangeTool, 'video/InstallHolder.mp4')            
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
+        elif currentWidget == self.pgImportDicom:
+            self._DetectUnexpectedShutdown()
         
         self.CheckStage(index)
         
@@ -3572,6 +3599,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             sleep(0.01)
             percent = i * 0.001
             self.signalDemoHoming.emit(percent)
+            
+    def RobotSystem_Initialize(self):
+        self.robot.Initialize()
+        self.RobotSupportArm.Initialize()
+        # self.OperationLight.Initialize()
                 
     def RobotSystem_OnFailed(self, errDevice:int):
         if errDevice == DEVICE_ROBOT:
@@ -3586,9 +3618,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         #     self.msgbox = msgbox
         #     ret = msgbox.exec_()
-        if self.showError is None:
+        if not self.showError:
             self.showError = True
-            
            
             if ((self.errDevice & DEVICE_LASER) != 0 and self.nLaserErrorCount == 0):
                 # 第一次Laser連線失敗直接重試
@@ -3599,11 +3630,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 logger.warning('Laser device suffered connection error in first switch on, re-connecting...')
                 tLaser = threading.Thread(target = self.Laser.Initialize)
                 tLaser.start()
+                self.showError = False
             else:
                 ret = MessageBox.ShowQuestion(msg + '\nRetry again?', 'Retry', 'Shutdown')
-            
+                self.showError = False
                 if ret == 0:
-                    del self.showError
                     
                     if (self.errDevice & DEVICE_ROBOT) != 0:
                         self.errDevice &= ~DEVICE_ROBOT

@@ -23,7 +23,7 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkCommonExecutionModel import vtkImageAlgorithm
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
-from vtkmodules.vtkFiltersCore import vtkTubeFilter
+from vtkmodules.vtkFiltersCore import vtkTubeFilter, vtkAppendPolyData
 from vtkmodules.vtkFiltersGeneral import vtkCursor2D, vtkCursor3D
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkSphereSource
 from vtkmodules.vtkImagingCore import (
@@ -2050,25 +2050,10 @@ class REGISTRATION(QObject):
             try:
                 pTmp1 = [(p[0]),(p[1]),int(p[2])]
                 tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
-            except:
-                pass
-        for p in averagePoint:
-            try:
-                pTmp1 = [(p[0]),(p[1]),int(p[2])]
-                tmpPoint1 = self.TransformPointVTK(imageTag, pTmp1)
                 
                 pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
                 tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
-                pTmp2 = [(p[0]),(p[1]),int(p[2])+1]
-                tmpPoint2 = self.TransformPointVTK(imageTag, pTmp2)
                 
-                X1 = int(p[2])
-                X2 = int(p[2])+1
-                Y1 = tmpPoint1[2]
-                Y2 = tmpPoint2[2]
-                X = p[2]
-                Pz = (Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1)))/pixel2Mm[2]
-                resultPoint.append([tmpPoint1[0],tmpPoint1[1],Pz, p[0], p[1], p[2]])
                 X1 = int(p[2])
                 X2 = int(p[2])+1
                 Y1 = tmpPoint1[2]
@@ -2081,14 +2066,10 @@ class REGISTRATION(QObject):
                 self.signalProgress.emit(nProgress, 'calculating registrator position...')
             except:
                 pass
-                nProgress = min(nProgress + nStep, 0.9)
-                self.signalProgress.emit(nProgress, 'calculating registrator position...')
         
         self.signalProgress.emit(0.9, 'calculating axis...')
         ## 辨識定位球方向 ############################################################################################
         try:
-            markers = self.IdentifyPoint(np.array(resultPoint))
-            # markers = self.IdentifyPoint(averagePoint)
             markers = self.IdentifyPoint(np.array(resultPoint))
             # markers = self.IdentifyPoint(averagePoint)
             self.signalProgress.emit(1, 'registration completed')
@@ -2099,7 +2080,6 @@ class REGISTRATION(QObject):
         # print("-------------------------------------------------------------------")
         ############################################################################################
         ## 如果 IdentifyPoint 失敗, return 候選人, 為了手動註冊 ############################################################################################
-        pointMatrixSorted = np.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         pointMatrixSorted = np.concatenate((pointMatrixSorted_xy, pointMatrixSorted_yz, pointMatrixSorted_xz), axis = 0)
         if not markers:
             return False, pointMatrixSorted
@@ -2137,7 +2117,6 @@ class REGISTRATION(QObject):
         Y = ImagePositionPatient[1] + x * RowVector[1] + y * ColumnVector[1]
         Z = ImagePositionPatient[2] + x * RowVector[2] + y * ColumnVector[2]
         ############################################################################################
-        return np.array([X,Y,Z])
         return np.array([X,Y,Z])
     
     def GetBallManual(self, candidateBall, pixel2Mm, answer, imageTag):
@@ -6223,7 +6202,8 @@ class StippleLine():
         self.spacing = spacing
         self.colors = colors
         self.renderer = None
-        
+        self.appendPoly = vtkAppendPolyData()
+        self.actorLine = vtkActor2D()
         self.setPosition(startPoint, endPoint)
         
         # vector = self.endPoint - self.startPoint
@@ -6259,6 +6239,9 @@ class StippleLine():
         #     if np.linalg.norm(lineEnd - self.startPoint) > length:
         #         lineEnd = self.endPoint
                 
+    def remove(self, renderer:vtkRenderer):
+        renderer.RemoveActor(self.actorLine)
+    
     def setPosition(self, startPoint:_ArrayLike = None, endPoint:_ArrayLike = None):
         assert(startPoint is not None and endPoint is not None), 'must have startPoint or endPoint'
         
@@ -6274,34 +6257,37 @@ class StippleLine():
         if length > 0:
             vector = vector / length
         
-        self.stippeLines = []
+        # self.stippeLines = []
         lineStart = self.startPoint.copy()
         lineEnd = self.startPoint + vector * self.spacing
         
         # clear old actor
-        if self.renderer is not None:
-            for line in self.stippeLines:
-                self.renderer.RemoveActor(line)
-            self.stippeLines = []
+        # if self.renderer is not None:
+        #     for line in self.stippeLines:
+        #         self.renderer.RemoveActor(line)
+        #     self.stippeLines = []
+        
         
         while np.linalg.norm(lineStart - self.startPoint) < length:
             lineSource = vtkLineSource()
             lineSource.SetPoint1(lineStart)
             lineSource.SetPoint2(lineEnd)
-
-            lineMapper2D = vtkPolyDataMapper2D()
-            lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
             
-            c = vtkCoordinate()
-            c.SetCoordinateSystemToWorld()
-            lineMapper2D.SetTransformCoordinate(c)
+            self.appendPoly.AddInputConnection(lineSource.GetOutputPort())
+
+            # lineMapper2D = vtkPolyDataMapper2D()
+            # lineMapper2D.SetInputConnection(lineSource.GetOutputPort())
+            
+            # c = vtkCoordinate()
+            # c.SetCoordinateSystemToWorld()
+            # lineMapper2D.SetTransformCoordinate(c)
                 
-            actorLine = vtkActor2D()
-            actorLine.SetMapper(lineMapper2D)
-            actorLine.GetProperty().SetColor(self.colors)
-            self.stippeLines.append(actorLine)
-            if self.renderer is not None:
-                self.renderer.AddActor(actorLine)
+            # actorLine = vtkActor2D()
+            # actorLine.SetMapper(lineMapper2D)
+            # actorLine.GetProperty().SetColor(self.colors)
+            # self.stippeLines.append(actorLine)
+            # if self.renderer is not None:
+            #     self.renderer.AddActor(actorLine)
             
             offset = self.spacing * 2
             lineStart += (vector * offset)
@@ -6309,16 +6295,27 @@ class StippleLine():
             
             if np.linalg.norm(lineEnd - self.startPoint) > length:
                 lineEnd = self.endPoint
+                
+        lineMapper2D = vtkPolyDataMapper2D()
+        lineMapper2D.SetInputConnection(self.appendPoly.GetOutputPort())
+        
+        c = vtkCoordinate()
+        c.SetCoordinateSystemToWorld()
+        lineMapper2D.SetTransformCoordinate(c)
+        
+        self.actorLine.SetMapper(lineMapper2D)
+        self.actorLine.GetProperty().SetColor(self.colors)
         
     def setRenderer(self, renderer:vtkRenderer):
-        for line in self.stippeLines:
-            renderer.AddActor(line)
+        # for line in self.stippeLines:
+        #     renderer.AddActor(line)
+        renderer.AddActor(self.actorLine)
         self.renderer = renderer
         
     def setVisibility(self, bVisible:bool):
-        for line in self.stippeLines:
-            line.SetVisibility(bVisible)
-    
+        # for line in self.stippeLines:
+        #     line.SetVisibility(bVisible)
+        self.actorLine.SetVisibility(bVisible)
 class TrajectoryVTKObj():
     def __init__(self, entryPoint:_ArrayLike, targetPoint:_ArrayLike, colors:_ArrayLike):
         self.stippleLine = None
@@ -6328,6 +6325,7 @@ class TrajectoryVTKObj():
         self.actorBallRed = vtkActor()
         self.entryPoint = np.asarray(entryPoint)
         self.targetPoint = np.asarray(targetPoint)
+        self.lstRenderer = []
         self.bVisible = True
         self.bCurrent = True
         
@@ -6340,6 +6338,11 @@ class TrajectoryVTKObj():
         
         # self.originProperty = vtk.vtkProperty2D()
         # self.originProperty.DeepCopy(self.property)
+        
+    def remove(self):
+        for renderer in self.lstRenderer:
+            self.stippleLine.remove(renderer)
+            renderer.RemoveActor(self.actorLine)
         
     def setCurrent(self, bEnabled:bool = True):
         if self.bVisible:
@@ -6401,6 +6404,8 @@ class TrajectoryVTKObj():
         
     def setRenderer(self, renderer:vtkRenderer):
         renderer.AddActor(self.actorLine)
+        if renderer not in self.lstRenderer:
+            self.lstRenderer.append(renderer)
         # renderer.AddActor(self.actorTube)
         self.stippleLine.setRenderer(renderer)
         
@@ -6548,6 +6553,12 @@ class Trajectory():
             self.currentIndex = count
             return self[self.currentIndex], False
         return self[self.currentIndex], True
+    
+    def removeTrajectory(self, idx:int):
+        if len(self._listTrajectory) > 0:
+            self._listVTKObj[idx].remove()
+            self._listVTKObj.pop(idx)
+            self._listTrajectory.pop(idx)
     
     def setCurrentIndex(self, index:int):
         self.currentIndex = min(len(self._listTrajectory) - 1, max(0, index))

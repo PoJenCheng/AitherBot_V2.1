@@ -73,8 +73,8 @@ EXHALE_AREA = 20
 BreathingCycle_Slope_Threshold = 0.5
 
 # devices retry time
-TIMEOVER_ROBOT = 10
-TIMEOVER_LASER = 3
+TIMEOVER_ROBOT = 60
+TIMEOVER_LASER = 5
 
 # enabled device setting, default is DEVICE_ALL
 DEVICE_NONE = 0
@@ -83,7 +83,7 @@ DEVICE_LASER = 2
 DEVICE_ALL = 3
 
 # 設定啟動的設備，正常是DEVICE_ALL，要個別測試就選擇robot或是laser
-DEVICE_ENABLED = DEVICE_ALL
+DEVICE_ENABLED = DEVICE_NONE
 
 # foot pedal action
 NUM_OF_ACTION = 4
