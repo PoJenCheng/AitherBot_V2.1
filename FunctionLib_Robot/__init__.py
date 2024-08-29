@@ -73,8 +73,8 @@ EXHALE_AREA = 20
 BreathingCycle_Slope_Threshold = 0.5
 
 # devices retry time
-TIMEOVER_ROBOT = 10
-TIMEOVER_LASER = 3
+TIMEOVER_ROBOT = 60
+TIMEOVER_LASER = 5
 
 # enabled device setting, default is DEVICE_ALL
 DEVICE_NONE = 0
