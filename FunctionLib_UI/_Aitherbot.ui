@@ -6505,8 +6505,8 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>294</height>
+                     <width>100</width>
+                     <height>30</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -7034,6 +7034,12 @@ font: 12px Arial;</string>
                         <height>32</height>
                        </size>
                       </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>32</height>
+                       </size>
+                      </property>
                       <layout class="QHBoxLayout" name="horizontalLayout_43">
                        <property name="spacing">
                         <number>2</number>
@@ -7117,8 +7123,8 @@ font: 12px Arial;</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>100</width>
+                     <height>30</height>
                     </rect>
                    </property>
                    <attribute name="label">
@@ -8663,11 +8669,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btnGroup_fusion"/>
-  <buttongroup name="btgDicom"/>
   <buttongroup name="buttonGroup"/>
   <buttongroup name="btnGroup_tool"/>
-  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btnGroup_fusion"/>
  </buttongroups>
 </ui>

@@ -2755,7 +2755,13 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
         
         if InteractorStyleWipe.image1Filter is None:
             InteractorStyleWipe.image1Filter = vtkImageConstantPad()
-            InteractorStyleWipe.image1Filter.SetInputData(image1)
+        
+        reslice = vtkImageReslice()
+        reslice.SetInputData(self.ren1.imageOrigin)
+        reslice.SetResliceTransform(vtkTransform())
+        reslice.SetInterpolationModeToLinear()
+        reslice.SetBackgroundLevel(-1024)
+        self.image1Filter.SetInputConnection(reslice.GetOutputPort())
         
         mapColor1 = vtkImageMapToColors()
         mapColor1.SetInputConnection(self.image1Filter.GetOutputPort())
@@ -5327,7 +5333,7 @@ class RendererObj3D(RendererObj):
     def __init__(self):
         super().__init__()
         self.actorTarget3D = vtkAssembly()
-        
+        self.volume = vtkVolume()
         
     def InitTarget(self, pos = None, size = 40):
         prop3Ds = self.actorTarget3D.GetParts()
@@ -5501,7 +5507,6 @@ class RendererObj3D(RendererObj):
         volumeProperty.SetScalarOpacity(gradientOpacity)
         self.volumeMapper = volumeMapper
         
-        self.volume = vtkVolume()
         self.volume.SetMapper(volumeMapper)
         self.volume.SetProperty(volumeProperty)
         
@@ -6751,7 +6756,7 @@ class DISPLAY(QObject):
         self.irenList = {}
         self.rendererList = {}
             
-    def LoadImage(self, image, image2 = None):
+    def LoadImage(self, image):
         """load image
            use VTK
            for diocm display
@@ -6763,60 +6768,12 @@ class DISPLAY(QObject):
         Returns:
             imageVTK (_numpy.array_): image array in VTK
         """
-        # "init"
-        # self.radius = 3.5
-        # ## 建立好load dicom 所需的 VTK 物件 ############################################################################################
-        # # self.reader = vtkDICOMImageReader()
-        # self.windowLevelLookup = vtkWindowLevelLookupTable()
-        # self.mapColors = vtkImageMapToColors()
-        # self.mapColorReslice = vtkImageMapToColors()
-        
-        # self.cameraSagittal = vtkCamera()
-        # self.cameraCoronal = vtkCamera()
-        # self.cameraAxial = vtkCamera()
-        # self.camera3D = vtkCamera()
-        
-        # self.actorSagittal = vtkImageActor()
-        # self.actorCoronal = vtkImageActor()
-        # self.actorAxial = vtkImageActor()
-        # self.actorCrossSection = vtkImageActor()
-        
-        # self.rendererSagittal = RendererObj()
-        # self.rendererCoronal = RendererObj()
-        # self.rendererAxial = RendererObj()
-        # self.renderer3D = RendererObj3D()
-        # self.rendererCrossSection = RendererCrossSectionObj()
-        
-        # DISPLAY._lstRendererAxial.append(self.rendererAxial)
-        # DISPLAY._lstRendererCoronal.append(self.rendererCoronal)
-        # DISPLAY._lstRendererSagittal.append(self.rendererSagittal)
-        # DISPLAY._lstRenderer3D.append(self.renderer3D)
-        # DISPLAY._lstRendererCrossSection.append(self.rendererCrossSection)
-        
-        # self.rendererList = {}
-        # self.rendererList['3D'] = self.renderer3D
-        # self.rendererList['Sagittal'] = self.rendererSagittal
-        # self.rendererList['Coronal'] = self.rendererCoronal
-        # self.rendererList['Axial'] = self.rendererAxial
-        # self.rendererList['Cross-Section'] = self.rendererCrossSection
-        
-        # "planningPointCenter"
-        # self.actorPointEntry = vtkActor()
-        # self.actorPointTarget = vtkActor()
-        # # self.actorLine = vtkActor()
-        # self.actorLine = vtkActor2D()
-        # self.actorTube = vtkActor()
-        # self.actorBallGreen = vtkActor()
-        # self.actorBallRed = vtkActor()
         
         self.signalProgress.emit(0.5)
         
-        
-        # self.vtkImage = self.reader.GetOutput()
-        # self.vtkImage.SetOrigin(0, 0, 0)
-        self.vtkImage = vtk.vtkImageData()
+        self.vtkImage = vtkImageData()
         self.vtkImage.DeepCopy(image)
-        self.imageOrigin = vtk.vtkImageData()
+        self.imageOrigin = vtkImageData()
         self.imageOrigin.DeepCopy(self.vtkImage)
         
         # 這邊的target和各個renderer中的target是同一個實體
@@ -6830,21 +6787,6 @@ class DISPLAY(QObject):
         self.imageDimensions = self.vtkImage.GetDimensions()
         self.voxelSize = self.vtkImage.GetSpacing()
         
-        # print(f'grayScale = {self.dicomGrayscaleRange}')
-        # print(f'bounds = {self.dicomBoundsRange}')
-        # print(f'dimensions = {self.imageDimensions}')
-        # print(f'pixel = {self.pixel2Mm}')
-        
-        # self.imageReslice = vtkImageReslice()
-        # self.imageReslice.SetInputConnection(self.reader.GetOutputPort())
-        # self.imageReslice.SetOutputDimensionality(2)
-        # self.imageReslice.SetInterpolationModeToLinear()
-        
-        # center = np.array(self.imageDimensions) * np.array(self.pixel2Mm) * 0.5
-        # self.ChangeCrossSectionView(center, True)
-        # self.imageReslice.SetBackgroundLevel(self.dicomGrayscaleRange[0])
-        
-        # self.SetMapColor()
         self.target[:] = np.array(self.imageDimensions) * np.array(self.voxelSize) * 0.5
         self.imagePosition[:] = np.array(self.imageDimensions, dtype = int) * 0.5
         self.SetMapColor()
@@ -6857,9 +6799,6 @@ class DISPLAY(QObject):
         self.signalProgress.emit(1)
         ############################################################################################
         return imageVTK
-    
-    
-    
     
     def SetCameraToPosition(self, pos = None, renderer = None):
         # move camera to select point
