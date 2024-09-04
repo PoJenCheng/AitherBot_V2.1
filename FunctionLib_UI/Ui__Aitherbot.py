@@ -3152,6 +3152,7 @@ class Ui_MainWindow(object):
         self.treeTrajectory.header().setSortIndicatorShown(False)
         self.treeTrajectory.header().setStretchLastSection(True)
         self.gridLayout_45.addWidget(self.treeTrajectory, 1, 0, 1, 1)
+        self.gridLayout_45.addWidget(self.treeTrajectory, 1, 0, 1, 1)
         self.btnAddTrajectory = QtWidgets.QPushButton(self.page)
         self.btnAddTrajectory.setMinimumSize(QtCore.QSize(0, 48))
         self.btnAddTrajectory.setMaximumSize(QtCore.QSize(16777215, 16777215))

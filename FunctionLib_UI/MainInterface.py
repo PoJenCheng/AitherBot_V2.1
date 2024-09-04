@@ -1,5 +1,5 @@
 
-import nest_asyncio
+# import nest_asyncio
 import math
 import os
 import subprocess
@@ -34,9 +34,9 @@ import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_DlgHintBox
 import FunctionLib_UI.Ui_DlgRobotMoving
-import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_homing import *
 from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
@@ -52,7 +52,7 @@ from FunctionLib_UI.Ui_formFluoroSlider import *
 import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
@@ -812,10 +812,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            logger.debug('ready to start robot thread')
-            # tRobot = threading.Thread(target = self.robot.Initialize)
-            # tRobot.start()
-            
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
@@ -875,6 +871,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgPositionRobot)
+        
+            self._DetectUnexpectedShutdown()
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -3698,7 +3696,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def RobotSystem_Initialize(self):
         self.robot.Initialize()
         self.RobotSupportArm.Initialize()
-        # self.OperationLight.Initialize()
                 
     def RobotSystem_OnFailed(self, errDevice:int):
         if errDevice == DEVICE_ROBOT:
@@ -3804,8 +3801,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not self.robot:
             return
         
-        # self.robot.signalProgress.disconnect(self.Robot_OnLoading)
-        self.Robot_HomingProcess()
         self.uiHoming = HomingWidget(self)
         self.uiHoming.finished.connect(lambda:self.NextScene())
         self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
@@ -5101,7 +5096,6 @@ class WidgetProcess(QWidget):
         painter.translate(center)
         
         conical = QConicalGradient(0, 0, self.angle)
-        # conical = QConicalGradient(center.x(), center.y(), self.angle)
         conical.setColorAt(0, Qt.transparent)
         conical.setColorAt(0.4, Qt.red)
         conical.setColorAt(0.6, Qt.blue)
@@ -5111,16 +5105,11 @@ class WidgetProcess(QWidget):
         painter.setBrush(conical)
         self.radius = min(self.radius, centerX, centerY)
         painter.drawPie( - self.radius,  - self.radius, self.radius * 2, self.radius * 2, 0 * 16, int(self.angle * 16))
-        # painter.translate(-center)
         mask = QRegion(center.x() - self.radius, center.y() - self.radius, self.radius * 2, self.radius * 2, QRegion.Ellipse)
         maskRadius = self.radius - self.circleWidth
         mask2 = QRegion(center.x() - maskRadius, center.y() - maskRadius, maskRadius * 2, maskRadius * 2, QRegion.Ellipse)
         
         self.setMask(mask.subtracted(mask2))
-        
-        # painter.drawPie( - self.radius,  - self.radius, self.radius * 2, self.radius * 2, 0 * 16, int(self.angle * 16))
-        
-        # painter.fillRect(mask.boundingRect(), QBrush(conical))
         
     def UpdateProgress(self, percent:float):
         # self.angle = self.angle + self.angleStep
@@ -5129,11 +5118,7 @@ class WidgetProcess(QWidget):
         self.angle = 360.0 * percent
         self.update()
         
-        
-        # if percent >= 1:
-        #     QTimer.singleShot(1000, lambda:self.signalFinished.emit())
-        
-class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
+class HomingWidget(QDialog, Ui_dlgHoming):
     nProgress = 0
     percent = 0
     signalFinish = pyqtSignal()
@@ -5144,11 +5129,6 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
         super().__init__()
         self.setupUi(self)
         
-        
-        # layout.removeWidget(self.wdgProcess)
-        # layout.addWidget(self.wdgProcess, 1, 2, Qt.AlignCenter)
-        
-        # self.wdgHoming.setStyleSheet('border-image:url(image/robot.png)')
         self.player = QMediaPlayer()
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/Homing Robot.mp4')))
         
@@ -5162,32 +5142,10 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
-        # layout = self.layout()
-        layout = self.layoutH
-        naviButton = NaviButton(self)
-        naviButton.CopyPropertyFrom(self.btnStartHoming)
-        layout.removeWidget(self.btnStartHoming)
-        # layout.addWidget(naviButton, 1, 1, Qt.AlignCenter)
-        layout.addWidget(naviButton)
-        self.btnStartHoming = naviButton
-        
-        widget = WidgetProcess(self)
-        widget.setMinimumSize(120, 120)
-        # widget.signalPercent.connect(self.OnSignal_Percent)
-        
-        layoutButton = QVBoxLayout(self.btnStartHoming)
-        layoutButton.addWidget(widget)
-        self.circleWidget = widget
-        
         self.initEvent()
         
     def initEvent(self):
         self.btnStartHoming.clicked.connect(self.onClick_StartHoming)
-        self.signalProgress.connect(self.OnSignal_UpdateProgress)
-        # self.t = QTimer()
-        # self.t.timeout.connect(self.onTimeout)
-        
-        # self.circleWidget.signalFinished.connect(self.OnSignal_Finished)
         
     def onClick_StartHoming(self):
         styleSheet = self.btnStartHoming.styleSheet()
@@ -5198,38 +5156,33 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
             for s in substr.split(';'):
                 s = s.strip()
                 if s.startswith("font"):
-                    newStyle = styleSheet.replace(s, 'font:12px Arial')
+                    newStyle = styleSheet.replace(s, 'font:24px Arial')
                     bFound = True
             if bFound:
                 break
         
         if newStyle:
             self.btnStartHoming.setStyleSheet(newStyle)
-            
-        # self.t.start(50)
+        
         self.btnStartHoming.setEnabled(False)
         
-        self.signalHoming.emit()
+        QTimer.singleShot(0, lambda:self.signalHoming.emit())
         
-    def onTimeout(self):
-        pass
-        # self.circleWidget.UpdateProgress()
-        # print('running')
+    # def OnSignal_Idle(self):
+    #     if not hasattr(self, 'timeStart'):
+    #         self.timeStart = 0.0
+        
+    #     self.OnSignal_Percent(self.timeStart / 360)
+    #     self.timeStart += 1
+    #     self.update()
         
     def OnSignal_Percent(self, percent:float):
         self.percent = percent
         percent = min(1, percent)
-        # self.wdgProcess.OnSignal_Percent(percent)
-        # self.btnStartHoming.OnSignal_Percent(percent)
-        # self.circleWidget.UpdateProgress(percent)
-        self.signalProgress.emit(percent)
-        if percent >= 1:
-            # self.t.stop()
-            self.OnSignal_Finished()
-            
-    def OnSignal_UpdateProgress(self, percent:float):
+        
         self.btnStartHoming.OnSignal_Percent(percent)
-        self.circleWidget.UpdateProgress(percent)
+        if percent >= 1:
+            self.OnSignal_Finished()
             
     def OnSignal_Finished(self):
         # self.signalFinish.emit()

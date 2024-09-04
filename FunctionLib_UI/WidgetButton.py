@@ -731,53 +731,6 @@ class WidgetButton(QWidget):
         
     def mouseReleaseEvent(self, event):
         return super().mouseReleaseEvent(event)
-    
-class WidgetHoming(QWidget):
-    count = 0
-    percent = 0.0
-    signalFinished = pyqtSignal()
-    
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-        self.startTime = datetime.now().timestamp()
-        self.mutex = QMutex()
-        self.setAutoFillBackground(True)
-        
-    def paintEvent(self, event: QPaintEvent):
-        painter = QPainter(self)
-        # self.mutex.lock()
-        # painter.begin(self)
-        # painter.setBrush(QBrush(Qt.black))
-        # painter.drawRect(self.rect())
-        
-        painter.setPen(QColor(255, 0, 255))
-        
-        font = QFont()
-        font.setFamily('Arial')
-        font.setPointSize(10)
-        painter.setFont(font)
-        
-        fontMetrics = QFontMetrics(font)
-        
-        fontRect = fontMetrics.boundingRect('Homing...100%')
-        
-        x = int(self.rect().center().x() - fontRect.width() / 2)
-        y = int(self.rect().center().y() - fontRect.height() / 2)
-        leftTop = QPoint(x, y)
-        
-        
-        text = f'Homing...{self.percent:.0%}'
-        painter.drawText(leftTop.x(), leftTop.y() + fontRect.height(), text)
-        super().paintEvent(event)
-        # painter.end()
-        # self.mutex.unlock()
-        if self.percent >= 1:
-            QTimer.singleShot(1000, lambda:self.signalFinished.emit())
-        
-    def OnSignal_Percent(self, percent:float):
-        self.percent = percent
-        self.update()
-        
 class WidgetProgressing(QWidget):
     
     def __init__(self, parent: QWidget = None):
@@ -833,28 +786,41 @@ class NaviButton(QPushButton):
     
     def __init__(self, parent:QWidget):
         super().__init__(parent)
+        self.rectWidth = 0.0
         
     def paintEvent(self, event):
-        # self.setStyleSheet('font:10pt "Arial"')
-        
+        super().paintEvent(event)
         
         opt = QStyleOption()
         opt.initFrom(self)
         
+        path = QPainterPath()
+        rect = QRectF(self.rect())
+        path.addRoundedRect(rect, 24.0, 24.0)
+        
+        pathSub = QPainterPath()
+        rectSub = QRectF(self.rect())
+        rectSub.moveLeft(self.rectWidth)
+        pathSub.addRect(rectSub)
+        path = path.subtracted(pathSub)
+        
         painter = QStylePainter(self)
-        # self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
-        # self.style().drawControl(QStyle.CE_PushButton, opt, painter, self)
         painter.drawControl(QStyle.CE_PushButton, opt)
         
-        super().paintEvent(event)
+        painter.setPen(Qt.black)
+        painter.drawText(self.rect(), Qt.AlignCenter, self.text())
         
-    def CopyPropertyFrom(self, button:QPushButton):
-        self.setMaximumSize(button.maximumSize())
-        self.setMinimumSize(button.minimumSize())
-        self.setText(button.text())
-        self.setStyleSheet(button.styleSheet())
+        painter.setClipPath(path)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setBrush(QColor(0, 0, 255, 50))
+        painter.drawRect(rect)
+        
+        painter.setPen(Qt.white)
+        painter.drawText(self.rect(), Qt.AlignCenter, self.text())
+        
         
     def OnSignal_Percent(self, percent:float):
+        self.rectWidth = self.width() * percent
         self.setText(f'Homing...{percent:.1%}')
         self.update()
         
