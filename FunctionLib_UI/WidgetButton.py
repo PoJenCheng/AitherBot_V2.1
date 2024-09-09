@@ -137,7 +137,7 @@ class TreeWidget(QTreeWidget):
                     self.setItemWidget(item, 2, self.itemWidget(itemDrag, 2))
                     # self.setItemWidget(itemDrag, 2, QWidget())
                     # 確保在完成拖曳事件後，才設定拖曳項為current，如果不這麼做，會影響拖曳事件，造成不正常的結果
-                    QTimer.singleShot(0, lambda:self._UpdateCurrentItem(item, itemTarget))
+                    QTimer.singleShot(0, lambda:self._ReAssembleItemWidget(item, itemTarget))
                     
                     self.takeTopLevelItem(self.indexOfTopLevelItem(itemDrag))
                     event.setDropAction(Qt.MoveAction)
@@ -247,13 +247,13 @@ class TreeWidget(QTreeWidget):
             except Exception as msg:
                 logger.error(msg)
                 
-    def GetCurrentItem(self, idx:int):
+    def GetItemByIndex(self, idx:int):
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if item.data(0, ROLE_TRAJECTORY) == idx:
                 return item
             
-    def GetCurrentTrajectory(self):
+    def GetCurrentTrajectory(self, bOnlyCurrent = False):
         """
         get current trajectory and it corresponded one
 
@@ -268,6 +268,9 @@ class TreeWidget(QTreeWidget):
         if not dicomLabel:
             logger.error('missing dicom label:[inhale / exhale]')
             return None
+        
+        if bOnlyCurrent:
+            return {dicomLabel:idx}
         
         # output order: [inhale, exhale]
         dicOutput = {'I':idx, 'E':idxParner}
@@ -286,6 +289,49 @@ class TreeWidget(QTreeWidget):
             return self._groupNumber
         else:
             return self._groupNumberTable[idx]
+        
+    def RemoveItem(self, idx:int):
+        if idx >= self.topLevelItemCount():
+            return
+        
+        itemList = []
+        for i in range(self.topLevelItemCount()):
+            itemList.append(self.topLevelItem(i))
+            
+        itemList.sort(key = lambda item:item.data(0, ROLE_TRAJECTORY))
+        for i in range(len(itemList)):
+            if i > idx:
+                itemList[i].setData(0, ROLE_TRAJECTORY, itemList[i].data(0, ROLE_TRAJECTORY) - 1)
+                # widget = self.itemWidget(itemList[i])
+                # if isinstance(widget, QWidget):
+                #     itemList[i].setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
+                    
+        itemIndex = self.indexOfTopLevelItem(itemList[idx])
+        
+        self._groupNumberTable = np.delete(self._groupNumberTable, idx)
+        idxParner = self._groupTable[idx]
+        # 如果刪除目標有配對路徑，將其配對路徑索引指向其自身
+        if idxParner != idx:
+            self._groupTable[idxParner] = idxParner
+        
+        # 將刪除目標的索引值之後的索引，全部遞減 1
+        self._groupTable = np.array(self._groupTable)
+        self._groupTable[self._groupTable > idx] -= 1
+        
+        # 從group table中刪除要移除的對象索引
+        self._groupTable = np.delete(self._groupTable, idx).tolist()
+        
+        # 將current item設為目標索引值的後一個item
+        if idx < self.topLevelItemCount() - 1:
+            idx += 1
+        # 否則為前一個item
+        elif idx > 0:
+            idx -= 1
+        self.setCurrentItem(self.topLevelItem(idx), 1)
+        
+        self.blockSignals(True)
+        self.takeTopLevelItem(itemIndex)
+        self.blockSignals(False)
         
     def SortItems(self):
         # 按照群組號碼重新排序index
@@ -395,38 +441,23 @@ class TreeWidget(QTreeWidget):
                 self.signalButtonClicked.emit(idx, owner)
                 
     def _ReAssembleItemWidget(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
+        ## 將itemSrc與itemDst組成群組
         labelSrc, labelDst = self._GetItemWidget(itemSrc, itemDst, childType = QLabel)
         if isinstance(labelSrc, QLabel) and isinstance(labelDst, QLabel):
             # 對應DISPLAY.trajectory的index
             idxItemSrc = itemSrc.data(0, ROLE_TRAJECTORY)
             idxItemDst = itemDst.data(0, ROLE_TRAJECTORY)
             
-            # QTreeWidgetItem上的QLabel文字
-            # groupNumSrc = labelSrc.text()
-            # groupNumDst = labelDst.text()
-            
-            # # 改變src item的群組號碼與dst item一致(src與dst item配對)
-            # labelSrc.setText(groupNumDst)
-            
-            # idxItemDstParner = self._groupTable[idxItemDst]
-            # if idxItemDstParner != idxItemDst:
-            #     for i in range(self.topLevelItemCount()):
-            #         item = self.topLevelItem(i)
-            #         if item.data(0, ROLE_TRAJECTORY) == idxItemDstParner:
-            #             self.itemWidget(item, 2).findChild(QLabel).setText(groupNumSrc)
-            #             break
-            
             self.UpdateItemGroup(idxItemDst, idxItemSrc)
             self.SortItems()
+            
+        self.setCurrentItem(itemSrc, 1)
         
     def _RestoreItemWidget(self, widgets:list):
         for i in range(self.topLevelItemCount()):
             self.setItemWidget(self.topLevelItem(i), 2, widgets[i])
-            
-    def _UpdateCurrentItem(self, itemSrc:QTreeWidgetItem, itemDst:QTreeWidgetItem):
-        self._ReAssembleItemWidget(itemSrc, itemDst)
         
-        self.setCurrentItem(itemSrc, 1)
+        # self.setCurrentItem(itemSrc, 1)
 class QCustomStyle(QProxyStyle):
     def __init__(self, parent:QWidget):
         super().__init__()
@@ -700,53 +731,6 @@ class WidgetButton(QWidget):
         
     def mouseReleaseEvent(self, event):
         return super().mouseReleaseEvent(event)
-    
-class WidgetHoming(QWidget):
-    count = 0
-    percent = 0.0
-    signalFinished = pyqtSignal()
-    
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-        self.startTime = datetime.now().timestamp()
-        self.mutex = QMutex()
-        self.setAutoFillBackground(True)
-        
-    def paintEvent(self, event: QPaintEvent):
-        painter = QPainter(self)
-        # self.mutex.lock()
-        # painter.begin(self)
-        # painter.setBrush(QBrush(Qt.black))
-        # painter.drawRect(self.rect())
-        
-        painter.setPen(QColor(255, 0, 255))
-        
-        font = QFont()
-        font.setFamily('Arial')
-        font.setPointSize(10)
-        painter.setFont(font)
-        
-        fontMetrics = QFontMetrics(font)
-        
-        fontRect = fontMetrics.boundingRect('Homing...100%')
-        
-        x = int(self.rect().center().x() - fontRect.width() / 2)
-        y = int(self.rect().center().y() - fontRect.height() / 2)
-        leftTop = QPoint(x, y)
-        
-        
-        text = f'Homing...{self.percent:.0%}'
-        painter.drawText(leftTop.x(), leftTop.y() + fontRect.height(), text)
-        super().paintEvent(event)
-        # painter.end()
-        # self.mutex.unlock()
-        if self.percent >= 1:
-            QTimer.singleShot(1000, lambda:self.signalFinished.emit())
-        
-    def OnSignal_Percent(self, percent:float):
-        self.percent = percent
-        self.update()
-        
 class WidgetProgressing(QWidget):
     
     def __init__(self, parent: QWidget = None):
@@ -802,28 +786,41 @@ class NaviButton(QPushButton):
     
     def __init__(self, parent:QWidget):
         super().__init__(parent)
+        self.rectWidth = 0.0
         
     def paintEvent(self, event):
-        # self.setStyleSheet('font:10pt "Arial"')
-        
+        super().paintEvent(event)
         
         opt = QStyleOption()
         opt.initFrom(self)
         
+        path = QPainterPath()
+        rect = QRectF(self.rect())
+        path.addRoundedRect(rect, 24.0, 24.0)
+        
+        pathSub = QPainterPath()
+        rectSub = QRectF(self.rect())
+        rectSub.moveLeft(self.rectWidth)
+        pathSub.addRect(rectSub)
+        path = path.subtracted(pathSub)
+        
         painter = QStylePainter(self)
-        # self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
-        # self.style().drawControl(QStyle.CE_PushButton, opt, painter, self)
         painter.drawControl(QStyle.CE_PushButton, opt)
         
-        super().paintEvent(event)
+        painter.setPen(Qt.black)
+        painter.drawText(self.rect(), Qt.AlignCenter, self.text())
         
-    def CopyPropertyFrom(self, button:QPushButton):
-        self.setMaximumSize(button.maximumSize())
-        self.setMinimumSize(button.minimumSize())
-        self.setText(button.text())
-        self.setStyleSheet(button.styleSheet())
+        painter.setClipPath(path)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setBrush(QColor(0, 0, 255, 50))
+        painter.drawRect(rect)
+        
+        painter.setPen(Qt.white)
+        painter.drawText(self.rect(), Qt.AlignCenter, self.text())
+        
         
     def OnSignal_Percent(self, percent:float):
+        self.rectWidth = self.width() * percent
         self.setText(f'Homing...{percent:.1%}')
         self.update()
         

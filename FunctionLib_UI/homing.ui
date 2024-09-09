@@ -58,7 +58,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QPushButton" name="btnStartHoming">
+      <widget class="NaviButton" name="btnStartHoming">
        <property name="minimumSize">
         <size>
          <width>240</width>
@@ -77,9 +77,14 @@ font: 48pt &quot;Arial&quot;;
 color:#666666;
 border-radius:24px;
 background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
-padding: 0px 20px;
+/*padding: 0px 20px;*/
+/*
 margin-bottom:5px;
-margin-right:3px;
+margin-right:3px;*/
+border-top:1px solid rgb(0, 200, 200);
+border-left:1px solid rgb(0, 200, 200);
+border-bottom:2px solid rgb(0, 155, 155);
+border-right:2px solid rgb(0, 155, 155);
 }
 
 QPushButton:hover{
@@ -88,10 +93,10 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb
 }
 
 QPushButton:pressed{
-margin-top:5px;
-margin-bottom:0px;
-margin-left:3px;
-margin-right:0px;
+border-top:2px solid rgb(0, 155, 155);
+border-left:2px solid rgb(0, 155, 155);
+border-bottom:1px solid rgb(0, 200, 200);
+border-right:1px solid rgb(0, 200, 200);
 }</string>
        </property>
        <property name="text">
@@ -119,6 +124,13 @@ margin-right:0px;
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>NaviButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">FunctionLib_UI.WidgetButton.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

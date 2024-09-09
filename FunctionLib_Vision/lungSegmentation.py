@@ -13,7 +13,7 @@ import threading
 lock = threading.Lock()
 class LungSegmentation(QObject):
     signalProgress = pyqtSignal(float, str)
-    signalCompleted = pyqtSignal(np.ndarray, float)
+    signalCompleted = pyqtSignal(np.ndarray, float, str)
     def __init__(
         self, 
         dicomPath:str = None, 
@@ -37,9 +37,11 @@ class LungSegmentation(QObject):
         
     def apply(
         self, 
+        name:str,
         bUseAI:bool = False, 
         threshold:int = -500, 
-        downSample = 128
+        downSample = 128,
+        bShow = False
     ):
         lock.acquire()
         if bUseAI:
@@ -47,26 +49,29 @@ class LungSegmentation(QObject):
         else:
             bodymask, volumeSize = self._segmentation(self.image_array, threshold, downSample)
         
-        max_value = min(np.max(self.image_array), 600)
-        
-        expose_image = exposure.rescale_intensity(self.image_array, in_range=(threshold, max_value), out_range=(0, 255)).astype(np.uint8)
-        
-        self.signalProgress.emit(0.9, '')
-        
-        # 擴展成RGBA
-        image = np.stack((expose_image, ) * 4, axis = -1, dtype = np.uint8)
-        image[..., 3] = 255
-        
-        labels = np.unique(bodymask)
-        idx = 0
-        for label in labels:
-            if label > 0:
-                image[bodymask == label] =  np.array(self.label_colors[idx], dtype = np.uint8)
-                idx = (idx + 1) % 4
-                
-        self.signalProgress.emit(1, '')
-        
-        self.signalCompleted.emit(image, volumeSize)
+        if bShow:
+            max_value = min(np.max(self.image_array), 600)
+            expose_image = exposure.rescale_intensity(self.image_array, in_range=(threshold, max_value), out_range=(0, 255)).astype(np.uint8)
+            
+            self.signalProgress.emit(0.9, '')
+            
+            # 擴展成RGBA
+            image = np.stack((expose_image, ) * 4, axis = -1, dtype = np.uint8)
+            image[..., 3] = 255
+            
+            labels = np.unique(bodymask)
+            idx = 0
+            for label in labels:
+                if label > 0:
+                    image[bodymask == label] =  np.array(self.label_colors[idx], dtype = np.uint8)
+                    idx = (idx + 1) % 4
+            
+            self.signalProgress.emit(1, '')
+            self.signalCompleted.emit(image, volumeSize, name)
+        else:
+            self.signalProgress.emit(1, '')
+            self.signalCompleted.emit(self.image_array, volumeSize, name)
+            
         # return image, volumeSize
         lock.release()
         
@@ -190,7 +195,7 @@ g_nSlice = 0
 g_axesImage = None
 g_timer = None
 
-def _ShowImage(image:np.ndarray, volumeSize:float):
+def _ShowImage(image:np.ndarray, volumeSize:float, name:str = None):
     global g_image, g_nSlice
     
     # g_image, volumeSize = lungSegment.apply(bUserAI, threshold = threshold, downSample = downSample)
@@ -215,13 +220,16 @@ def _ShowImage(image:np.ndarray, volumeSize:float):
 
     
 def ShowImage(
+    name:str,
     dicomPath:str = None, 
     arrImage:np.ndarray = None, 
     spacing = None, 
     threshold = -500,
     downSample = 128,
     bUserAI:bool = False,
-    signalCallback = None
+    progressCallback = None,
+    returnCallback = None,
+    bShow = False
 ):
     # lungSegment = LungSegmentation('C:/Leon/CT/20220615/S43320/S2010')
     if dicomPath is None and arrImage is None:
@@ -229,12 +237,21 @@ def ShowImage(
         
     lungSegment = LungSegmentation(dicomPath, arrImage, spacing)
     
-    if signalCallback is not None:
-        lungSegment.signalProgress.connect(signalCallback)
+    if progressCallback is not None:
+        lungSegment.signalProgress.connect(progressCallback)
         
-    lungSegment.signalCompleted.connect(_ShowImage)
+    if bShow:
+        lungSegment.signalCompleted.connect(_ShowImage)
         
-    params = {'threshold' : threshold, 'downSample' : downSample}
+    if returnCallback:
+        lungSegment.signalCompleted.connect(returnCallback)
+            
+    params = {
+        'name' : name, 
+        'threshold' : threshold, 
+        'downSample' : downSample, 
+        'bShow' : bShow
+    }
     t = threading.Thread(target = lungSegment.apply, kwargs = params)
     t.start()
     

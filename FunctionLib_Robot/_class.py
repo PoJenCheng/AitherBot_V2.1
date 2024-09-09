@@ -311,23 +311,6 @@ class OperationLight():
         self.DynamicCompensationLight = 'GVL.DynamicCompensation'
         self.EnableCompensation = 'GVL.EnableCompensation'
         self.plc = None
-        # self.Initialize()
-        # try:
-        #     self.plc = pyads.Connection('5.97.65.198.1.1', 851)
-        #     # adsState, deviceState = self.plc.read_state()
-        #     # logger.info(f'ads state = {adsState}, device state = {deviceState}')
-        #     self.plc.open()
-        #     logger.error(f'plc open status : {self.plc.is_open}')
-            
-        #     self.plc.write_by_name(self.bDisplayLight_GR,False)
-        #     self.plc.write_by_name(self.bDisplayLight_OR,False)
-        #     self.plc.write_by_name(self.bDisplayLight_RE,False)
-        # except Exception as msg:
-        #     input("Motor or auduino connect fail. Please check it and press 'Enter'")
-        #     logger.error(msg)
-        #     self.plc.write_by_name(self.bDisplayLight_GR,False)
-        #     self.plc.write_by_name(self.bDisplayLight_OR,False)
-        #     self.plc.write_by_name(self.bDisplayLight_RE,True)
         
             
     def DisplayRun(self):
@@ -380,14 +363,7 @@ class RobotSupportArm(QObject):
     signalAxisDiff = pyqtSignal(int, float)
     signalProgress = pyqtSignal(str, int)
     def __init__(self):
-        super().__init__()
-        # try:
-        #     self.plc = pyads.Connection('5.97.65.198.1.1', 851)
-        #     self.plc.open()
-        #     print(f'plc open status : {self.plc.is_open}')
-        # except:
-        #     input("Motor or auduino connect fail. Please check it and press 'Enter'")
-            
+        super().__init__()   
         self.RobotArmEn1 = 'GVL.RobotArmEn1'
         self.RobotArmEn2 = 'GVL.RobotArmEn2'
         self.SupportMove = 'GVL.SupportMove'
