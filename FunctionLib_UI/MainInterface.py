@@ -34,9 +34,9 @@ import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_DlgHintBox
 import FunctionLib_UI.Ui_DlgRobotMoving
-import FunctionLib_UI.Ui_homing
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_homing import *
 from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
@@ -74,6 +74,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalModelBuildingUI = pyqtSignal(bool)
     signalModelCycle = pyqtSignal(tuple, int)
     signalResetLaserUI = pyqtSignal()
+    signalLoadingImage = pyqtSignal(float, str)
     
     player = QMediaPlayer()
     robot = None
@@ -159,6 +160,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgSystemProcessing = None
         self.widgetSlider = None
         self.tempResumeData = {}
+        self.bFirstCheckResume = True
+        self.bDoneRegistration = False
+        self._preImportData = []
         
         # interactors
         self.lstInteractorWipe = []
@@ -188,6 +192,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicViewSelector_L['RB'] = self.cbxRightBottom
         
         self.dicLastBootData = {}
+        self.dicLungVolumeInfo = {}
         
         self.floatingBox = [WidgetToolBox() for _ in range(3)]
         
@@ -412,6 +417,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.btnDicomLow.clicked.connect(self.OnClicked_btnDicomLow)
         self.btnDicomHigh.clicked.connect(self.OnClicked_btnDicomHigh)
+        
+        self.btnDeleteTrajectory.clicked.connect(self.OnClicked_btnTrajectoryDelete)
+        self.btnLockTrajectory.clicked.connect(self.OnClicked_btnTrajectoryLock)
         
         for combobox in self.dicViewSelector_L.values():
             combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
@@ -685,7 +693,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self._CheckTrajectoryVisibleItem()
         self.treeTrajectory.blockSignals(True)
-        item = self.treeTrajectory.GetCurrentItem(currentIndex)
+        item = self.treeTrajectory.GetItemByIndex(currentIndex)
         self.treeTrajectory.setCurrentItem(item)
         self.prevSelection_trajectory = item
         self.treeTrajectory.blockSignals(False)
@@ -860,8 +868,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgPositionRobot)
-        
-            self._DetectUnexpectedShutdown()
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -895,10 +901,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _GetCurrentTrajectory(self):
+    def _GetCurrentTrajectory(self) -> dict:
         try:
-            items = self.treeTrajectory.GetCurrentTrajectory()
-            return items
+            dicIndex = self.treeTrajectory.GetCurrentTrajectory()
+            return dicIndex
         except Exception as msg:
             logger.critical(msg)
             
@@ -965,6 +971,57 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
+    def _PreImportImage(
+        self, 
+        nType:int,
+        idxPatient:int = None, 
+        idxStudy:int = None, 
+        idxSeries:int = None,
+    ):
+        if nType not in [TYPE_INHALE, TYPE_EXHALE]:
+            return None
+        
+        retData = tuple()
+        path = ''
+        
+        self.signalLoadingImage.emit(0.0, 'Start Loading image...')
+        
+        if None not in (idxPatient, idxStudy, idxSeries):
+            retData = self.reader.GetDataFromIndex(idxPatient, idxStudy, idxSeries)
+            path = list(self.dicDicom.values())[nType]['path']
+        else:
+            retData = self.reader.GetData(index = nType)
+            path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
+            
+        if retData is None:
+            logger.error(f'load inhale dicom failed')
+            return None
+        
+        vtkImage = vtkImageData()
+        vtkImage.DeepCopy(retData[0])
+        
+        dicRetValue = {
+            'arrImage' : self.reader.arrImage.copy(),
+            'path' : str(path),
+            'vtkImage' : vtkImage,
+            'spacing' : retData[1],
+            'dimension' : retData[2]
+        }
+        
+        self.signalLoadingImage.emit(1.0, 'Loading image succeed')
+        
+        return dicRetValue
+        
+    def _RemoveTrajectoryItem(self):
+        dicTrajectory = self.treeTrajectory.GetCurrentTrajectory(True)
+        if isinstance(dicTrajectory, dict):
+            idx = list(dicTrajectory.values())[0]
+            DISPLAY.trajectory.removeTrajectory(idx)
+        
+            self.treeTrajectory.RemoveItem(idx)
+
+            self.UpdateView()
+        
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
@@ -984,47 +1041,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
-            
-            reply = MessageBox.ShowInformation("already registration, reset now?", 'Yes', 'No')
+            # reply = MessageBox.ShowInformation("already registration, reset now?", 'Yes', 'No')
             ## 重新設定儲存的資料 ############################################################################################
             # if reply == QMessageBox.Yes:
-            if reply == 0:
-                # self.dcmTagLow.update({"selectedBall": []})
-                self.currentTag.update({"regBall": []})
-                self.currentTag.update({"flagSelectedBall": False})
-                
-                self.currentTag.update({"candidateBall": []})
-                self.currentTag.update({"selectedBallKey": []})
-                self.currentTag.update({"regMatrix": []})
-                # self.dcmTagLow.update({"sectionTag": []})
-                self.currentTag.update({"selectedPoint": []})
-                self.currentTag.update({"flagSelectedPoint": False})
-                
-                "UI"
-                # self.label_Error_L.setText('Registration difference: mm')
-                # self.Button_ShowRegistration_L.setEnabled(False)
-                # self.comboBox_L.setEnabled(False)
-                # self.Button_SetPoint_L.setEnabled(False)
-                # self.Button_ShowPoint_L.setEnabled(False)
-                
-                "VTK"
-                # try:
-                #     self.dicomLow.RemovePoint()
-                # except:
-                #     pass
-                
-                # self.logUI.info('reset selected ball (Low)')
-                logger.info("reset selected ball (Low)")
-                
-                
-            # else:
-            #     self.ui_SP.close()
-            #     return
-            ############################################################################################
-        "automatic find registration ball center"
+            # if reply == 0:
+            # self.dcmTagLow.update({"selectedBall": []})
+            self.currentTag.update({"regBall": []})
+            self.currentTag.update({"flagSelectedBall": False})
+            
+            self.currentTag.update({"candidateBall": []})
+            self.currentTag.update({"selectedBallKey": []})
+            self.currentTag.update({"regMatrix": []})
+            # self.dcmTagLow.update({"sectionTag": []})
+            self.currentTag.update({"selectedPoint": []})
+            self.currentTag.update({"flagSelectedPoint": False})
+           
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
-            # self.regFn.GetBallAuto2(image, spacing)
             # flag, answer = self.regFn.GetBallAuto(image, spacing, series)
             flag, answer = self.regFn.GetBallAuto2(image, spacing)
             
@@ -1033,10 +1066,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            MessageBox.ShowCritical("get candidate ball error", "OK")
-            logger.error('get candidate ball error / SetRegistration_L() error')
-            logger.critical(e)
             self.dlgSystemProcessing.close()
+            MessageBox.ShowCritical("get candidate ball error", "OK")
+            logger.error(f'get candidate ball error / SetRegistration_L() error:{e}')
+            logger.critical(e)
             return False
         
         if flag == True:
@@ -1050,29 +1083,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.ShowRegistrationDifference()
             ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
-            # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
-            # self.ui_SP.close()
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
         else:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error')
-            
-            # QMessageBox.critical(self, "error", "get candidate ball error")
+            self.dlgSystemProcessing.close()
             MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
             self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
-            # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
             return False
         
+        self.bDoneRegistration = True
         return True
     
     def _ResumeStored(self):
@@ -1131,11 +1151,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             self.reader = DICOM()
             self.reader.LoadPath(pathInhale)
-            if not self.ImportDicom_L(0, 0, 0):
+            retInhale = self._PreImportImage(TYPE_INHALE, 0, 0, 0)
+            
+            if retInhale is None:
+                logger.error('inhale resume data is None')
+                return
+            
+            if not self.ImportDicom_L(retInhale):
                 return
             
             self.reader.LoadPath(pathExhale)
-            if not self.ImportDicom_H(0, 0, 0):
+            retExhale = self._PreImportImage(TYPE_EXHALE, 0, 0, 0)
+            
+            if retExhale is None:
+                logger.error('exhale resume data is None')
+                return
+            
+            if not self.ImportDicom_H(retExhale):
                 return
             
             lstItem = []
@@ -1193,6 +1225,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 image = io.imread(pathImageIn)
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
                 cv2.imencode('.png', image)[1].tofile(pathImageOut)
+                
+    def _SetProgress(self, content:str, signal:pyqtSignal = None, nParts:int = 1, prefix = ''):
+        self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
+        self.dlgSystemProcessing.label_Processing.setText(content)
+        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+        if signal:
+            signal.connect(self.dlgSystemProcessing.UpdateProgress)
+        self.dlgSystemProcessing.show()
+        QApplication.processEvents()
                 
     def _GetBootFileInfo(self, tagName:str):
         try:
@@ -1516,7 +1557,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.UpdateView()
             
     def ImportDicom(self, path):
-        self.dlgSystemProcessing = SystemProcessing()
+        self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
         self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
         self.dlgSystemProcessing.show()
         QApplication.processEvents()
@@ -1581,7 +1622,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     strSpacing = ''
                     if spacingXY is None:
                         # QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
-                        MessageBox.ShowCritical('dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        MessageBox.ShowCritical(f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
                         strSpacing = 'NONE'
                     else:
                         spacing = spacingXY[:]
@@ -1650,107 +1691,84 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                   1:{'selected':[]}
                                   }
                   
-    def ImportDicom_L(self, idxPatient:int = None, idxStudy:int = None, idxSeries:int = None):
+    def ImportDicom_L(
+        self, 
+        dicData:dict
+    ):
         """load inhale (Low breath) DICOM to get image array and metadata
         """
-        ############################################################################################
-        ## 用 VTK 顯示 + 儲存 VT形式的影像 ############################################################################################
-        "VTK stage"
-        retData = tuple()
-        pathInhale = ''
-        if None not in (idxPatient, idxStudy, idxSeries):
-            retData = self.reader.GetDataFromIndex(idxPatient, idxStudy, idxSeries)
-            pathInhale = list(self.dicDicom.values())[0]['path']
-        else:
-            retData = self.reader.GetData(index = 0)
-            pathInhale = self.reader.GetSelectedDicomPath(0).replace('\\', '/')
-            
-        if retData is None:
-            logger.error(f'load inhale dicom failed')
+        
+        if any(data is None for data in dicData.values()):
+            logger.error('preImport data error')
             return False
-            
-        self.vtkImageLow, spacing, dimension, series = retData
-        self.imageL = self.reader.arrImage
+        
+        self.imageL = dicData.get('arrImage')
+        pathInhale = dicData.get('path') 
+        self.vtkImageLow = dicData.get('vtkImage')
+        dimension = dicData.get('dimension')
+        spacing = dicData.get('spacing')
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('ERROR', 'image error')
+            MessageBox.ShowCritical('image error')
             logger.critical('import dicom error')
             return False
         
         # if self.currentTag == self.dicDicom.get(self.btnDicomLow.objectName()):
+        self.signalLoadingImage.emit(0.6, 'Start Visualizing image...')
         
         self.dicomLow.LoadImage(self.vtkImageLow)
         grayscaleRange = self.vtkImageLow.GetScalarRange()
         dicomTag = self.SetDicomData(self.dicomLow, pathInhale, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
-            MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            MessageBox.ShowCritical('missing current tag [LOW]')
             return False
-        
-        # self.currentTag['dimension'] = dimension
-        # self.currentTag['spacing'] = spacing
-        # self.currentTag['series'] = series
             
-        if not SKIP_REGISTRATION:
+        if ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
-                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('Registration Failed')
                 return False
             
         
         self.ShowDicom()
+        
+        self.signalLoadingImage.emit(1.0, 'Loading Inhale image Completed')
         # self.bDicomChanged = False
         
         return True
     
-    def ImportDicom_H(self, idxPatient:int = None, idxStudy:int = None, idxSeries:int = None):
-        "VTK stage"
-        retData = tuple()
-        pathExhale = ''
-        if None not in (idxPatient, idxStudy, idxSeries):
-            retData = self.reader.GetDataFromIndex(idxPatient, idxStudy, idxSeries)
-            pathExhale = list(self.dicDicom.values())[1]['path']
-        else:
-            retData = self.reader.GetData(index = 1)
-            pathExhale = self.reader.GetSelectedDicomPath(1).replace('\\', '/')
-            
-        if retData is None:
-            logger.error(f'load exhale dicom failed')
+    def ImportDicom_H(
+        self, 
+        dicData:dict
+    ):
+        
+        if any(data is None for data in dicData.values()):
+            logger.error('preImport data error')
             return False
         
-        self.vtkImageHigh, spacing, dimension, series = retData
-        self.imageH = self.reader.arrImage
+        self.imageH = dicData.get('arrImage')
+        pathExhale = dicData.get('path') 
+        self.vtkImageHigh = dicData.get('vtkImage')
+        dimension = dicData.get('dimension')
+        spacing = dicData.get('spacing')
         
         if self.vtkImageHigh is None:
-            # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('ERROR', 'image error')
+            MessageBox.ShowCritical('image error')
             return False
-        
-        # self.dicomHigh.LoadImage(self.vtkImageHigh)
         
         grayscaleRange = self.vtkImageHigh.GetScalarRange()
         dicomTag = self.SetDicomData(self.dicomHigh, pathExhale, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [HIGH]')
-            MessageBox.ShowCritical('DICOM TAG ERROR', 'missing current tag [HIGH]')
+            MessageBox.ShowCritical('missing current tag [HIGH]')
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
-        
-        # thresholdValue = int(((grayscaleRange[1] - grayscaleRange[0]) / 6) + grayscaleRange[0])
-        # self.currentTag['ww'] = abs(thresholdValue * 2)
-        # self.currentTag['wl'] = thresholdValue
-        # self.currentTag['dimension'] = dimension
-        # self.currentTag['spacing'] = spacing
-        # self.currentTag['series'] = series
-        
-        if not SKIP_REGISTRATION:
+        if ENABLE_REGISTRATION:
+            self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
-                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('Registration Failed')
                 return False
         
         matrix = self._CalculateExhaleToInhaleMatrix()
@@ -1758,9 +1776,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # transform image
             self.dicomHigh._TransformImage(self.vtkImageHigh, matrix)
         else:
+            self.signalLoadingImage.emit(0.6, 'Start Visualizing image...')
             self.dicomHigh.LoadImage(self.vtkImageHigh)
             
         self.ShowDicom()
+        self.signalLoadingImage.emit(1.0, 'Loading Exhale image Completed')
         # self.bDicomChanged = False
         return True
     
@@ -1807,64 +1827,69 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def ShowFusion(self):
         # setUI to Fusion page
-        self.stkViewer.setCurrentWidget(self.pgCheckFusion)
-        self.tabWidget.setHidden(True)
-        
-        self.ResetView()
-        
-        lstOrientation = [VIEW_AXIAL, VIEW_SAGITTAL, VIEW_CORONAL]
-        self.viewport_L = {}
-        self.viewport_L["Fusion1"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView1, lstOrientation[0], self.sbrFusion1)
-        self.viewport_L["Fusion2"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView2, lstOrientation[1], self.sbrFusion2)
-        self.viewport_L["Fusion3"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView3, lstOrientation[2], self.sbrFusion3)
-        MainInterface.viewport = self.viewport_L
-        
-        # self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
-        self.currentRenderer = self.viewport_L['Fusion1'].renderer
-        
-        self.dicomLow.rendererAxial.SetTargetVisible(False)
-        self.dicomLow.rendererSagittal.SetTargetVisible(False)
-        self.dicomLow.rendererCoronal.SetTargetVisible(False)
-        
-        for view in self.viewport_L.values():
-            iStyle = view.iren.GetInteractorStyle()
-            if isinstance(iStyle, MyInteractorStyle):
-                iStyle.signalObject.ConnectUpdateView(self.UpdateView)
+        if ENABLE_REGISTRATION:
+            self.stkViewer.setCurrentWidget(self.pgCheckFusion)
+            self.tabWidget.setHidden(True)
             
-            view.signalUpdateSlice.connect(self.ChangeSlice_L)
-            view.signalUpdateAll.connect(self.UpdateTarget)
-            view.signalUpdateExcept.connect(self.UpdateTarget)
-            view.signalFocus.connect(self.Focus)
-            view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
-        
-        self.lstInteractorWipe = []
-        
-        for orientation in lstOrientation:
-            interactorWipe = InteractorStyleWipe(orientation)
-            interactorWipe.signalUpdate.ConnectUpdateView(self.UpdateTarget)
-            self.lstInteractorWipe.append(interactorWipe)
-        
-        balls = list(self.dicDicom.values())[0].get('candidateBallVTK')
-        if balls:
-            reference = np.array(*list(balls.values()))
-            self.currentRenderer.SetTarget(reference[0][:3])
+            self.ResetView()
             
-        # add toolbox widget to Views
-        views = [self.wdgFusionView1, self.wdgFusionView2, self.wdgFusionView3]
-        for i in range(3):
-            layoutView = QGridLayout(views[i])
-            layoutView.addItem(QSpacerItem(0, 0, vPolicy = QSizePolicy.Expanding), 0, 1)
-            layoutView.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding), 1, 0)
-            layoutView.addWidget(self.floatingBox[i], 1, 1)
-            self.floatingBox[i].setVisible(False)
+            lstOrientation = [VIEW_AXIAL, VIEW_SAGITTAL, VIEW_CORONAL]
+            self.viewport_L = {}
+            self.viewport_L["Fusion1"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView1, lstOrientation[0], self.sbrFusion1)
+            self.viewport_L["Fusion2"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView2, lstOrientation[1], self.sbrFusion2)
+            self.viewport_L["Fusion3"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView3, lstOrientation[2], self.sbrFusion3)
+            MainInterface.viewport = self.viewport_L
             
-            self.floatingBox[i].signalSliceUp.connect(self.lstInteractorWipe[i].SliceUp)
-            self.floatingBox[i].signalSliceDown.connect(self.lstInteractorWipe[i].SliceDown)
-            views[i].GetRenderWindow().GetInteractor().AddObserver('MouseMoveEvent', self.OnMouseMove_views)
+            # self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
+            self.currentRenderer = self.viewport_L['Fusion1'].renderer
             
-        for wipe in self.lstInteractorWipe:
-            wipe.SetInput(self.dicomLow, self.dicomHigh)
-        
+            self.dicomLow.rendererAxial.SetTargetVisible(False)
+            self.dicomLow.rendererSagittal.SetTargetVisible(False)
+            self.dicomLow.rendererCoronal.SetTargetVisible(False)
+            
+            for view in self.viewport_L.values():
+                iStyle = view.iren.GetInteractorStyle()
+                if isinstance(iStyle, MyInteractorStyle):
+                    iStyle.signalObject.ConnectUpdateView(self.UpdateView)
+                
+                view.signalUpdateSlice.connect(self.ChangeSlice_L)
+                view.signalUpdateAll.connect(self.UpdateTarget)
+                view.signalUpdateExcept.connect(self.UpdateTarget)
+                view.signalFocus.connect(self.Focus)
+                view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
+            
+            self.lstInteractorWipe = []
+            
+            for orientation in lstOrientation:
+                interactorWipe = InteractorStyleWipe(orientation)
+                interactorWipe.signalUpdate.ConnectUpdateView(self.UpdateTarget)
+                self.lstInteractorWipe.append(interactorWipe)
+            
+            balls = list(self.dicDicom.values())[0].get('candidateBallVTK')
+            if balls:
+                reference = np.array(*list(balls.values()))
+                self.currentRenderer.SetTarget(reference[0][:3])
+                
+            # add toolbox widget to Views
+            views = [self.wdgFusionView1, self.wdgFusionView2, self.wdgFusionView3]
+            for i in range(3):
+                layoutView = views[i].layout()
+                if layoutView is None:
+                    layoutView = QGridLayout(views[i])
+                    layoutView.addItem(QSpacerItem(0, 0, vPolicy = QSizePolicy.Expanding), 0, 1)
+                    layoutView.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding), 1, 0)
+                    layoutView.addWidget(self.floatingBox[i], 1, 1)
+                self.floatingBox[i].setVisible(False)
+                
+                self.floatingBox[i].signalSliceUp.connect(self.lstInteractorWipe[i].SliceUp)
+                self.floatingBox[i].signalSliceDown.connect(self.lstInteractorWipe[i].SliceDown)
+                views[i].GetRenderWindow().GetInteractor().AddObserver('MouseMoveEvent', self.OnMouseMove_views)
+                
+            for wipe in self.lstInteractorWipe:
+                wipe.SetInput(self.dicomLow, self.dicomHigh)
+        else:
+            self.stkViewer.setCurrentWidget(self.pg4View)
+            self.tabWidget.setHidden(False)
         
         self.UpdateTarget()
         self.UpdateView()
@@ -2384,6 +2409,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if isinstance(iStyle, InteractorStyleWipe):
             iStyle.RotateR()
             
+    def OnClicked_btnTrajectoryDelete(self):
+        self._RemoveTrajectoryItem()
+    
+    def OnClicked_btnTrajectoryLock(self):
+        pass
+            
     def OnClicked_btnTrajectoryList(self, idx:int, owner:str):
         # 切換Inhale / Exhale標識
         # owners = np.array(['I', 'E'])
@@ -2581,8 +2612,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             view.SetViewPort(viewName, currentDicom.rendererList[viewName])
                             view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
                         else:
-                            # QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
-                            MessageBox.ShowCritical('DICOM ERROR', 'missing current dicom')
+                            MessageBox.ShowCritical('missing current dicom')
                         
                         iStyle = MyInteractorStyle(self, viewName)
                         # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
@@ -2912,32 +2942,60 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.bDicomChanged = True
                 self.btnImport.setEnabled(False)
                 
-                if not self.ImportDicom_L():
-                    return
-                
-                if not self.ImportDicom_H():
-                    return
-                
-                self._SaveBootFile()
-               
-                self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-                self.ShowFusion()
-                
-                # self.dlgSystemProcessing = SystemProcessing(2)
-                # self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-                # self.dlgSystemProcessing.setWindowTitle('Segmentation')
-                # self.dlgSystemProcessing.label_Processing.setText('Lung volume calculating...')
-                # self.dlgSystemProcessing.show()
+                self._SetProgress('Loading dicom image...', self.signalLoadingImage, 2)
                 
                 # tag = list(self.dicDicom.values())
+                retInhale = self._PreImportImage(TYPE_INHALE)
+                retExhale = self._PreImportImage(TYPE_EXHALE)
                 
-                # lung.ShowImage(
-                #     arrImage = self.imageL, 
-                #     spacing = tag[0]['spacing'], 
-                #     downSample = 256,
-                #     signalCallback = self.dlgSystemProcessing.UpdateProgress
-                # )
-                # return
+                if retInhale is None or retExhale is None:
+                    return
+                
+                self._preImportData = [retInhale, retExhale]
+                
+                if ENABLE_LUNG_VOLUME_DETECT:
+                    
+                    self._SetProgress('Calculating Lung Volume...', nParts = 2)
+                    self.dicLungVolumeInfo = {}
+                    
+                    lung.ShowImage(
+                        name = 'inhale',
+                        arrImage = retInhale.get('arrImage'), 
+                        spacing = retInhale.get('spacing'),
+                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                        returnCallback = self.OnSignal_LungVolume
+                    )
+                    
+                    lung.ShowImage(
+                        name = 'exhale',
+                        arrImage = retExhale.get('arrImage'), 
+                        spacing = retExhale.get('spacing'),
+                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                        returnCallback = self.OnSignal_LungVolume
+                    )
+                
+                
+                    # if not self.ImportDicom_L(retInhale):
+                    #     return
+                    
+                    # if not self.ImportDicom_H(retExhale):
+                    #     return
+                    
+                    # self._SaveBootFile()
+                    # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+                    return
+                else:
+                    if not self.ImportDicom_L(retInhale):
+                        return
+                    
+                    if not self.ImportDicom_H(retExhale):
+                        return
+                    
+                    self._SaveBootFile()
+                    self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+                    
+                    self.ShowFusion()
+                    
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
                 self.stkScene.setCurrentWidget(self.pgModelBuilding)
@@ -2996,8 +3054,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         tag = self.dicDicom.get(dicomName)
         if tag is None:
-            # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
-            MessageBox.ShowCritical('dicom error', 'dicom name not exists')
+            MessageBox.ShowCritical('dicom name not exists')
             return False
         
         self.currentTag = tag
@@ -3075,7 +3132,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.Laser_CheckInhale()
         elif currentWidget == self.pgStartExhaleCT:
             self.Laser_CheckExhale()
-        elif currentWidget == self.pgDicomList:   
+        elif currentWidget == self.pgDicomList:
+            self.btnInhale.setChecked(True)
             self.btnImport.setEnabled(False)
                      
             # dlgHint = DlgHint()
@@ -3120,7 +3178,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         elif currentWidget == self.pgImportDicom:
-            self._DetectUnexpectedShutdown()
+            if self.bFirstCheckResume:
+                self._DetectUnexpectedShutdown()
+                self.bFirstCheckResume = False
         
         self.CheckStage(index)
         
@@ -3352,6 +3412,38 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.stkMain.setCurrentWidget(self.pgScene)
         if self.stkScene.currentWidget() == self.pgUnlockRobot:
             self.wdgAnimateUnlock.Start()
+            
+    def OnSignal_LungVolume(self, image:np.ndarray, volumeSize:float, name:str):
+        logger.info(f'dicom:[{name}] volume size = {volumeSize} cm3')
+        self.dicLungVolumeInfo[name] = volumeSize
+        
+        ret = 0
+        if len(self.dicLungVolumeInfo) == 2:
+            if self.dicLungVolumeInfo['inhale'] < self.dicLungVolumeInfo['exhale']:
+                ret = MessageBox.ShowWarning('inhale dicom volume is smaller than exhale.\nSwap image?', 'No', 'Yes')
+            
+            # 0: no swap 1:swap
+            if ret == 0:
+                if not self.ImportDicom_L(self._preImportData[0]):
+                    return
+                
+                if not self.ImportDicom_H(self._preImportData[1]):
+                    return
+            else:
+                if not self.ImportDicom_L(self._preImportData[1]):
+                    return
+                
+                if not self.ImportDicom_H(self._preImportData[0]):
+                    return
+                
+            self._SaveBootFile()
+            self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            
+            self.ShowFusion()
+            index = self.stkScene.currentIndex()
+            index = min(self.stkScene.count() - 1, index + 1)
+            self.stkScene.setCurrentIndex(index)
+            self.dicLungVolumeInfo = {}
         
     def OnSignal_ModelBuilding(self, bValid):
         if bValid:
@@ -3684,8 +3776,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not self.robot:
             return
         
-        # self.robot.signalProgress.disconnect(self.Robot_OnLoading)
-        self.Robot_HomingProcess()
         self.uiHoming = HomingWidget(self)
         self.uiHoming.finished.connect(lambda:self.NextScene())
         self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
@@ -4981,7 +5071,6 @@ class WidgetProcess(QWidget):
         painter.translate(center)
         
         conical = QConicalGradient(0, 0, self.angle)
-        # conical = QConicalGradient(center.x(), center.y(), self.angle)
         conical.setColorAt(0, Qt.transparent)
         conical.setColorAt(0.4, Qt.red)
         conical.setColorAt(0.6, Qt.blue)
@@ -4991,16 +5080,11 @@ class WidgetProcess(QWidget):
         painter.setBrush(conical)
         self.radius = min(self.radius, centerX, centerY)
         painter.drawPie( - self.radius,  - self.radius, self.radius * 2, self.radius * 2, 0 * 16, int(self.angle * 16))
-        # painter.translate(-center)
         mask = QRegion(center.x() - self.radius, center.y() - self.radius, self.radius * 2, self.radius * 2, QRegion.Ellipse)
         maskRadius = self.radius - self.circleWidth
         mask2 = QRegion(center.x() - maskRadius, center.y() - maskRadius, maskRadius * 2, maskRadius * 2, QRegion.Ellipse)
         
         self.setMask(mask.subtracted(mask2))
-        
-        # painter.drawPie( - self.radius,  - self.radius, self.radius * 2, self.radius * 2, 0 * 16, int(self.angle * 16))
-        
-        # painter.fillRect(mask.boundingRect(), QBrush(conical))
         
     def UpdateProgress(self, percent:float):
         # self.angle = self.angle + self.angleStep
@@ -5009,11 +5093,7 @@ class WidgetProcess(QWidget):
         self.angle = 360.0 * percent
         self.update()
         
-        
-        # if percent >= 1:
-        #     QTimer.singleShot(1000, lambda:self.signalFinished.emit())
-        
-class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
+class HomingWidget(QDialog, Ui_dlgHoming):
     nProgress = 0
     percent = 0
     signalFinish = pyqtSignal()
@@ -5024,11 +5104,6 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
         super().__init__()
         self.setupUi(self)
         
-        
-        # layout.removeWidget(self.wdgProcess)
-        # layout.addWidget(self.wdgProcess, 1, 2, Qt.AlignCenter)
-        
-        # self.wdgHoming.setStyleSheet('border-image:url(image/robot.png)')
         self.player = QMediaPlayer()
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile('video/Homing Robot.mp4')))
         
@@ -5042,32 +5117,10 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
         self.player.play()
         self.player.mediaStatusChanged.connect(self.OnStatusChanged)
         
-        # layout = self.layout()
-        layout = self.layoutH
-        naviButton = NaviButton(self)
-        naviButton.CopyPropertyFrom(self.btnStartHoming)
-        layout.removeWidget(self.btnStartHoming)
-        # layout.addWidget(naviButton, 1, 1, Qt.AlignCenter)
-        layout.addWidget(naviButton)
-        self.btnStartHoming = naviButton
-        
-        widget = WidgetProcess(self)
-        widget.setMinimumSize(120, 120)
-        # widget.signalPercent.connect(self.OnSignal_Percent)
-        
-        layoutButton = QVBoxLayout(self.btnStartHoming)
-        layoutButton.addWidget(widget)
-        self.circleWidget = widget
-        
         self.initEvent()
         
     def initEvent(self):
         self.btnStartHoming.clicked.connect(self.onClick_StartHoming)
-        self.signalProgress.connect(self.OnSignal_UpdateProgress)
-        # self.t = QTimer()
-        # self.t.timeout.connect(self.onTimeout)
-        
-        # self.circleWidget.signalFinished.connect(self.OnSignal_Finished)
         
     def onClick_StartHoming(self):
         styleSheet = self.btnStartHoming.styleSheet()
@@ -5078,42 +5131,38 @@ class HomingWidget(QDialog, FunctionLib_UI.Ui_homing.Ui_dlgHoming):
             for s in substr.split(';'):
                 s = s.strip()
                 if s.startswith("font"):
-                    newStyle = styleSheet.replace(s, 'font:12px Arial')
+                    newStyle = styleSheet.replace(s, 'font:24px Arial')
                     bFound = True
             if bFound:
                 break
         
         if newStyle:
             self.btnStartHoming.setStyleSheet(newStyle)
-            
-        # self.t.start(50)
+        
         self.btnStartHoming.setEnabled(False)
+        self.setHidden(True)
+        QTimer.singleShot(0, lambda:self.signalHoming.emit())
         
-        self.signalHoming.emit()
+    # def OnSignal_Idle(self):
+    #     if not hasattr(self, 'timeStart'):
+    #         self.timeStart = 0.0
         
-    def onTimeout(self):
-        pass
-        # self.circleWidget.UpdateProgress()
-        # print('running')
+    #     self.OnSignal_Percent(self.timeStart / 360)
+    #     self.timeStart += 1
+    #     self.update()
         
     def OnSignal_Percent(self, percent:float):
         self.percent = percent
         percent = min(1, percent)
-        # self.wdgProcess.OnSignal_Percent(percent)
-        # self.btnStartHoming.OnSignal_Percent(percent)
-        # self.circleWidget.UpdateProgress(percent)
-        self.signalProgress.emit(percent)
-        if percent >= 1:
-            # self.t.stop()
-            self.OnSignal_Finished()
-            
-    def OnSignal_UpdateProgress(self, percent:float):
+        print(percent)
         self.btnStartHoming.OnSignal_Percent(percent)
-        self.circleWidget.UpdateProgress(percent)
+        if percent >= 1:
+            self.OnSignal_Finished()
             
     def OnSignal_Finished(self):
         # self.signalFinish.emit()
         # self.t.stop()
+        self.setHidden(False)
         self.player.stop()
         self.close()
         
@@ -5636,16 +5685,17 @@ class DlgRobotMoving(QDialog, FunctionLib_UI.Ui_DlgRobotMoving.Ui_DlgRobotMoving
 class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
     signalClose = pyqtSignal()
     
-    def __init__(self, nParts = 1):
+    def __init__(self, nParts = 1, prefix:str = ''):
         """show loading window"""
         ## 顯示 loading 畫面 ############################################################################################
         self.nParts = max(nParts, 1)
         self.nPartSize = 100 // self.nParts
         self.idPart = 0
+        self.prefix = prefix
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
         ############################################################################################
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
     
     def UpdateProgress(self, value:float, content:str):
@@ -5654,7 +5704,7 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.pgbLoadDIcom.setValue(progress)
             
         content = content.replace('\\', '/')
-        self.lblContent.setText('from ' + content)
+        self.lblContent.setText(self.prefix + content)
         if progress >= 100:
             self.signalClose.emit()
             self.close()

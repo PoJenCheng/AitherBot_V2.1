@@ -20,6 +20,6 @@ if len(sys.argv) > 1:
         app.installTranslator(translator)
 
 w = mi.MainInterface(lang)
-w.show()
-# w.showFullScreen()
+# w.show()
+w.showFullScreen()
 sys.exit(app.exec_()) 

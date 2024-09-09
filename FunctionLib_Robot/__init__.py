@@ -112,7 +112,8 @@ IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
-SKIP_REGISTRATION = False
+ENABLE_REGISTRATION = True
+ENABLE_LUNG_VOLUME_DETECT = True
 
 entry_full_1 = np.array([5,20.93392833,-85.62637816])
 target_full_1 = np.array([ 35,80.55959477,-126.77388984])
