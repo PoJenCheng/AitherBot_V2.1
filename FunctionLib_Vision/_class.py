@@ -398,7 +398,7 @@ class DICOM(QObject):
                                     
                         else:
                             series['spacingZ'] = elem
-                                
+                    series['spacingZ'] = np.round(series['spacingZ'], 6)         
                         
                     elemPatientPosition = self.FindTag(slice, (0x18, 0x5100))
                     if elemPatientPosition:
@@ -1886,8 +1886,8 @@ class REGISTRATION(QObject):
             interpolation_method = None
             
             
-        new_shape = (imageHuMm.shape[0], imageHuMm.shape[1], int(imageHuMm.shape[2] * spacing[2]))
-        imageHuMm_resized = np.zeros(new_shape, dtype=np.int16)
+        new_shape = (int(np.round(imageHuMm.shape[0] * spacing[2])), imageHuMm.shape[1], imageHuMm.shape[2])
+        imageHuMm_resized = np.zeros(new_shape, dtype = np.int16)
         
         if interpolation_method is not None:
             for y in range(imageHuMm.shape[1]):
@@ -6272,7 +6272,7 @@ class StippleLine():
         #         self.renderer.RemoveActor(line)
         #     self.stippeLines = []
         
-        
+        self.appendPoly.RemoveAllInputs()
         while np.linalg.norm(lineStart - self.startPoint) < length:
             lineSource = vtkLineSource()
             lineSource.SetPoint1(lineStart)

@@ -807,7 +807,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
-            logger.debug('ready to initial robot')
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
@@ -822,7 +821,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tRobot = threading.Thread(target = self.RobotSystem_Initialize)
             tRobot.start()
             
-            logger.debug('ready to initial laser')
             self.Laser = Robot.LineLaser()
             self.Laser.signalProgress.connect(self.Laser_OnLoading)
             self.Laser.signalModelPassed.connect(self.Laser_OnSignalModelPassed)
@@ -871,8 +869,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.stkMain.setCurrentWidget(self.pgScene)
             self.stkScene.setCurrentWidget(self.pgImportDicom)
             # self.stkScene.setCurrentWidget(self.pgPositionRobot)
-        
-            self._DetectUnexpectedShutdown()
     
     def _GetSeriesFromModelIndex(self, index:QModelIndex):
         model = self.treeDicom.model()
@@ -1071,10 +1067,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.ui_SP.close()
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            MessageBox.ShowCritical("get candidate ball error", "OK")
-            logger.error('get candidate ball error / SetRegistration_L() error')
-            logger.critical(e)
             self.dlgSystemProcessing.close()
+            MessageBox.ShowCritical("get candidate ball error", "OK")
+            logger.error(f'get candidate ball error / SetRegistration_L() error:{e}')
+            logger.critical(e)
             return False
         
         if flag == True:
@@ -1088,27 +1084,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.ShowRegistrationDifference()
             ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
-            # self.ui_CS = CoordinateSystem(self.dcmTagLow, self.dicomLow)
-            # self.ui_SP.close()
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
         else:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error')
-            
-            # QMessageBox.critical(self, "error", "get candidate ball error")
+            self.dlgSystemProcessing.close()
             MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
             self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
-            # self.ui_CS = CoordinateSystemManual(self.currentTag, self.currentTag.get('display'), answer)
-            # self.ui_CS.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-            # self.ui_CS.show()
-            ############################################################################################
-            # self.Button_ShowRegistration_L.setEnabled(True)
             return False
         
         self.bDoneRegistration = True
@@ -1641,7 +1623,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     strSpacing = ''
                     if spacingXY is None:
                         # QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
-                        MessageBox.ShowCritical('dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                        MessageBox.ShowCritical(f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
                         strSpacing = 'NONE'
                     else:
                         spacing = spacingXY[:]
@@ -1729,7 +1711,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('ERROR', 'image error')
+            MessageBox.ShowCritical('image error')
             logger.critical('import dicom error')
             return False
         
@@ -1741,14 +1723,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, pathInhale, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            # QMessageBox.critical(None, 'DICOM TAG ERROR', 'missing current tag [LOW]')
-            MessageBox.ShowCritical( 'DICOM TAG ERROR', 'missing current tag [LOW]')
+            MessageBox.ShowCritical('missing current tag [LOW]')
             return False
             
         if ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
-                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('Registration Failed')
                 return False
             
         
@@ -1775,23 +1755,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         spacing = dicData.get('spacing')
         
         if self.vtkImageHigh is None:
-            # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('ERROR', 'image error')
+            MessageBox.ShowCritical('image error')
             return False
         
         grayscaleRange = self.vtkImageHigh.GetScalarRange()
         dicomTag = self.SetDicomData(self.dicomHigh, pathExhale, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            MessageBox.ShowCritical('DICOM TAG ERROR', 'missing current tag [HIGH]')
+            MessageBox.ShowCritical('missing current tag [HIGH]')
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         if ENABLE_REGISTRATION:
             self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
-                # QMessageBox.critical(None, 'ERROR', 'Registration Failed')
-                MessageBox.ShowCritical('ERROR', 'Registration Failed')
+                MessageBox.ShowCritical('Registration Failed')
                 return False
         
         matrix = self._CalculateExhaleToInhaleMatrix()
@@ -2635,8 +2613,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                             view.SetViewPort(viewName, currentDicom.rendererList[viewName])
                             view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
                         else:
-                            # QMessageBox.critical(None, 'DICOM ERROR', 'missing current dicom')
-                            MessageBox.ShowCritical('DICOM ERROR', 'missing current dicom')
+                            MessageBox.ShowCritical('missing current dicom')
                         
                         iStyle = MyInteractorStyle(self, viewName)
                         # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
@@ -3078,8 +3055,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         tag = self.dicDicom.get(dicomName)
         if tag is None:
-            # QMessageBox.critical(None, 'dicom error', 'dicom name not exists')
-            MessageBox.ShowCritical('dicom error', 'dicom name not exists')
+            MessageBox.ShowCritical('dicom name not exists')
             return False
         
         self.currentTag = tag
@@ -5165,7 +5141,7 @@ class HomingWidget(QDialog, Ui_dlgHoming):
             self.btnStartHoming.setStyleSheet(newStyle)
         
         self.btnStartHoming.setEnabled(False)
-        
+        self.setHidden(True)
         QTimer.singleShot(0, lambda:self.signalHoming.emit())
         
     # def OnSignal_Idle(self):
@@ -5179,7 +5155,7 @@ class HomingWidget(QDialog, Ui_dlgHoming):
     def OnSignal_Percent(self, percent:float):
         self.percent = percent
         percent = min(1, percent)
-        
+        print(percent)
         self.btnStartHoming.OnSignal_Percent(percent)
         if percent >= 1:
             self.OnSignal_Finished()
@@ -5187,6 +5163,7 @@ class HomingWidget(QDialog, Ui_dlgHoming):
     def OnSignal_Finished(self):
         # self.signalFinish.emit()
         # self.t.stop()
+        self.setHidden(False)
         self.player.stop()
         self.close()
         

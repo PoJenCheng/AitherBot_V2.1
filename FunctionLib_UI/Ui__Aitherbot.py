@@ -2191,6 +2191,75 @@ class Ui_MainWindow(object):
 "    background: none;\n"
 "}")
         self.stkViewer.setObjectName("stkViewer")
+        self.pgManualRegistration = QtWidgets.QWidget()
+        self.pgManualRegistration.setObjectName("pgManualRegistration")
+        self.gridLayout_47 = QtWidgets.QGridLayout(self.pgManualRegistration)
+        self.gridLayout_47.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_47.setHorizontalSpacing(0)
+        self.gridLayout_47.setVerticalSpacing(3)
+        self.gridLayout_47.setObjectName("gridLayout_47")
+        self.wdgManualView1 = QVTKRenderWindowInteractor(self.pgManualRegistration)
+        self.wdgManualView1.setObjectName("wdgManualView1")
+        self.gridLayout_47.addWidget(self.wdgManualView1, 0, 0, 1, 1)
+        self.sbrManual1 = QtWidgets.QScrollBar(self.pgManualRegistration)
+        self.sbrManual1.setOrientation(QtCore.Qt.Vertical)
+        self.sbrManual1.setObjectName("sbrManual1")
+        self.gridLayout_47.addWidget(self.sbrManual1, 0, 1, 1, 1)
+        self.wdgManualView2 = QVTKRenderWindowInteractor(self.pgManualRegistration)
+        self.wdgManualView2.setObjectName("wdgManualView2")
+        self.gridLayout_47.addWidget(self.wdgManualView2, 0, 2, 1, 1)
+        self.sbrManual2 = QtWidgets.QScrollBar(self.pgManualRegistration)
+        self.sbrManual2.setOrientation(QtCore.Qt.Vertical)
+        self.sbrManual2.setObjectName("sbrManual2")
+        self.gridLayout_47.addWidget(self.sbrManual2, 0, 3, 1, 1)
+        self.wdgManualView3 = QVTKRenderWindowInteractor(self.pgManualRegistration)
+        self.wdgManualView3.setObjectName("wdgManualView3")
+        self.gridLayout_47.addWidget(self.wdgManualView3, 0, 4, 1, 1)
+        self.sbrManual3 = QtWidgets.QScrollBar(self.pgManualRegistration)
+        self.sbrManual3.setOrientation(QtCore.Qt.Vertical)
+        self.sbrManual3.setObjectName("sbrManual3")
+        self.gridLayout_47.addWidget(self.sbrManual3, 0, 5, 1, 1)
+        self.horizontalLayout_44 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_44.setObjectName("horizontalLayout_44")
+        self.btnConfirmManual = QtWidgets.QPushButton(self.pgManualRegistration)
+        self.btnConfirmManual.setEnabled(True)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btnConfirmManual.sizePolicy().hasHeightForWidth())
+        self.btnConfirmManual.setSizePolicy(sizePolicy)
+        self.btnConfirmManual.setMinimumSize(QtCore.QSize(324, 150))
+        self.btnConfirmManual.setStyleSheet("QPushButton{\n"
+"font: 48pt \"Arial\";\n"
+"color:#666666;\n"
+"border-radius:24px;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));\n"
+"padding: 0px 20px;\n"
+"margin-bottom:5px;\n"
+"margin-right:3px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"color:#aa3333;\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"margin-top:5px;\n"
+"margin-bottom:0px;\n"
+"margin-left:3px;\n"
+"margin-right:0px;\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    color:#bbb;\n"
+"    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(255, 255, 255, 255), stop:0.5 rgba(255, 255, 255, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
+"}")
+        self.btnConfirmManual.setObjectName("btnConfirmManual")
+        self.horizontalLayout_44.addWidget(self.btnConfirmManual)
+        self.gridLayout_47.addLayout(self.horizontalLayout_44, 1, 0, 1, 6)
+        self.gridLayout_47.setRowStretch(0, 1)
+        self.stkViewer.addWidget(self.pgManualRegistration)
         self.pgCheckFusion = QtWidgets.QWidget()
         self.pgCheckFusion.setStyleSheet("QWidget{\n"
 "    background-color: rgb(61, 61, 147);\n"
@@ -3026,7 +3095,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addLayout(self.horizontalLayout_31)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 294))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -3151,7 +3220,6 @@ class Ui_MainWindow(object):
         self.treeTrajectory.header().setMinimumSectionSize(0)
         self.treeTrajectory.header().setSortIndicatorShown(False)
         self.treeTrajectory.header().setStretchLastSection(True)
-        self.gridLayout_45.addWidget(self.treeTrajectory, 1, 0, 1, 1)
         self.gridLayout_45.addWidget(self.treeTrajectory, 1, 0, 1, 1)
         self.btnAddTrajectory = QtWidgets.QPushButton(self.page)
         self.btnAddTrajectory.setMinimumSize(QtCore.QSize(0, 48))
@@ -3303,7 +3371,7 @@ class Ui_MainWindow(object):
         self.gridLayout_45.addWidget(self.wdgToolBarTrajectory, 0, 0, 1, 1)
         self.toolTrajectory.addItem(self.page, "")
         self.page_2 = QtWidgets.QWidget()
-        self.page_2.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.page_2.setGeometry(QtCore.QRect(0, 0, 300, 482))
         self.page_2.setObjectName("page_2")
         self.toolTrajectory.addItem(self.page_2, "")
         self.verticalLayout_4.addWidget(self.toolTrajectory)
@@ -3950,7 +4018,7 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(4)
         self.stkScene.setCurrentIndex(15)
-        self.stkViewer.setCurrentIndex(1)
+        self.stkViewer.setCurrentIndex(0)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxRightBottom.setCurrentIndex(3)
         self.cbxLeftBottom.setCurrentIndex(2)
@@ -4074,6 +4142,7 @@ class Ui_MainWindow(object):
         self.label_title_6.setText(_translate("MainWindow", "Import CT"))
         self.btnCancel.setText(_translate("MainWindow", "Cancel"))
         self.btnImport.setText(_translate("MainWindow", "Confirm"))
+        self.btnConfirmManual.setText(_translate("MainWindow", "Registration"))
         self.groupBox_2.setTitle(_translate("MainWindow", "tool"))
         self.groupBox.setTitle(_translate("MainWindow", "merge mode"))
         self.groupBox_4.setTitle(_translate("MainWindow", "Window / Level Applying"))
