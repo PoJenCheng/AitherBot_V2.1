@@ -2,7 +2,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
-from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
+from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
 
@@ -1063,6 +1063,8 @@ class Indicator(QWidget):
 class AnimationWidget(QWidget):
     timePool = []
     signalIdle = pyqtSignal()
+    clicked = pyqtSignal()
+    
     def __init__(self, imagePath:str, parent = None):
         super().__init__(parent)
         
@@ -1088,6 +1090,13 @@ class AnimationWidget(QWidget):
         rcImage.moveLeft(shift)
         painter.drawImage(QRectF(rcImage), self.image)
         super().paintEvent(event)
+        
+    def mousePressEvent(self, event: QMouseEvent = None):
+        self.clicked.emit()
+        super().mousePressEvent(event)
+        
+    def mouseReleaseEvent(self, event: QMouseEvent = None):
+        super().mouseReleaseEvent(event)
         
     def startAnimation(self):
         self.opacity = max(0, min(10, self.opacity + self.opacityStep))

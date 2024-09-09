@@ -83,7 +83,7 @@ DEVICE_LASER = 2
 DEVICE_ALL = 3
 
 # 設定啟動的設備，正常是DEVICE_ALL，要個別測試就選擇robot或是laser
-DEVICE_ENABLED = DEVICE_NONE
+DEVICE_ENABLED = DEVICE_ALL
 
 # foot pedal action
 NUM_OF_ACTION = 4
