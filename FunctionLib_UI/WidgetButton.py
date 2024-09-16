@@ -174,8 +174,8 @@ class TreeWidget(QTreeWidget):
         wdgMark = QWidget()
         wdgMark.setObjectName(f'group{idx}')
         layout = QHBoxLayout(wdgMark)
-        layout.setContentsMargins(5, 0, 0, 0)
-        layout.setSpacing(3)
+        layout.setContentsMargins(2, 0, 0, 0)
+        layout.setSpacing(2)
         
         button = QPushButton()
         button.setObjectName(f'btnT{idx}')
@@ -188,7 +188,7 @@ class TreeWidget(QTreeWidget):
         lblGroup.setAlignment(Qt.AlignCenter)
         layout.addWidget(lblGroup)
         layout.addWidget(button)
-        layout.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding))
+        layout.addStretch(1)
         
         wdgMark.setStyleSheet(f"""
                                 #group{idx}{{
@@ -197,22 +197,6 @@ class TreeWidget(QTreeWidget):
                                 """)
         
         self.setItemWidget(item, 2, wdgMark)
-        # groupNumer = 0
-        # bFoundGroup = False
-        # if idxParner not in self._groupTable:
-        #     self._groupNumber += 1
-        #     groupNumer = self._groupNumber
-            
-        #     self._groupTable.append(idxParner)
-        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
-        # elif self._groupTable.index(idxParner) == idxParner:
-                
-        #     self._groupTable[idxParner] = len(self._groupTable)
-        #     groupNumer = self._groupNumberTable[idxParner]
-        #     bFoundGroup = True
-        
-        #     self._groupTable.append(idxParner)
-        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
             
         return bFoundGroup
     
@@ -261,6 +245,9 @@ class TreeWidget(QTreeWidget):
             dict: {'I':inhale, 'E':exhale}
         """
         item = self.currentItem()
+        if not item:
+            return None
+        
         idx = item.data(0, ROLE_TRAJECTORY)
         idxParner = self._groupTable[idx]
         dicomLabel = item.data(0, ROLE_DICOM)
@@ -289,6 +276,32 @@ class TreeWidget(QTreeWidget):
             return self._groupNumber
         else:
             return self._groupNumberTable[idx]
+        
+    def GetLock(self):
+        item = self.currentItem()
+        if item:
+            bLocked = item.data(0, ROLE_LOCK)
+            return bLocked
+        return False
+        
+    def LockItem(self):
+        item = self.currentItem()
+        if item:
+            bLocked = item.data(0, ROLE_LOCK)
+            item.setData(0, ROLE_LOCK, not bLocked)
+            widget = self.itemWidget(item, 2)
+            
+            if isinstance(widget, QWidget):
+                lstChildren = widget.children()
+                if len(lstChildren) < 4:
+                    btnLock = QPushButton()
+                    btnLock.setFixedSize(24, 24)
+                    btnLock.setStyleSheet("""
+                                        image:url(image/lock.png)
+                                        """)
+                    widget.layout().insertWidget(2, btnLock)
+                else:
+                    widget.layout().removeWidget(lstChildren[-1])
         
     def RemoveItem(self, idx:int):
         if idx >= self.topLevelItemCount():

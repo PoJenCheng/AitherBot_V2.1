@@ -687,6 +687,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             item.setData(0, ROLE_TRAJECTORY, index)
             item.setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
             item.setData(0, ROLE_DICOM, owner)
+            item.setData(0, ROLE_LOCK, False)
             self.treeTrajectory.AddItemToGroup(item)
             
         self.treeTrajectory.SortItems()
@@ -902,14 +903,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _GetCurrentTrajectory(self) -> dict:
+    def _GetCurrentTrajectory(self, bOnlyCurrent = False) -> tuple[dict, bool]:
         try:
-            dicIndex = self.treeTrajectory.GetCurrentTrajectory()
-            return dicIndex
+            dicIndex = self.treeTrajectory.GetCurrentTrajectory(bOnlyCurrent)
+            bLocked = self.treeTrajectory.GetLock()
+            return dicIndex, bLocked
         except Exception as msg:
             logger.critical(msg)
             
         return None
+    
+    def _GetCurrentTrajectoryLock(self):
+        return self.treeTrajectory.GetLock()
+    
+    def _LockTrajectoryItem(self):
+        self.treeTrajectory.LockItem()
     
     def _ModifyTrajectory(
         self, 
@@ -1014,14 +1022,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return dicRetValue
         
     def _RemoveTrajectoryItem(self):
-        dicTrajectory = self.treeTrajectory.GetCurrentTrajectory(True)
-        if isinstance(dicTrajectory, dict):
-            idx = list(dicTrajectory.values())[0]
-            DISPLAY.trajectory.removeTrajectory(idx)
-        
-            self.treeTrajectory.RemoveItem(idx)
+        ret = self._GetCurrentTrajectory(True)
+        if ret is not None:
+            dicTrajectory, bLocked = ret
+            if isinstance(dicTrajectory, dict) and not bLocked:
+                idx = list(dicTrajectory.values())[0]
+                DISPLAY.trajectory.removeTrajectory(idx)
+            
+                self.treeTrajectory.RemoveItem(idx)
 
-            self.UpdateView()
+                self.UpdateView()
         
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
@@ -1181,7 +1191,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 lstItem.append({'owner':owner})
                     
             self._AddTrajectoryTreeItems(lstItem)
-            
+            if len(lstItem) > 0:
+                self.SetUIEnable_Trajectory(True)
             # self._SaveBootFile()
             
             self.ChangeCurrentDicom(self.btnDicomLow.objectName())
@@ -2148,7 +2159,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if output is None:
                 return
             
-            owner, idx = list(output.items())[0]
+            dicOutput, bLocked = output
+            if bLocked:
+                MessageBox.ShowInformation('Trajectory locked')
+                return
+            
+            owner, idx = list(dicOutput.items())[0]
             if idx > -1:
                 currentDicom.trajectory.setEntry(pickPoint, idx, owner)
                 self.currentTag["entry"] = np.array(pickPoint)
@@ -2176,7 +2192,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if output is None:
                 return
             
-            owner, idx = list(output.items())[0]
+            dicOutput, bLocked = output
+            if bLocked:
+                MessageBox.ShowInformation('Trajectory locked')
+                return
+            
+            owner, idx = list(dicOutput.items())[0]
             if idx > -1:
                 DISPLAY.trajectory.setTarget(pickPoint, idx, owner)
                 self.currentTag["target"] = np.array(pickPoint)
@@ -2203,7 +2224,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.sldTrajectory.blockSignals(True)
             self.sldTrajectory.setValue(nTrajectoryValue)
             self.sldTrajectory.blockSignals(False)
-            self.OnValueChanged_sldTrajectory(nTrajectoryValue)
+            self.OnValueChanged_sldTrajectory(nTrajectoryValue, isEntry = True)
     
     def OnClicked_btnToTarget(self):
         currentDicom = self.currentTag.get('display')
@@ -2414,7 +2435,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self._RemoveTrajectoryItem()
     
     def OnClicked_btnTrajectoryLock(self):
-        pass
+        self._LockTrajectoryItem()
             
     def OnClicked_btnTrajectoryList(self, idx:int, owner:str):
         # 切換Inhale / Exhale標識
@@ -2510,10 +2531,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         gVars['toleranceLaserData'] = fValue
         self.lblThreshold.setText(str(fValue))
     
-    def OnValueChanged_sldTrajectory(self, value):
-        dicOutput = self._GetCurrentTrajectory()
-        if dicOutput is None:
+    def OnValueChanged_sldTrajectory(self, value, isEntry = False):
+        ret = self._GetCurrentTrajectory()
+        if ret is None:
             return
+        
+        dicOutput, *_ = ret
         
         idx = list(dicOutput.values())[0]
         
@@ -2522,8 +2545,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             entry, target  = trajectory
             vector = entry - target
             
-            vectorUnit = vector / np.linalg.norm(vector)
+            lenOfVector = np.linalg.norm(vector)
+            vectorUnit = 0
+            if lenOfVector > 0:
+                vectorUnit = vector / lenOfVector
+                
             newTarget = target + vectorUnit * value
+            if isEntry:
+                newTarget = entry
             
             self.lblDistanceToTarget.setText(f'{value:.2f}mm')
             self.currentTag['trajectoryValue'] = value
@@ -3870,9 +3899,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # pathExhale = dicomExhale.get('trajectory')
         
         try:
-            dicOutput:dict = self._GetCurrentTrajectory()
-            if dicOutput is None:
+            ret = self._GetCurrentTrajectory()
+            if ret is None:
                 return
+            
+            dicOutput, *_ = ret
                 
             if len(dicOutput) < 2:
                 msgMissing = {'I':'Exhale', 'E':'Inhale'}

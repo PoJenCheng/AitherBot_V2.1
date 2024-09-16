@@ -105,6 +105,7 @@ ROLE_DICOM      = Qt.UserRole + 3
 ROLE_GROUP      = Qt.UserRole + 4
 ROLE_TRAJECTORY = Qt.UserRole + 5
 ROLE_DROPITEM   = Qt.UserRole + 6
+ROLE_LOCK       = Qt.UserRole + 7
 
 
 IMG_VISIBLE = 'image/eye2.png'
