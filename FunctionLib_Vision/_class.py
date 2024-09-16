@@ -7435,6 +7435,9 @@ class DISPLAY(QObject):
     def GetHUValue(self, pick_point):        
         
         # convert from image size to image slices
+        if np.any(np.isnan(pick_point)):
+            return ''
+        
         returnValue, imagePos = self.IsPositionInImage(pick_point)
         
         if returnValue == 1:
