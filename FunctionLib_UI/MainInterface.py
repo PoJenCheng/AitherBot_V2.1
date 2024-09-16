@@ -589,13 +589,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if obj in [self.btnInhale, self.btnExhale] and event.type() == QEvent.MouseButtonPress:
             if self.stepDicom == 1:
                 dlg = DlgHintBox()
-                dlg.SetText('select <span style="color:#f00">Inhale dicom</span> series first', self.treeDicom, None)
+                dlg.SetText('select <span style="color:#f00">Inhale dicom</span> series first', self.treeDicom)
                 if dlg.show():
                     return True
                 
             elif self.stepDicom == 3:
                 dlg = DlgHintBox()
-                dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom)
                 if dlg.show():
                     # 如果是step 3，按了inhale exhale button會被攔截
                     return True
@@ -1246,6 +1246,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             signal.connect(self.dlgSystemProcessing.UpdateProgress)
         self.dlgSystemProcessing.show()
         QApplication.processEvents()
+        
+    def _SetHintBox_dicom(self):
+        lstMessage = [
+            'select <span style="color:#f00">Inhale dicom</span> series first',
+            'then press <span style="color:#ff0000">Exhale button</span>', 
+            'now select <span style="color:#f00">Exhale dicom</span> series', 
+        ]
+        kstWidget = [
+            self.treeDicom,
+            self.btnExhale,
+            self.treeDicom
+        ]
                 
     def _GetBootFileInfo(self, tagName:str):
         try:
@@ -2716,7 +2728,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnSelectionChanged_treeDicom(self, selected:QItemSelection, deselected:QItemSelection):
         if self.stepDicom == 1:
             dlg = DlgHintBox()
-            dlg.SetText('then press <span style="color:#ff0000">Exhale button</span>', self.btnExhale, None)
+            dlg.SetText('then press <span style="color:#ff0000">Exhale button</span>', self.btnExhale)
             dlg.show()
             self.stepDicom += 1
         
@@ -2844,7 +2856,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             if self.stepDicom == 3:
                 dlg = DlgHintBox()
-                dlg.SetText('Press confirm', self.btnImport, HINT_DOWN_RIGHT, 96)
+                # dlg.SetText('Press confirm', self.btnImport, HINT_DOWN_RIGHT, 96)
+                dlg.SetText('Press confirm', self.btnImport, pixelSize = 96)
                 dlg.show()
                 
                 self.stepDicom += 1
@@ -2865,7 +2878,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 if self.stepDicom == 2:
                     dlg = DlgHintBox()
-                    dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom, None)
+                    dlg.SetText('now select <span style="color:#f00">Exhale dicom</span> series', self.treeDicom)
                     dlg.show()
                     if self.stepDicom == 2:
                         self.stepDicom += 1
@@ -3173,7 +3186,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.listSubDialog.append(dlgHint)
             
             dlg = DlgHintBox()
-            dlg.SetText('select Inhale dicom series first', self.treeDicom, None)
+            dlg.SetText('select Inhale dicom series first', self.treeDicom)
             dlg.show()
             
         elif currentWidget == self.pgRobotRegSphere:
@@ -5363,7 +5376,10 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
     signalDontShow = pyqtSignal(bool)
     bShow = True
     stkDialog = []
-    
+    lstMessage = []
+    lstWidget = []
+    nStepTotal = 0
+    nStepCurrent = -1
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.setupUi(self)
@@ -5534,7 +5550,7 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         # self.SetPosition(self.obj)
         # self.Replay(100)
             
-    def SetText(self, text:str, widget, alignment:int = HINT_UP_RIGHT, pixelSize = 48, tDuration:int = 0):
+    def SetText(self, text:str = None, widget:Type[QWidget] = None, alignment:int = None, pixelSize = 48, tDuration:int = 0):
         """show hint dialog box on the specified widget
 
         Args:
@@ -5545,7 +5561,14 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         """
         
         # if pixelSize is not None:
+        if text is None:
+            text = DlgHintBox.lstMessage[DlgHintBox.nStepCurrent]
+            
+        if widget is None:
+            widget = DlgHintBox.lstWidget[DlgHintBox.nStepCurrent]
+        
         pixelSize = min(128, max(pixelSize, 16))
+            
         doc = QTextDocument()
         doc.setHtml(text)
         plainText = doc.toPlainText()
@@ -5634,7 +5657,44 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
         
     def IsShow():
         return DlgHintBox.bShow
+    
+    def SetMessage(lstMessage:list[str], lstWidget:list[Type[QWidget]]):
+        DlgHintBox.lstMessage = lstMessage
+        DlgHintBox.lstWidget = lstWidget
+        DlgHintBox.nStepTotal = len(DlgHintBox.lstMessage)
+        DlgHintBox.nStepCurrent = 0
+    
+    def SetTotalStep(nStep:int):
+        if nStep > 0:
+            DlgHintBox.nStepTotal = nStep
+            DlgHintBox.nStepCurrent = 0
+            
+    def Show(nStep:int = -1):
+        if nIndex in range(DlgHintBox.nStepTotal):
+            dlg = DlgHintBox()
+            dlg.SetText(DlgHintBox.lstMessage[nStep], DlgHintBox.lstWidget[nStep])
+            dlg.show()
+            
+            DlgHintBox.nStepCurrent = nStep
+            
+        elif len(DlgHintBox.stkDialog) > 0:
+            DlgHintBox.stkDialog[nIndex].show()
+            
+    def Back():
+        if DlgHintBox.nStepCurrent > 0:
+            DlgHintBox.nStepCurrent -= 1
+            
+            dlg = DlgHintBox()
+            dlg.SetText()
+            dlg.show()
         
+    def Next():
+        if DlgHintBox.nStepCurrent < DlgHintBox.nStepTotal:
+            DlgHintBox.nStepCurrent += 1
+        
+            dlg = DlgHintBox()
+            dlg.SetText()
+            dlg.show()
 class DlgInstallAdaptor(QDialog, Ui_dlgInstallAdaptor):
     signalRobotStartMoving = pyqtSignal()
     
