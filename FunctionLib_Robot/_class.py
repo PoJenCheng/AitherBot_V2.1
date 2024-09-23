@@ -35,6 +35,10 @@ upper_G_length = 0
 upper_G_angle = 0
 lower_G_length = 0
 lower_G_angle = 0
+last_BLDC_Down_Motion = 0
+last_FLDC_Down_Motion = 0
+last_BLDC_Up_Motion = 0
+last_FLDC_Up_Motion = 0
 
 
 class MOTORCONTROL(QObject):
@@ -377,9 +381,7 @@ class RobotSupportArm(QObject):
         self.bPedalPressLast = None
         # 是否偏離target
         self.bRobotMoveFromTarget = True
-        
-        # self.plc.write_by_name(self.EnableSupportEn1,False) 
-        # self.plc.write_by_name(self.EnableSupportEn2,False)
+
         
     def Initialize(self):
         try:
@@ -430,8 +432,8 @@ class RobotSupportArm(QObject):
     
     def SetTargetPos(self):
         self.TargetEn1,self.TargetEn2 = self.ReadEncoder()
-        self.TargetEn1 = 159322
-        self.TargetEn2 = 205927
+        print(f"target En1 {self.TargetEn1}")
+        print(f"target En2 {self.TargetEn2}")
         self.bRobotMoveFromTarget = False
         return self.TargetEn1, self.TargetEn2
     
@@ -475,19 +477,19 @@ class RobotSupportArm(QObject):
         return self.bRobotMoveFromTarget
 
 class imageCalibration():
-    def __init__(self,id,exposure_time):        
+    def __init__(self,id,exposure_time):
+        self.cameraID = id
         # 初始化相機
         self.camera = ueye.HIDS(id)
-
+        
         # 嘗試初始化相機
         ret = ueye.is_InitCamera(self.camera, None)
         if ret != ueye.IS_SUCCESS:
             print("相機初始化失敗")
             exit(1)
-
+        
         # 獲取相機感測器的資訊
         self.sensor_info = ueye.SENSORINFO()
-        print(self.sensor_info.SensorID)
         ueye.is_GetSensorInfo(self.camera, self.sensor_info)
 
         # 設置相機的尺寸
@@ -584,13 +586,24 @@ class imageCalibration():
         # 獲取最小外接矩形
         rect = cv2.minAreaRect(contour)
         box = cv2.boxPoints(rect)
-        box = np.int0(box)
+        box = np.int_(box)
+        
+        # make sure the rectangle corner
+        sorted_by_x = box[np.argsort(box[:,0])]
+        left_points = sorted_by_x[:2]
+        right_points = sorted_by_x[2:]
+        
+        left_points = left_points[np.argsort(left_points[:,1])]
+        right_points = right_points[np.argsort(right_points[:,1])]
+        
+        # 獲取四個頂點座標
+        points = np.array([left_points[1], left_points[0], right_points[0],right_points[1]])
 
         # 繪製矩形（可選）
         cv2.drawContours(imagePic, [box], 0, (0, 0, 255), 2)
 
-        # 獲取四個頂點座標
-        points = [(point[0], point[1]) for point in box]
+        
+        # points = [(point[0], point[1]) for point in box]
 
         # 輸出四個頂點座標
         print("左下角:", points[0])
@@ -680,7 +693,7 @@ class imageCalibration():
     def poleEquation(self, imagePixel,Y_value1,Y_value2):
         data1 = []
         data2 = []
-        for x in range(imagePixel.shape[1]):  # 列
+        for x in range(10,imagePixel.shape[1]-10):  # 列
                 # 確保像素值為無符號 8 位整數
                 pixel_value1 = int(imagePixel[Y_value1, x])  # 轉換為整數
                 pixel_value2 = int(imagePixel[Y_value2, x])  # 轉換為整數
@@ -690,31 +703,46 @@ class imageCalibration():
                 if pixel_value2 == 0:
                     # pixel_value2 = 1
                     data2.append([x, Y_value2])
+        if len(data1) == 0 or len(data2) == 0:
+            return None, None
+        
         leftLine = self.lineEquation(data1[0][0],data1[0][1],data2[0][0],data2[0][1])   
         rightLine = self.lineEquation(data1[-1][0],data1[-1][1],data2[-1][0],data2[-1][1])
                 
         return leftLine, rightLine
     
-    def poleEdgeFinder(self, imagePixel, Y_value1, Y_value2, threadValue):
+    def poleEdgeFinder(self, imagePixel, Y_value1, Y_value2):
         data1 = []
         data2 = []
-        for x in range(imagePixel.shape[1]):
+        for x in range(10,imagePixel.shape[1]-10):
             pixel_value1 = int(imagePixel[Y_value1,x])
             pixel_value2 = int(imagePixel[Y_value2,x])
-            if pixel_value1 <= threadValue:
+            if pixel_value1 == 0:
                 data1.append([x,Y_value1])
-            if pixel_value2 <= threadValue:
+            if pixel_value2 == 0:
                 data2.append([x,Y_value2])
         
         return data1, data2
-                
+    
+    
+    def differentEdge(self, imagePixel, Y_value):
+        data1 = []
+        for x in range(10,imagePixel.shape[1]):
+            pixel_poleEdge = int(imagePixel[Y_value,x])
+            if pixel_poleEdge == 0:
+                data1.append([x,Y_value])
+        print((data1[-1][0] + data1[0][0])/2)
+        distance = (606 - ((data1[-1][0] + data1[0][0])/2))*(138/606)
+        diff = ((diff_Pole_lightBoard - distance)/2)+5
+        return diff
+                          
 
     def findAngle(self,slope):
         theta_rad = math.atan(slope)  # 反正切，得到弧度值
         # 轉換為角度
         theta_deg = math.degrees(theta_rad)
         # 直線與垂直線的夾角
-        angle_with_vertical = 90 - theta_deg  # 與垂直線的夾角
+        angle_with_vertical = 90 - theta_deg
 
         return angle_with_vertical
     
@@ -722,18 +750,38 @@ class imageCalibration():
         # 釋放內存並退出相機
         ueye.is_FreeImageMem(self.camera, self.mem_ptr, self.mem_id)
         ueye.is_ExitCamera(self.camera)
+        
+    def checkCameraID(cam1:'imageCalibration', cam2:'imageCalibration'):
+        cam1Info = ueye.BOARDINFO()
+        ueye.is_GetCameraInfo(cam1.camera, cam1Info)
+        
+        cam2Info = ueye.BOARDINFO()
+        ueye.is_GetCameraInfo(cam2.camera, cam2Info)
+        
+        lstSerialNo = [b'4108698095', b'4108698094']
+        
+        if cam1Info.SerNo == lstSerialNo[cam1.cameraID] and cam2Info.SerNo == lstSerialNo[cam2.cameraID]:
+            logger.info('camera ID correct')
+            return cam1, cam2
+        elif cam1Info.SerNo == lstSerialNo[cam2.cameraID] and cam2Info.SerNo == lstSerialNo[cam1.cameraID]:
+            logger.info('camera ID swapped')
+            return cam2, cam1
     
 class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     signalInitFailed = pyqtSignal(int)
     signalProgress = pyqtSignal(str, int)
     signalHomingProgress = pyqtSignal(float)
-    
+    signalArrived = pyqtSignal()
+    signalReachable = pyqtSignal(bool)
     
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
         self.SupportMove = 'GVL.SupportMove'
+        self.CalibrationLight_1 = 'GVL.calibrationLight_1'
+        self.CalibrationLight_2 = 'GVL.calibrationLight_2'
         
+        self.currentPath = []
         self.bConnected = False
         self.fHomeProgress = 0.0
         self.initProgress = 0
@@ -747,11 +795,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         # print(self.get_camera_list())
         
         # frontCamera_ID = 0
-        frontCamera_ID = 0
-        sideCamera_ID = 1
+        frontCamera_ID = 1
+        sideCamera_ID = 0
         
-        # self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
-        # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+        self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+        
+        self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
         
         # cameraCheck = False
         # while cameraCheck == False:
@@ -1100,10 +1150,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
             if homeStatus_Enable == False:
                 if self.FLDC_Up.homeValue() == 0:
-                    self.FLDC_Up.MoveVelocitySetting(900, 1200, 1)
+                    self.FLDC_Up.MoveVelocitySetting(5, 1200, 1)
                     self.FLDC_Up.bMoveVelocityEnable()
                 if self.FLDC_Down.homeValue() == 0:
-                    self.FLDC_Down.MoveVelocitySetting(1500, 1200, 1)
+                    self.FLDC_Down.MoveVelocitySetting(5, 1200, 1)
                     self.FLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
@@ -1121,7 +1171,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.FLDC_Stop()
 
         "Rotate to a specific angle"
-        self.DualRotatePositionMotion(-2000, 400)
+        self.DualRotatePositionMotion(-10, 5)
 
         "second positioning"
         homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
@@ -1133,10 +1183,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             homeSwitch = self.FLDC_Up.homeValue() * self.FLDC_Down.homeValue()
             if homeStatus_Enable == False:
                 if self.FLDC_Up.homeValue() == 0:
-                    self.FLDC_Up.MoveVelocitySetting(250, 500, 1)
+                    self.FLDC_Up.MoveVelocitySetting(1.5, 500, 1)
                     self.FLDC_Up.bMoveVelocityEnable()
                 if self.FLDC_Down.homeValue() == 0:
-                    self.FLDC_Down.MoveVelocitySetting(250, 500, 1)
+                    self.FLDC_Down.MoveVelocitySetting(1.5, 500, 1)
                     self.FLDC_Down.bMoveVelocityEnable()
                 homeStatus_Enable = True
             else:
@@ -1152,10 +1202,10 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         if progressMaximum is not None:
             self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMaximum)
             self.signalHomingProgress.emit(self.fHomeProgress)
-            
+           
         "Rotate to a specific angle"
-        self.FLDC_Up.MoveRelativeSetting(shiftingFLDC_up, 1500)
-        self.FLDC_Down.MoveRelativeSetting(shiftingFLDC_Down, 1500)
+        self.FLDC_Up.MoveRelativeSetting(shiftingFLDC_up, 10)
+        self.FLDC_Down.MoveRelativeSetting(shiftingFLDC_Down, 10)
         self.FLDC_Up.bMoveRelativeEnable()
         self.FLDC_Down.bMoveRelativeEnable()
         while self.FLDC_Up.fbMoveRelative() == False or self.FLDC_Down.fbMoveRelative() == False:
@@ -1177,43 +1227,43 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             QMessageBox.critical(None, 'error', 'Robot Connection Failure')
             return False
         else:
-            self.DisplayRun()
             self.fHomeProgress = 0.0
             print("Home Processing Started.")
-            self.Home(1000, 1000,1, 0.125)  #dir = 1 前進 ; dir = 3 後退
+            self.Home(5,5,1, 0.125)  #dir = 1 前進 ; dir = 3 後退
             sleep(1)
-            self.HomeLinearMotion(-4500,-4500,1000, 0.25)
+            self.HomeLinearMotion(-4.5,-4.5,3, 0.25)
             sleep(1)
-            self.Home(100, 100,1, 0.375)
+            self.Home(3, 3,1, 0.375)
             sleep(1)
             self.SetZero(0.5)
-            self.HomeLinearMotion(shiftingBLDC_Up, shiftingBLDC_Up, 2500, 0.666)
+            self.HomeLinearMotion(shiftingBLDC_Up, shiftingBLDC_Down, 8, 0.666)
             sleep(0.1)
-            self.HomeRotation(0.832)
+            self.HomeRotation(0.8)
             self.ReSetMotor()
-            self.SetZero(1.0)
-            self.signalHomingProgress.emit(1.0)
-            self.DisplaySafe()
+            self.SetZero(0.85)
+            # self.signalHomingProgress.emit(1.0)
         return True
     
     def RollCalibration(self,camera,corrected_image,caliStatus):
-        leftLine, rightLine= camera.poleEquation(corrected_image,20,180)
+        leftLine, rightLine= camera.poleEquation(corrected_image,20,100)
+        if leftLine is None or rightLine is None:
+            return False
+        
         if leftLine[3] == True or rightLine[3] == True:
             try:
                 caliAngle = camera.findAngle(((leftLine[0])+(rightLine[0]))/2)
+                caliAngle = caliAngle/4
                 print(caliAngle)
                 
-                if caliAngle >= 0.2 and caliAngle < 40:
+                if caliAngle >= 0.2 and caliAngle < 10:
                     # 根據取得的歪斜角度進行補償
-                    RotationCount_axis1 = -1*(float(caliAngle*(RotationMotorCountPerLoop*RotateGearRatio)/360))
-                    self.FLDC_Up.MoveRelativeSetting(RotationCount_axis1,200)
+                    self.FLDC_Up.MoveRelativeSetting(caliAngle,2)
                     self.FLDC_Up.bMoveRelativeEnable()
                     while self.FLDC_Up.fbMoveRelative() != True:
                         caliStatus = False
-                elif (180-caliAngle) >= 0.2 and caliAngle > 120:
+                elif (180-caliAngle) >= 0.2 and (180-caliAngle) < 20:
                     # 根據取得的歪斜角度進行補償
-                    RotationCount_axis1 = float((180-caliAngle)*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-                    self.FLDC_Up.MoveRelativeSetting(RotationCount_axis1,200)
+                    self.FLDC_Up.MoveRelativeSetting(caliAngle-180,2)
                     self.FLDC_Up.bMoveRelativeEnable()
                     while self.FLDC_Up.fbMoveRelative() != True:
                         caliStatus = False
@@ -1227,16 +1277,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         return caliStatus
     
     def YawCalibration(self,camera, corrected_image,imageWidth,caliStatus):
-        leftLine, rightLine= camera.poleEdgeFinder(corrected_image,50,100,50)
+        leftLine, rightLine= camera.poleEdgeFinder(corrected_image,50,100)
         poleWidth = abs(leftLine[1][0] - rightLine[-1][0])
         pole_midLine = leftLine[1][0] + poleWidth/2
-        diff_distance = (imageWidth/2 - pole_midLine)*(138/605)
+        diff_distance = ((imageWidth/2 - pole_midLine - 36)*(138/606))
         print(diff_distance)
         if abs(diff_distance) >= 0.5 and abs(diff_distance) < 100:
-            diff_angle = math.asin(diff_distance/robotInitialLength)
+            diff_angle = -1*(math.asin(diff_distance/robotInitialLength))
             caliAngle = diff_angle*180/math.pi
-            RotationCount_axis3 = float(caliAngle*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-            self.FLDC_Down.MoveRelativeSetting(RotationCount_axis3,500)
+            caliAngle = caliAngle/4
+            self.FLDC_Down.MoveRelativeSetting(caliAngle,2)
             self.FLDC_Down.bMoveRelativeEnable()
             while self.FLDC_Down.fbMoveRelative() != True:
                 caliStatus = False
@@ -1247,18 +1297,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     
     def PitchCalibration(self,camera, corrected_image):
         caliStatus = False
-        upperData, lowerData = camera.poleEdgeFinder(corrected_image,30,130,50)
-        diff_distance = (upperData[2][0]-lowerData[2][0])*(138/605)
+        upperData, lowerData = camera.poleEdgeFinder(corrected_image,30,100)
+        diff_distance = (upperData[0][0]-lowerData[0][0])*(138/606)
         print(diff_distance)
         if diff_distance > 0.1 :
-            LinearCount_axis2 = diff_distance*LinearMotorCountPerLoop
-            self.BLDC_Up.MoveRelativeSetting(LinearCount_axis2, 100)
+            self.BLDC_Up.MoveRelativeSetting(diff_distance, 1)
             self.BLDC_Up.bMoveRelativeEnable()
             while self.BLDC_Up.fbMoveRelative() != True:
                 caliStatus = False
         elif diff_distance < -0.1:
-            LinearCount_axis4 = diff_distance*LinearMotorCountPerLoop
-            self.BLDC_Down.MoveRelativeSetting(LinearCount_axis4, 100)
+            self.BLDC_Down.MoveRelativeSetting(-1*diff_distance, 1)
             self.BLDC_Down.bMoveRelativeEnable()
             while self.BLDC_Down.fbMoveRelative() != True:
                 caliStatus = False            
@@ -1267,10 +1315,29 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             
         return caliStatus               
     
-    def imageCalibraionProcess_front(self,camera):
+    def movementCalibration(self,camera, corrected_image):
+        caliStatus = False
+        diff = camera.differentEdge(corrected_image,50)
+        if abs(diff) >= 0.2:
+            self.BLDC_Up.MoveRelativeSetting(diff, 1)
+            self.BLDC_Down.MoveRelativeSetting(diff, 1)
+            self.BLDC_Up.bMoveRelativeEnable()
+            self.BLDC_Down.bMoveRelativeEnable()
+            while self.BLDC_Up.fbMoveRelative() != True or self.BLDC_Down.fbMoveRelative() != True:
+                caliStatus = False
+        else:
+            caliStatus = True
+        return caliStatus
+          
+    def imageCalibraionProcess_front(self,camera, progressMax = None):
         caliStatus = False
         caliStatus_rotate_camera1 = False
         caliStatus_movement_camera1 = False
+        
+        # Open calibration light
+        self.plc.write_by_name(self.CalibrationLight_1,True)
+        self.plc.write_by_name(self.CalibrationLight_2,False)
+            
         while caliStatus == False:
             # 開始攝影
             ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
@@ -1306,7 +1373,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             # 計算校正桿的傾斜角度
             # 取得邊界pixel
             if caliStatus_rotate_camera1 == False:
-                caliStatus_rotate_camera1 = self.RollCalibration(camera,dst,caliStatus_rotate_camera1)
+                caliStatus_rotate_camera1 = self.RollCalibration(camera,dst,caliStatus_rotate_camera1)                
                 print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
                 cv2.imwrite("imageFront_calAngle.jpg",dst)
             elif caliStatus_movement_camera1 == False:
@@ -1318,11 +1385,23 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                 if caliStatus_movement_camera1 == True:
                     caliStatus = True
                     self.cameraCali_Front.releaseCamera()
-        cv2.imwrite("imageFront_done.jpg",corrected_image)
                     
-    def imageCalibraionProcess_side(self,camera):
+            if progressMax is not None:
+                self.fHomeProgress = min(self.fHomeProgress + 0.005, progressMax)
+                self.signalHomingProgress.emit(self.fHomeProgress)
+        cv2.imwrite("imageFront_done.jpg",corrected_image)
+        return True
+                    
+    def imageCalibraionProcess_side(self,camera, progressMax:float = None):
         caliStatus = False
         caliStatus_rotate_camera1 = False
+        caliStatus_movement_camera1 = False
+        
+        # Open calibration light
+        self.plc.write_by_name(self.CalibrationLight_1,False)
+        self.plc.write_by_name(self.CalibrationLight_2,True)
+        
+        
         # caliStatus_movement_camera1 = False
         while caliStatus == False:
             # 開始攝影
@@ -1345,7 +1424,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                     
             points = camera.FindCrossPoint("imageSide.jpg")
 
-            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[0],points[1],points[3],points[2])
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[1],points[2],points[0],points[3])
             corrected_image = CalibrationResult[0]
             # imageWidth = CalibrationResult[1]
             
@@ -1361,31 +1440,77 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             if caliStatus_rotate_camera1 == False:
                 caliStatus_rotate_camera1 = self.PitchCalibration(camera,dst)
                 print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
-            else:
-                caliStatus = True
+            elif caliStatus_movement_camera1 == False:
+                caliStatus_movement_camera1 = self.movementCalibration(camera,dst)
+                if caliStatus_movement_camera1 == True:
+                    caliStatus = True
+                    
+            if progressMax is not None:
+                self.fHomeProgress = min(self.fHomeProgress + 0.001, progressMax)
+                self.signalHomingProgress.emit(self.fHomeProgress)
         
+        # close calibration light
+        self.plc.write_by_name(self.CalibrationLight_1,False)
+        self.plc.write_by_name(self.CalibrationLight_2,False)
+        
+        # set zero
+        self.SetZero()
+
+    
     def HomeProcessing_image(self):
         #先執行一般HomeProcessing
+        self.DisplayRun()
         self.HomeProcessing()
-        # self.imageCalibraionProcess_front(self.cameraCali_Front)
-        # self.imageCalibraionProcess_side(self.cameraCali_Side)     
-        
+        self.imageCalibraionProcess_front(self.cameraCali_Front, 0.9)
+        self.imageCalibraionProcess_side(self.cameraCali_Side, 0.98)
+        self.DisplaySafe()
+        self.signalHomingProgress.emit(1.0)
         return True
+    
+    def HomeProcessing_Done(self):
+        #先執行一般HomeProcessing
+        self.DisplayRun()
+        self.HomeProcessing()
+        self.DisplaySafe()
+        self.signalHomingProgress.emit(1.0)
+        return True
+    
+    def Check_Upper_RobotMovingPoint(self, PointX, PointY):     
+        robotTotalLength = (PointX**2 + (PointY)**2)**0.5
+        "The distance of the robot needs to travel"
+        robotMovingLength = robotTotalLength - robotInitialLength
+
+        rotationTheta = math.atan(PointY/PointX)
+        "The angle of the robot needs to rotate"
+        rotationAngle = rotationTheta*180/math.pi
+
+        return robotMovingLength, rotationAngle
+
+    def Check_Lower_RobotMovingPoint(self, PointX, PointY):
+        robotTotalLength = (PointX**2 + (PointY)**2)**0.5
+        "The distance of the robot needs to travel"
+        robotMovingLength = robotTotalLength - robotInitialLength
+
+        rotationTheta = math.atan(PointY/PointX)
+        "The angle of the robot needs to rotate"
+        rotationAngle = rotationTheta*180/math.pi
+
+        return robotMovingLength, rotationAngle
 
     def Upper_RobotMovingPoint(self, PointX, PointY):
         global upper_G_length
         global upper_G_angle
-
-        robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
+        
+        robotTotalLength = (PointX**2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
         robotMovingLength = robotTotalLength - robotInitialLength
 
-        rotationTheta = math.atan(PointY/(PointX))
+        rotationTheta = math.atan(PointY/PointX)
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
         "the difference length and angle of the continuous point"
-        diffLength = robotMovingLength - upper_G_length
+        diffLength = float(robotMovingLength - upper_G_length)
         diffAngle = rotationAngle - upper_G_angle
 
         "update global length and angle"
@@ -1398,16 +1523,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         global lower_G_length
         global lower_G_angle
 
-        robotTotalLength = (PointX ** 2 + (PointY)**2)**0.5
+        robotTotalLength = (PointX**2 + (PointY)**2)**0.5
         "The distance of the robot needs to travel"
         robotMovingLength = robotTotalLength - robotInitialLength
 
-        rotationTheta = math.atan(PointY/(PointX))
+        rotationTheta = math.atan(PointY/PointX)
         "The angle of the robot needs to rotate"
         rotationAngle = rotationTheta*180/math.pi
 
         "the difference length and angle of the continuous point"
-        diffLength = robotMovingLength - lower_G_length
+        diffLength = float(robotMovingLength - lower_G_length)
         diffAngle = rotationAngle - lower_G_angle
 
         "update global length and angle"
@@ -1433,26 +1558,22 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             target3 = 0
             target4 = 0
             
-    def CaptureRealTimePoint(self, percentage):
-        entry_full = np.array([5,20.93392833,-85.62637816])
-        target_full = np.array([ 35,80.55959477,-126.77388984])
-        entry_halt = np.array([5,10.93381232,-85.61114631])
-        target_halt = np.array([ 20,72.57378253,-127.63668602])
-        pointTemp = np.array(
-            [entry_full, target_full, entry_halt, target_halt])
-        # pointTemp = self.PlanningPath
+    def CaptureRealTimePoint(self, entry_full, target_full, entry_halt, target_halt,percentage):
+        breathingPath = np.array([entry_full, target_full, entry_halt, target_halt])
 
         "translate base from ball to robot"
         calibration = np.array([baseShift_X, baseShift_Y, baseShift_Z])
-        breathingFull_entry = pointTemp[0]
-        breathingFull_target = pointTemp[1]
-        breathingHalt_entry = pointTemp[2]
-        breathingHalt_target = pointTemp[3]
+        # breathingFull_entry = pointTemp[0]
+        # breathingFull_target = pointTemp[1]
+        # breathingHalt_entry = pointTemp[2]
+        # breathingHalt_target = pointTemp[3]
+        breathingPath = np.array([path - calibration for path in breathingPath])
 
-        breathingFull_entry = breathingFull_entry - calibration
-        breathingFull_target = breathingFull_target - calibration
-        breathingHalt_entry = breathingHalt_entry - calibration
-        breathingHalt_target = breathingHalt_target - calibration
+        # breathingFull_entry = breathingFull_entry - calibration
+        # breathingFull_target = breathingFull_target - calibration
+        # breathingHalt_entry = breathingHalt_entry - calibration
+        # breathingHalt_target = breathingHalt_target - calibration
+        breathingFull_entry, breathingFull_target, breathingHalt_entry, breathingHalt_target = breathingPath
         
         realTimeEntry = breathingHalt_entry + (breathingFull_entry - breathingHalt_entry) * (percentage/100)
         realTimeTarget = breathingHalt_target + (breathingFull_target - breathingHalt_target) * (percentage/100)
@@ -1504,6 +1625,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                 "Calculate rotation and movement of upper layer"
                 upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
                 lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+
                 print(upperMotion)
                 print(lowerMotion)
                 # upperMotion = [38.48377285883819, 7.959463888190757]
@@ -1511,22 +1633,18 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
 
                 "robot motion"
                 "rotation command"
-                RotationCount_axis3 = (float(
-                    lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360))
-                RotationCount_axis1 = ((float(
-                    upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3))
+                upperMotion_ = float(upperMotion[1]-lowerMotion[1])
                 "Linear motion command"
-                LinearCount_axis2 = (upperMotion[0]*LinearMotorCountPerLoop)*2
-                LinearCount_axis4 = (lowerMotion[0]*LinearMotorCountPerLoop)*2
                 self.DisplayRun()
-                self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
-                                        RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)
+                self.MultiRelativeMotion(upperMotion_, upperMotion[0],
+                                        lowerMotion[1], lowerMotion[0], 5, 5, 5, 5)
+                self.signalArrived.emit()
                 print("Compensation is Done!")
                 reachTarget = True
                 self.DisplaySafe()
                 
-    def MoveToPoint_temp(self):
-        OperationLight.DynamicCompensation(self)
+    def MoveToPoint_compensation(self):
+        # OperationLight.DynamicCompensation(self)  
         # breathingCompensation = self.plc.read_by_name(self.SupportMove)
         "obtain upper point"
         # print(f"Entry point is {self.entryPoint}")
@@ -1546,21 +1664,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             (self.targetPoint[1]-self.entryPoint[1])*t
 
         "Calculate rotation and movement of upper layer"
-        upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
-        lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+        upperMotion = np.array(self.Upper_RobotMovingPoint(upperPointX, upperPointY))
+        lowerMotion = np.array(self.Lower_RobotMovingPoint(lowerPointX, lowerPointY))
 
         "robot motion"
         "rotation command"
-        RotationCount_axis3 = float(
-            lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-        RotationCount_axis1 = float(
-            upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
+        upperMotion[1] = upperMotion[1]- lowerMotion[1]
         "Linear motion command"
-        LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
-        LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
         self.DisplayRun()
-        self.MultiRelativeMotion(RotationCount_axis1, LinearCount_axis2,
-                                RotationCount_axis3, LinearCount_axis4, 800, 1300, 800, 1300)
+        self.MultiRelativeMotion(upperMotion[1], upperMotion[0],
+                                lowerMotion[1], lowerMotion[0], 5, 5, 5, 5)
         print("Compensation is Done!")
         self.DisplaySafe()
 
@@ -1573,7 +1686,12 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         print(f"RTtargetPoint is {self.targetPoint}")
         
     
-    def reachable_check(self, entry_full, target_full, entry_halt, target_halt):
+    def reachable_check(self, entry_full, target_full, entry_halt, target_halt): 
+        global last_BLDC_Down_Motion
+        global last_FLDC_Down_Motion
+        global last_BLDC_Up_Motion
+        global last_FLDC_Up_Motion       
+        
         movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
         self.entryPoint = movingPoint[0]  # from robot to entry point
         self.targetPoint = movingPoint[1] # from robot to target point
@@ -1595,49 +1713,61 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             (self.targetPoint[1]-self.entryPoint[1])*t
 
         "Calculate rotation and movement of upper layer"
-        upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
-        lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
+        upperMotion = self.Check_Upper_RobotMovingPoint(upperPointX, upperPointY)
+        lowerMotion = self.Check_Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
         "robot motion"
-        "rotation command"
-        RotationCount_axis3 = float(
-            lowerMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360)
-        RotationCount_axis1 = float(
-            upperMotion[1]*(RotationMotorCountPerLoop*RotateGearRatio)/360) - RotationCount_axis3
-        "Linear motion command"
-        LinearCount_axis2 = upperMotion[0]*LinearMotorCountPerLoop
-        LinearCount_axis4 = lowerMotion[0]*LinearMotorCountPerLoop
+        BLDC_Down_Motion = lowerMotion[0]# + last_BLDC_Down_Motion
+        FLDC_Down_Motion = lowerMotion[1]# + last_FLDC_Down_Motion
+        BLDC_Up_Motion = upperMotion[0] #+ last_BLDC_Up_Motion
+        FLDC_Up_Motion = upperMotion[1]# + last_FLDC_Up_Motion
         
         reachable = True
-        if abs(RotationCount_axis1 - RotationCount_axis3) >= 9000:
+        if abs(FLDC_Up_Motion) >= 100:
             reachable = False
-        if LinearCount_axis2 >= max_linear_count or LinearCount_axis4 >= max_linear_count:
+        elif abs(FLDC_Down_Motion) >= 150:
             reachable = False
-        if abs(LinearCount_axis2 - LinearCount_axis4) >= max_linearDiffCount_1:
+        elif (BLDC_Up_Motion - BLDC_Down_Motion) >= 50:
             reachable = False
-        if abs(LinearCount_axis4 - LinearCount_axis2) >= max_linearDiffCount_2:
+        elif (BLDC_Down_Motion - BLDC_Up_Motion) >= 65:
+            reachable = False
+        elif BLDC_Down_Motion < -4 or BLDC_Up_Motion < -4:
+            reachable = False
+        elif BLDC_Down_Motion > 57 or BLDC_Up_Motion > 57:
             reachable = False
         
         if reachable is False:
             print("Cannot reach to the target point!")
-            
+        else:
+            last_BLDC_Down_Motion = BLDC_Down_Motion
+            last_FLDC_Down_Motion = FLDC_Down_Motion
+            last_BLDC_Up_Motion = BLDC_Up_Motion
+            last_FLDC_Up_Motion = FLDC_Up_Motion
+        
+        
+        self.signalReachable.emit(reachable)   
         return reachable
             
                
     def P2P(self,entry_full, target_full, entry_halt, target_halt):
         "obtain entry point and target point"
+        self.currentPath = [entry_full, target_full, entry_halt, target_halt]
         self.movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
         self.entryPoint = self.movingPoint[0]  # from robot to entry point
         self.targetPoint = self.movingPoint[1] # from robot to target point
         # self.absolutePosition()
         self.MoveToPoint()
         
-    def breathingCompensation(self):
+    def breathingCompensation(self, percentage):
+        
         "obtain entry point and target point"
-        self.movingPoint = self.CaptureRealTimePoint(85)
-        self.entryPoint = self.movingPoint[0]  # from robot to entry point
-        self.targetPoint = self.movingPoint[1] # from robot to target point
-        self.MoveToPoint_temp()
+        if len(self.currentPath) == 4:
+            self.movingPoint = self.CaptureRealTimePoint(*self.currentPath, 90)
+            self.entryPoint = self.movingPoint[0]  # from robot to entry point
+            self.targetPoint = self.movingPoint[1] # from robot to target point
+            self.MoveToPoint_compensation()
+        else:
+            logger.error('no trajectory data')
 
     def P2P_Manual(self, entryPoint, targetPoint):
         "get entry and target points manually."
@@ -2398,7 +2528,7 @@ class LineLaser(MOTORCONTROL, QObject):
         # minValue = min(self.avgValueList)
         # maxValue = max(self.avgValueList)
         self.avgValueList = sorted(self.avgValueList, reverse=True)
-        
+        logger.debug(f'percentage rate = {realTimeAvgValue}')
         meanPercentage = self.PercentagePrediction(realTimeAvgValue)
         # try:
         #     if meanPercentage >= yellowLightCriteria and  meanPercentage < greenLightCriteria:
@@ -2464,7 +2594,8 @@ class LineLaser(MOTORCONTROL, QObject):
                 diffPointPercentage = upperPointPercentage - lowerPointPercentage # x-y
                 # print(f'diff = {diffPointPercentage}')
                 try:
-                    for i in range(laserEndPoint-laserStartPoint):
+                    for i in range(min(laserEndPoint-laserStartPoint, len(upperLaserRawData) - 1, len(lowerLaserRawData) - 1)):
+                        
                         dis = upperLaserRawData[i] - lowerLaserRawData[i] #a-b
                         if dis != 0:
                             # diff = upperLaserRawData[i] - self.receiveData[0][i] #a-c
@@ -2476,8 +2607,8 @@ class LineLaser(MOTORCONTROL, QObject):
                         meanPercentage = np.mean(pointPercentage)
                     else:
                         return 0
-                except:
-                    print("Predict percentage error")
+                except Exception as msg:
+                    logger.critical(f"Predict percentage error:{msg}")
             
             else:
                 meanPercentage = 0

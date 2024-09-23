@@ -69,7 +69,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalSetProgress = pyqtSignal(QProgressBar, int)
     signalSetCheck = pyqtSignal(QWidget, bool)
     signalShowPlot = pyqtSignal(float) # for Laser test
-    signalShowMessage = pyqtSignal(str, str, bool)
+    signalShowMessage = pyqtSignal(str, bool)
     signalModelBuildingPass = pyqtSignal(bool)
     signalModelBuildingUI = pyqtSignal(bool)
     signalModelCycle = pyqtSignal(tuple, int)
@@ -286,6 +286,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgFootPedal = None
         self.dlgResumeSupportArm = None
         self.dlgRobotDrive = None
+        self.robotAction = ROBOT_ACTION_P2P
         
         # trajectory tree view header item
         self.countOfVisibleItem = 0
@@ -312,6 +313,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         del widget
         
         self.init_ui()
+        # for 動物實驗
+        self.btnNext_scanCT.setEnabled(True)
+        self.btnNext_scanCT_2.setEnabled(True)
         # self._SaveAnotherImages('image\\msgbox\\down_right_side\\dark', 'image\\msgbox\\temp')
         
     def init_ui(self):
@@ -340,6 +344,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalShowMessage.connect(self.OnSignal_ShowMessage)
         self.signalModelBuildingUI.connect(self.OnSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
+        
+        self.btnClose.clicked.connect(lambda:self.close())
         
         self.signalSetCheck.connect(self.OnSignal_SetCheck)
         
@@ -397,6 +403,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_Lung.setId(self.btnLungsExhale, InteractorStyleWipe.IMAGE_EXHALE)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
+        self.btnTracking.clicked.connect(self.OnClicked_btnTracking)
         
         self.tbsCTScan.selectionChanged.connect(self.OnSelection)
         
@@ -616,6 +623,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.bFull = not self.bFull
         
     def closeEvent(self, event):
+        ret = MessageBox.ShowInformation('Robot will return home, make sure robot around clear.Sure?', 'Yes', 'No')
+        if ret == 1:
+            return
+        
+        if self.robot:
+            self._SetProgress('Robot Homing...', self.robot.signalHomingProgress)
+            self.robot.HomeProcessing_Done()
+        
         self.Laser_Close()
         try:
             for dlg in self.listSubDialog:
@@ -687,6 +702,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             item.setData(0, ROLE_TRAJECTORY, index)
             item.setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
             item.setData(0, ROLE_DICOM, owner)
+            item.setData(0, ROLE_LOCK, False)
             self.treeTrajectory.AddItemToGroup(item)
             
         self.treeTrajectory.SortItems()
@@ -839,14 +855,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
-            tRobot = threading.Thread(target = self.robot.Initialize)
-            tRobot.start()
-            
             self.RobotSupportArm = Robot.RobotSupportArm()
             self.RobotSupportArm.signalPedalPress.connect(self.Robot_OnSignalFootPedal)
             self.RobotSupportArm.signalTargetArrived.connect(self.Robot_OnSignalTargetArrived)
             self.RobotSupportArm.signalAxisDiff.connect(self.Robot_OnSignalAxisValue)
-            self.OperationLight = Robot.OperationLight()
+            self.RobotSupportArm.signalProgress.connect(self.Robot_OnLoading)
+            
+            tRobot = threading.Thread(target = self.RobotSystem_Initialize)
+            tRobot.start()
         elif nDevice == DEVICE_LASER:
             self.stkScene.setCurrentWidget(self.pgLaser)
             
@@ -901,14 +917,21 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _GetCurrentTrajectory(self) -> dict:
+    def _GetCurrentTrajectory(self, bOnlyCurrent = False) -> tuple[dict, bool]:
         try:
-            dicIndex = self.treeTrajectory.GetCurrentTrajectory()
-            return dicIndex
+            dicIndex = self.treeTrajectory.GetCurrentTrajectory(bOnlyCurrent)
+            bLocked = self.treeTrajectory.GetLock()
+            return dicIndex, bLocked
         except Exception as msg:
             logger.critical(msg)
             
         return None
+    
+    def _GetCurrentTrajectoryLock(self):
+        return self.treeTrajectory.GetLock()
+    
+    def _LockTrajectoryItem(self):
+        self.treeTrajectory.LockItem()
     
     def _ModifyTrajectory(
         self, 
@@ -1013,14 +1036,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return dicRetValue
         
     def _RemoveTrajectoryItem(self):
-        dicTrajectory = self.treeTrajectory.GetCurrentTrajectory(True)
-        if isinstance(dicTrajectory, dict):
-            idx = list(dicTrajectory.values())[0]
-            DISPLAY.trajectory.removeTrajectory(idx)
-        
-            self.treeTrajectory.RemoveItem(idx)
+        ret = self._GetCurrentTrajectory(True)
+        if ret is not None:
+            dicTrajectory, bLocked = ret
+            if isinstance(dicTrajectory, dict) and not bLocked:
+                idx = list(dicTrajectory.values())[0]
+                DISPLAY.trajectory.removeTrajectory(idx)
+            
+                self.treeTrajectory.RemoveItem(idx)
 
-            self.UpdateView()
+                self.UpdateView()
         
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
@@ -1180,7 +1205,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 lstItem.append({'owner':owner})
                     
             self._AddTrajectoryTreeItems(lstItem)
-            
+            if len(lstItem) > 0:
+                self.SetUIEnable_Trajectory(True)
             # self._SaveBootFile()
             
             self.ChangeCurrentDicom(self.btnDicomLow.objectName())
@@ -1200,16 +1226,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
         self.stkScene.setCurrentWidget(self.pgImageView)
         
-        self.Laser_OnTracking()
+        for dlg in self.listSubDialog:
+            del dlg
+        self.listSubDialog = []
         
         dlgDriveTo = DlgInstallAdaptor()
-        dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+        self.robot.signalArrived.connect(dlgDriveTo.OnSignal_RobotArrived)
+        self.robot.signalReachable.connect(dlgDriveTo.OnSignal_RobotReachable)
+        if self.robotAction == ROBOT_ACTION_TRACKING:
+            self.Laser_OnTracking()
+            dlgDriveTo.signalRobotStartMoving.connect(self.Laser_StopTracking)
+        else:
+            # dlgDriveTo.signalRobotStartMoving.connect(self.RobotRun)
+            dlgDriveTo.signalRobotStartMoving.connect(self.Robot_OnThreadRun)
         dlgDriveTo.setWindowFlags(Qt.FramelessWindowHint)
         dlgDriveTo.setModal(True)
         self.dlgRobotDrive = dlgDriveTo
-        
-        dlgDriveTo.exec_()
-        self.listSubDialog.append(dlgDriveTo)
+        # dlgDriveTo.exec_()
+        dlgDriveTo.show()
+        # self.listSubDialog.append(dlgDriveTo)
         
         self.stkScene.setCurrentWidget(self.pgImageView)
         
@@ -2097,13 +2132,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def OnClicked_btnDriveTo(self):
         if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
-                self.btnUnlockRobot_2.setHidden(True)
-                self.btnDriveConfirm.setHidden(False)
-                self.btnRobotResume.setHidden(True)
-                self.btnUnlockRobot_2.setEnabled(False)
-                self.NextScene()
+            self.btnUnlockRobot_2.setHidden(True)
+            self.btnDriveConfirm.setHidden(False)
+            self.btnRobotResume.setHidden(True)
+            self.btnUnlockRobot_2.setEnabled(False)
+            self.NextScene()
                 
         else:
+            self.robotAction = ROBOT_ACTION_P2P
+            self._Robot_driveTo()
+            
+    def OnClicked_btnTracking(self):
+        if (self.RobotSupportArm and self.RobotSupportArm.IsMove() == True) or self.bSterile == False:
+            self.btnUnlockRobot_2.setHidden(True)
+            self.btnDriveConfirm.setHidden(False)
+            self.btnRobotResume.setHidden(True)
+            self.btnUnlockRobot_2.setEnabled(False)
+            self.NextScene()
+                
+        else:
+            self.robotAction = ROBOT_ACTION_TRACKING
             self._Robot_driveTo()
         
     def OnClicked_btnCancel(self):
@@ -2147,7 +2195,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if output is None:
                 return
             
-            owner, idx = list(output.items())[0]
+            dicOutput, bLocked = output
+            if bLocked:
+                MessageBox.ShowInformation('Trajectory locked')
+                return
+            
+            owner, idx = list(dicOutput.items())[0]
             if idx > -1:
                 currentDicom.trajectory.setEntry(pickPoint, idx, owner)
                 self.currentTag["entry"] = np.array(pickPoint)
@@ -2175,7 +2228,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if output is None:
                 return
             
-            owner, idx = list(output.items())[0]
+            dicOutput, bLocked = output
+            if bLocked:
+                MessageBox.ShowInformation('Trajectory locked')
+                return
+            
+            owner, idx = list(dicOutput.items())[0]
             if idx > -1:
                 DISPLAY.trajectory.setTarget(pickPoint, idx, owner)
                 self.currentTag["target"] = np.array(pickPoint)
@@ -2202,7 +2260,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.sldTrajectory.blockSignals(True)
             self.sldTrajectory.setValue(nTrajectoryValue)
             self.sldTrajectory.blockSignals(False)
-            self.OnValueChanged_sldTrajectory(nTrajectoryValue)
+            self.OnValueChanged_sldTrajectory(nTrajectoryValue, isEntry = True)
     
     def OnClicked_btnToTarget(self):
         currentDicom = self.currentTag.get('display')
@@ -2413,7 +2471,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self._RemoveTrajectoryItem()
     
     def OnClicked_btnTrajectoryLock(self):
-        pass
+        self._LockTrajectoryItem()
             
     def OnClicked_btnTrajectoryList(self, idx:int, owner:str):
         # 切換Inhale / Exhale標識
@@ -2509,10 +2567,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         gVars['toleranceLaserData'] = fValue
         self.lblThreshold.setText(str(fValue))
     
-    def OnValueChanged_sldTrajectory(self, value):
-        dicOutput = self._GetCurrentTrajectory()
-        if dicOutput is None:
+    def OnValueChanged_sldTrajectory(self, value, isEntry = False):
+        ret = self._GetCurrentTrajectory()
+        if ret is None:
             return
+        
+        dicOutput, *_ = ret
         
         idx = list(dicOutput.values())[0]
         
@@ -2521,8 +2581,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             entry, target  = trajectory
             vector = entry - target
             
-            vectorUnit = vector / np.linalg.norm(vector)
+            lenOfVector = np.linalg.norm(vector)
+            vectorUnit = 0
+            if lenOfVector > 0:
+                vectorUnit = vector / lenOfVector
+                
             newTarget = target + vectorUnit * value
+            if isEntry:
+                newTarget = entry
             
             self.lblDistanceToTarget.setText(f'{value:.2f}mm')
             self.currentTag['trajectoryValue'] = value
@@ -3365,6 +3431,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def StopVedio(self):
         if self.videoWidget is not None:
+            self.player.stop()
             parentWidget = self.videoWidget.parentWidget()
             parentWidget.layout().removeWidget(self.videoWidget)
             self.videoWidget = None
@@ -3467,7 +3534,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             widget.setStyleSheet('border-image:none;')
             
-    def OnSignal_ShowMessage(self, msg:str, title:str, bIsError = False):
+    def OnSignal_ShowMessage(self, msg:str, bIsError = False):
         if len(msg) > 0:
             if not bIsError:
                 MessageBox.ShowInformation(msg)
@@ -3783,7 +3850,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.uiHoming.setModal(True)
-        self.uiHoming.exec_()
+        # self.uiHoming.exec_()
+        self.uiHoming.show()
         self.listSubDialog.append(self.uiHoming)
         # self.NextScene()
         
@@ -3856,12 +3924,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # diffValue = (diffValue + 5000) * 0.01
         if self.dlgResumeSupportArm is not None:
             self.dlgResumeSupportArm.SetValue(nAxisIndex, diffValue, greenZoneColor)
+            
+    def Robot_OnThreadRun(self):
+        t = threading.Thread(target = self.RobotRun)
+        t.start()
                 
     def Robot_Stop(self):
         # QMessageBox.information(None, 'Info', 'Robot Stop')
         MessageBox.ShowInformation('Robot Stop')
         
-    def RobotRun(self):
+    def RobotRun(self, bNext = False):
         # 路徑轉換
         dicomInhale = list(self.dicDicom.values())[0]
         dicomExhale = list(self.dicDicom.values())[1]
@@ -3869,9 +3941,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # pathExhale = dicomExhale.get('trajectory')
         
         try:
-            dicOutput:dict = self._GetCurrentTrajectory()
-            if dicOutput is None:
+            ret = self._GetCurrentTrajectory()
+            if ret is None:
                 return
+            
+            dicOutput, *_ = ret
                 
             if len(dicOutput) < 2:
                 msgMissing = {'I':'Exhale', 'E':'Inhale'}
@@ -3896,29 +3970,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 logger.debug(f'inhale path = {pathInhale}')
                 logger.debug(f'exhale path = {pathExhale}')
                 
-                pathInhale = [p * [1, 1, -1] for p in pathInhale]
-                pathExhale = [p * [1, 1, -1] for p in pathExhale]
+                # pathInhale = [p * [1, 1, 1] for p in pathInhale] #[p * [1, 1, -1] for p in pathInhale]
+                # pathExhale = [p * [1, 1, 1] for p in pathExhale] #[p * [1, 1, -1] for p in pathExhale]
                 
         except Exception as msg:
             logger.error(msg)
         
         if self.homeStatus is True:
-            self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
-            print("Robot run processing is done!")
-            # QMessageBox.information(self, "information", "Robot run processing is done!")
+            reach = self.robot.reachable_check(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
+            if reach == True:
+                self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
+                print("Robot run processing is done!")
+                # QMessageBox.information(self, "information", "Robot run processing is done!")
             
-            #執行呼吸補償
-            self.robot.breathingCompensation()
-            
-            nextPoint = input("是否執行下一個手術點?如果是，請按'Y'，若不是請按'N'")
-            if nextPoint == 'Y':
-                self.robot.P2P(entry_full_2, target_full_2, entry_halt_2, target_halt_2)
                 #執行呼吸補償
-                self.robot.breathingCompensation()
+                # ret = MessageBox.ShowInformation("Is robot arm execute breathing compensation?", 'Yes', 'No')
+                # if ret == 0:
+                #     self.robot.breathingCompensation(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1], self.breathingPercentage)
+                # nextPoint = input("是否執行下一個手術點?如果是，請按'Y'，若不是請按'N'")
+                # self.tabWidget.setCurrentWidget(self.tabPlanning)
+            else:
+                self.robot.currentPath = []
+                logger.error('Robot cannot reach to the setting point.')
+                self.signalShowMessage.emit('Robot cannot reach to the setting point', True)
         else:
             logger.warning("Please execute home processing first.")
-            # QMessageBox.information(self, "information", "Please execute home processing first.")
-            MessageBox.ShowInformation("Please execute home processing first.")
+            self.signalShowMessage.emit('Please execute home processing first.', True)
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
@@ -4242,9 +4319,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if ratio >= self.greenLightCriteria:
                         self.dlgRobotDrive.SetState(True)
                         
-                        if self.dlgShowHint is not None:
-                            self.dlgShowHint.close()
-                            self.dlgShowHint = None
+                        DlgHintBox.Hidden()
                     else:
                         self.dlgRobotDrive.SetState(False)
                         
@@ -4300,7 +4375,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             # self.stkSignalLightInhale.setCurrentWidget(self.pgRedLightInhale)
             self.pgbInhale.setValue(0)
-            self.btnNext_scanCT.setEnabled(False)
+            # self.btnNext_scanCT.setEnabled(False) # for動物實驗
             self.tInhale = None
         self.indicatorInhale.setValue(percentage)
         
@@ -4345,7 +4420,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             # self.stkSignalLightExhale.setCurrentWidget(self.pgRedLightExhale)
             self.pgbExhale.setValue(0)
-            self.btnNext_scanCT_2.setEnabled(False)
+            # self.btnNext_scanCT_2.setEnabled(False) # for動物實驗
             self.tExhale = None
         self.indicatorExhale.setValue(percentage)
         
@@ -4683,7 +4758,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # 每隔1秒算一次，避免太過頻繁的運算
                     if curTime - lastTime > 1:
                         # 分析資料的週期，當週期數達到閾值，資料蒐集完成
-                        bValid, data, lstTime = self.Laser.DataCheckCycle(receiveData, nValidCycle + 5)
+                        bValid, data, lstTime = self.Laser.DataCheckCycle(receiveData, nValidCycle)#+ 5)
                         
                         # 資料繪制於右側子圖，因目前座標軸範圍設定為負值，暫時轉換成負值處理
                         data = np.array(data) * -1
@@ -4813,7 +4888,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.Laser is None:
             return
         
-        logger.info("即時量測呼吸狀態")
+        logger.info("breathe tracking")
         if self.recordBreathingBase is True:
             self.bLaserTracking = True
             
@@ -4827,8 +4902,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.avgValueDataTmp = []
         
         while self.bLaserTracking is True:
-            self.Laser.RealTimeHeightAvg() #透過計算出即時的HeightAvg, 顯示燈號
-            
+            percentage = self.Laser.RealTimeHeightAvg() #透過計算出即時的HeightAvg, 顯示燈號
+            # if self.robotAction == ROBOT_ACTION_TRACKING and percentage >= self.greenLightCriteria:
+            #     break
         # with open('AVG_data.txt', mode='w') as f:
         #     for data in self.avgValueDataTmp:
         #         f.write(f'{data},')
@@ -4842,9 +4918,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if hasattr(self, 'robot'):
             try:
                 # self.robot.RealTimeTracking(self.breathingPercentage)
-                self.RobotRun()
-            except:
-                logger.critical("Robot Compensation error")
+                if self.robotAction == ROBOT_ACTION_P2P:
+                    # self.RobotRun()
+                    self.Robot_OnThreadRun()
+                elif self.robotAction == ROBOT_ACTION_TRACKING:
+                    self.breathingPercentage = 90
+                    self.robot.breathingCompensation(self.breathingPercentage)
+            except Exception as msg:
+                logger.critical(f"Robot Compensation error:{msg}")
         # else:
         #     self.trackingBreathingCommand = True
     
@@ -5140,7 +5221,7 @@ class HomingWidget(QDialog, Ui_dlgHoming):
             self.btnStartHoming.setStyleSheet(newStyle)
         
         self.btnStartHoming.setEnabled(False)
-        self.setHidden(True)
+        self.setHidden(False)
         QTimer.singleShot(0, lambda:self.signalHoming.emit())
         
     # def OnSignal_Idle(self):
@@ -5597,8 +5678,13 @@ class DlgHintBox(QDialog, FunctionLib_UI.Ui_DlgHintBox.Ui_DlgHintBox):
     def Clear():
         for dlg in DlgHintBox.stkDialog:
             dlg.close()
-            DlgHintBox.stkDialog = []
-            DlgHintBox.bShow = True
+        DlgHintBox.stkDialog = []
+        DlgHintBox.bShow = True
+        
+    def Hidden(bHidden:bool = True):
+        for dlg in DlgHintBox.stkDialog:
+            dlg.close()
+        DlgHintBox.bShow = not bHidden
         
     def IsShow():
         return DlgHintBox.bShow
@@ -5618,16 +5704,26 @@ class DlgInstallAdaptor(QDialog, Ui_dlgInstallAdaptor):
         self.stkWidget.currentChanged.connect(self.onCurrentChanged)
         self.stkWidget.setCurrentWidget(self.pgDriveRobot)
         self.pgRobotMoving.SetText('Robot Moving...')
+        self.bClose = False
         
+        # self.pgRobotMoving.signalClose.connect(lambda:self.close())
+        self.bClose = False
         
     def statusChanged(self, status):
-        if status == QMediaPlayer.EndOfMedia:
+        if status == QMediaPlayer.EndOfMedia and not self.bClose:
             sleep(0.5)
             self.player.play()
             
     def closeEvent(self, event: QCloseEvent):
         self.player.stop()
-        return super().closeEvent(event)
+        layout = self.wdgPutNeedle.layout()
+        if isinstance(layout, QVBoxLayout):
+            lstChildren = self.wdgPutNeedle.children()
+            for child in lstChildren:
+                if isinstance(child, QWidget):
+                    layout.removeWidget(child)
+        self.bClose = True
+        super().closeEvent(event)
     
     def onCurrentChanged(self, index):
         currentWidget = self.stkWidget.currentWidget()
@@ -5638,21 +5734,40 @@ class DlgInstallAdaptor(QDialog, Ui_dlgInstallAdaptor):
             videoWidget.setAspectRatioMode(Qt.KeepAspectRatio)
             self.player.setVideoOutput(videoWidget)
             
-            layout = QVBoxLayout(self.wdgPutNeedle)
+            layout = self.wdgPutNeedle.layout()
+            if layout is None:
+                layout = QVBoxLayout(self.wdgPutNeedle)
+                
             layout.addWidget(videoWidget)
             layout.setContentsMargins(0, 0, 0, 0)
             self.player.play()
-        elif currentWidget == self.pgRobotMoving:
-            QTimer.singleShot(3000, lambda:self.stkWidget.setCurrentWidget(self.pgNeedle))
+        
     
     def OnClicked_btnConfirm(self):
-        ret = MessageBox.ShowInformation('This action will move robot, do you sure about that?', 'YES', 'NO')
-        QTimer.singleShot(1000, lambda: self.stkWidget.setCurrentWidget(self.pgRobotMoving))
+        ret = MessageBox.ShowInformation('Robot will move, do you sure about that?', 'YES', 'NO')
+        # QTimer.singleShot(1000, lambda: self.stkWidget.setCurrentWidget(self.pgRobotMoving))
+        self.stkWidget.setCurrentWidget(self.pgRobotMoving)
         
         if ret == 0:
             logger.info('robot start to move')
             self.signalRobotStartMoving.emit()
             
+        
+    def OnSignal_RobotArrived(self):
+        QTimer.singleShot(1000, lambda:self.stkWidget.setCurrentWidget(self.pgNeedle))
+        self.pgRobotMoving.idle.stop()
+        
+            
+    def OnSignal_RobotReachable(self, bReachable:bool):
+        if bReachable:
+            self.stkWidget.setCurrentWidget(self.pgRobotMoving)
+            self.pgRobotMoving.Start()
+        else:
+            # if not self.bClose:
+            #     self.bClose = True
+            self.close()
+            logger.debug('cannot reach position, page robot moving closing')
+                
     def SetState(self, bEnabled:bool):
         self.btnConfirm.setEnabled(bEnabled)
             
@@ -5698,7 +5813,7 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
     
-    def UpdateProgress(self, value:float, content:str):
+    def UpdateProgress(self, value:float, content:str = ''):
         progress = int(value * 100 // self.nParts)
         progress += self.idPart * int(self.nPartSize)
         self.pgbLoadDIcom.setValue(progress)

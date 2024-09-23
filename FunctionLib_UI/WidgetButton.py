@@ -2,7 +2,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
-from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
+from PyQt5.QtGui import QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
 
@@ -36,6 +36,7 @@ class TreeWidget(QTreeWidget):
         self._dragItem = None
         self._preSelectedItem = None
         self._groupTable = []
+        self._hasDrived = []
         self._groupNumberTable = np.array([], dtype = int)
         self._groupNumber = 0
         self.setDragDropMode(QAbstractItemView.InternalMove)
@@ -171,11 +172,13 @@ class TreeWidget(QTreeWidget):
             
         self.addTopLevelItem(item)
         
+        self._hasDrived.append(False)
+        
         wdgMark = QWidget()
         wdgMark.setObjectName(f'group{idx}')
         layout = QHBoxLayout(wdgMark)
-        layout.setContentsMargins(5, 0, 0, 0)
-        layout.setSpacing(3)
+        layout.setContentsMargins(2, 0, 0, 0)
+        layout.setSpacing(2)
         
         button = QPushButton()
         button.setObjectName(f'btnT{idx}')
@@ -188,7 +191,7 @@ class TreeWidget(QTreeWidget):
         lblGroup.setAlignment(Qt.AlignCenter)
         layout.addWidget(lblGroup)
         layout.addWidget(button)
-        layout.addItem(QSpacerItem(0, 0, hPolicy = QSizePolicy.Expanding))
+        layout.addStretch(1)
         
         wdgMark.setStyleSheet(f"""
                                 #group{idx}{{
@@ -197,22 +200,6 @@ class TreeWidget(QTreeWidget):
                                 """)
         
         self.setItemWidget(item, 2, wdgMark)
-        # groupNumer = 0
-        # bFoundGroup = False
-        # if idxParner not in self._groupTable:
-        #     self._groupNumber += 1
-        #     groupNumer = self._groupNumber
-            
-        #     self._groupTable.append(idxParner)
-        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
-        # elif self._groupTable.index(idxParner) == idxParner:
-                
-        #     self._groupTable[idxParner] = len(self._groupTable)
-        #     groupNumer = self._groupNumberTable[idxParner]
-        #     bFoundGroup = True
-        
-        #     self._groupTable.append(idxParner)
-        #     self._groupNumberTable = np.append(self._groupNumberTable, groupNumer)
             
         return bFoundGroup
     
@@ -261,6 +248,9 @@ class TreeWidget(QTreeWidget):
             dict: {'I':inhale, 'E':exhale}
         """
         item = self.currentItem()
+        if not item:
+            return None
+        
         idx = item.data(0, ROLE_TRAJECTORY)
         idxParner = self._groupTable[idx]
         dicomLabel = item.data(0, ROLE_DICOM)
@@ -282,13 +272,64 @@ class TreeWidget(QTreeWidget):
             # 只有一條路徑(缺少inhale或exhale)，只取第一條作為current
             return dict([list(dicOutput.items())[0]])
         
-        return dicOutput     
+        return dicOutput    
+    
+    def GetNextTrajectory(self, bOnlyCurrent = False):
+        """
+        get current trajectory and it corresponded one
+
+        Returns:
+            dict: {'I':inhale, 'E':exhale}
+        """
+        item = self.currentItem()
+        if not item:
+            return None
+        
+        idx = item.data(0, ROLE_TRAJECTORY) + 1
+        bFoundNext = False
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item.data(0, ROLE_TRAJECTORY) == idx:
+                self.setCurrentItem(item)
+                bFoundNext = True
+                break
+        
+        if not bFoundNext:
+            return None
+        
+        return self.GetCurrentTrajectory(bOnlyCurrent)
     
     def GetGroupNumber(self, idx:int = -1):
         if idx not in range(len(self._groupNumberTable)):
             return self._groupNumber
         else:
             return self._groupNumberTable[idx]
+        
+    def GetLock(self):
+        item = self.currentItem()
+        if item:
+            bLocked = item.data(0, ROLE_LOCK)
+            return bLocked
+        return False
+        
+    def LockItem(self):
+        item = self.currentItem()
+        if item:
+            bLocked = item.data(0, ROLE_LOCK)
+            item.setData(0, ROLE_LOCK, not bLocked)
+            widget = self.itemWidget(item, 2)
+            
+            if isinstance(widget, QWidget):
+                lstChildren = widget.children()
+                if len(lstChildren) < 4:
+                    btnLock = QPushButton()
+                    btnLock.setFixedSize(24, 24)
+                    btnLock.setStyleSheet("""
+                                        image:url(image/lock.png)
+                                        """)
+                    widget.layout().insertWidget(2, btnLock)
+                else:
+                    widget.layout().removeWidget(lstChildren[-1])
         
     def RemoveItem(self, idx:int):
         if idx >= self.topLevelItemCount():
@@ -732,7 +773,7 @@ class WidgetButton(QWidget):
     def mouseReleaseEvent(self, event):
         return super().mouseReleaseEvent(event)
 class WidgetProgressing(QWidget):
-    
+    signalClose = pyqtSignal()
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.angle = 0
@@ -740,36 +781,46 @@ class WidgetProgressing(QWidget):
         
         self.idle = QTimer()
         self.idle.timeout.connect(self._onTimer)
-        self.idle.start(33)
+        self.painter = None
         
+    def closeEvent(self, event: QCloseEvent = None):
+        self.idle.stop()
+        super().closeEvent(event)
+    
     def paintEvent(self, event: QPaintEvent):
-        center = self.rect().center()
-        painter = QPainter(self)
-        
-        painter.translate(center)
-        
-        font = painter.font()
-        font.setFamily('Arial')
-        font.setPointSize(36)
-        
-        fm = QFontMetrics(font)
-        painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
-        
-        posX = int(fm.width(self.text) * 0.5)
-        posY = int(fm.height() * 0.5) - 3
-        painter.drawText(-posX, posY, self.text)
-        
-        painter.setPen(Qt.NoPen)
-        painter.rotate(self.angle)
-        radius = min(self.width(), self.height()) // 2 - 50
-        stepColor = 255 // 72
-        for i in range(72):
-            painter.setBrush(QColor(255, 255, 255, 255 - i * stepColor))
-            painter.drawEllipse(QPoint(radius, 0), 10, 10)
-            painter.rotate(-5)
-        
-        return super().paintEvent(event)
+        try:
+            
+            center = self.rect().center()
+            painter = QPainter(self)
+            
+            painter.translate(center)
+            
+            font = painter.font()
+            font.setFamily('Arial')
+            font.setPointSize(36)
+            
+            fm = QFontMetrics(font)
+            painter.setFont(font)
+            painter.setPen(QColor(255, 255, 255))
+            
+            posX = int(fm.width(self.text) * 0.5)
+            posY = int(fm.height() * 0.5) - 3
+            painter.drawText(-posX, posY, self.text)
+            
+            painter.setPen(Qt.NoPen)
+            painter.rotate(self.angle)
+            radius = min(self.width(), self.height()) // 2 - 50
+            stepColor = 255 // 72
+            for i in range(72):
+                painter.setBrush(QColor(255, 255, 255, 255 - i * stepColor))
+                painter.drawEllipse(QPoint(radius, 0), 10, 10)
+                painter.rotate(-5)
+            
+            painter.end()
+            self.painter = painter
+            super().paintEvent(event)
+        except Exception as msg:
+            logger.error(msg)
     
     def _onTimer(self):
         self.angle = (self.angle + 5) % 360
@@ -777,6 +828,10 @@ class WidgetProgressing(QWidget):
         
     def SetText(self, text:str):
         self.text = text
+        
+    def Start(self):
+        if not self.idle.isActive():
+            self.idle.start(33)
             
 class NaviButton(QPushButton):
     angle = 0
