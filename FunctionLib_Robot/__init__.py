@@ -1,10 +1,10 @@
 import numpy as np
 from PyQt5.QtCore import Qt
 
-LinearMotorCountPerLoop = 360  # 8192 count per loop in encoder
-LinearGearRatio = 1  # screw pitch is 1
-RotationMotorCountPerLoop = 4096
-RotateGearRatio = 50  # H.D. gear ratio
+# LinearMotorCountPerLoop = 360  # 8192 count per loop in encoder
+# LinearGearRatio = 1  # screw pitch is 1
+# RotationMotorCountPerLoop = 2048
+# RotateGearRatio = 100  # H.D. gear ratio
 PointShift = 10  # Distance between ball coordination and robot center
 L_OrginalToRobot = 47.5  # Length from original point to robot point
 # Length from ball original point to rotation motor center
@@ -31,22 +31,24 @@ maxManualRotateSpeed = 200
 jogResolution = 1
 differential_time = 2
 normalSpeed = 1000
-shiftingFLDC_up = -81.2109 - 7790.4492
-shiftingBLDC_Up = -37126.9336-0.0879
-shiftingFLDC_Down = 6314.7656 - 16182.7734
-shiftingBLDC_Down = -37000.0195+0.1758
+shiftingFLDC_up = -20.5893
+shiftingBLDC_Up = -52.85
+shiftingFLDC_Down = -26.0881
+shiftingBLDC_Down = -52.85
 robotShifting = np.array([70, -11.5, 205])
 
-robotInitialLength = 128.38
-upperHigh = 6.1
-lowerHigh = -15.6
+robotInitialLength = 132.5 #110.38  #128.38
+upperHigh = 6.6 #6.1
+lowerHigh = -16.8 #-15.6
 global data
 data = ''
 
 "distance between point ball and robot base"
-baseShift_X = -178
-baseShift_Y = 32.5 #70 - 2.5
+baseShift_X = -182.5
+baseShift_Y = 32.48 #70 - 2.5
 baseShift_Z = -21.4 #15.5
+
+diff_Pole_lightBoard = 67.24
 
 
 "Laser setting parameter"
@@ -65,7 +67,7 @@ gVars = {}
 gVars['toleranceLaserData'] = 0.004
 
 # model building parameters
-nValidCycle = 10
+nValidCycle = 5
 MODEL_SCORE = 60
 VALID_CYCLE_NUM = 10
 INHALE_AREA = 80
@@ -115,6 +117,9 @@ IMG_PARTIAL = 'image/eye-close-line2.png'
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
 ENABLE_REGISTRATION = True
 ENABLE_LUNG_VOLUME_DETECT = True
+
+ROBOT_ACTION_P2P = 0
+ROBOT_ACTION_TRACKING = 1
 
 entry_full_1 = np.array([5,20.93392833,-85.62637816])
 target_full_1 = np.array([ 35,80.55959477,-126.77388984])
