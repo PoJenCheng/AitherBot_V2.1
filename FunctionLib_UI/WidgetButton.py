@@ -2,7 +2,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
-from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
+from PyQt5.QtGui import QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
 
@@ -36,6 +36,7 @@ class TreeWidget(QTreeWidget):
         self._dragItem = None
         self._preSelectedItem = None
         self._groupTable = []
+        self._hasDrived = []
         self._groupNumberTable = np.array([], dtype = int)
         self._groupNumber = 0
         self.setDragDropMode(QAbstractItemView.InternalMove)
@@ -171,6 +172,8 @@ class TreeWidget(QTreeWidget):
             
         self.addTopLevelItem(item)
         
+        self._hasDrived.append(False)
+        
         wdgMark = QWidget()
         wdgMark.setObjectName(f'group{idx}')
         layout = QHBoxLayout(wdgMark)
@@ -269,7 +272,32 @@ class TreeWidget(QTreeWidget):
             # 只有一條路徑(缺少inhale或exhale)，只取第一條作為current
             return dict([list(dicOutput.items())[0]])
         
-        return dicOutput     
+        return dicOutput    
+    
+    def GetNextTrajectory(self, bOnlyCurrent = False):
+        """
+        get current trajectory and it corresponded one
+
+        Returns:
+            dict: {'I':inhale, 'E':exhale}
+        """
+        item = self.currentItem()
+        if not item:
+            return None
+        
+        idx = item.data(0, ROLE_TRAJECTORY) + 1
+        bFoundNext = False
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item.data(0, ROLE_TRAJECTORY) == idx:
+                self.setCurrentItem(item)
+                bFoundNext = True
+                break
+        
+        if not bFoundNext:
+            return None
+        
+        return self.GetCurrentTrajectory(bOnlyCurrent)
     
     def GetGroupNumber(self, idx:int = -1):
         if idx not in range(len(self._groupNumberTable)):
@@ -745,7 +773,7 @@ class WidgetButton(QWidget):
     def mouseReleaseEvent(self, event):
         return super().mouseReleaseEvent(event)
 class WidgetProgressing(QWidget):
-    
+    signalClose = pyqtSignal()
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.angle = 0
@@ -753,36 +781,46 @@ class WidgetProgressing(QWidget):
         
         self.idle = QTimer()
         self.idle.timeout.connect(self._onTimer)
-        self.idle.start(33)
+        self.painter = None
         
+    def closeEvent(self, event: QCloseEvent = None):
+        self.idle.stop()
+        super().closeEvent(event)
+    
     def paintEvent(self, event: QPaintEvent):
-        center = self.rect().center()
-        painter = QPainter(self)
-        
-        painter.translate(center)
-        
-        font = painter.font()
-        font.setFamily('Arial')
-        font.setPointSize(36)
-        
-        fm = QFontMetrics(font)
-        painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
-        
-        posX = int(fm.width(self.text) * 0.5)
-        posY = int(fm.height() * 0.5) - 3
-        painter.drawText(-posX, posY, self.text)
-        
-        painter.setPen(Qt.NoPen)
-        painter.rotate(self.angle)
-        radius = min(self.width(), self.height()) // 2 - 50
-        stepColor = 255 // 72
-        for i in range(72):
-            painter.setBrush(QColor(255, 255, 255, 255 - i * stepColor))
-            painter.drawEllipse(QPoint(radius, 0), 10, 10)
-            painter.rotate(-5)
-        
-        return super().paintEvent(event)
+        try:
+            
+            center = self.rect().center()
+            painter = QPainter(self)
+            
+            painter.translate(center)
+            
+            font = painter.font()
+            font.setFamily('Arial')
+            font.setPointSize(36)
+            
+            fm = QFontMetrics(font)
+            painter.setFont(font)
+            painter.setPen(QColor(255, 255, 255))
+            
+            posX = int(fm.width(self.text) * 0.5)
+            posY = int(fm.height() * 0.5) - 3
+            painter.drawText(-posX, posY, self.text)
+            
+            painter.setPen(Qt.NoPen)
+            painter.rotate(self.angle)
+            radius = min(self.width(), self.height()) // 2 - 50
+            stepColor = 255 // 72
+            for i in range(72):
+                painter.setBrush(QColor(255, 255, 255, 255 - i * stepColor))
+                painter.drawEllipse(QPoint(radius, 0), 10, 10)
+                painter.rotate(-5)
+            
+            painter.end()
+            self.painter = painter
+            super().paintEvent(event)
+        except Exception as msg:
+            logger.error(msg)
     
     def _onTimer(self):
         self.angle = (self.angle + 5) % 360
@@ -790,6 +828,10 @@ class WidgetProgressing(QWidget):
         
     def SetText(self, text:str):
         self.text = text
+        
+    def Start(self):
+        if not self.idle.isActive():
+            self.idle.start(33)
             
 class NaviButton(QPushButton):
     angle = 0
