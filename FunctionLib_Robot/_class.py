@@ -15,7 +15,7 @@ from FunctionLib_Robot.__init__ import *
 from FunctionLib_Vision._class import REGISTRATION
 from FunctionLib_Robot._subFunction import lowPass
 from ._globalVar import *
-from pyueye import ueye
+# from pyueye import ueye
 # from FunctionLib_UI.ui_matplotlib_pyqt import *
 
 import matplotlib

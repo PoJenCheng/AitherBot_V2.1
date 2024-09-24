@@ -1126,15 +1126,21 @@ QPushButton:pressed{
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
-               <width>0</width>
+               <width>144</width>
                <height>50</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1151,15 +1157,21 @@ QPushButton:pressed{
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
-               <width>0</width>
+               <width>144</width>
                <height>50</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1176,15 +1188,21 @@ QPushButton:pressed{
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
-               <width>0</width>
+               <width>144</width>
                <height>50</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1222,7 +1240,7 @@ QPushButton:pressed{
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1247,7 +1265,7 @@ QPushButton:pressed{
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1272,7 +1290,7 @@ QPushButton:pressed{
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1297,7 +1315,7 @@ QPushButton:pressed{
              </property>
              <property name="maximumSize">
               <size>
-               <width>146</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -1316,14 +1334,14 @@ QPushButton:pressed{
              </property>
              <property name="minimumSize">
               <size>
-               <width>128</width>
-               <height>128</height>
+               <width>144</width>
+               <height>144</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>128</width>
-               <height>128</height>
+               <width>144</width>
+               <height>144</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -8814,11 +8832,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btgDicom"/>
-  <buttongroup name="btnGroup_ref"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="btnGroup_tool"/>
-  <buttongroup name="btnGroup_Lung"/>
   <buttongroup name="btnGroup_fusion"/>
+  <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btnGroup_tool"/>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="btgDicom"/>
+  <buttongroup name="btnGroup_Lung"/>
  </buttongroups>
 </ui>

@@ -115,7 +115,7 @@ IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
-ENABLE_REGISTRATION = True
+ENABLE_REGISTRATION = False
 ENABLE_LUNG_VOLUME_DETECT = True
 
 ROBOT_ACTION_P2P = 0
