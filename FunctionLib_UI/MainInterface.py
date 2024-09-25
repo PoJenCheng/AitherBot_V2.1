@@ -1290,6 +1290,52 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ]
         
         DlgHintBox.SetMessage(lstIndex, lstMessage, lstWidget)
+        
+    def _SetupTrajectoryPoint(self, idPoint:int):
+        if idPoint not in [POINT_ENTRY, POINT_TARGET]:
+            logger.error('entry \/ target setting error')
+            return
+        
+        currentDicom:DISPLAY = self.currentTag.get("display")
+        if currentDicom is None:
+            return
+
+        pickPoint = currentDicom.target.copy()
+        if pickPoint is not None:
+            currentDicom.DrawPoint(pickPoint, idPoint)    
+            output = self._GetCurrentTrajectory()
+            if output is None:
+                return
+            
+            dicOutput, bLocked = output
+            if bLocked:
+                MessageBox.ShowInformation('Trajectory locked')
+                return
+            
+            owner, idx = list(dicOutput.items())[0]
+            if idx > -1:
+                if idPoint == POINT_ENTRY:
+                    currentDicom.trajectory.setEntry(pickPoint, idx, owner)
+                    self.currentTag["entry"] = np.array(pickPoint)
+                else:
+                    currentDicom.trajectory.setTarget(pickPoint, idx, owner)
+                    self.currentTag["target"] = np.array(pickPoint)
+                
+                if DISPLAY.CountOfTrajectory() > idx:
+                    self.currentTag.update({"flageSelectedPoint": True})
+                    
+                    self._ModifyTrajectory(idx, currentDicom)
+                    self._AddCrossSectionItemInSelector()
+                    self._SaveBootFile()
+                    self.SetUIEnable_Trajectory(True)
+                    
+                    if self.robot:
+                        pathInhale, pathExhale = self.GetTransformedTrajectory()
+                        bReachable = self.robot.reachable_check(*pathInhale, *pathExhale)
+                        if not bReachable:
+                            MessageBox.ShowCritical('this trajectory is not reachable')
+                            
+                self.UpdateView()
                 
     def _GetBootFileInfo(self, tagName:str):
         try:
@@ -1611,6 +1657,44 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if bUpdate:
             self.UpdateView()
+            
+    def GetTransformedTrajectory(self):
+        # 路徑轉換
+        try:
+            dicomInhale = list(self.dicDicom.values())[0]
+            ret = self._GetCurrentTrajectory()
+            if ret is None:
+                logger.warning('Invalid trajectory')
+                return
+            
+            dicOutput, *_ = ret
+                
+            if len(dicOutput) < 2:
+                msgMissing = {'I':'Exhale', 'E':'Inhale'}
+                logger.error(f'missing trajectory:{msgMissing[list(dicOutput.keys())[0]]}')
+                return
+            
+            pathInhale = DISPLAY.trajectory[dicOutput['I']]
+            pathExhale = DISPLAY.trajectory[dicOutput['E']]
+            
+            if pathInhale is not None and pathExhale is not None:
+                regBallInhale = dicomInhale.get('regBall')
+                regMatrixInhale = dicomInhale.get('regMatrix')
+                
+                # inhale和exhale dicome在完成註冊時，已轉換成同一座標，故原點和矩陣使用inhale的參數即可
+                pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
+                pathExhale = self.regFn.GetPlanningPath(regBallInhale[0], pathExhale, regMatrixInhale)
+                    
+                logger.debug(f'inhale path = {pathInhale}')
+                logger.debug(f'exhale path = {pathExhale}')
+                
+        except Exception as msg:
+            logger.error(msg)
+            
+        return pathInhale, pathExhale
+    
+    def GetViewPort(self):
+        return self.viewport_L
             
     def ImportDicom(self, path):
         self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
@@ -2033,7 +2117,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             view.signalUpdateExcept.connect(self.UpdateTarget)
             view.signalFocus.connect(self.Focus)
             view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
-            view.SetTargetVisible(False)
             # view.signalSetSliceValue.connect(self.SetSliceValue_L)
         # 強制更新第一次
         # self.SetSliceValue_L(self.dicomLow.imagePosition)
@@ -2113,17 +2196,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 view.renderer.SetTarget(pos)
                 view.ChangeSliceView()
                 # view.UpdateView()
-                
-    def GetViewPort(self):
-        # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
-        # indexH = self.tabWidget.indexOf(self.tabWidget_High)
-        
-        # if self.tabWidget.currentIndex() == indexL:
-        return self.viewport_L
-        # elif self.tabWidget.currentIndex() == indexH:
-        #     return self.viewPortH
-        
-        # return None
         
     def OnClicked_btnAddTrajectory(self):
         display = self.currentTag.get('display')
@@ -2205,69 +2277,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.ShowDicom()
         
     def OnClicked_btnSetEntry(self):
-        
-        currentDicom:DISPLAY = self.currentTag.get("display")
-        if currentDicom is None:
-            return
-
-        pickPoint = currentDicom.target.copy()
-        if pickPoint is not None:
-            currentDicom.DrawPoint(pickPoint, 1)    
-            output = self._GetCurrentTrajectory()
-            if output is None:
-                return
-            
-            dicOutput, bLocked = output
-            if bLocked:
-                MessageBox.ShowInformation('Trajectory locked')
-                return
-            
-            owner, idx = list(dicOutput.items())[0]
-            if idx > -1:
-                currentDicom.trajectory.setEntry(pickPoint, idx, owner)
-                self.currentTag["entry"] = np.array(pickPoint)
-                
-                if DISPLAY.CountOfTrajectory() > idx:
-                    self.currentTag.update({"flageSelectedPoint": True})
-                    
-                    self._ModifyTrajectory(idx, currentDicom)
-                    self.SetUIEnable_Trajectory(True)
-                    self._AddCrossSectionItemInSelector()
-                    self._SaveBootFile()
-                self.UpdateView()
-            
+        self._SetupTrajectoryPoint(POINT_ENTRY)
     
     def OnClicked_btnSetTarget(self):
-
-        currentDicom:DISPLAY = self.currentTag.get("display")
-        if currentDicom is None:
-            return
-
-        pickPoint = currentDicom.target.copy()
-        if pickPoint is not None:
-            currentDicom.DrawPoint(pickPoint, 2)
-            output = self._GetCurrentTrajectory()
-            if output is None:
-                return
-            
-            dicOutput, bLocked = output
-            if bLocked:
-                MessageBox.ShowInformation('Trajectory locked')
-                return
-            
-            owner, idx = list(dicOutput.items())[0]
-            if idx > -1:
-                DISPLAY.trajectory.setTarget(pickPoint, idx, owner)
-                self.currentTag["target"] = np.array(pickPoint)
-                
-                if DISPLAY.trajectory.count() > idx:
-                    self.currentTag.update({"flageSelectedPoint": True})
-                    
-                    self._ModifyTrajectory(idx, currentDicom)
-                    self.SetUIEnable_Trajectory(True)
-                    self._AddCrossSectionItemInSelector()
-                    self._SaveBootFile()
-                self.UpdateView()
+        self._SetupTrajectoryPoint(POINT_TARGET)
             
     def OnClicked_btnToEntry(self):
         currentDicom = self.currentTag.get('display')
@@ -3964,47 +3977,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         MessageBox.ShowInformation('Robot Stop')
         
     def RobotRun(self):
-        # 路徑轉換
-        dicomInhale = list(self.dicDicom.values())[0]
-        dicomExhale = list(self.dicDicom.values())[1]
-        # pathInhale = dicomInhale.get('trajectory')
-        # pathExhale = dicomExhale.get('trajectory')
-        
-        try:
-            ret = self._GetCurrentTrajectory()
-            if ret is None:
-                return
-            
-            dicOutput, *_ = ret
-                
-            if len(dicOutput) < 2:
-                msgMissing = {'I':'Exhale', 'E':'Inhale'}
-                logger.error(f'missing trajectory:{msgMissing[list(dicOutput.keys())[0]]}')
-                return
-            
-            pathInhale = DISPLAY.trajectory[dicOutput['I']]
-            pathExhale = DISPLAY.trajectory[dicOutput['E']]
-            
-            if pathInhale is not None and pathExhale is not None:
-                regBallInhale = dicomInhale.get('regBall')
-                # regBallExhale = dicomExhale.get('regBall')
-                regMatrixInhale = dicomInhale.get('regMatrix')
-                # regMatrixExhale = dicomExhale.get('regMatrix')
-                # invMatrix = np.linalg.inv(regMatrixExhale)
-                # regMatrixExhale = np.matmul(invMatrix, regMatrixInhale)
-                
-                # inhale和exhale dicome在完成註冊時，已轉換成同一座標，故原點和矩陣使用inhale的參數即可
-                pathInhale = self.regFn.GetPlanningPath(regBallInhale[0], pathInhale, regMatrixInhale)
-                pathExhale = self.regFn.GetPlanningPath(regBallInhale[0], pathExhale, regMatrixInhale)
-                    
-                logger.debug(f'inhale path = {pathInhale}')
-                logger.debug(f'exhale path = {pathExhale}')
-                
-                # pathInhale = [p * [1, 1, 1] for p in pathInhale] #[p * [1, 1, -1] for p in pathInhale]
-                # pathExhale = [p * [1, 1, 1] for p in pathExhale] #[p * [1, 1, -1] for p in pathExhale]
-                
-        except Exception as msg:
-            logger.error(msg)
+        pathInhale, pathExhale = self.GetTransformedTrajectory()
         
         if self.homeStatus is True:
             reach = self.robot.reachable_check(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
