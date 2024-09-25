@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
 import vtkmodules.all as vtk
+from pydicom.dataset import Dataset, FileDataset
 from numpy._typing import _ArrayLike
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import *
@@ -140,7 +141,7 @@ class DICOM(QObject):
     def __init__(self):
         super().__init__()
         
-        
+        self._count = 0
         self.dicPatient = None
         self.windowWidth = None
         self.windowLevel = None
@@ -251,8 +252,6 @@ class DICOM(QObject):
                 skipCount += 1
                 continue
             
-            
-            
             elem = self.FindTag(fileData, (0x18, 0x50))
             if elem is None:
                 # (0018, 0050) 和 (0018, 0088)兩個tag都不存在，判斷此檔案應該略過
@@ -334,14 +333,32 @@ class DICOM(QObject):
                         
                     # get image orientation
                     imageOrientation = self.FindTag(slice, (0x20, 0x37))
-                    if imageOrientation:
+                    if imageOrientation is not None:
                         imageOrientation = np.array(imageOrientation)
                         series['orientation'] = imageOrientation
+                    else:
+                        imageOrientation = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
                     
+                    bFoundImagePosition = False
                     if hasattr(slice, 'ImagePositionPatient'):
-                        imagePosition = slice.ImagePositionPatient
+                        bFoundImagePosition = True
                         # calculate z direction
                         # sort by z direction
+                        # x = imageOrientation[:3]
+                        # y = imageOrientation[3:]
+                        # z = np.cross(x, y)
+                        # direct_idx = np.argmax(np.abs(z))
+                        # bReverse = z[direct_idx] < 0
+                        # slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
+                    else:
+                        elem = self.FindTag(slice, (0x20, 0x32))
+                        if elem:
+                            bFoundImagePosition = True
+                            logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
+                            for ds in slices:
+                                ds.ImagePositionPatient = elem
+                            
+                    if bFoundImagePosition:
                         x = imageOrientation[:3]
                         y = imageOrientation[3:]
                         z = np.cross(x, y)
@@ -349,11 +366,8 @@ class DICOM(QObject):
                         bReverse = z[direct_idx] < 0
                         slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
                     else:
-                        logger.warning(f'missing:ImagePositionPatient')
-                        elem = self.FindTag(slice, (0x20, 0x32))
-                        if elem:
-                            logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
-                            
+                        logger.error(f'missing:ImagePositionPatient')
+                        
                     # 讀取X, Y spacing
                     elem = self.FindTag(slice, (0x28, 0x30))
                     if elem:
@@ -482,6 +496,90 @@ class DICOM(QObject):
         return dicPatient
        
         ############################################################################################
+        
+    def Export(self, path:str, selectedID:int = 0):
+        try:
+            ret = self.GetData(index = selectedID)
+            if ret is None:
+                logger.error('Export dicom error')
+                return
+            
+            _, spacing, dimension, series = ret
+            if isinstance(series, list):
+                imagePosition = np.array([0, 0, 0], dtype = np.float64)
+                incValue = np.array([0, 0, spacing[2]], dtype = np.float64)
+                for i, slice in enumerate(series):
+                    ds = slice.copy()
+                    # self.ModifyTag(ds, (0x20, 0x37), [1.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+                    # self.ModifyTag(ds, (0x20, 0x32), imagePosition, incValue) # from layer 1
+                    
+                    if self.rescaleIntercept and self.rescaleSlope:
+                        self.arrImage = (self.arrImage - self.rescaleIntercept) / self.rescaleSlope
+                        
+                    # if 'ImageOrientationPatient' not in ds:
+                    #     ds.ImageOrientationPatient = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+                        
+                    shape = self.arrImage.shape
+                    if 'NumberOfFrames' in ds:
+                        ds.NumberOfFrames = shape[0]
+                        ds.Rows = shape[1]
+                        ds.Columns = shape[2]
+                        ds.PixelData = self.arrImage.astype('<i2').tobytes()
+                        ds.PixelSpacing = spacing.tolist()[:2]
+                        
+                        for i in range(ds.NumberOfFrames):
+                            ds.ImagePositionPatient = imagePosition.tolist()
+                            imagePosition += incValue
+                            self.SaveAsSingleFrameDicom(ds, i, path)
+                    else:
+                        ds.ImagePositionPatient = imagePosition.tolist()
+                        imagePosition += incValue
+                        ds.Rows = shape[1]
+                        ds.Columns = shape[2]
+                        ds.PixelData = self.arrImage[i].astype('<i2').tobytes()
+                        
+                        path = os.path.join(path, f'{i:04}.dcm')
+                        ds.save_as(path)
+        except Exception as msg:
+            logger.critical(msg)
+            
+    def SaveAsSingleFrameDicom(self, ds:Dataset, frame_index:int, output_dir:str):
+        try:
+            # 創建一個單幀的 DICOM 副本
+            single_frame_ds = ds.copy()
+            
+            # 移除多幀相關的標籤
+            if 'NumberOfFrames' in single_frame_ds:
+                del single_frame_ds.NumberOfFrames
+            if 'PerFrameFunctionalGroupsSequence' in single_frame_ds:
+                del single_frame_ds.PerFrameFunctionalGroupsSequence
+            if 'SharedFunctionalGroupsSequence' in single_frame_ds:
+                del single_frame_ds.SharedFunctionalGroupsSequence
+            if 'FrameIncrementPointer' in single_frame_ds:
+                del single_frame_ds.FrameIncrementPointer
+            
+            # 為單幀設置新的 SOPInstanceUID
+            single_frame_ds.SOPInstanceUID = pydicom.uid.generate_uid()
+            
+            # 提取該幀的像素數據
+            rows = single_frame_ds.Rows
+            columns = single_frame_ds.Columns
+            pixel_data = self.arrImage.reshape((ds.NumberOfFrames, rows, columns))
+            single_frame_ds.PixelData = pixel_data[frame_index].astype('<i2').tobytes()
+            
+            # 設置正確的幀索引相關標籤 (如 ImagePositionPatient 等)
+            # 這些需要根據幀的順序和原來的標籤進行設置
+            # 這裡省略具體的設置過程
+
+            # 設置 InstanceNumber
+            single_frame_ds.InstanceNumber = frame_index + 1
+            
+            # 保存 DICOM 文件
+            output_filename = os.path.join(output_dir, f"{frame_index + 1:04}.dcm")
+            single_frame_ds.save_as(output_filename)
+        except Exception as msg:
+            logger.critical(msg)
+    
     def SelectDataFromID(self, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
         patient = self.dicPatient.get(idPatient)
         if not patient:
@@ -639,14 +737,14 @@ class DICOM(QObject):
         elem = self.FindTag(dataSet, (0x28, 0x1053))
         if elem is not None:
             self.rescaleSlope = elem
-            
+        
         for dataSet in listSeries:
             if hasattr(dataSet, 'pixel_array'):
                 if self.rescaleIntercept and self.rescaleSlope:
                     images.append(dataSet.pixel_array * self.rescaleSlope + self.rescaleIntercept)
                 else:
                     images.append(dataSet.pixel_array)
-            
+                
         images = np.array(images).astype(np.int16)
         
         if len(images.shape) > 3:
@@ -728,7 +826,23 @@ class DICOM(QObject):
         # if layer == 0 and foundElem is None:
         #     print(f'Tag[{tag}] not found')
         return foundElem
+    
+    def ModifyTag(self, dataSet:pydicom.Dataset, tag:tuple, value, incValue = None, nLayer = 0):
+        
+        if tag in dataSet:
+            if isinstance(value, (np.ndarray, tuple)):
+                dataSet[tag].value = list(value)
+            else:
+                dataSet[tag].value = value
             
+            if nLayer > 0 and type(value) == type(incValue):
+                value += incValue
+                
+        for elem in dataSet:
+            if elem.VR == 'SQ':
+                #Sequence
+                for item in elem.value:
+                    self.ModifyTag(item, tag, value, incValue, nLayer = nLayer + 1)
     
     def printSequence(self, data, outF, layer = 0):
         prefix = ' ' * 4
@@ -2295,6 +2409,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
     wipePosition = np.zeros(3)
     sizeFluoro = 100
     image1Filter = None
+    image2Filter = None
     
     lookupTable   = [vtkWindowLevelLookupTable() for _ in range(2)]
     
@@ -2513,14 +2628,15 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             
     def _TransformImage(self, transform:vtkTransform):
         reslice = vtkImageReslice()
-        reslice.SetInputData(self.ren1.imageOrigin)
+        # reslice.SetInputData(self.ren1.imageOrigin)
+        reslice.SetInputData(self.ren2.imageOrigin)
         reslice.SetResliceTransform(transform)
         reslice.SetInterpolationModeToLinear()
         reslice.SetBackgroundLevel(-1024)
         # reslice.Update()
         
         # self.ren1.image.DeepCopy(reslice.GetOutput())
-        self.image1Filter.SetInputConnection(reslice.GetOutputPort())
+        InteractorStyleWipe.image2Filter.SetInputConnection(reslice.GetOutputPort())
         self._Update()
         
     def _Slice(self, value:int):
@@ -2746,8 +2862,14 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             resample.SetAxisOutputSpacing(i, spacing[i]) 
         resample.SetInterpolationModeToLinear()
         
+        if InteractorStyleWipe.image2Filter is None:
+            InteractorStyleWipe.image2Filter = vtkImageConstantPad()
+            
+        InteractorStyleWipe.image2Filter.SetInputConnection(resample.GetOutputPort())
+        
         pad = vtkImageConstantPad()
-        pad.SetInputConnection(resample.GetOutputPort())
+        # pad.SetInputConnection(resample.GetOutputPort())
+        pad.SetInputConnection(InteractorStyleWipe.image2Filter.GetOutputPort())
         pad.SetOutputWholeExtent(extent)
         pad.SetConstant(-1024)
         
