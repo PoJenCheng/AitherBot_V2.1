@@ -39,6 +39,7 @@ class TreeWidget(QTreeWidget):
         self._hasDrived = []
         self._groupNumberTable = np.array([], dtype = int)
         self._groupNumber = 0
+        self.bFoundGroup = False # 上一個路徑的狀態
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setAcceptDrops(True)
         self.setDefaultDropAction(Qt.MoveAction)
@@ -201,6 +202,7 @@ class TreeWidget(QTreeWidget):
         
         self.setItemWidget(item, 2, wdgMark)
             
+        self.bFoundGroup = bFoundGroup
         return bFoundGroup
     
     def UpdateItemGroup(self, idxParner:int, idx:int):
@@ -240,7 +242,7 @@ class TreeWidget(QTreeWidget):
             if item.data(0, ROLE_TRAJECTORY) == idx:
                 return item
             
-    def GetCurrentTrajectory(self, bOnlyCurrent = False):
+    def GetCurrentTrajectory(self, nPattern:int = TRAJECTORY_ALL):
         """
         get current trajectory and it corresponded one
 
@@ -259,7 +261,7 @@ class TreeWidget(QTreeWidget):
             logger.error('missing dicom label:[inhale / exhale]')
             return None
         
-        if bOnlyCurrent:
+        if nPattern == TRAJECTORY_CURRENT:
             return {dicomLabel:idx}
         
         # output order: [inhale, exhale]
@@ -268,36 +270,40 @@ class TreeWidget(QTreeWidget):
         if dicomLabel == 'E':
             dicOutput = {'E':idx, 'I':idxParner}
             
+            
         if idx == idxParner: 
             # 只有一條路徑(缺少inhale或exhale)，只取第一條作為current
             return dict([list(dicOutput.items())[0]])
         
+        if nPattern == TRAJECTORY_PARTNER:
+            return dict([list(dicOutput.items())[1]])
+        
         return dicOutput    
     
-    def GetNextTrajectory(self, bOnlyCurrent = False):
-        """
-        get current trajectory and it corresponded one
+    # def GetNextTrajectory(self, bOnlyCurrent = False):
+    #     """
+    #     get current trajectory and it corresponded one
 
-        Returns:
-            dict: {'I':inhale, 'E':exhale}
-        """
-        item = self.currentItem()
-        if not item:
-            return None
+    #     Returns:
+    #         dict: {'I':inhale, 'E':exhale}
+    #     """
+    #     item = self.currentItem()
+    #     if not item:
+    #         return None
         
-        idx = item.data(0, ROLE_TRAJECTORY) + 1
-        bFoundNext = False
-        for i in range(self.topLevelItemCount()):
-            item = self.topLevelItem(i)
-            if item.data(0, ROLE_TRAJECTORY) == idx:
-                self.setCurrentItem(item)
-                bFoundNext = True
-                break
+    #     idx = item.data(0, ROLE_TRAJECTORY) + 1
+    #     bFoundNext = False
+    #     for i in range(self.topLevelItemCount()):
+    #         item = self.topLevelItem(i)
+    #         if item.data(0, ROLE_TRAJECTORY) == idx:
+    #             self.setCurrentItem(item)
+    #             bFoundNext = True
+    #             break
         
-        if not bFoundNext:
-            return None
+    #     if not bFoundNext:
+    #         return None
         
-        return self.GetCurrentTrajectory(bOnlyCurrent)
+    #     return self.GetCurrentTrajectory(bOnlyCurrent)
     
     def GetGroupNumber(self, idx:int = -1):
         if idx not in range(len(self._groupNumberTable)):
@@ -413,6 +419,7 @@ class TreeWidget(QTreeWidget):
             
         # 要重新排列item順序，一定要先移除
         # 已在treeWidget中的item會無視insert指令
+        self.blockSignals(True)
         for i in range(count):
             self.takeTopLevelItem(0)
         
@@ -423,6 +430,8 @@ class TreeWidget(QTreeWidget):
             self.addTopLevelItem(item)
             self.setItemWidget(item, 2, widget)
             self.takeTopLevelItem(0)
+            
+        self.blockSignals(False)
             
         
                 
@@ -913,13 +922,13 @@ class Indicator(QWidget):
                 self.update()
                 return
             else:
-                self.greenZoneWidth = 200 / (absValue * 2)
+                self.greenZoneWidth = (SUPPORT_ARM_TORLERANCE * 0.5) / (absValue * 2)
             
         # 此計算出的數值不是 0 就是 100
         if absValue == 0:
             self.value = 0
         else:
-            self.value = (((value / absValue) + 1) // 2) * 100
+            self.value = (((value / absValue) + 1) // 2) * SUPPORT_ARM_TORLERANCE
         self.update()
         
     def setGreenZone(self, color:QColor):

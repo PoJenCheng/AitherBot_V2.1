@@ -691,8 +691,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if lstItem is None or len(lstItem) == 0:
             return
         
+        lstName = [f'T {i + 1}' for i in range(currentIndex + len(lstItem))]
+        for i in range(currentIndex):
+            itemName = self.treeTrajectory.topLevelItem(i).text(1)
+            if itemName in lstName:
+                lstName.remove(itemName)
+        
+        bFoundGroup = False
         for i, dicItem in enumerate(lstItem):
-            itemName = f'T {currentIndex + i + 1}'
+            # itemName = f'T {currentIndex + i + 1}'
+            itemName = lstName[i]
             index = currentIndex + i
             
             item = QTreeWidgetItem()
@@ -705,7 +713,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             item.setData(2, ROLE_COLOR, DISPLAY.GetTrajectoryColor(index))
             item.setData(0, ROLE_DICOM, owner)
             item.setData(0, ROLE_LOCK, False)
-            self.treeTrajectory.AddItemToGroup(item)
+            bFoundGroup = self.treeTrajectory.AddItemToGroup(item)
             
         self.treeTrajectory.SortItems()
         
@@ -715,7 +723,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.treeTrajectory.setCurrentItem(item)
         self.prevSelection_trajectory = item
         self.treeTrajectory.blockSignals(False)
-            
+        
+        return bFoundGroup
         
     def _CalculateExhaleToInhaleMatrix(self):
         dicomInhale = list(self.dicDicom.values())[0]
@@ -919,9 +928,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return strText, dimZ
     
-    def _GetCurrentTrajectory(self, bOnlyCurrent = False) -> tuple[dict, bool]:
+    def _GetCurrentTrajectory(self, nPattern = TRAJECTORY_ALL) -> tuple[dict, bool]:
         try:
-            dicIndex = self.treeTrajectory.GetCurrentTrajectory(bOnlyCurrent)
+            dicIndex = self.treeTrajectory.GetCurrentTrajectory(nPattern)
             bLocked = self.treeTrajectory.GetLock()
             return dicIndex, bLocked
         except Exception as msg:
@@ -1040,7 +1049,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return dicRetValue
         
     def _RemoveTrajectoryItem(self):
-        ret = self._GetCurrentTrajectory(True)
+        ret = self._GetCurrentTrajectory(TRAJECTORY_CURRENT)
         if ret is not None:
             dicTrajectory, bLocked = ret
             if isinstance(dicTrajectory, dict) and not bLocked:
@@ -1213,7 +1222,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.SetUIEnable_Trajectory(True)
             # self._SaveBootFile()
             
-            self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
             self.ShowFusion()
             self.stkScene.setCurrentWidget(self.pgImageView)
         except Exception as msg:
@@ -1291,7 +1300,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         DlgHintBox.SetMessage(lstIndex, lstMessage, lstWidget)
         
-    def _SetupTrajectoryPoint(self, idPoint:int):
+    def _SetupTrajectoryPoint(self, idPoint:int, pickPoint:np.ndarray = None):
         if idPoint not in [POINT_ENTRY, POINT_TARGET]:
             logger.error('entry \/ target setting error')
             return
@@ -1299,8 +1308,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         currentDicom:DISPLAY = self.currentTag.get("display")
         if currentDicom is None:
             return
-
-        pickPoint = currentDicom.target.copy()
+        
+        if pickPoint is None:
+            pickPoint = currentDicom.target.copy()
+            
         if pickPoint is not None:
             currentDicom.DrawPoint(pickPoint, idPoint)    
             output = self._GetCurrentTrajectory()
@@ -1329,13 +1340,46 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self._SaveBootFile()
                     self.SetUIEnable_Trajectory(True)
                     
-                    if self.robot:
-                        pathInhale, pathExhale = self.GetTransformedTrajectory()
+                    trajectory = None
+                    dicomLabel = None
+                    if not self.treeTrajectory.bFoundGroup:
+                        dicPathInfo = self.treeTrajectory.GetCurrentTrajectory()
+                        if dicPathInfo is not None:
+                            pathInfo = list(dicPathInfo.items())
+                            if len(pathInfo) == 1:
+                                _label, _idx = pathInfo[0]
+                                
+                                idxMapper = np.array(['I', 'E'])
+                                dicomLabel = idxMapper[idxMapper != _label][0]
+                                entry, target = DISPLAY.trajectory[_idx]
+                                
+                                trajectory = [entry, target]
+                                
+                    if self.robot and trajectory is not None:
+                        ret = self.GetTransformedTrajectory(trajectory, trajectory)
+                        if ret is None:
+                            return
+                        
+                        pathInhale, pathExhale = ret
                         bReachable = self.robot.reachable_check(*pathInhale, *pathExhale)
                         if not bReachable:
                             MessageBox.ShowCritical('this trajectory is not reachable')
+                        else:
+                            self.OnClicked_btnAddTrajectory(dicomLabel)
+                            # self._SetupTrajectoryPoint(POINT_ENTRY, trajectory[0])
+                            # self._SetupTrajectoryPoint(POINT_TARGET, trajectory[1])
                             
                 self.UpdateView()
+                
+    def _SwitchDicomButton(self, dicomLabel:str):
+        if dicomLabel is not None:
+            labelMap = {'I':self.btnDicomLow.objectName(), 'E':self.btnDicomHigh.objectName()}
+            self.ChangeCurrentDicom(labelMap[dicomLabel])
+            self.buttonGroup.blockSignals(True)
+            button = eval('self.'+labelMap[dicomLabel])
+            if isinstance(button, QPushButton):
+                button.setChecked(True)
+            self.buttonGroup.blockSignals(False)
                 
     def _GetBootFileInfo(self, tagName:str):
         try:
@@ -1658,7 +1702,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if bUpdate:
             self.UpdateView()
             
-    def GetTransformedTrajectory(self):
+    def GetTransformedTrajectory(self, pathInhale:_ArrayLike = None, pathExhale:_ArrayLike = None):
         # 路徑轉換
         try:
             dicomInhale = list(self.dicDicom.values())[0]
@@ -1669,13 +1713,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             dicOutput, *_ = ret
                 
-            if len(dicOutput) < 2:
-                msgMissing = {'I':'Exhale', 'E':'Inhale'}
-                logger.error(f'missing trajectory:{msgMissing[list(dicOutput.keys())[0]]}')
-                return
-            
-            pathInhale = DISPLAY.trajectory[dicOutput['I']]
-            pathExhale = DISPLAY.trajectory[dicOutput['E']]
+            if pathInhale is None or pathExhale is None:
+                if len(dicOutput) < 2:
+                    msgMissing = {'I':'Exhale', 'E':'Inhale'}
+                    logger.error(f'missing trajectory:{msgMissing[list(dicOutput.keys())[0]]}')
+                    return
+                
+                if pathInhale is None:
+                    pathInhale = DISPLAY.trajectory[dicOutput['I']]
+                    
+                if pathExhale is None:
+                    pathExhale = DISPLAY.trajectory[dicOutput['E']]
             
             if pathInhale is not None and pathExhale is not None:
                 regBallInhale = dicomInhale.get('regBall')
@@ -2197,7 +2245,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 view.ChangeSliceView()
                 # view.UpdateView()
         
-    def OnClicked_btnAddTrajectory(self):
+    def OnClicked_btnAddTrajectory(self, owner:str = None):
         display = self.currentTag.get('display')
         countOfTrajectory = DISPLAY.CountOfTrajectory()
         
@@ -2205,14 +2253,35 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         # 檢查treeWidget的item項目數量，和路徑是否一致，一致的時候才允許增加路徑
         if countOfTrajectory == itemCount:
-            owner = 'E'
-            if self.currentTag['name'] == self.btnDicomLow.objectName():
-                owner = 'I'
+            if not owner:
+                dicPathInfo = self.treeTrajectory.GetCurrentTrajectory()
+                if isinstance(dicPathInfo, dict):
+                    dicPathInfo = list(dicPathInfo.items())
+                    if len(dicPathInfo) == 1:
+                        _owner, _ = dicPathInfo[0]
+                        idxMap = np.array(['I', 'E'])
+                        owner = idxMap[idxMap != _owner][0]
+                        
+            if not owner:
+                owner = 'E'
+                if self.currentTag['name'] == self.btnDicomLow.objectName():
+                    owner = 'I'
                 
             item = [{'owner':owner}]
-            self._AddTrajectoryTreeItems(item)
+            bFoundGroup = self._AddTrajectoryTreeItems(item)
             
-            self.SetUIEnable_Trajectory(False)
+            if bFoundGroup == True:
+                dicPathInfo = self.treeTrajectory.GetCurrentTrajectory(TRAJECTORY_PARTNER)
+                if dicPathInfo is None:
+                    return
+                
+                idxPartnerPath = list(dicPathInfo.values())[0]
+                entry, target = DISPLAY.trajectory[idxPartnerPath]
+                self._SetupTrajectoryPoint(POINT_ENTRY, entry)
+                self._SetupTrajectoryPoint(POINT_TARGET, target)
+                self.SetUIEnable_Trajectory(True)
+            else:
+                self.SetUIEnable_Trajectory(False)
         
         self.btnSetEntry.setEnabled(True)
         self.btnSetTarget.setEnabled(True)
@@ -2544,6 +2613,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if column > 0:
             # idx = self.treeTrajectory.indexOfTopLevelItem(item)
             idx = item.data(0, ROLE_TRAJECTORY)
+            dicomLabel = item.data(0, ROLE_DICOM)
             display = self.currentTag.get('display')
             if None not in (idx, display) and isinstance(display, DISPLAY) and idx < DISPLAY.CountOfTrajectory():
                 self.sldTrajectory.blockSignals(True)
@@ -2553,6 +2623,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.SetUIEnable_Trajectory(True)
             else:
                 self.SetUIEnable_Trajectory(False)
+                
+            
+            self._SwitchDicomButton(dicomLabel)
+                
             self.prevSelection_trajectory = item
             self.UpdateView()
         else:
@@ -3977,7 +4051,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         MessageBox.ShowInformation('Robot Stop')
         
     def RobotRun(self):
-        pathInhale, pathExhale = self.GetTransformedTrajectory()
+        ret = self.GetTransformedTrajectory()
+        if ret is None:
+            return
+        
+        pathInhale, pathExhale = ret
         
         if self.homeStatus is True:
             reach = self.robot.reachable_check(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
@@ -4761,7 +4839,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # 每隔1秒算一次，避免太過頻繁的運算
                     if curTime - lastTime > 1:
                         # 分析資料的週期，當週期數達到閾值，資料蒐集完成
-                        bValid, data, lstTime = self.Laser.DataCheckCycle(receiveData, nValidCycle)#+ 5)
+                        bValid, data, lstTime = self.Laser.DataCheckCycle(receiveData, nValidCycle * 2)
                         
                         # 資料繪制於右側子圖，因目前座標軸範圍設定為負值，暫時轉換成負值處理
                         data = np.array(data) * -1
@@ -5919,7 +5997,6 @@ class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
         self.btnConfirm.setEnabled(False)
         
         self.lblContent.setText('<span style="font-size:64px">...Please press foot pedal...</span>')
-    
     def runContentText(self):
         if self.bPress == False:
             self.lblContent.setStyleSheet(f'color:rgba(255, 255, 0, {self.alpha})')
@@ -5989,7 +6066,6 @@ class DlgResumeSupportArm(DlgFootPedal):
         
         layoutAxis1.addWidget(self.indicatorAxis1)
         layoutAxis2.addWidget(self.indicatorAxis2)
-        
     def SetPress(self, bPress:bool):
         
         if bPress:
@@ -6034,7 +6110,7 @@ class DlgResumeSupportArm(DlgFootPedal):
                         self.lblHintAxis2.setText('')
         
         self.lastValue = value
-            
+        self.update()
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
     styleGolden = 'image:url(image/arrow-golden.png)'
