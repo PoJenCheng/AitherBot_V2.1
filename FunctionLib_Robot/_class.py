@@ -373,7 +373,11 @@ class RobotSupportArm(QObject):
         self.SupportMove = 'GVL.SupportMove'
         self.EnableSupportEn1 = 'GVL.EnableSupportEn1'
         self.EnableSupportEn2 = 'GVL.EnableSupportEn2'
-        self.Tolerance = 100
+        self.SupportEn1Target = 'GVL.SupportEn1Target'
+        self.SupportEn2Target = 'GVL.SupportEn2Target'
+        self.BackToTarget = 'GVL.BackToTarget'
+        self.Tolerance = SUPPORT_ARM_TORLERANCE
+        self.PLC_tolerance = 'GVL.Tolerance'
         self.frequency = 1000
         self.duration = 1000
         self.TargetEn1 = None
@@ -468,8 +472,26 @@ class RobotSupportArm(QObject):
                     winsound.Beep(self.frequency, self.duration)
                 
     def BackToTargetPos(self):
-        self.CaliEncoder1()
-        self.CaliEncoder2()
+        self.plc.write_by_name(self.BackToTarget,True)
+        self.plc.write_by_name(self.PLC_tolerance,SUPPORT_ARM_TORLERANCE)
+        self.plc.write_by_name(self.SupportEn1Target, self.TargetEn1)
+        self.plc.write_by_name(self.SupportEn2Target, self.TargetEn2)
+        caliStatus = False
+        while caliStatus == False:
+            footController = self.plc.read_by_name(self.SupportMove)
+            if footController ==True:
+                self.plc.write_by_name(self.EnableSupportEn1,True) #將軸一enable
+                self.plc.write_by_name(self.EnableSupportEn2,True) #將軸一enable
+                statusEn1 = self.plc.read_by_name(self.EnableSupportEn1)
+                statusEn2 = self.plc.read_by_name(self.EnableSupportEn2)
+                if statusEn1 == False and statusEn2 == False:
+                    caliStatus = True
+            else:
+                self.plc.write_by_name(self.EnableSupportEn1,False) #將軸一enable
+                self.plc.write_by_name(self.EnableSupportEn2,False) #將軸一enable
+        # self.CaliEncoder1()
+        # self.CaliEncoder2()
+        self.plc.write_by_name(self.BackToTarget,False)
         sleep(0.5)
         self.signalTargetArrived.emit()
         
@@ -2704,8 +2726,8 @@ class LineLaser(MOTORCONTROL, QObject):
                     # 計算斜率變化量
                     slopeDiff = slope - slopeLast
                     
+                    if abs(slopeDiff) > 0.001 and slopeLast * slope < 0:
                     # 當前斜率與上一次斜率發生正負交錯時，代表有峰值或低波谷
-                    if slopeLast * slope < 0:
                         countCycle += 1
                         # 當前斜率為負，前一次為正，代表是波峰，因此找最大值；相反為低谷，找最小值
                         # 並且紀錄當時的斜率變化量，供後面計算過濾

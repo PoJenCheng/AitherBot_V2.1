@@ -6683,9 +6683,11 @@ class Trajectory():
     
     def removeTrajectory(self, idx:int):
         if len(self._listTrajectory) > 0:
-            self._listVTKObj[idx].remove()
-            self._listVTKObj.pop(idx)
-            self._listTrajectory.pop(idx)
+            numOfVTKObj = len(self._listVTKObj)
+            if idx in range(numOfVTKObj):
+                self._listVTKObj[idx].remove()
+                self._listVTKObj.pop(idx)
+                self._listTrajectory.pop(idx)
     
     def setCurrentIndex(self, index:int):
         self.currentIndex = min(len(self._listTrajectory) - 1, max(0, index))

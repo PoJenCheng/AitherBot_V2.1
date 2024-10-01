@@ -67,7 +67,7 @@ gVars = {}
 gVars['toleranceLaserData'] = 0.004
 
 # model building parameters
-nValidCycle = 5
+nValidCycle = 3
 MODEL_SCORE = 60
 VALID_CYCLE_NUM = 10
 INHALE_AREA = 80
@@ -90,6 +90,12 @@ DEVICE_ENABLED = DEVICE_NONE
 # entry or target
 POINT_ENTRY = 1
 POINT_TARGET = 2
+
+TRAJECTORY_ALL = 0
+TRAJECTORY_CURRENT = 1
+TRAJECTORY_PARTNER = 2
+
+SUPPORT_ARM_TORLERANCE = 20
 
 # foot pedal action
 NUM_OF_ACTION = 4
