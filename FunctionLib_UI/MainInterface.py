@@ -402,6 +402,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_Lung.setId(self.btnLungsInhale, InteractorStyleWipe.IMAGE_INHALE)
         self.btnGroup_Lung.setId(self.btnLungsExhale, InteractorStyleWipe.IMAGE_EXHALE)
         
+        self.btnMoveContinuous.clicked.connect(self.OnClicked_btnMoveContinuous)
+        self.btnMoveInching.clicked.connect(self.OnClicked_btnMoveContinuous)
+        
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         self.btnTracking.clicked.connect(self.OnClicked_btnTracking)
         
@@ -674,11 +677,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # indexL = self.tabWidget.indexOf(self.tabWidget_Low)
         # indexH = self.tabWidget.indexOf(self.tabWidget_High)
         
-        viewName = VIEW_CROSS_SECTION + ' View'
+        viewCrossSectionName = VIEW_CROSS_SECTION + ' View'
+        viewAlongTrajectory = VIEW_ALONG_TRAJECTORY + ' View'
         # if self.tabWidget.currentIndex() == indexL:
         for combobox in self.dicViewSelector_L.values():
-            if combobox.findText(viewName) == -1:
-                combobox.addItem(viewName)
+            if combobox.findText(viewCrossSectionName) == -1:
+                combobox.addItem(viewCrossSectionName)
+                
+            if combobox.findText(viewAlongTrajectory) == -1:
+                combobox.addItem(viewAlongTrajectory)
             
         # elif self.tabWidget.currentIndex() == indexH:
         #     for combobox in self.listViewSelectorH.values():
@@ -2590,6 +2597,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         DISPLAY.trajectory.setOwner(idx, owner)
         self._SaveBootFile()
+        
+    def OnClicked_btnMoveContinuous(self):
+        btn = self.sender()
+        
+        if isinstance(btn, QPushButton) and btn.isChecked():
+            self.btnMoveInching.setChecked(False)
+            try:
+                joystick = eval('joystickControl.JoystickControl_Conti()')
+                joystick
+            except Exception as msg:
+                logger.error(f'[joystick error]{msg}')
+                
+    def OnClicked_btnMoveInching(self):
+        btn = self.sender()
+        
+        if isinstance(btn, QPushButton) and btn.isChecked():
+            self.btnMoveContinuous.setChecked(False)
+            # joystick = eval('joystickControl.JoystickControl_Conti()')
+            # if joystick:
+            #     joystick.JoystickControl_Conti()
+                
+    
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
         if column == 0:
@@ -6110,7 +6139,7 @@ class DlgResumeSupportArm(DlgFootPedal):
                         self.lblHintAxis2.setText('')
         
         self.lastValue = value
-        self.update()
+            
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'
     styleGolden = 'image:url(image/arrow-golden.png)'
