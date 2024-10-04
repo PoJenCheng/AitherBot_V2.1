@@ -77,6 +77,7 @@ VIEW_CORONAL        = 'Coronal'
 VIEW_SAGITTAL       = 'Sagittal'
 VIEW_3D             = '3D'
 VIEW_CROSS_SECTION  = 'Cross-Section'
+VIEW_ALONG_TRAJECTORY = 'Along Trajectory'
 SCALAR_TYPE_RANGE = {
             vtk.VTK_UNSIGNED_CHAR:  (0, 255),
             vtk.VTK_CHAR:           (-128, 127),
@@ -5423,8 +5424,8 @@ class RendererObj(vtkRenderer):
             self.actorImage.SetDisplayExtent(0, self.imageDimensions[0], 0, self.imageDimensions[1], center[2], center[2])
             self.textActor.SetInput(f'{center[2]}/{self.imageDimensions[2] - 1}')
         elif orientation == VIEW_CROSS_SECTION:
-            self.camera.SetViewUp(0, 1, 0)
-            self.camera.SetPosition(0, 0, 1)
+            self.camera.SetViewUp(0, -1, 0)
+            self.camera.SetPosition(0, 0, -1)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             
         
@@ -6107,6 +6108,97 @@ class RendererCrossSectionObj(RendererObj):
 #         self.SetActiveCamera(self.camera)
 #         self.ResetCamera(self.dicomBoundsRange)
 #         self.camera.Zoom(1.8)
+
+class RendererAlongTrajectory(RendererCrossSectionObj):
+    def __init__(self):
+        super().__init__()
+        self.axis = np.array([0, 0, -1])
+        self.transform = vtkTransform()
+        
+    def RotationView(self, angle:float):
+        if self.targetPoint is None or self.entryPoint is None:
+            return None
+        
+        matrix:vtkMatrix4x4 = self.imageReslice.GetResliceAxes()
+        
+        transform = vtkTransform()
+        transform.RotateWXYZ(angle, self.axis)
+        transform.Concatenate(self.transform.GetMatrix())
+        
+        self.imageReslice.SetResliceAxes(transform.GetMatrix())
+        self.imageReslice.SetResliceAxesOrigin(self.targetPoint)
+        
+        position = self.GetCrossSectionFromPosition(self.targetPoint)
+        
+        if position is None:
+            logger.debug('position of Cross-Section is None')
+            return None
+        
+        self.SetCameraToTarget(position)
+        self.SetTarget(position, self.targetPoint)
+        
+        
+    def SetView(self, trajectory:_ArrayLike, image = None):
+        if isinstance(trajectory, (np.ndarray, list, tuple)):
+            trajectory = np.asarray(trajectory)
+            
+        if len(trajectory) != 2:
+            return
+        
+        entry, target = trajectory
+        
+        coord2D = vtkCoordinate()
+        coord2D.SetCoordinateSystemToWorld()
+        
+        vector = entry - target
+        length = np.linalg.norm(vector)
+        length = length if length > 0 else 1
+        vector = vector / length
+        
+        viewPlaneUpVector = np.array([0, -1, 0])
+        axis = np.cross(vector, viewPlaneUpVector)
+        length = np.linalg.norm(axis)
+        length = length if length > 0 else 1
+        axis = axis / length
+        self.axis = vector
+        
+        angle = vtk.vtkMath.SignedAngleBetweenVectors(vector, viewPlaneUpVector, axis)
+                
+        transform = vtkTransform()
+        transform.RotateWXYZ(-angle * 180.0 / np.pi, axis)
+        self.transform.DeepCopy(transform)
+        
+        # get image info
+        # self.SetImage(image)
+        self.image = image if image is not None else self.image
+            
+        if self.image is None:
+            logger.debug(f'imageReslice is NULL')
+            return
+        
+        matrix = transform.GetMatrix()
+        
+        self.imageReslice = vtkImageReslice()
+        self.imageReslice.SetResliceAxes(matrix)
+        self.imageReslice.SetResliceAxesOrigin(target)
+        
+        self.imageReslice.SetInputData(self.image)
+        self.imageReslice.SetOutputDimensionality(2)
+        self.imageReslice.SetInterpolationModeToLinear()
+        
+        self.imageReslice.SetBackgroundLevel(self.dicomGrayscaleRange[0])
+        
+        self.mapColor.SetInputConnection(self.imageReslice.GetOutputPort())
+        self.mapColor.Update()
+        
+        #Add 2D target point line
+        c = vtkCoordinate()
+        c.SetCoordinateSystemToWorld()
+        
+        posCS = self.GetCrossSectionFromPosition(target)
+        
+        self.entryPoint = entry
+        self.targetPoint = target
 class TargetObj():
     bVisible = True
     
@@ -6812,6 +6904,7 @@ class DISPLAY(QObject):
         self.rendererAxial = RendererObj()
         self.renderer3D = RendererObj3D()
         self.rendererCrossSection = RendererCrossSectionObj()
+        self.rendererAlongTrajectory = RendererAlongTrajectory()
         
         DISPLAY._lstRendererAxial.append(self.rendererAxial)
         DISPLAY._lstRendererCoronal.append(self.rendererCoronal)
