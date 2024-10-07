@@ -870,6 +870,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif nDevice == DEVICE_ROBOT:
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
+            self.joystick = Robot.joystickControl()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
@@ -4015,8 +4016,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
-                # self.RobotRun()
                 
+        
     def Robot_OnSignalFootPedal(self, bPress:bool):
         if bPress:
             currentWidget = self.stkScene.currentWidget()

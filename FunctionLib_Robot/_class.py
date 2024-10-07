@@ -7,6 +7,7 @@ import keyboard
 import winsound
 import serial
 import cv2
+import pygame
 # import random
 # import atexit
 from pylltLib import pyllt as llt
@@ -2911,3 +2912,176 @@ class LineLaser(MOTORCONTROL, QObject):
             self.signalShowHint.emit('')
            
         return output     
+    
+class joystickControl(MOTORCONTROL):
+    def __init__(self):
+        self.open = False
+        # initial pygame lib
+        pygame.init()
+        pygame.joystick.init()
+        
+        self.findJoystick = False
+        if pygame.joystick.get_count == 0:
+            print("No find any joystick.")
+        else:
+            self.findJoystick = True
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            self.FLDC_Up = MOTORCONTROL(1)
+            self.BLDC_Up = MOTORCONTROL(2)
+            self.FLDC_Down = MOTORCONTROL(3)
+            self.BLDC_Down = MOTORCONTROL(4)
+       
+            self.FLDC_Up.MotorDriverEnable()
+            self.BLDC_Up.MotorDriverEnable()
+            self.FLDC_Down.MotorDriverEnable()
+            self.BLDC_Down.MotorDriverEnable()
+            
+            self.Status_FLDC_Up = False
+            self.Status_BLDC_Up = False
+            self.Status_FLDC_Down = False
+            self.Status_BLDC_Down = False
+    
+    def FLDC_Up_StopMove(self):
+        self.FLDC_Up.MC_Stop()
+        sleep(0.5)
+        self.FLDC_Up.MC_Stop_Disable()
+        self.FLDC_Up.bMoveRelativeCommandDisable()
+        
+    def BLDC_Up_StopMove(self):
+        self.BLDC_Up.MC_Stop()
+        sleep(0.5)
+        self.BLDC_Up.MC_Stop_Disable()
+        self.BLDC_Up.bMoveRelativeCommandDisable()
+        
+    def FLDC_Down_StopMove(self):
+        self.FLDC_Down.MC_Stop()
+        sleep(0.5)
+        self.FLDC_Down.MC_Stop_Disable()
+        self.FLDC_Down.bMoveRelativeCommandDisable()
+        
+    def BLDC_Down_StopMove(self):
+        self.BLDC_Down.MC_Stop()
+        sleep(0.5)
+        self.BLDC_Down.MC_Stop_Disable()
+        self.BLDC_Down.bMoveRelativeCommandDisable()
+        
+    def JoystickControl_Conti(self):
+        while True:
+            pygame.event.pump()    
+            if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
+                RotateMove_up = self.joystick.get_axis(0)
+                LinearMove_up = self.joystick.get_axis(1)
+                RotateMove_Down_Right = self.joystick.get_button(Button_B)
+                RotateMove_Down_Left = self.joystick.get_button(Button_X)
+                LinearMove_Down_Forward = self.joystick.get_button(Button_Y)
+                LinearMove_Down_Backward = self.joystick.get_button(Button_A)
+            
+                if RotateMove_up > 0.9 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                elif RotateMove_up == -1 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                elif LinearMove_up > 0.9 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(0.5,100,3)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                elif LinearMove_up == -1 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(0.5,100,1)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                elif RotateMove_Down_Left and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Down = True
+                elif RotateMove_Down_Right and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Down = True
+                elif LinearMove_Down_Forward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveVelocitySetting(0.5,100,1)
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Down = True
+                elif LinearMove_Down_Backward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveVelocitySetting(0.5,100,3)
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Down = True
+        
+            else:
+                if self.Status_FLDC_Up:
+                    self.FLDC_Up_StopMove()
+                    self.Status_FLDC_Up = False
+                elif self.Status_BLDC_Up:
+                    self.BLDC_Up_StopMove()
+                    self.Status_BLDC_Up = False
+                elif self.Status_FLDC_Down:
+                    self.FLDC_Down_StopMove()
+                    self.Status_FLDC_Down = False
+                elif self.Status_BLDC_Down:
+                    self.BLDC_Down_StopMove()
+                    self.Status_BLDC_Down = False
+         
+            
+    def JoystickControl_StepRun(self):
+        while True:
+            pygame.event.pump()
+            # up layer control
+            if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
+                RotateMove_up = self.joystick.get_axis(0)
+                LinearMove_up = self.joystick.get_axis(1)
+                RotateMove_Down_Right = self.joystick.get_button(Button_B)
+                RotateMove_Down_Left = self.joystick.get_button(Button_X)
+                LinearMove_Down_Forward = self.joystick.get_button(Button_Y)
+                LinearMove_Down_Backward = self.joystick.get_button(Button_A)
+            
+                if RotateMove_up > 0.9 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveRelativeSetting(-jogResolution_rotation,10)
+                    self.FLDC_Up.bMoveRelativeEnable()
+                    self.Status_FLDC_Up = True
+                elif RotateMove_up == -1 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveRelativeSetting(jogResolution_rotation,10)
+                    self.FLDC_Up.bMoveRelativeEnable()
+                    self.Status_FLDC_Up = True
+                elif LinearMove_up > 0.9 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveRelativeSetting(-jogResolution_movement,5)
+                    self.BLDC_Up.bMoveRelativeEnable()
+                    self.Status_BLDC_Up = True
+                elif LinearMove_up == -1 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveRelativeSetting(jogResolution_movement,5)
+                    self.BLDC_Up.bMoveRelativeEnable()
+                    self.Status_BLDC_Up = True
+                elif RotateMove_Down_Left and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveRelativeSetting(jogResolution_rotation,10)
+                    self.FLDC_Down.bMoveRelativeEnable()
+                    self.Status_FLDC_Down = True
+                elif RotateMove_Down_Right and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveRelativeSetting(-jogResolution_rotation,10)
+                    self.FLDC_Down.bMoveRelativeEnable()
+                    self.Status_FLDC_Down = True
+                elif LinearMove_Down_Forward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveRelativeSetting(jogResolution_movement,5)
+                    self.BLDC_Down.bMoveRelativeEnable()
+                    self.Status_BLDC_Down = True
+                elif LinearMove_Down_Backward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveRelativeSetting(-jogResolution_movement,5)
+                    self.BLDC_Down.bMoveRelativeEnable()
+                    self.Status_BLDC_Down = True
+        
+        
+                if self.Status_FLDC_Up:
+                    self.FLDC_Up_StopMove()
+                    self.Status_FLDC_Up = False
+                elif self.Status_BLDC_Up:
+                    self.BLDC_Up_StopMove()
+                    self.Status_BLDC_Up = False
+                elif self.Status_FLDC_Down:
+                    self.FLDC_Down_StopMove()
+                    self.Status_FLDC_Down = False
+                elif self.Status_BLDC_Down:
+                    self.BLDC_Down_StopMove()
+                    self.Status_BLDC_Down = False
+        
+            
