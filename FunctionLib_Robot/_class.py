@@ -2913,8 +2913,11 @@ class LineLaser(MOTORCONTROL, QObject):
            
         return output     
     
-class joystickControl(MOTORCONTROL):
+class joystickControl(MOTORCONTROL, QObject):
+    signalStop = pyqtSignal()
+    
     def __init__(self):
+        QObject.__init__(self)
         self.open = False
         # initial pygame lib
         pygame.init()
@@ -2941,6 +2944,7 @@ class joystickControl(MOTORCONTROL):
             self.Status_BLDC_Up = False
             self.Status_FLDC_Down = False
             self.Status_BLDC_Down = False
+            self.bStop = True
     
     def FLDC_Up_StopMove(self):
         self.FLDC_Up.MC_Stop()
@@ -2967,7 +2971,8 @@ class joystickControl(MOTORCONTROL):
         self.BLDC_Down.bMoveRelativeCommandDisable()
         
     def JoystickControl_Conti(self):
-        while True:
+        self.bStop = False
+        while not self.bStop:
             pygame.event.pump()    
             if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
                 RotateMove_up = self.joystick.get_axis(0)
@@ -3023,10 +3028,13 @@ class joystickControl(MOTORCONTROL):
                 elif self.Status_BLDC_Down:
                     self.BLDC_Down_StopMove()
                     self.Status_BLDC_Down = False
+                    
+        self.signalStop.emit()
          
             
     def JoystickControl_StepRun(self):
-        while True:
+        self.bStop = False
+        while not self.bStop:
             pygame.event.pump()
             # up layer control
             if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
@@ -3083,5 +3091,10 @@ class joystickControl(MOTORCONTROL):
                 elif self.Status_BLDC_Down:
                     self.BLDC_Down_StopMove()
                     self.Status_BLDC_Down = False
+                    
+        self.signalStop.emit()
+                    
+    def Joystick_Stop(self):
+        self.bStop = True
         
             

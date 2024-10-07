@@ -431,6 +431,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnDeleteTrajectory.clicked.connect(self.OnClicked_btnTrajectoryDelete)
         self.btnLockTrajectory.clicked.connect(self.OnClicked_btnTrajectoryLock)
         
+        self.btnJoystick.clicked.connect(self.OnClicked_btnJoystick)
+        
         for combobox in self.dicViewSelector_L.values():
             combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
             
@@ -841,6 +843,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
+            self.joystick = Robot.joystickControl()
+            self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
+            
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
@@ -868,9 +873,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser= threading.Thread(target = self.Laser.Initialize)
             tLaser.start()
         elif nDevice == DEVICE_ROBOT:
+            self.joystick = Robot.joystickControl()
+            self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
+            
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
-            self.joystick = Robot.joystickControl()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
             self.robot.signalInitFailed.connect(self.RobotSystem_OnFailed)
             
@@ -2473,6 +2480,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif nStep is None:
             self._Robot_driveTo()
             # self.stkScene.setCurrentWidget(self.pgImageView)
+            
+    def OnClicked_btnJoystick(self):
+        button = self.sender()
+        if isinstance(button, QPushButton):
+            if button.isChecked():
+                t_joystick = threading.Thread(target = self.joystick.JoystickControl_Conti)
+                t_joystick.start()
+            else:
+                self.joystick.Joystick_Stop()
             
     def OnClicked_btnMoveUp(self):
         iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
