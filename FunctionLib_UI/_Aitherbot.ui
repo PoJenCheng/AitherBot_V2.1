@@ -1118,12 +1118,8 @@ QPushButton:pressed{
 	background-color:rgb(175, 175, 175);
 }
 
-#btnJoystick:checked{
+#btnJoystick:pressed{
 	background-color:rgb(210, 210, 210);
-	border-left:2px solid #555;
-	border-top:2px solid #555;
-	border-right:1px solid #ddd;
-	border-bottom:1px solid #ddd;
 }
 </string>
           </property>
@@ -1264,7 +1260,7 @@ QPushButton:pressed{
               <string/>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -6499,7 +6495,7 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>283</width>
+                     <width>222</width>
                      <height>314</height>
                     </rect>
                    </property>
@@ -6796,8 +6792,8 @@ QLabel{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>250</width>
+                     <height>308</height>
                     </rect>
                    </property>
                    <property name="sizePolicy">
@@ -8985,10 +8981,10 @@ margin-right:0px;
  </slots>
  <buttongroups>
   <buttongroup name="btnGroup_tool"/>
-  <buttongroup name="btnGroup_ref"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="btgDicom"/>
-  <buttongroup name="btnGroup_fusion"/>
   <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btnGroup_fusion"/>
+  <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btgDicom"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

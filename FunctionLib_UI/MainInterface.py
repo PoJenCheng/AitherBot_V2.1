@@ -13,6 +13,7 @@ from time import sleep
 from xml.dom.minidom import parse
 import xml.dom.minidom as xdom
 
+from PyQt5.QtGui import QCloseEvent
 import cv2
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -33,6 +34,7 @@ from PyQt5.QtWidgets import *
 import FunctionLib_Robot._class as Robot
 import FunctionLib_UI.Ui_DlgFootPedal
 import FunctionLib_UI.Ui_DlgHintBox
+import FunctionLib_UI.Ui_DlgJoystick
 import FunctionLib_UI.Ui_DlgRobotMoving
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
@@ -42,6 +44,7 @@ from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
 from FunctionLib_UI.Ui__Aitherbot import *
+from FunctionLib_UI.Ui_DlgJoystick import *
 from FunctionLib_UI.Ui_DlgFootPedal import *
 from FunctionLib_UI.Ui_DlgHint import *
 from FunctionLib_UI.Ui_step import *
@@ -159,6 +162,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgShowHint = None
         self.dlgSystemProcessing = None
         self.widgetSlider = None
+        self.joystick = None
         self.tempResumeData = {}
         self.bFirstCheckResume = True
         self.bDoneRegistration = False
@@ -844,7 +848,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
             self.joystick = Robot.joystickControl()
-            self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
+            # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.robot = Robot.MOTORSUBFUNCTION()
             self.robot.signalProgress.connect(self.Robot_OnLoading)
@@ -874,7 +878,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser.start()
         elif nDevice == DEVICE_ROBOT:
             self.joystick = Robot.joystickControl()
-            self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
+            # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.loadingLaser = 100
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -2483,12 +2487,15 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnClicked_btnJoystick(self):
         button = self.sender()
-        if isinstance(button, QPushButton):
-            if button.isChecked():
-                t_joystick = threading.Thread(target = self.joystick.JoystickControl_Conti)
-                t_joystick.start()
-            else:
-                self.joystick.Joystick_Stop()
+        if isinstance(button, QPushButton) and self.joystick:
+            self.dlgJoyStick = DlgJoystick()
+            self.joystick.signalMove.connect(self.dlgJoyStick.SetMoveDirect)
+            self.dlgJoyStick.signalClose.connect(self.joystick.Joystick_Stop)
+            
+            t_joystick = threading.Thread(target = self.joystick.JoystickControl_Conti)
+            t_joystick.start()
+                
+            self.dlgJoyStick.exec_()
             
     def OnClicked_btnMoveUp(self):
         iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
@@ -6016,7 +6023,68 @@ class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
             self.signalClose.emit()
             self.close()
         self.idPart = progress // self.nPartSize
+        
+class DlgJoystick(QDialog, Ui_DlgJoysitck):
+    ROBOT_UPPER = 1
+    ROBOT_DOWN = 2
+    signalClose = pyqtSignal()
+    def __init__(self, parent:QWidget = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        # self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+       
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.wdgRobot.Idle)
+        self.timer.start(33)
+        self.lastDirection = 0
+        
+        self.styleBackward = 'image:url(image/joystick_backward.png)'
+        self.styleForward  = 'image:url(image/joystick_forward.png)'
+        self.styleLeft     = 'image:url(image/joystick_left.png)'
+        self.styleRight    = 'image:url(image/joystick_right.png)'
+        self.styleBackwardHighlight = 'image:url(image/joystick_backward_enable.png)'
+        self.styleForwardHighlight  = 'image:url(image/joystick_forward_enable.png)'
+        self.styleLeftHighlight     = 'image:url(image/joystick_left_enable.png)'
+        self.styleRightHighlight    = 'image:url(image/joystick_right_enable.png)'
+        
+        self.btnStop.clicked.connect(lambda:self.Close())
+        
+    def Close(self):
+        self.signalClose.emit()
+        self.timer.stop()
+        self.close()
+        
+    def SetMoveDirect(self, nDirection:int):
+        if self.lastDirection == nDirection:
+            return
+        
+        if nDirection == 0:
+            self.wdgRobot.SetHighlight(-1)
             
+            self.wdgBackward.setStyleSheet(self.styleBackward)
+            self.wdgForward.setStyleSheet(self.styleForward)
+            self.wdgLeft.setStyleSheet(self.styleLeft)
+            self.wdgRight.setStyleSheet(self.styleRight)
+        else:
+            self.wdgRobot.SetHighlight((nDirection - 1) // 4)
+            
+            self.wdgBackward.setStyleSheet(self.styleBackward)
+            self.wdgForward.setStyleSheet(self.styleForward)
+            self.wdgLeft.setStyleSheet(self.styleLeft)
+            self.wdgRight.setStyleSheet(self.styleRight)
+            
+            if nDirection in (JOYSTICK_DOWN_BACKWARD, JOYSTICK_UP_BACKWARD):
+                self.wdgBackward.setStyleSheet(self.styleBackwardHighlight)
+            elif nDirection in (JOYSTICK_DOWN_FORWARD, JOYSTICK_UP_FORWARD):
+                self.wdgForward.setStyleSheet(self.styleForwardHighlight)
+            elif nDirection in (JOYSTICK_DOWN_LEFT, JOYSTICK_UP_LEFT):
+                self.wdgLeft.setStyleSheet(self.styleLeftHighlight)
+            elif nDirection in (JOYSTICK_DOWN_RIGHT, JOYSTICK_UP_RIGHT):
+                self.wdgRight.setStyleSheet(self.styleRightHighlight)
+                
+        self.lastDirection = nDirection
 class DlgFootPedal(QDialog, FunctionLib_UI.Ui_DlgFootPedal.Ui_DlgFootPedal):
     signalClose = pyqtSignal()
     

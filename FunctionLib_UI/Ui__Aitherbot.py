@@ -509,12 +509,8 @@ class Ui_MainWindow(object):
 "    background-color:rgb(175, 175, 175);\n"
 "}\n"
 "\n"
-"#btnJoystick:checked{\n"
+"#btnJoystick:pressed{\n"
 "    background-color:rgb(210, 210, 210);\n"
-"    border-left:2px solid #555;\n"
-"    border-top:2px solid #555;\n"
-"    border-right:1px solid #ddd;\n"
-"    border-bottom:1px solid #ddd;\n"
 "}\n"
 "")
         self.wdgNaviBar.setObjectName("wdgNaviBar")
@@ -565,7 +561,7 @@ class Ui_MainWindow(object):
         self.btnJoystick.setMaximumSize(QtCore.QSize(144, 144))
         self.btnJoystick.setStyleSheet("image:url(image/joystick.png)")
         self.btnJoystick.setText("")
-        self.btnJoystick.setCheckable(True)
+        self.btnJoystick.setCheckable(False)
         self.btnJoystick.setObjectName("btnJoystick")
         self.verticalLayout.addWidget(self.btnJoystick)
         self.btnRobotRelease = QtWidgets.QPushButton(self.wdgNaviBar)
@@ -3063,7 +3059,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 283, 314))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 314))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -3216,7 +3212,7 @@ class Ui_MainWindow(object):
 "")
         self.toolTrajectory.setObjectName("toolTrajectory")
         self.page = QtWidgets.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 300, 482))
+        self.page.setGeometry(QtCore.QRect(0, 0, 250, 308))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
