@@ -6032,8 +6032,7 @@ class DlgJoystick(QDialog, Ui_DlgJoysitck):
         super().__init__(parent)
         self.setupUi(self)
         
-        # self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
        
         self.timer = QTimer()
         self.timer.timeout.connect(self.wdgRobot.Idle)
