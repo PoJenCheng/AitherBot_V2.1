@@ -503,7 +503,16 @@ class Ui_MainWindow(object):
 "    border-top:2px solid #555;\n"
 "    border-right:1px solid #ddd;\n"
 "    border-bottom:1px solid #ddd;\n"
-"}")
+"}\n"
+"\n"
+"#btnJoystick{\n"
+"    background-color:rgb(175, 175, 175);\n"
+"}\n"
+"\n"
+"#btnJoystick:pressed{\n"
+"    background-color:rgb(210, 210, 210);\n"
+"}\n"
+"")
         self.wdgNaviBar.setObjectName("wdgNaviBar")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.wdgNaviBar)
         self.verticalLayout.setContentsMargins(11, -1, 11, -1)
@@ -546,6 +555,15 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.btnSceneView)
         spacerItem18 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem18)
+        self.btnJoystick = QtWidgets.QPushButton(self.wdgNaviBar)
+        self.btnJoystick.setEnabled(True)
+        self.btnJoystick.setMinimumSize(QtCore.QSize(144, 144))
+        self.btnJoystick.setMaximumSize(QtCore.QSize(144, 144))
+        self.btnJoystick.setStyleSheet("image:url(image/joystick.png)")
+        self.btnJoystick.setText("")
+        self.btnJoystick.setCheckable(False)
+        self.btnJoystick.setObjectName("btnJoystick")
+        self.verticalLayout.addWidget(self.btnJoystick)
         self.btnRobotRelease = QtWidgets.QPushButton(self.wdgNaviBar)
         self.btnRobotRelease.setEnabled(True)
         self.btnRobotRelease.setMinimumSize(QtCore.QSize(0, 50))
@@ -3041,7 +3059,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 283, 314))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 314))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -3119,7 +3137,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addLayout(self.horizontalLayout_31)
         self.toolBox.addItem(self.pgImage, "")
         self.pgTrajectory = QtWidgets.QWidget()
-        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 300, 294))
+        self.pgTrajectory.setGeometry(QtCore.QRect(0, 0, 100, 30))
         self.pgTrajectory.setObjectName("pgTrajectory")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.pgTrajectory)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -3194,7 +3212,7 @@ class Ui_MainWindow(object):
 "")
         self.toolTrajectory.setObjectName("toolTrajectory")
         self.page = QtWidgets.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 300, 482))
+        self.page.setGeometry(QtCore.QRect(0, 0, 250, 308))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -3395,7 +3413,7 @@ class Ui_MainWindow(object):
         self.gridLayout_45.addWidget(self.wdgToolBarTrajectory, 0, 0, 1, 1)
         self.toolTrajectory.addItem(self.page, "")
         self.page_2 = QtWidgets.QWidget()
-        self.page_2.setGeometry(QtCore.QRect(0, 0, 300, 482))
+        self.page_2.setGeometry(QtCore.QRect(0, 0, 100, 30))
         self.page_2.setObjectName("page_2")
         self.toolTrajectory.addItem(self.page_2, "")
         self.verticalLayout_4.addWidget(self.toolTrajectory)
