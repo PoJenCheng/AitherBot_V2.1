@@ -1191,9 +1191,47 @@ class AnimationWidget(QWidget):
             self.Stop()
         self.bPause = bPause
         
-        
+class AnimationJoystickWidget(QWidget):
     
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
+        self.imageUpper = QImage('image/robot_upper.png')
+        self.imageDown = QImage('image/robot_down.png')
+        self.lstImage = [self.imageUpper, self.imageDown]
+        self.idx = -1
         
+        self.opacity = 0
+        self.opacityStep = 0.1
+        
+    def paintEvent(self, event):
+        
+        opt = QStyleOption()
+        opt.initFrom(self)
+        p = QPainter(self)
+        self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
+        
+        if self.idx not in range(2):
+            return
+        
+        painter = QPainter(self)
+        painter.setOpacity(self.opacity)
+        
+        rcImage = self.rect()
+        painter.drawImage(QRectF(rcImage), self.lstImage[self.idx])
+        
+        super().paintEvent(event)  
+        
+    def Idle(self): 
+        if self.idx in range(2):
+            if self.opacity < 0 or self.opacity > 1:
+                self.opacityStep *= -1
+            self.opacity += self.opacityStep
+        self.update()
+            
+    def SetHighlight(self, part:int):
+        self.idx = part
+        if part not in range(2):
+            self.opacity = 0
 class MessageBox(QMessageBox):
     
     def __init__(self, icon:int, text:str):

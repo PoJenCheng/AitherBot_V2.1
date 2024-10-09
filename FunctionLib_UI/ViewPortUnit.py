@@ -113,6 +113,13 @@ class ViewPortUnit(QObject):
                 self.uiScrollSlice.setMinimum(0)
                 self.uiScrollSlice.setMaximum(int(length))
                 self.uiScrollSlice.setValue(0)
+                
+        elif orientation == VIEW_ALONG_TRAJECTORY:
+            self.changeRenderer(self.dicom.rendererAlongTrajectory)
+            self.iren.SetInteractorStyle(MyInteractorStyle(mainWidget, VIEW_ALONG_TRAJECTORY))
+            self.uiScrollSlice.setMaximum(360)
+            self.uiScrollSlice.setValue(0)
+            
         # self.renderer.signalUpdateView.connect(self.UpdateView)
         self.renderer.SetTarget()
         self.renderer.initalBorder()
@@ -301,6 +308,7 @@ class ViewPortUnit(QObject):
                 self.renderer.SetTarget(posOriginal = self.renderer.target)
                 
                 self.renderer.FocusTarget()
+            # elif orientation == VIEW
             
             # self.uiScrollSlice.setValue(0)
             # renderer.signalUpdateView.connect(self.UpdateView)
