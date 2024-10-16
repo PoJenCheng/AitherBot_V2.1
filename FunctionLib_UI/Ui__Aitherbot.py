@@ -16,6 +16,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1924, 1029)
         MainWindow.setMinimumSize(QtCore.QSize(1920, 1020))
+        MainWindow.setFocusPolicy(QtCore.Qt.StrongFocus)
         MainWindow.setStyleSheet("#MainWindow{background-color: rgb(0, 0, 0);}\n"
 "\n"
 "#centralwidget{background-color: rgb(0, 0, 0);}")
@@ -3059,7 +3060,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 314))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 283, 314))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -3212,7 +3213,7 @@ class Ui_MainWindow(object):
 "")
         self.toolTrajectory.setObjectName("toolTrajectory")
         self.page = QtWidgets.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 250, 308))
+        self.page.setGeometry(QtCore.QRect(0, 0, 300, 482))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -3498,48 +3499,72 @@ class Ui_MainWindow(object):
         self.gridLayout_32.addWidget(self.btnTracking, 2, 0, 1, 1)
         spacerItem54 = QtWidgets.QSpacerItem(20, 1000, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_32.addItem(spacerItem54, 4, 0, 1, 1)
-        self.groupBox_5 = QtWidgets.QGroupBox(self.tabGuidance)
-        self.groupBox_5.setMinimumSize(QtCore.QSize(0, 0))
-        self.groupBox_5.setStyleSheet("QGroupBox{\n"
-"    font: 18pt \"Arial\";\n"
+        self.gbxJoystick = CustomGroupBox(self.tabGuidance)
+        self.gbxJoystick.setMinimumSize(QtCore.QSize(0, 0))
+        self.gbxJoystick.setStyleSheet("QGroupBox{\n"
+"    font: 32px \"Arial\";\n"
+"}\n"
+"\n"
+"QPushButton{\n"
+"    border-radius:5px;\n"
+"    border-top:1px solid #ddd;\n"
+"    border-left:1px solid #ddd;\n"
+"    border-bottom:2px solid #444;\n"
+"    border-right:2px solid #444;\n"
+"}\n"
+"\n"
+"QPushButton:checked{\n"
+"    border-bottom:1px solid #ddd;\n"
+"    border-right:1px solid #ddd;\n"
+"    border-top:2px solid #444;\n"
+"    border-left:2px solid #444;\n"
 "}")
-        self.groupBox_5.setObjectName("groupBox_5")
-        self.gridLayout_54 = QtWidgets.QGridLayout(self.groupBox_5)
-        self.gridLayout_54.setContentsMargins(-1, 5, -1, -1)
+        self.gbxJoystick.setCheckable(False)
+        self.gbxJoystick.setObjectName("gbxJoystick")
+        self.gridLayout_54 = QtWidgets.QGridLayout(self.gbxJoystick)
+        self.gridLayout_54.setVerticalSpacing(7)
         self.gridLayout_54.setObjectName("gridLayout_54")
-        self.lblMoveDistance = QtWidgets.QLabel(self.groupBox_5)
-        self.lblMoveDistance.setObjectName("lblMoveDistance")
-        self.gridLayout_54.addWidget(self.lblMoveDistance, 2, 0, 1, 1)
-        self.comboBox = QtWidgets.QComboBox(self.groupBox_5)
-        self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.gridLayout_54.addWidget(self.comboBox, 2, 1, 1, 1)
-        self.lblUnit_2 = QtWidgets.QLabel(self.groupBox_5)
-        self.lblUnit_2.setObjectName("lblUnit_2")
-        self.gridLayout_54.addWidget(self.lblUnit_2, 2, 2, 1, 1)
+        self.lblMode = QtWidgets.QLabel(self.gbxJoystick)
+        self.lblMode.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblMode.setObjectName("lblMode")
+        self.gridLayout_54.addWidget(self.lblMode, 0, 0, 1, 1)
         self.horizontalLayout_45 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_45.setSpacing(3)
         self.horizontalLayout_45.setObjectName("horizontalLayout_45")
-        self.btnMoveContinuous = QtWidgets.QPushButton(self.groupBox_5)
+        self.btnMoveContinuous = QtWidgets.QPushButton(self.gbxJoystick)
         self.btnMoveContinuous.setMinimumSize(QtCore.QSize(0, 50))
         self.btnMoveContinuous.setCheckable(True)
-        self.btnMoveContinuous.setChecked(True)
+        self.btnMoveContinuous.setChecked(False)
         self.btnMoveContinuous.setObjectName("btnMoveContinuous")
         self.horizontalLayout_45.addWidget(self.btnMoveContinuous)
-        self.btnMoveInching = QtWidgets.QPushButton(self.groupBox_5)
+        self.btnMoveInching = QtWidgets.QPushButton(self.gbxJoystick)
         self.btnMoveInching.setMinimumSize(QtCore.QSize(0, 50))
         self.btnMoveInching.setCheckable(True)
         self.btnMoveInching.setChecked(False)
         self.btnMoveInching.setObjectName("btnMoveInching")
         self.horizontalLayout_45.addWidget(self.btnMoveInching)
-        self.gridLayout_54.addLayout(self.horizontalLayout_45, 1, 0, 1, 3)
-        self.lblMode = QtWidgets.QLabel(self.groupBox_5)
-        self.lblMode.setAlignment(QtCore.Qt.AlignCenter)
-        self.lblMode.setObjectName("lblMode")
-        self.gridLayout_54.addWidget(self.lblMode, 0, 0, 1, 3)
-        self.gridLayout_32.addWidget(self.groupBox_5, 3, 0, 1, 1)
+        self.gridLayout_54.addLayout(self.horizontalLayout_45, 1, 0, 1, 1)
+        self.lblMoveDistance = QtWidgets.QLabel(self.gbxJoystick)
+        self.lblMoveDistance.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblMoveDistance.setObjectName("lblMoveDistance")
+        self.gridLayout_54.addWidget(self.lblMoveDistance, 2, 0, 1, 1)
+        self.horizontalLayout_46 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_46.setObjectName("horizontalLayout_46")
+        self.comboBox = QtWidgets.QComboBox(self.gbxJoystick)
+        self.comboBox.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.comboBox.setInsertPolicy(QtWidgets.QComboBox.InsertAtBottom)
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.horizontalLayout_46.addWidget(self.comboBox)
+        self.lblUnit_2 = QtWidgets.QLabel(self.gbxJoystick)
+        self.lblUnit_2.setObjectName("lblUnit_2")
+        self.horizontalLayout_46.addWidget(self.lblUnit_2)
+        self.horizontalLayout_46.setStretch(0, 3)
+        self.horizontalLayout_46.setStretch(1, 1)
+        self.gridLayout_54.addLayout(self.horizontalLayout_46, 3, 0, 1, 1)
+        self.gridLayout_32.addWidget(self.gbxJoystick, 3, 0, 1, 1)
         self.tabWidget.addTab(self.tabGuidance, "")
         self.gridLayout_5.addWidget(self.tabWidget, 0, 1, 1, 1)
         self.stkScene.addWidget(self.pgImageView)
@@ -4281,15 +4306,15 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPlanning), _translate("MainWindow", "Planning"))
         self.btnDriveTo.setText(_translate("MainWindow", "Drive To Entry Point"))
         self.btnTracking.setText(_translate("MainWindow", "Breathing Tracking"))
-        self.groupBox_5.setTitle(_translate("MainWindow", "Joy Stick"))
-        self.lblMoveDistance.setText(_translate("MainWindow", "move distance"))
+        self.gbxJoystick.setTitle(_translate("MainWindow", "      "))
+        self.lblMode.setText(_translate("MainWindow", "- mode -"))
+        self.btnMoveContinuous.setText(_translate("MainWindow", "Continuous"))
+        self.btnMoveInching.setText(_translate("MainWindow", "Inching Move"))
+        self.lblMoveDistance.setText(_translate("MainWindow", "- move distance -"))
         self.comboBox.setItemText(0, _translate("MainWindow", "0.1"))
         self.comboBox.setItemText(1, _translate("MainWindow", "0.5"))
         self.comboBox.setItemText(2, _translate("MainWindow", "1"))
         self.lblUnit_2.setText(_translate("MainWindow", "mm"))
-        self.btnMoveContinuous.setText(_translate("MainWindow", "Continuous"))
-        self.btnMoveInching.setText(_translate("MainWindow", "Inching Move"))
-        self.lblMode.setText(_translate("MainWindow", "- mode -"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabGuidance), _translate("MainWindow", "Guidance"))
         self.btnUnlockRobot_2.setText(_translate("MainWindow", "Unlock"))
         self.btnRobotResume.setText(_translate("MainWindow", "Resume\n"
@@ -4312,5 +4337,5 @@ class Ui_MainWindow(object):
 "is tightened securely"))
         self.label_title_11.setText(_translate("MainWindow", "Install adaptor"))
         self.btnNext_scanCT_4.setText(_translate("MainWindow", "Confirm"))
-from FunctionLib_UI.WidgetButton import TreeWidget, WidgetButton
+from FunctionLib_UI.WidgetButton import CustomGroupBox, TreeWidget, WidgetButton
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor

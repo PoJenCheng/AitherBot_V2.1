@@ -5427,6 +5427,10 @@ class RendererObj(vtkRenderer):
             self.camera.SetViewUp(0, -1, 0)
             self.camera.SetPosition(0, 0, -1)
             self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
+        elif orientation == VIEW_ALONG_TRAJECTORY:
+            self.camera.SetViewUp(0, -1, 0)
+            self.camera.SetPosition(0, 0, -1)
+            self.actorImage.GetMapper().SetInputConnection(self.mapColor.GetOutputPort())
             
         
         self.camera.ComputeViewPlaneNormal()
@@ -5770,7 +5774,7 @@ class RendererCrossSectionObj(RendererObj):
         self.SetCrossSectionDelta(delta)
     
     def SetCrossSectionDelta(self, delta:float):
-        if self.targetPoint is None or self.entryPoint is None:
+        if self.targetPoint is None or self.entryPoint is None or delta is None:
             return None
         
         vector = self.entryPoint - self.targetPoint
@@ -6114,6 +6118,14 @@ class RendererAlongTrajectory(RendererCrossSectionObj):
         super().__init__()
         self.axis = np.array([0, 0, -1])
         self.transform = vtkTransform()
+        
+    def ChangeView(self, value):
+        """change slice view
+
+        Args:
+            value (_int_): location of slice
+        """
+        self.RotationView(value)
         
     def RotationView(self, angle:float):
         if self.targetPoint is None or self.entryPoint is None:
@@ -6918,6 +6930,7 @@ class DISPLAY(QObject):
         self.rendererList['Coronal'] = self.rendererCoronal
         self.rendererList['Axial'] = self.rendererAxial
         self.rendererList['Cross-Section'] = self.rendererCrossSection
+        self.rendererList['Along Trajectory'] = self.rendererAlongTrajectory
         
         "planningPointCenter"
         self.actorPointEntry = vtkActor()
@@ -7121,6 +7134,7 @@ class DISPLAY(QObject):
         self.rendererCoronal.SetCamera(VIEW_CORONAL)
         self.rendererSagittal.SetCamera(VIEW_SAGITTAL)
         self.rendererCrossSection.SetCamera(VIEW_CROSS_SECTION)
+        self.rendererAlongTrajectory.SetCamera(VIEW_ALONG_TRAJECTORY)
         ############################################################################################
         return
     
@@ -7214,7 +7228,7 @@ class DISPLAY(QObject):
     
     def UpdateTarget(self, pos = None, posCS =None, pcoord = None):
         for key, renderer in self.rendererList.items():
-            if key != VIEW_CROSS_SECTION:
+            if key != VIEW_CROSS_SECTION and key != VIEW_ALONG_TRAJECTORY:
                 renderer.SetTarget(pos)
         
         # if posCS is not None:
@@ -7538,6 +7552,7 @@ class DISPLAY(QObject):
         
         startPoint, endPoint = DISPLAY.trajectory[index]
         self.rendererCrossSection.SetCrossSectionView(endPoint, startPoint)
+        self.rendererAlongTrajectory.SetView([startPoint, endPoint])
         
         DISPLAY.trajectory.setRenderer(
             index,

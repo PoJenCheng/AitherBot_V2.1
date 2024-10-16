@@ -23,6 +23,27 @@ def message_handler(mode, context, message):
 # 安装自定义的日志处理器
 qInstallMessageHandler(message_handler)
 
+class CustomGroupBox(QGroupBox):
+    def __init__(self, title:str, parent:QWidget = None):
+        super().__init__(title)
+        
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        
+        painter = QPainter(self)
+        pixmap = QPixmap('image/joystick.png')
+        
+        painter.drawPixmap(5, -10, pixmap.scaled(60, 60))
+        rect = QRectF(60, 0, 130, 48)
+        
+        painter.save()
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(93, 161, 209))
+        painter.drawRect(rect)
+        painter.restore()
+        rect.moveLeft(70)
+        painter.drawText(rect, 'Joystick')
+
 class MimeData(QMimeData):
     def __init__(self, item:QTreeWidgetItem):
         super().__init__()
