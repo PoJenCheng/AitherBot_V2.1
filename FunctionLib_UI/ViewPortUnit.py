@@ -455,8 +455,10 @@ class LogViewDelegate(QStyledItemDelegate):
             content_rect = option.widget.style().subElementRect(QStyle.SE_ItemViewItemText, option, option.widget)
             
             offset = content_rect.left()
-            if index.column() == 0:
-                offset += 22
+            
+            indent = index.data(Qt.UserRole + 3)
+            if indent:
+                offset += indent
                 
             content_rect.setLeft(offset)
             painter.save()
@@ -464,6 +466,8 @@ class LogViewDelegate(QStyledItemDelegate):
             painter.restore()
             painter.setPen(QColor(255, 255, 255))
             option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 0, 255)))
+            
+            content_rect.setLeft(content_rect.left() + 3)
             painter.drawText(QRectF(content_rect), index.data(Qt.DisplayRole))
         
 # class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):

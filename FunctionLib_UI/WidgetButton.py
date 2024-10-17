@@ -866,7 +866,7 @@ class WidgetProgressing(QWidget):
 class NaviButton(QPushButton):
     angle = 0
     angleStep = 3.6
-    radius = 100
+    radius = 24.0
     circleWidth = 10
     
     def __init__(self, parent:QWidget):
@@ -881,7 +881,7 @@ class NaviButton(QPushButton):
         
         path = QPainterPath()
         rect = QRectF(self.rect())
-        path.addRoundedRect(rect, 24.0, 24.0)
+        path.addRoundedRect(rect, self.radius, self.radius)
         
         pathSub = QPainterPath()
         rectSub = QRectF(self.rect())
@@ -904,9 +904,9 @@ class NaviButton(QPushButton):
         painter.drawText(self.rect(), Qt.AlignCenter, self.text())
         
         
-    def OnSignal_Percent(self, percent:float):
+    def OnSignal_Percent(self, percent:float, text:str = 'Homing...'):
         self.rectWidth = self.width() * percent
-        self.setText(f'Homing...{percent:.1%}')
+        self.setText(f'{text}{percent:.1%}')
         self.update()
         
 class Indicator(QWidget):

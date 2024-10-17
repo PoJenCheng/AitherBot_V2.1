@@ -154,7 +154,7 @@ class Ui_DlgLogViewer(object):
         self.gridLayout.addWidget(self.treeLogView, 1, 1, 1, 1)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.btnExport = QtWidgets.QPushButton(DlgLogViewer)
+        self.btnExport = NaviButton(DlgLogViewer)
         self.btnExport.setMinimumSize(QtCore.QSize(0, 80))
         self.btnExport.setMaximumSize(QtCore.QSize(300, 16777215))
         self.btnExport.setObjectName("btnExport")
@@ -184,3 +184,4 @@ class Ui_DlgLogViewer(object):
         self.treeLogView.headerItem().setText(2, _translate("DlgLogViewer", "Model"))
         self.treeLogView.headerItem().setText(3, _translate("DlgLogViewer", "Message"))
         self.btnExport.setText(_translate("DlgLogViewer", "Export"))
+from FunctionLib_UI.WidgetButton import NaviButton
