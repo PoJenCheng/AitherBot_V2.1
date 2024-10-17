@@ -597,7 +597,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # dlg.exec_()
         
                     dlg = DlgLogViewer()
-                    dlg.Load()
                     dlg.exec_()
                 self.hiddenCodes = []
                 
@@ -5527,12 +5526,16 @@ class DlgExportLog(QDialog, Ui_dlgExportLog):
             
 class DlgLogViewer(QDialog, Ui_DlgLogViewer):
     levelMap = {'d':'debug', 'i':'information', 'w':'warning', 'e':'error', 'c':'critical'}
+    signalProgress = pyqtSignal(float, str)
+    signalReadFinished = pyqtSignal()
+    
     def __init__(self, parent:QWidget = None):
         super().__init__(parent)
         self.setupUi(self)
         
         self.bCheckAction = False # 檢查是否是核取方塊的事件，若是，itemClicked的事件就不執行 
         self.textFilter = ''
+        self.dicFolder = {}
         self.dicLogFile = {}
         self.lstLevelCount = np.zeros(len(self.levelMap), dtype = int)
         self.lstChecked = np.ones(len(self.levelMap), dtype = bool)
@@ -5558,41 +5561,41 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
         self.btnCritical.clicked.connect(self.OnClicked_LevelButton)
         self.ledSearch.textEdited.connect(self.OnTextEdit)
         self.btnExport.clicked.connect(self.OnClicked_btnExport)
+        self.btnExport.radius = 0
         
         self.treeLogList.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.treeLogView.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         
-    def Load(self):
+        self.signalReadFinished.connect(self._Load)
+        self.signalProgress.connect(self.btnExport.OnSignal_Percent)
+        t = threading.Thread(target = self.PreLoad)
+        t.start()
+        
+    def PreLoad(self):
         # read log folder
         logPath = os.path.join(os.getcwd(), 'logs')
         levelKeys = np.array(list(self.levelMap.keys()))
         
-        nSkip = 0
         for dirPath, dirNames, _ in os.walk(logPath):
+            numOfDirs = len(dirNames)
+            percent = 0
+            
             for dirName in dirNames:
                 try:
-                    item = QTreeWidgetItem()
-                    item.setCheckState(0, Qt.Unchecked)
-                    subDirPath = os.path.join(dirPath, dirName)
                     
-                    # 先將item加入至treeWidget，不然後面 _MarkerItem 會找不到treeWidget
-                    self.treeLogList.addTopLevelItem(item)
+                    subDirPath = os.path.join(dirPath, dirName)
                     # 用於計算每個目錄(日期)中，各別level在log中出現的次數
                     lstLevelCountByFolder = np.zeros(len(self.levelMap), dtype = int)
-                    
+                    self.dicFolder[dirName] = {}
                     # 取得子目錄中所有的log files
                     for _, _, files in os.walk(subDirPath):
                         for filename in files:
                             
                             filePath = os.path.join(subDirPath, filename)
                             if os.path.exists(filePath):
-                                itemChild = QTreeWidgetItem()
                                 filename = filename.split('.')[0]
-                                itemChild.setText(1, filename)
-                                item.addChild(itemChild)
-                                
                                 self.dicLogFile[filename] = []
-                                
+                                self.dicFolder[dirName][filename] = []
                                 with open(filePath, 'r') as f:
                                     line = f.readline()
                                     while line:
@@ -5601,10 +5604,6 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                                         levelText = lstText[0]
                                         # 累加對應index的level log
                                         lstLevelCountByFolder[levelKeys == levelText.casefold()] += 1
-                                        
-                                        # 該日期底下有出現error或critical的log，以紅色標記，易於快速找到有這兩種log的日期
-                                        self._MarkerItem(levelText, item)
-                                        self._MarkerItem(levelText, itemChild, [1])
                                         
                                         dicLogData = {}
                                         dicLogData['level'] = levelText
@@ -5615,29 +5614,71 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                                         line = self._ReadNextLine(f, msg)
                                         
                                         self.dicLogFile[filename].append(dicLogData)
-                                        # line, bNext = self._ReadNextLine(f, msg)
-                                        # while not bNext:
-                                        #     line, bNext = self._ReadNextLine(f, msg)
-                                        
-                                        # line = f.readline()
+                                        self.dicFolder[dirName][filename].append(dicLogData)
                         break
-                    item.setData(0, Qt.UserRole + 2, dirName)
-                    # item name以日期命名，後面加註該日期中，(error, critical)的數目
-                    item.setText(0, dirName + f'({lstLevelCountByFolder[-2]}, {lstLevelCountByFolder[-1]})')
                     
                     for i in range(len(self.lstLevelCount)):
                         self.lstLevelCount[i] += lstLevelCountByFolder[i]
                         
+                    percent += 1
+                    self.signalProgress.emit(percent / numOfDirs, 'Log Loading...')
+                        
                 except ValueError:
-                    nSkip += 1
                     # 忽略非日期的目錄
                     continue
             
             break
         
+        self.signalReadFinished.emit()
+        
+    def _Load(self):
+        self.btnExport.setText('Export')
+        
+        self.lstLevelCount = np.zeros(len(self.levelMap), dtype = int)
+        levelKeys = np.array(list(self.levelMap.keys()))
+        self.treeLogList.blockSignals(True)
+        for folderName, files in self.dicFolder.items():
+            try:
+                item = QTreeWidgetItem()
+                item.setCheckState(0, Qt.Unchecked)
+                
+                # 先將item加入至treeWidget，不然後面 _MarkerItem 會找不到treeWidget
+                self.treeLogList.addTopLevelItem(item)
+                # 用於計算每個目錄(日期)中，各別level在log中出現的次數
+                lstLevelCountByFolder = np.zeros(len(self.levelMap), dtype = int)
+                
+                # 取得子目錄中所有的log files
+                for filename, logFile in files.items():
+                    itemChild = QTreeWidgetItem()
+                    itemChild.setText(1, filename)
+                    item.addChild(itemChild)
+                    
+                    for logData in logFile:
+                        levelText = logData['level']
+                        # 累加對應index的level log
+                        lstLevelCountByFolder[levelKeys == levelText.casefold()] += 1
+                        
+                        # 該日期底下有出現error或critical的log，以紅色標記，易於快速找到有這兩種log的日期
+                        self._MarkerItem(levelText, item, indent = [22, 0])
+                        self._MarkerItem(levelText, itemChild, [1])
+                                
+                item.setData(0, Qt.UserRole + 2, folderName)
+                # item name以日期命名，後面加註該日期中，(error, critical)的數目
+                item.setText(0, folderName + f'({lstLevelCountByFolder[-2]}, {lstLevelCountByFolder[-1]})')
+                
+                for i in range(len(self.lstLevelCount)):
+                    self.lstLevelCount[i] += lstLevelCountByFolder[i]
+                    
+            except ValueError:
+                nSkip += 1
+                # 忽略非日期的目錄
+                continue
+        self.treeLogList.blockSignals(False)
+        
         for i, button in enumerate(self.lstButton):
             button.setText(button.text() + f'({self.lstLevelCount[i]})')
-        
+            
+       
     def OnClicked_LevelButton(self):
         button = self.sender()
         if isinstance(button, QPushButton):
@@ -5660,12 +5701,39 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                     self.lstChecked = (self.lstChecked == False)
                     self.btnAll.setChecked(True)
       
+        rowCount = self.treeLogList.topLevelItemCount()
+        for i in range(rowCount):
+            item = self.treeLogList.topLevelItem(i)
+            
+            if isinstance(item, QTreeWidgetItem):
+                bFound = False
+                for idx in range(item.childCount()):
+                    itemChild = item.child(idx)
+                    
+                    logData = self.dicLogFile[itemChild.text(1)]
+                    bFoundLine = False
+                    for logLine in logData:
+                        for i, level_key in enumerate(self.levelMap.keys()):
+                    
+                            if logLine['level'].casefold() == level_key:
+                                # 只要log中有一行符合篩選條件，該item就會被保留，否則隱藏
+                                bFoundLine |= self.lstChecked[i]
+                                bFound |= self.lstChecked[i]
+                                
+                    itemChild.setHidden(not bFoundLine)
+                    
+                item.setHidden(not bFound)
+                    
+                    
             
         rowCount = self.treeLogView.topLevelItemCount()
         for i in range(rowCount):
             item = self.treeLogView.topLevelItem(i)
+            
             if isinstance(item, QTreeWidgetItem):
+                
                 for i, level in enumerate(self.levelMap.values()):
+                    
                     if item.text(1).casefold() == level:
                         item.setHidden(not self.lstChecked[i])
                         
@@ -5833,7 +5901,7 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
         
         self.itemLastExpand = item
         
-    def _ReadNextLine(self, f, item):
+    def _ReadNextLine(self, f, msg:str):
         line = f.readline()
         
         while True:
@@ -5845,11 +5913,11 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
             
             if bIsNewLine:
                 break
-        
-            if isinstance(item, QTreeWidgetItem):
-                item.setText(3, item.text(3) + line)
-            elif isinstance(item, str):
-                item += line
+            
+            if isinstance(msg, str):
+                msg += line
+            else:
+                logger.error('error type in _ReadNextLine')
                 
             line = f.readline()
         
@@ -5860,6 +5928,7 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
         levelText:str, 
         item:QTreeWidgetItem,
         columns:List[int] = None,
+        indent:int = 0,
         condition = ['e', 'c']
     ):
         treeWidget = item.treeWidget()
@@ -5871,9 +5940,17 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
             
             if columns is None:
                 columns = range(treeWidget.columnCount())
-           
-            for col in columns:
-                item.setData(col, Qt.UserRole + 1, True)
+
+            if isinstance(indent, int):
+                for col in columns:
+                    item.setData(col, Qt.UserRole + 1, True)
+                    item.setData(col, Qt.UserRole + 3, indent)
+            elif isinstance(indent, (list, tuple)):
+                if len(columns) == len(indent):
+                    for col, ind in zip(columns, indent):
+                        item.setData(col, Qt.UserRole + 1, True)
+                        item.setData(col, Qt.UserRole + 3, ind)
+                        
                 
 class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
     
