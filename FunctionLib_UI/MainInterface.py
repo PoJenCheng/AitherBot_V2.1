@@ -408,7 +408,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_Lung.setId(self.btnLungsExhale, InteractorStyleWipe.IMAGE_EXHALE)
         
         self.btnMoveContinuous.clicked.connect(self.OnClicked_btnMoveContinuous)
-        self.btnMoveInching.clicked.connect(self.OnClicked_btnMoveContinuous)
+        self.btnMoveInching.clicked.connect(self.OnClicked_btnMoveInching)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         self.btnTracking.clicked.connect(self.OnClicked_btnTracking)
@@ -852,7 +852,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
-            self.joystick = Robot.joystickControl()
+            # self.joystick = Robot.joystickControl()
             # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -882,7 +882,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser= threading.Thread(target = self.Laser.Initialize)
             tLaser.start()
         elif nDevice == DEVICE_ROBOT:
-            self.joystick = Robot.joystickControl()
+            # self.joystick = Robot.joystickControl()
             # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.loadingLaser = 100
@@ -1257,18 +1257,22 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         return True
     
-    def _Joystick_RunContinuous(self, stopCallback = None):
-        if self.joystick:
+    def _Joystick_Run(self, joystickCallback, stopCallback = None, movement:float = None):
+        if self.robot:
             if not self.dlgJoyStick:
                 self.dlgJoyStick = DlgJoystick()
-                self.joystick.signalMove.connect(self.dlgJoyStick.SetMoveDirect)
-                self.dlgJoyStick.signalClose.connect(self.joystick.Joystick_Stop)
+                self.robot.signalMove.connect(self.dlgJoyStick.SetMoveDirect)
+                self.dlgJoyStick.signalClose.connect(self.robot.Joystick_Stop)
                 
                 if stopCallback:
                     self.dlgJoyStick.signalClose.connect(stopCallback)
-            
-            t_joystick = threading.Thread(target = self.joystick.JoystickControl_Conti)
-            t_joystick.start()
+                    
+            if movement is None:
+                t_joystick = threading.Thread(target = joystickCallback)
+                t_joystick.start()
+            else:
+                t_joystick = threading.Thread(target = joystickCallback, args = (movement,))
+                t_joystick.start()
                 
             self.dlgJoyStick.exec_()
             
@@ -2510,7 +2514,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnClicked_btnJoystick(self):
         button = self.sender()
         if isinstance(button, QPushButton):
-            self._Joystick_RunContinuous()
+            self._Joystick_Run(self.robot.JoystickControl_Conti)
             
     def OnClicked_btnMoveUp(self):
         iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
@@ -2641,16 +2645,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         btn = self.sender()
         if isinstance(btn, QPushButton) and btn.isChecked():
             self.btnMoveInching.setChecked(False)
-            self._Joystick_RunContinuous(lambda:btn.setChecked(False))
+            self._Joystick_Run(self.robot.JoystickControl_Conti, lambda:self.btnMoveContinuous.setChecked(False))
                 
     def OnClicked_btnMoveInching(self):
         btn = self.sender()
-        
         if isinstance(btn, QPushButton) and btn.isChecked():
             self.btnMoveContinuous.setChecked(False)
-            # joystick = eval('joystickControl.JoystickControl_Conti()')
-            # if joystick:
-            #     joystick.JoystickControl_Conti()
+            movement = float(self.comboBox.currentText())
+            self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
     
             
@@ -3996,6 +3998,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.pteProgress.moveCursor(QTextCursor.End)
         if hasattr(self, 'loadingLaser'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
+                # self.joystick = Robot.joystickControl()
                 if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
             
@@ -6396,7 +6399,8 @@ class DlgJoystick(QDialog, Ui_DlgJoysitck):
         super().__init__(parent)
         self.setupUi(self)
         
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint)
        
         self.timer = QTimer()
         self.timer.timeout.connect(self.wdgRobot.Idle)
@@ -6420,6 +6424,9 @@ class DlgJoystick(QDialog, Ui_DlgJoysitck):
         self.close()
         
     def SetMoveDirect(self, nDirection:int):
+        if not self.timer.isActive():
+            self.timer.start(33)
+            
         if self.lastDirection == nDirection:
             return
         
