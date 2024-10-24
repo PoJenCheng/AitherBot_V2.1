@@ -43,6 +43,7 @@ from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
+from FunctionLib_Robot._class import DlgRobotCalibration
 from FunctionLib_UI.Ui__Aitherbot import *
 from FunctionLib_UI.Ui_DlgJoystick import *
 from FunctionLib_UI.Ui_DlgFootPedal import *
@@ -3484,6 +3485,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.idEnabledDevice == DEVICE_ROBOT:
             if currentWidget == self.pgLaser:
                 self.stkScene.setCurrentWidget(self.pgImportDicom)
+                
+            
+            self.wdgRobotCalibration = DlgRobotCalibration()
+            self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
+            self.wdgRobotCalibration.exec_()
         
     def IsStage(self,index:int, stage:str):
                 

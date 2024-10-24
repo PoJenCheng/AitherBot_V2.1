@@ -15,6 +15,7 @@ from time import sleep
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Vision._class import REGISTRATION
 from FunctionLib_Robot._subFunction import lowPass
+from FunctionLib_UI.Ui_RobotCalibration import *
 from ._globalVar import *
 from pyueye import ueye
 # from FunctionLib_UI.ui_matplotlib_pyqt import *
@@ -23,7 +24,8 @@ import matplotlib
 matplotlib.use('QT5Agg')
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # from matplotlib.backends.backend_gt5agg import FigureCanvasGTKAgg as FigureCanvas
@@ -1831,6 +1833,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         # self.absolutePosition()
         self.MoveToPoint()
         
+    def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray):
+        self.entryPoint = entry
+        self.targetPoint = target
+        self.MoveToPoint()
+        
     def breathingCompensation(self, percentage):
         
         "obtain entry point and target point"
@@ -3382,3 +3389,219 @@ class joystickControl(MOTORSUBFUNCTION, QObject):
         self.bStop = True
         
             
+class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
+    signalRobotRun = pyqtSignal(np.ndarray, np.ndarray)
+    
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.baseShiftX = 69
+        self.baseDistance = 197.392
+        self.baseShiftHeight = 63.9
+        
+        self.boardWidth = 138
+        self.boardHeight = 88
+        
+        self.pixelWidth  = 606
+        self.pixelHeight = 606
+        self.entry = np.zeros(3, dtype = int)
+        self.target = np.zeros(3, dtype = int)
+        self.entryRobot = np.zeros(3, dtype = int)
+        self.targetRobot = np.zeros(3, dtype = int)
+        
+        self.lstCoord = [self.ledX1, 
+                         self.ledY1, 
+                         self.ledZ1, 
+                         self.ledX2, 
+                         self.ledY2, 
+                         self.ledZ2
+                         ]
+        
+        for p in self.lstCoord:
+            p.editingFinished.connect(self.OnEditFinished)
+            
+        self.btnRobotRun.clicked.connect(lambda:self.signalRobotRun.emit(self.entryRobot, self.targetRobot))
+            
+        self.cameraRegist()
+        
+    def OnClicked_btnGetImage(self):
+        self.cameraRegist()
+        
+        caliStatus = False
+        caliStatus_rotate_camera1 = False
+        caliStatus_movement_camera1 = False
+        
+        # Open calibration light
+        # self.plc.write_by_name(self.CalibrationLight_1,True)
+        # self.plc.write_by_name(self.CalibrationLight_2,False)
+            
+        while caliStatus == False:
+            # 開始攝影
+            camera = self.cameraCali_Front
+            ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
+            sleep(1)  # 等待攝影完成
+
+            # 取得影像數據
+            image_data = ueye.get_data(camera.mem_ptr, camera.original_width, \
+                camera.original_height, 8, camera.original_width, copy=True)
+
+            # 確保無符號 8 位整數
+            image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
+
+            # 縮放圖像至原始尺寸的一半
+            self.scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
+            self.scaled_width = camera.original_width // 2
+            self.scaled_height = camera.original_height // 2
+            
+            cv2.imwrite("imageFront.jpg",self.scaled_image)
+            
+            points = camera.FindCrossPoint('imageFront.jpg')
+
+            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[1],points[2],points[0],points[3])
+            corrected_image = CalibrationResult[0]
+            imageWidth = CalibrationResult[1]
+            
+            cv2.imwrite("imageFront_cal.jpg",corrected_image)
+            
+            # 修改成adaptive threshold image
+            src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+            dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
+            cv2.imwrite("imageFrontAdaptive.jpg",dst)
+
+            # 計算校正桿的傾斜角度
+            # 取得邊界pixel
+            # if caliStatus_rotate_camera1 == False:
+            #     caliStatus_rotate_camera1 = self.RollCalibration(camera,dst,caliStatus_rotate_camera1)                
+            #     print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
+            #     cv2.imwrite("imageFront_calAngle.jpg",dst)
+            # elif caliStatus_movement_camera1 == False:
+            #     src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+            #     ret, dst = cv2.threshold(src,240,255,cv2.THRESH_BINARY)
+            #     cv2.imwrite("imageFrontThreshold.jpg",dst)
+            #     caliStatus_movement_camera1 = self.YawCalibration(camera,dst,imageWidth,caliStatus_movement_camera1)
+            #     print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
+            #     if caliStatus_movement_camera1 == True:
+            #         caliStatus = True
+            #         self.cameraCali_Front.releaseCamera()
+                    
+            
+        cv2.imwrite("imageFront_done.jpg",corrected_image)
+        return True
+        
+    
+    def cameraRegist(self):
+        # frontCamera_ID = 0
+        frontCamera_ID = 1
+        sideCamera_ID = 0
+        
+        # self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+        
+        # self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
+        imageSize = self.pixelWidth * self.pixelHeight * 3
+        self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
+        self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
+        
+        self.qImgSide = self.__ImageToQImage(self.imageSide)
+        self.qImgFront = self.__ImageToQImage(self.imageFront)
+        self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+        self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+        self.update()
+    
+    def __ImageToQImage(self, image:np.ndarray):
+        h, w, ch = image.shape
+        qImg = QImage(image.data, w, h, ch * w, QImage.Format_RGB888)
+        return qImg
+    
+    def __DrawLine(self, qImg:QImage, point1:np.ndarray, point2:np.ndarray, color:QColor = QColor(0, 255, 0)):
+        painter = QPainter(qImg)
+        painter.setPen(color)
+        painter.drawLine(point1[0], point1[1], point2[0], point2[1])
+        painter.end()
+    
+    def __DrawOnQImage(self, qImg:QImage, x:int, y:int, color:QColor = QColor(255, 0, 0), radius:int = 10):
+        painter = QPainter(qImg)
+        painter.setPen(color)
+        # x_left = max(0, x - 20)
+        # x_right = min(self.pixelWidth, x + 20)
+        # y_top = max(0, y - 20)
+        # y_bottom = min(self.pixelHeight, y + 20)
+        
+        linearColor = QRadialGradient(x, y, radius, x, y)
+        arrColor = np.array([color.red(), color.green(), color.blue()], dtype = int)
+        colorDarker = QColor(*(arrColor * 0.5).astype(int))
+        
+        linearColor.setColorAt(0, QColor(255, 255, 255))
+        linearColor.setColorAt(0.4, color)
+        linearColor.setColorAt(0.7, color)
+        linearColor.setColorAt(1, colorDarker)
+        
+        painter.setBrush(linearColor)
+        painter.drawEllipse(QPoint(x, y), radius, radius)
+        
+        # painter.drawLine(x_left, y, x_right, y)
+        # painter.drawLine(x, y_top, x, y_bottom)
+        
+        painter.end()
+    
+    def DrawPoint(self, point:np.ndarray, color:QColor):
+        try:
+            
+            x, y, z = point
+            if x not in range(self.pixelWidth) or y not in range(self.pixelHeight) or z not in range(self.pixelWidth):
+                return False
+            
+            # qImg = self.__ImageToQImage(self.imageSide)
+            self.__DrawOnQImage(self.qImgSide, x, y, color)
+            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+            
+            # qImg = self.__ImageToQImage(self.imageFront)
+            self.__DrawOnQImage(self.qImgFront, z, y, color)
+            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+            
+            # draw path line
+            self.__DrawLine(self.qImgSide, self.entry[:2], self.target[:2]) # x, y
+            self.__DrawLine(self.qImgFront, self.entry[1:][::-1], self.target[1:][::-1]) # z, y
+            
+            self.update()
+            
+        except Exception as msg:
+            logger.debug(msg)
+            
+        return True
+        
+    def OnEditFinished(self):
+        lstPoint = []
+        for lineEdit in self.lstCoord:
+            text = lineEdit.text()
+            if text == '':
+                return
+            lstPoint.append(int(text))
+            
+        
+        lstPoint = np.array(lstPoint)
+        self.entryRobot = lstPoint[:3].copy()
+        self.targetRobot = lstPoint[3:].copy()
+        
+        # calculate robot to pixel coordinate
+        lstPoint[::3] = (self.boardWidth - 1) - (lstPoint[::3] + self.baseShiftX)
+        lstPoint[1::3] = (self.boardHeight - 1) - (lstPoint[1::3] + self.baseShiftHeight)
+        lstPoint[2::3] = self.baseDistance - (lstPoint[2::3] + robotInitialLength)
+        
+        rateW = (self.pixelWidth / 138) 
+        rateH = (self.pixelHeight / 88) 
+        transform = np.array([rateW, rateH, rateW])
+        
+        self.entry = (lstPoint[:3] * transform).astype(int)
+        self.target = (lstPoint[3:] * transform).astype(int)
+        
+        self.qImgSide = self.__ImageToQImage(self.imageSide) # XY plane
+        self.qImgFront = self.__ImageToQImage(self.imageFront) # YZ plane
+        
+        
+        ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
+        ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
+            
+        if ret == False:
+            QMessageBox.critical(None, 'error', f'out of canvas range')
