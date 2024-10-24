@@ -1404,7 +1404,7 @@ image:url(image/switch.png)</string>
 }</string>
           </property>
           <property name="currentIndex">
-           <number>15</number>
+           <number>13</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
            <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0" columnstretch="2,1">
@@ -3900,7 +3900,7 @@ QPushButton:disabled{
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>300</width>
+                  <width>380</width>
                   <height>300</height>
                  </size>
                 </property>
@@ -3938,9 +3938,9 @@ SYSTEM</string>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="btnFromCD">
+               <widget class="QPushButton" name="btnFromDB">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -3950,7 +3950,7 @@ SYSTEM</string>
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>300</width>
+                  <width>380</width>
                   <height>300</height>
                  </size>
                 </property>
@@ -3982,7 +3982,8 @@ QPushButton:disabled{
 }</string>
                 </property>
                 <property name="text">
-                 <string>CD ROM</string>
+                 <string>DATA
+BASE</string>
                 </property>
                </widget>
               </item>
@@ -6498,7 +6499,7 @@ QToolBox QPushButton:disabled{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>283</width>
+                     <width>222</width>
                      <height>314</height>
                     </rect>
                    </property>
@@ -6795,8 +6796,8 @@ QLabel{
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>300</width>
-                     <height>482</height>
+                     <width>250</width>
+                     <height>308</height>
                     </rect>
                    </property>
                    <property name="sizePolicy">
@@ -7541,7 +7542,7 @@ QPushButton:checked{
 }</string>
                   </property>
                   <property name="title">
-                   <string>      </string>
+                   <string/>
                   </property>
                   <property name="checkable">
                    <bool>false</bool>
@@ -8870,7 +8871,7 @@ margin-right:0px;
    </hints>
   </connection>
   <connection>
-   <sender>btnFromCD</sender>
+   <sender>btnFromDB</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>NextScene()</slot>
@@ -9020,11 +9021,11 @@ margin-right:0px;
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="btnGroup_ref"/>
+  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_tool"/>
   <buttongroup name="buttonGroup"/>
-  <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btnGroup_ref"/>
   <buttongroup name="btnGroup_fusion"/>
-  <buttongroup name="btgDicom"/>
  </buttongroups>
 </ui>

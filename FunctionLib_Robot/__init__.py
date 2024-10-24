@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from PyQt5.QtCore import Qt
 
@@ -120,10 +121,17 @@ ROLE_TRAJECTORY = Qt.UserRole + 5
 ROLE_DROPITEM   = Qt.UserRole + 6
 ROLE_LOCK       = Qt.UserRole + 7
 
+# MessageBox style
+MB_INFO = 0
+MB_WARNING = 1
+MB_ERROR = 2
+MB_QUESTION = 3
 
 IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
+
+DATABASE_PATH = os.path.join(os.getcwd(), 'database')
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
 ENABLE_REGISTRATION = False
