@@ -1834,8 +1834,11 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.MoveToPoint()
         
     def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray):
-        self.entryPoint = entry
-        self.targetPoint = target
+        self.entryPoint = np.roll(entry, 1)
+        self.targetPoint = np.roll(target, 1)
+        self.entryPoint[0] += robotInitialLength
+        self.targetPoint[0] += robotInitialLength
+        
         self.MoveToPoint()
         
     def breathingCompensation(self, percentage):
