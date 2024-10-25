@@ -3425,7 +3425,7 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             p.editingFinished.connect(self.OnEditFinished)
             
         self.btnRobotRun.clicked.connect(lambda:self.signalRobotRun.emit(self.entryRobot, self.targetRobot))
-            
+        self.btnGetImage.clicked.connect(self.OnClicked_btnGetImage)
         self.cameraRegist()
         
     def OnClicked_btnGetImage(self):
@@ -3465,31 +3465,27 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             corrected_image = CalibrationResult[0]
             imageWidth = CalibrationResult[1]
             
-            cv2.imwrite("imageFront_cal.jpg",corrected_image)
+            self.qImgSide = self.__ImageToQImage(self.imageSide)
+            self.qImgFront = self.__ImageToQImage(self.imageFront)
+            # self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+            # self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
             
-            # 修改成adaptive threshold image
-            src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
-            dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
-            cv2.imwrite("imageFrontAdaptive.jpg",dst)
-
-            # 計算校正桿的傾斜角度
-            # 取得邊界pixel
-            # if caliStatus_rotate_camera1 == False:
-            #     caliStatus_rotate_camera1 = self.RollCalibration(camera,dst,caliStatus_rotate_camera1)                
-            #     print(f"caliStatus_robot_camera1 :{caliStatus_rotate_camera1}")
-            #     cv2.imwrite("imageFront_calAngle.jpg",dst)
-            # elif caliStatus_movement_camera1 == False:
-            #     src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
-            #     ret, dst = cv2.threshold(src,240,255,cv2.THRESH_BINARY)
-            #     cv2.imwrite("imageFrontThreshold.jpg",dst)
-            #     caliStatus_movement_camera1 = self.YawCalibration(camera,dst,imageWidth,caliStatus_movement_camera1)
-            #     print(f"caliStatus_movement_camera1 :{caliStatus_movement_camera1}")
-            #     if caliStatus_movement_camera1 == True:
-            #         caliStatus = True
-            #         self.cameraCali_Front.releaseCamera()
+            ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
+            ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
+                
+            if ret == False:
+                QMessageBox.critical(None, 'error', f'out of canvas range')
+            self.update()
+            
+            # cv2.imwrite("imageFront_cal.jpg",corrected_image)
+            
+            # # 修改成adaptive threshold image
+            # src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+            # dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
+            # cv2.imwrite("imageFrontAdaptive.jpg",dst)
                     
             
-        cv2.imwrite("imageFront_done.jpg",corrected_image)
+        # cv2.imwrite("imageFront_done.jpg",corrected_image)
         return True
         
     
@@ -3498,18 +3494,19 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         frontCamera_ID = 1
         sideCamera_ID = 0
         
-        # self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
-        # self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
+        self.cameraCali_Front = imageCalibration(frontCamera_ID,3)
+        self.cameraCali_Side = imageCalibration(sideCamera_ID,2)
         
-        # self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
+        self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
+        
         imageSize = self.pixelWidth * self.pixelHeight * 3
         self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
         self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
         
         self.qImgSide = self.__ImageToQImage(self.imageSide)
         self.qImgFront = self.__ImageToQImage(self.imageFront)
-        self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
-        self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+        self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+        self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
         self.update()
     
     def __ImageToQImage(self, image:np.ndarray):
@@ -3556,16 +3553,16 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
                 return False
             
             # qImg = self.__ImageToQImage(self.imageSide)
-            self.__DrawOnQImage(self.qImgSide, x, y, color)
-            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+            self.__DrawOnQImage(self.qImgFront, x, y, color)
+            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
             
             # qImg = self.__ImageToQImage(self.imageFront)
-            self.__DrawOnQImage(self.qImgFront, z, y, color)
-            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+            self.__DrawOnQImage(self.qImgSide, z, y, color)
+            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
             
             # draw path line
-            self.__DrawLine(self.qImgSide, self.entry[:2], self.target[:2]) # x, y
-            self.__DrawLine(self.qImgFront, self.entry[1:][::-1], self.target[1:][::-1]) # z, y
+            self.__DrawLine(self.qImgFront, self.entry[:2], self.target[:2]) # x, y
+            self.__DrawLine(self.qImgSide, self.entry[1:][::-1], self.target[1:][::-1]) # z, y
             
             self.update()
             
@@ -3588,7 +3585,8 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.targetRobot = lstPoint[3:].copy()
         
         # calculate robot to pixel coordinate
-        lstPoint[::3] = (self.boardWidth - 1) - (lstPoint[::3] + self.baseShiftX)
+        # lstPoint[::3] = (self.boardWidth - 1) - (lstPoint[::3] + self.baseShiftX)
+        lstPoint[::3] = (lstPoint[::3] + self.baseShiftX)
         lstPoint[1::3] = (self.boardHeight - 1) - (lstPoint[1::3] + self.baseShiftHeight)
         lstPoint[2::3] = self.baseDistance - (lstPoint[2::3] + robotInitialLength)
         
