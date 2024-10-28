@@ -36,10 +36,11 @@ shiftingFLDC_up = -20.5893
 shiftingBLDC_Up = -52.85
 shiftingFLDC_Down = -26.0881
 shiftingBLDC_Down = -52.85
+shiftingPlatform_Left = -146.3998
 # robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 132.253 #132.93 #110.38  #128.38
-upperHigh = 6.798 #6.6 #6.1
+upperHigh = 9.8 #6.798 #6.6 #6.1
 lowerHigh = -14.93 #-18.671 #-14.171 #-15.6
 global data
 data = ''
@@ -60,6 +61,16 @@ yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
+
+"Joint Limit Setting"
+max_linearMotion = 53
+min_linearMotion = -1
+diff_linearMotion = 16
+diff_rotateMotion = 18
+
+"Joystick speed setting"
+linearSpeed = 2
+rotateSpeed = 2
 
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
