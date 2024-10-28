@@ -1038,13 +1038,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             return
         logger.info('connecting motor [BLDC_Down] pass')
         # self.signalProgress.emit('connecting motor [Robot System]...', 40)
-        self.RobotSystem = MOTORCONTROL(5)
+        self.Platform_Left = MOTORCONTROL(5)
+        if self.setInitProgress('connecting motor [Robot System]...') == False:
+            return
+        self.RobotSystem = MOTORCONTROL(6)
         if self.setInitProgress('connecting motor [Robot System]...') == False:
             return
         logger.info('connecting motor [Robot System] pass')
         
-        keyMotor = ['FLDC_Up', 'BLDC_Up', 'FLDC_Down', 'BLDC_Down']
-        lstMotor = [self.FLDC_Up, self.BLDC_Up, self.FLDC_Down, self.BLDC_Down]
+        keyMotor = ['FLDC_Up', 'BLDC_Up', 'FLDC_Down', 'BLDC_Down','Platform_Left']
+        lstMotor = [self.FLDC_Up, self.BLDC_Up, self.FLDC_Down, self.BLDC_Down,self.Platform_Left]
         dicMotor = dict(zip(keyMotor, lstMotor))
             
         for key, motor in dicMotor.items():
@@ -1187,6 +1190,46 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         sleep(0.5)
         self.FLDC_Up.MC_Stop_Disable()
         self.FLDC_Down.MC_Stop_Disable()
+        
+    def Platform_Left_homing(self,Speed,Dir):
+        homeSwitch = self.Platform_Left.homeValue()
+        homeStatus_Enable = False
+        while homeSwitch == 0:
+            homeSwitch = self.Platform_Left.homeValue()
+            if homeStatus_Enable == False:
+                self.Platform_Left.MoveVelocitySetting(Speed, 300, Dir)
+                self.Platform_Left.bMoveVelocityEnable()
+                homeStatus_Enable = True
+            else:
+                # self.fHomeProgress = min(self.fHomeProgress + 0.0005, progressMaximum)
+                # self.signalHomingProgress.emit(self.fHomeProgress)
+                if self.Platform_Left.homeValue() == 1:
+                    self.Platform_Left.MC_Stop()
+                    
+        sleep(0.01)
+        self.Platform_Left.MC_Stop_Disable()
+        self.Platform_Left.MoveRelativeSetting(shiftingPlatform_Left,3)
+        self.Platform_Left.bMoveRelativeEnable()
+        while self.Platform_Left.fbMoveRelative() == False:
+            sleep(0.01)
+        self.Platform_Left.MC_Stop()
+        sleep(0.5)
+        self.Platform_Left.MC_Stop_Disable()
+                
+        # "move a relative distance in a straight line"
+        # self.BLDC_Up.MoveRelativeSetting(shifting_Up, speed)
+        # self.BLDC_Down.MoveRelativeSetting(Shifting_Down, speed)
+        # sleep(0.5)
+        # self.BLDC_Up.bMoveRelativeEnable()
+        # self.BLDC_Down.bMoveRelativeEnable()
+        # while self.BLDC_Up.fbMoveRelative() == False or self.BLDC_Down.fbMoveRelative() == False:
+        #     self.fHomeProgress = min(self.fHomeProgress + 0.001, progressMaximum)
+        #     self.signalHomingProgress.emit(self.fHomeProgress)
+        #     sleep(0.01)
+            
+        # self.fHomeProgress = progressMaximum
+        # self.signalHomingProgress.emit(self.fHomeProgress)
+        # self.BLDC_Stop()
 
     def DualRotatePositionMotion(self, Target, Speed):
         while Target != 0:
@@ -1283,10 +1326,12 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.BLDC_Down.MotorInitial()
         self.FLDC_Up.MotorInitial()
         self.FLDC_Down.MotorInitial()
+        self.Platform_Left.MotorInitial()
         self.BLDC_Up.MotorDriverEnable()
         self.BLDC_Down.MotorDriverEnable()
         self.FLDC_Up.MotorDriverEnable()
         self.FLDC_Down.MotorDriverEnable()
+        self.Platform_Left.MotorDriverEnable()
 
     def HomeProcessing(self):
         if self.bConnected == False:
@@ -1532,6 +1577,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.imageCalibraionProcess_side(self.cameraCali_Side, 0.98)
         self.DisplaySafe()
         self.signalHomingProgress.emit(1.0)
+        self.Platform_Left_homing(10,3)
         return True
     
     def HomeProcessing_Done(self):
@@ -1834,10 +1880,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.MoveToPoint()
         
     def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray):
-        self.entryPoint = np.roll(entry, 1)
+        # x, y, z map to z, x, y(robot base) coordinate
+        self.entryPoint = np.roll(entry, 1) 
         self.targetPoint = np.roll(target, 1)
         self.entryPoint[0] += robotInitialLength
         self.targetPoint[0] += robotInitialLength
+        self.entryPoint[1] *= -1
+        self.targetPoint[1] *= -1
         
         self.MoveToPoint()
         

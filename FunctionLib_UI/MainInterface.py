@@ -3429,6 +3429,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         elif currentWidget == self.pgImportDicom:
+            self.wdgRobotCalibration = DlgRobotCalibration()
+            self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
+            # sys.exit(self.wdgRobotCalibration.exec_())
+            self.wdgRobotCalibration.exec_()
+            
             if self.bFirstCheckResume:
                 self._DetectUnexpectedShutdown()
                 self.bFirstCheckResume = False
@@ -3485,11 +3490,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.idEnabledDevice == DEVICE_ROBOT:
             if currentWidget == self.pgLaser:
                 self.stkScene.setCurrentWidget(self.pgImportDicom)
-                
             
-            self.wdgRobotCalibration = DlgRobotCalibration()
-            self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
-            self.wdgRobotCalibration.exec_()
         
     def IsStage(self,index:int, stage:str):
                 

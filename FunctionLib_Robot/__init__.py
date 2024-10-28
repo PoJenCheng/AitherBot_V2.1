@@ -36,6 +36,7 @@ shiftingFLDC_up = -20.5893
 shiftingBLDC_Up = -52.85
 shiftingFLDC_Down = -26.0881
 shiftingBLDC_Down = -52.85
+shiftingPlatform_Left = -146.3998
 # robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 132.253 #132.93 #110.38  #128.38
