@@ -37,6 +37,7 @@ import FunctionLib_UI.Ui_DlgHintBox
 import FunctionLib_UI.Ui_DlgRobotMoving
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_DlgLogViewer import *
 from FunctionLib_UI.Ui_homing import *
 from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
@@ -71,12 +72,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalSetProgress = pyqtSignal(QProgressBar, int)
     signalSetCheck = pyqtSignal(QWidget, bool)
     signalShowPlot = pyqtSignal(float) # for Laser test
-    signalShowMessage = pyqtSignal(str, bool)
+    signalShowMessage = pyqtSignal(str, int)
+    signalOnMessageReply = pyqtSignal(int)
     signalModelBuildingPass = pyqtSignal(bool)
     signalModelBuildingUI = pyqtSignal(bool)
     signalModelCycle = pyqtSignal(tuple, int)
     signalResetLaserUI = pyqtSignal()
     signalLoadingImage = pyqtSignal(float, str)
+    signalImportDicomFinished = pyqtSignal()
     
     player = QMediaPlayer()
     robot = None
@@ -162,10 +165,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dlgSystemProcessing = None
         self.widgetSlider = None
         self.joystick = None
+        self.dlgJoyStick = None
         self.tempResumeData = {}
         self.bFirstCheckResume = True
         self.bDoneRegistration = False
         self._preImportData = []
+        
+        self.bFromDatabase = False
         
         # interactors
         self.lstInteractorWipe = []
@@ -347,6 +353,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalShowMessage.connect(self.OnSignal_ShowMessage)
         self.signalModelBuildingUI.connect(self.OnSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
+        self.signalImportDicomFinished.connect(self.OnSignal_ImportDicomFinished)
         
         self.btnClose.clicked.connect(lambda:self.close())
         
@@ -406,7 +413,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnGroup_Lung.setId(self.btnLungsExhale, InteractorStyleWipe.IMAGE_EXHALE)
         
         self.btnMoveContinuous.clicked.connect(self.OnClicked_btnMoveContinuous)
-        self.btnMoveInching.clicked.connect(self.OnClicked_btnMoveContinuous)
+        self.btnMoveInching.clicked.connect(self.OnClicked_btnMoveInching)
         
         self.btnDriveTo.clicked.connect(self.OnClicked_btnDriveTo)
         self.btnTracking.clicked.connect(self.OnClicked_btnTracking)
@@ -591,7 +598,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.hiddenCodes.append(event.key())
             else:
                 if self.hiddenCodes == self.ans:
-                    dlg = DlgExportLog(self)
+                    # dlg = DlgExportLog(self)
+                    # dlg.exec_()
+        
+                    dlg = DlgLogViewer()
                     dlg.exec_()
                 self.hiddenCodes = []
                 
@@ -835,6 +845,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         headItem.setData(0, ROLE_VISIBLE, visibleStatus)
         headItem.setIcon(0, QIcon(icon))
         
+    def _CopyDicomToDatabase(self, filePath:str):
+        
+        for dirPath, dirNames, fileNames in os.walk(filePath):
+            pathSrc = ''
+            pathDst = ''
+            for dirName in dirNames:
+                pathSrc = os.path.join(filePath, dirName)
+                pathDst = os.path.join(DATABASE_PATH, dirName)
+                shutil.copytree(pathSrc, pathDst)
+                
+            for fileName in fileNames:
+                pathSrc = os.path.join(filePath, fileName)
+                pathDst = os.path.join(DATABASE_PATH, fileName)
+                shutil.copytree(pathSrc, pathDst)
+                
+            break
+        
+        logger.info('copy dicom to database finished')
+        
     def _DetectUnexpectedShutdown(self):
         statusValue = self._GetBootFileInfo('status')
         if isinstance(statusValue, str) and int(statusValue) != 0:
@@ -846,7 +875,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
-            self.joystick = Robot.joystickControl()
+            # self.joystick = Robot.joystickControl()
             # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.robot = Robot.MOTORSUBFUNCTION()
@@ -876,7 +905,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             tLaser= threading.Thread(target = self.Laser.Initialize)
             tLaser.start()
         elif nDevice == DEVICE_ROBOT:
-            self.joystick = Robot.joystickControl()
+            # self.joystick = Robot.joystickControl()
             # self.joystick.signalStop.connect(lambda:MessageBox.ShowInformation('joystick stop'))
             
             self.loadingLaser = 100
@@ -989,6 +1018,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if view.orientation == VIEW_CROSS_SECTION:
                     view.uiScrollSlice.setMaximum(int(length))
                     view.uiScrollSlice.setValue(0)
+                elif view.orientation == VIEW_ALONG_TRAJECTORY:
+                    view.uiScrollSlice.setMaximum(360)
             
             # else:
             #     for view in self.viewport_H.values():
@@ -1033,6 +1064,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if nType not in [TYPE_INHALE, TYPE_EXHALE]:
             return None
         
+        
         retData = tuple()
         path = ''
         
@@ -1045,11 +1077,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             retData = self.reader.GetData(index = nType)
             path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
             
+        if not self.bFromDatabase:
+            self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
+            # self.reader.Export(DATABASE_PATH, nType)
+            # self.reader.signalShowMessage.connect(self.OnSignal_ShowMessage)
+            # self.signalOnMessageReply.connect(self.reader.OnSignal_MessageboxReply)
+            # tExport = threading.Thread(target = self.reader.__Export, args = (DATABASE_PATH, nType))
+            # tExport.start()
+            
         if retData is None:
             logger.error(f'load inhale dicom failed')
             return None
         
         # self.reader.Export('C:/Leon/innormal dicom/2/output/')
+        
         
         vtkImage = vtkImageData()
         vtkImage.DeepCopy(retData[0])
@@ -1065,6 +1106,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalLoadingImage.emit(1.0, 'Loading image succeed')
         
         return dicRetValue
+    
+    def _ImportDicom(self, retInhale, retExhale):
+        if not self.ImportDicom_L(retInhale):
+            return
+        
+        if not self.ImportDicom_H(retExhale):
+            return
+        
+        self._SaveBootFile()
+        
+        self.signalImportDicomFinished.emit()
         
     def _RemoveTrajectoryItem(self):
         ret = self._GetCurrentTrajectory(TRAJECTORY_CURRENT)
@@ -1123,7 +1175,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
             # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
             self.dlgSystemProcessing.close()
-            MessageBox.ShowCritical("get candidate ball error", "OK")
+            self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
+            # MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error(f'get candidate ball error / SetRegistration_L() error:{e}')
             logger.critical(e)
             return False
@@ -1141,7 +1194,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             "open another ui window to check registration result"
         else:
             self.dlgSystemProcessing.close()
-            MessageBox.ShowCritical("get candidate ball error", "OK")
+            self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
+            # MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
             self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
@@ -1248,6 +1302,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         return True
+    
+    def _Joystick_Run(self, joystickCallback, stopCallback = None, movement:float = None):
+        if self.robot:
+            if not self.dlgJoyStick:
+                self.dlgJoyStick = DlgJoystick()
+                self.robot.signalMove.connect(self.dlgJoyStick.SetMoveDirect)
+                self.dlgJoyStick.signalClose.connect(self.robot.Joystick_Stop)
+                
+                if stopCallback:
+                    self.dlgJoyStick.signalClose.connect(stopCallback)
+                    
+            if movement is None:
+                t_joystick = threading.Thread(target = joystickCallback)
+                t_joystick.start()
+            else:
+                t_joystick = threading.Thread(target = joystickCallback, args = (movement,))
+                t_joystick.start()
+                
+            self.dlgJoyStick.exec_()
             
     def _Robot_driveTo(self):
         if self.language == LAN_CN:
@@ -1299,7 +1372,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if signal:
             signal.connect(self.dlgSystemProcessing.UpdateProgress)
         self.dlgSystemProcessing.show()
-        QApplication.processEvents()
         
     def _SetHintBox_dicom(self):
         lstIndex = [0, 0, 1, 2]
@@ -1916,7 +1988,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('image error')
+            self.signalShowMessage.emit('image error')
+            # MessageBox.ShowCritical('image error')
             logger.critical('import dicom error')
             return False
         
@@ -1928,16 +2001,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, pathInhale, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            MessageBox.ShowCritical('missing current tag [LOW]')
+            self.signalShowMessage.emit('missing current tag [LOW]')
+            # MessageBox.ShowCritical('missing current tag [LOW]')
             return False
             
         if ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
-                MessageBox.ShowCritical('Registration Failed')
+                self.signalShowMessage.emit('Registration Failed')
+                # MessageBox.ShowCritical('Registration Failed')
                 return False
             
         
-        self.ShowDicom()
+        # self.ShowDicom()
         
         self.signalLoadingImage.emit(1.0, 'Loading Inhale image Completed')
         # self.bDicomChanged = False
@@ -1960,21 +2035,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         spacing = dicData.get('spacing')
         
         if self.vtkImageHigh is None:
-            MessageBox.ShowCritical('image error')
+            self.signalShowMessage.emit('image error', MB_ERROR)
+            # MessageBox.ShowCritical('image error')
             return False
         
         grayscaleRange = self.vtkImageHigh.GetScalarRange()
         dicomTag = self.SetDicomData(self.dicomHigh, pathExhale, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            MessageBox.ShowCritical('missing current tag [HIGH]')
+            self.signalShowMessage.emit('missing current tag [HIGH]', MB_ERROR)
+            # MessageBox.ShowCritical('missing current tag [HIGH]')
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         if ENABLE_REGISTRATION:
             self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
-                MessageBox.ShowCritical('Registration Failed')
+                self.signalShowMessage.emit('Registration Failed', MB_ERROR)
+                # MessageBox.ShowCritical('Registration Failed')
                 return False
         
         matrix = self._CalculateExhaleToInhaleMatrix()
@@ -1985,7 +2063,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.signalLoadingImage.emit(0.6, 'Start Visualizing image...')
             self.dicomHigh.LoadImage(self.vtkImageHigh)
             
-        self.ShowDicom()
+        # self.ShowDicom()
         self.signalLoadingImage.emit(1.0, 'Loading Exhale image Completed')
         # self.bDicomChanged = False
         return True
@@ -2486,15 +2564,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnClicked_btnJoystick(self):
         button = self.sender()
-        if isinstance(button, QPushButton) and self.joystick:
-            self.dlgJoyStick = DlgJoystick()
-            self.joystick.signalMove.connect(self.dlgJoyStick.SetMoveDirect)
-            self.dlgJoyStick.signalClose.connect(self.joystick.Joystick_Stop)
-            
-            t_joystick = threading.Thread(target = self.joystick.JoystickControl_Conti)
-            t_joystick.start()
-                
-            self.dlgJoyStick.exec_()
+        if isinstance(button, QPushButton):
+            self._Joystick_Run(self.robot.JoystickControl_Conti)
             
     def OnClicked_btnMoveUp(self):
         iStyle = self.viewport_L['Fusion1'].iren.GetInteractorStyle()
@@ -2623,23 +2694,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
     def OnClicked_btnMoveContinuous(self):
         btn = self.sender()
-        
         if isinstance(btn, QPushButton) and btn.isChecked():
             self.btnMoveInching.setChecked(False)
-            try:
-                joystick = eval('joystickControl.JoystickControl_Conti()')
-                joystick
-            except Exception as msg:
-                logger.error(f'[joystick error]{msg}')
+            self._Joystick_Run(self.robot.JoystickControl_Conti, lambda:self.btnMoveContinuous.setChecked(False))
                 
     def OnClicked_btnMoveInching(self):
         btn = self.sender()
-        
         if isinstance(btn, QPushButton) and btn.isChecked():
             self.btnMoveContinuous.setChecked(False)
-            # joystick = eval('joystickControl.JoystickControl_Conti()')
-            # if joystick:
-            #     joystick.JoystickControl_Conti()
+            movement = float(self.comboBox.currentText())
+            self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
     
             
@@ -2808,7 +2872,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         sys.exit()
         
-    def OnChangeIndex_ViewSelect(self, viewName):
+    def OnChangeIndex_ViewSelect(self, viewName:str):
         
         senderObj = self.sender()
         
@@ -2821,8 +2885,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     #remove old renderer
                     renderWindow = widget.GetRenderWindow()
                     iren = renderWindow.GetInteractor()
-                
-                    viewName = viewName.split()[0]
+
+                    idx = viewName.casefold().find('view'.casefold())
+                    
+                    if idx > -1:
+                        viewName = viewName[:idx].strip()
 
                     #檢查該視窗是否已存在，若是則交換
                     bExist = False
@@ -3218,16 +3285,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
                     return
                 else:
-                    if not self.ImportDicom_L(retInhale):
-                        return
-                    
-                    if not self.ImportDicom_H(retExhale):
-                        return
-                    
-                    self._SaveBootFile()
-                    self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-                    
-                    self.ShowFusion()
+                    tImportDicom = threading.Thread(target = self._ImportDicom, args = (retInhale, retExhale))
+                    tImportDicom.start()
                     
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
@@ -3259,10 +3318,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
 
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
+                    self.bFromDatabase = 'database' in filePath
+                    
                     self.ImportDicom(filePath)
                     
                 else:
                     return
+            elif button == self.btnFromDB:
+                self.bFromDatabase = True
+                currentPath = os.path.join(os.getcwd(), 'database')
+                self.ImportDicom(currentPath)
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -3659,27 +3724,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 ret = MessageBox.ShowWarning('inhale dicom volume is smaller than exhale.\nSwap image?', 'No', 'Yes')
             
             # 0: no swap 1:swap
-            if ret == 0:
-                if not self.ImportDicom_L(self._preImportData[0]):
-                    return
+            args = (self._preImportData[0], self._preImportData[1])
+            if ret == 1:
+                args = (self._preImportData[1], self._preImportData[0])
                 
-                if not self.ImportDicom_H(self._preImportData[1]):
-                    return
-            else:
-                if not self.ImportDicom_L(self._preImportData[1]):
-                    return
+            tImportDicom = threading.Thread(target = self._ImportDicom, args = args)
+            tImportDicom.start()
                 
-                if not self.ImportDicom_H(self._preImportData[0]):
-                    return
-                
-            self._SaveBootFile()
-            self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            # self._SaveBootFile()
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
             
-            self.ShowFusion()
-            index = self.stkScene.currentIndex()
-            index = min(self.stkScene.count() - 1, index + 1)
-            self.stkScene.setCurrentIndex(index)
-            self.dicLungVolumeInfo = {}
+            # self.ShowFusion()
+            # index = self.stkScene.currentIndex()
+            # index = min(self.stkScene.count() - 1, index + 1)
+            # self.stkScene.setCurrentIndex(index)
+            # self.dicLungVolumeInfo = {}
+            
+    def OnSignal_ImportDicomFinished(self):
+        # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        # self.ShowFusion()
+        
+        self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        self.ShowFusion()
+        index = self.stkScene.currentIndex()
+        index = min(self.stkScene.count() - 1, index + 1)
+        self.stkScene.setCurrentIndex(index)
+        self.dicLungVolumeInfo = {}
         
     def OnSignal_ModelBuilding(self, bValid):
         if bValid:
@@ -3703,12 +3773,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             widget.setStyleSheet('border-image:none;')
             
-    def OnSignal_ShowMessage(self, msg:str, bIsError = False):
+    def OnSignal_ShowMessage(self, msg:str, messageboxStyle = MB_INFO, *buttons:str):
         if len(msg) > 0:
-            if not bIsError:
-                MessageBox.ShowInformation(msg)
-            else:
-                MessageBox.ShowCritical(msg)
+            ret = 0
+            if messageboxStyle == MB_INFO:
+                ret = MessageBox.ShowInformation(msg, *buttons)
+            elif messageboxStyle == MB_ERROR:
+                ret = MessageBox.ShowCritical(msg, *buttons)
+            elif messageboxStyle == MB_WARNING:
+                ret = MessageBox.ShowWarning(msg, *buttons)
+            elif messageboxStyle == MB_QUESTION:
+                ret = MessageBox.ShowQuestion(msg, *buttons)
+            self.signalOnMessageReply.emit(ret)    
+            
                 
     def OnSignal_ProcessClose(self):
         self.dlgSystemProcessing = None
@@ -3786,7 +3863,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # selectedBallKey = self.currentTag.get("selectedBallKey")
         if selectedBallKey is None or selectedBallKey == []:
             # QMessageBox.critical(self, "error", "please redo registration, select the ball")
-            MessageBox.ShowCritical("please redo registration, select the ball")
+            self.signalShowMessage.emit("please redo registration, select the ball", MB_ERROR)
+            # MessageBox.ShowCritical("please redo registration, select the ball")
             logger.warning("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
@@ -3982,6 +4060,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.pteProgress.moveCursor(QTextCursor.End)
         if hasattr(self, 'loadingLaser'):
             if self.loadingLaser >= 100 and self.loadingRobot >= 100:
+                # self.joystick = Robot.joystickControl()
                 if self.stkMain.currentWidget() != self.pgScene:
                     self.signalLoadingReady.emit()
             
@@ -4125,10 +4204,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             else:
                 self.robot.currentPath = []
                 logger.error('Robot cannot reach to the setting point.')
-                self.signalShowMessage.emit('Robot cannot reach to the setting point', True)
+                self.signalShowMessage.emit('Robot cannot reach to the setting point', MB_ERROR)
         else:
             logger.warning("Please execute home processing first.")
-            self.signalShowMessage.emit('Please execute home processing first.', True)
+            self.signalShowMessage.emit('Please execute home processing first.', MB_ERROR)
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
@@ -5507,6 +5586,436 @@ class DlgExportLog(QDialog, Ui_dlgExportLog):
         # self.calendarTo.setHidden(True)
         if None not in [self.selectedDateFrom, self.selectedDateTo]:
             self.btnExport.setEnabled(True)
+            
+class DlgLogViewer(QDialog, Ui_DlgLogViewer):
+    levelMap = {'d':'debug', 'i':'information', 'w':'warning', 'e':'error', 'c':'critical'}
+    signalProgress = pyqtSignal(float, str)
+    signalReadFinished = pyqtSignal()
+    
+    ROLE_MARKER = Qt.UserRole + 1
+    ROLE_FOLDER = Qt.UserRole + 2
+    ROLE_INDENT = Qt.UserRole + 3
+    
+    def __init__(self, parent:QWidget = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        self.bCheckAction = False # 檢查是否是核取方塊的事件，若是，itemClicked的事件就不執行 
+        self.textFilter = ''
+        self.dicFolder = {}
+        self.dicLogFile = {}
+        self.lstLevelCount = np.zeros(len(self.levelMap), dtype = int)
+        self.lstChecked = np.ones(len(self.levelMap), dtype = bool)
+        self.lstButton = np.array([self.btnDebug,
+                                   self.btnInfo,
+                                   self.btnWarning,
+                                   self.btnError,
+                                   self.btnCritical])
+        
+        self.itemLastExpand = None
+        self.treeLogList.itemClicked.connect(self.OnItemClicked_logList)
+        self.treeLogList.itemChanged.connect(self.onItemChanged)
+        
+        self.treeLogList.setItemDelegate(LogViewDelegate(self.treeLogList))
+        self.treeLogView.setItemDelegate(LogViewDelegate(self.treeLogView))
+        
+        
+        self.btnAll.clicked.connect(self.OnClicked_LevelButton)
+        self.btnDebug.clicked.connect(self.OnClicked_LevelButton)
+        self.btnInfo.clicked.connect(self.OnClicked_LevelButton)
+        self.btnWarning.clicked.connect(self.OnClicked_LevelButton)
+        self.btnError.clicked.connect(self.OnClicked_LevelButton)
+        self.btnCritical.clicked.connect(self.OnClicked_LevelButton)
+        self.ledSearch.textEdited.connect(self.OnTextEdit)
+        self.btnExport.clicked.connect(self.OnClicked_btnExport)
+        self.btnExport.radius = 0
+        
+        self.treeLogList.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.treeLogView.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        
+        self.signalReadFinished.connect(self._Load)
+        self.signalProgress.connect(self.btnExport.OnSignal_Percent)
+        t = threading.Thread(target = self.PreLoad)
+        t.start()
+        
+    def PreLoad(self):
+        # read log folder
+        logPath = os.path.join(os.getcwd(), 'logs')
+        levelKeys = np.array(list(self.levelMap.keys()))
+        
+        for dirPath, dirNames, _ in os.walk(logPath):
+            numOfDirs = len(dirNames)
+            percent = 0
+            
+            for dirName in dirNames:
+                try:
+                    
+                    subDirPath = os.path.join(dirPath, dirName)
+                    # 用於計算每個目錄(日期)中，各別level在log中出現的次數
+                    lstLevelCountByFolder = np.zeros(len(self.levelMap), dtype = int)
+                    self.dicFolder[dirName] = {}
+                    # 取得子目錄中所有的log files
+                    for _, _, files in os.walk(subDirPath):
+                        for filename in files:
+                            
+                            filePath = os.path.join(subDirPath, filename)
+                            if os.path.exists(filePath):
+                                filename = filename.split('.')[0]
+                                self.dicLogFile[filename] = []
+                                self.dicFolder[dirName][filename] = []
+                                with open(filePath, 'r') as f:
+                                    line = f.readline()
+                                    while line:
+                                        lstText = [text.strip() for text in line.split(',')]
+                                        
+                                        levelText = lstText[0]
+                                        # 累加對應index的level log
+                                        lstLevelCountByFolder[levelKeys == levelText.casefold()] += 1
+                                        
+                                        dicLogData = {}
+                                        dicLogData['level'] = levelText
+                                        dicLogData['model'] = lstText[2]
+                                        msg = lstText[4]
+                                        dicLogData['message'] = msg
+                                        
+                                        line = self._ReadNextLine(f, msg)
+                                        
+                                        self.dicLogFile[filename].append(dicLogData)
+                                        self.dicFolder[dirName][filename].append(dicLogData)
+                        break
+                    
+                    for i in range(len(self.lstLevelCount)):
+                        self.lstLevelCount[i] += lstLevelCountByFolder[i]
+                        
+                    percent += 1
+                    self.signalProgress.emit(percent / numOfDirs, 'Log Loading...')
+                        
+                except ValueError:
+                    # 忽略非日期的目錄
+                    continue
+            
+            break
+        
+        self.signalReadFinished.emit()
+        
+    def _Load(self):
+        self.btnExport.setText('Export')
+        
+        self.lstLevelCount = np.zeros(len(self.levelMap), dtype = int)
+        levelKeys = np.array(list(self.levelMap.keys()))
+        self.treeLogList.blockSignals(True)
+        for folderName, files in self.dicFolder.items():
+            try:
+                item = QTreeWidgetItem()
+                item.setCheckState(0, Qt.Unchecked)
+                
+                # 先將item加入至treeWidget，不然後面 _MarkerItem 會找不到treeWidget
+                self.treeLogList.addTopLevelItem(item)
+                # 用於計算每個目錄(日期)中，各別level在log中出現的次數
+                lstLevelCountByFolder = np.zeros(len(self.levelMap), dtype = int)
+                
+                # 取得子目錄中所有的log files
+                for filename, logFile in files.items():
+                    itemChild = QTreeWidgetItem()
+                    itemChild.setText(1, filename)
+                    item.addChild(itemChild)
+                    
+                    for logData in logFile:
+                        levelText = logData['level']
+                        # 累加對應index的level log
+                        lstLevelCountByFolder[levelKeys == levelText.casefold()] += 1
+                        
+                        # 該日期底下有出現error或critical的log，以紅色標記，易於快速找到有這兩種log的日期
+                        self._MarkerItem(levelText, item, indent = [22, 0])
+                        self._MarkerItem(levelText, itemChild, [1])
+                                
+                item.setData(0, self.ROLE_FOLDER, folderName)
+                # item name以日期命名，後面加註該日期中，(error, critical)的數目
+                item.setText(0, folderName + f'({lstLevelCountByFolder[-2]}, {lstLevelCountByFolder[-1]})')
+                
+                for i in range(len(self.lstLevelCount)):
+                    self.lstLevelCount[i] += lstLevelCountByFolder[i]
+                    
+            except ValueError:
+                nSkip += 1
+                # 忽略非日期的目錄
+                continue
+        self.treeLogList.blockSignals(False)
+        
+        for i, button in enumerate(self.lstButton):
+            button.setText(button.text() + f'({self.lstLevelCount[i]})')
+            
+       
+    def OnClicked_LevelButton(self):
+        button = self.sender()
+        if isinstance(button, QPushButton):
+            if button == self.btnAll:
+                self.lstChecked = np.ones(len(self.levelMap), dtype = bool)
+                # button all不能被取消，但可透過選取其他篩選類別(如debug、information...等)，button all將自動uncheck
+                button.setChecked(True)
+                for btn in self.lstButton:
+                    btn.setChecked(False)
+            else:
+                if self.btnAll.isChecked():
+                    self.lstChecked = np.zeros(len(self.levelMap), dtype = bool)
+                    self.btnAll.setChecked(False)
+                
+                # 紀錄有哪些level的按鈕被核取
+                self.lstChecked[self.lstButton == button] = button.isChecked()
+                
+                # 若所有level的按鈕都被取消，表示不篩選，button all按鈕設定為checked
+                if np.all(self.lstChecked == False):
+                    self.lstChecked = (self.lstChecked == False)
+                    self.btnAll.setChecked(True)
+      
+        rowCount = self.treeLogList.topLevelItemCount()
+        for i in range(rowCount):
+            item = self.treeLogList.topLevelItem(i)
+            
+            if isinstance(item, QTreeWidgetItem):
+                bFound = False
+                for idx in range(item.childCount()):
+                    itemChild = item.child(idx)
+                    
+                    logData = self.dicLogFile[itemChild.text(1)]
+                    bFoundLine = False
+                    for logLine in logData:
+                        for i, level_key in enumerate(self.levelMap.keys()):
+                    
+                            if logLine['level'].casefold() == level_key:
+                                # 只要log中有一行符合篩選條件，該item就會被保留，否則隱藏
+                                bFoundLine |= self.lstChecked[i]
+                                bFound |= self.lstChecked[i]
+                                
+                    itemChild.setHidden(not bFoundLine)
+                    
+                item.setHidden(not bFound)
+                    
+                    
+            
+        rowCount = self.treeLogView.topLevelItemCount()
+        for i in range(rowCount):
+            item = self.treeLogView.topLevelItem(i)
+            
+            if isinstance(item, QTreeWidgetItem):
+                
+                for i, level in enumerate(self.levelMap.values()):
+                    
+                    if item.text(1).casefold() == level:
+                        item.setHidden(not self.lstChecked[i])
+                        
+    def onItemChanged(self, item:QTreeWidgetItem, column:int):
+        # Check if the column contains the checkbox and if it has been checked or unchecked
+        self.bCheckAction = True
+                
+        
+    def OnItemClicked_logList(self, item:QTreeWidgetItem, column:int):
+        # if self.itemLastExpand is not None and self.itemLastExpand != item:
+        #     self.treeLogList.scrollToItem(self.itemLastExpand, QAbstractItemView.PositionAtTop)
+        #     self.treeLogList.collapseItem(self.itemLastExpand)
+        
+        if self.bCheckAction:
+            self.bCheckAction = False
+            return
+        
+        levelKeys = np.array(list(self.levelMap.keys()))
+        lstLevelCount = np.zeros(len(self.levelMap), dtype = int)
+        if item.childCount() > 0:
+            if not item.isExpanded():
+                # if self.itemLastExpand is not None:
+                #     QTimer.singleShot(500, lambda:self._ItemExpand(item))
+                # else:
+                self._ItemExpand(item)
+                for idx in range(item.childCount()):
+                    itemChild = item.child(idx)
+                    logData = self.dicLogFile.get(itemChild.text(1))
+                    if logData:
+                        for logLine in logData:
+                            levelText = logLine['level']
+                            lstLevelCount[levelKeys == levelText.casefold()] += 1
+                
+            else:
+                self.treeLogList.collapseItem(item)
+                self.itemLastExpand = None
+                self.treeLogView.clear()
+                
+                lstLevelCount = self.lstLevelCount
+        else:
+            
+            filename = item.text(1)
+            
+            logData = self.dicLogFile.get(filename)
+            if logData:
+                self.treeLogView.clear()
+                
+                for lineNo, logLine in enumerate(logData, 1):
+                    itemView = QTreeWidgetItem()
+                    self.treeLogView.addTopLevelItem(itemView)
+                    
+                    itemView.setText(0, str(lineNo))
+                    
+                    levelText = logLine['level']
+                    lstLevelCount[levelKeys == levelText.casefold()] += 1
+                    
+                    for i, key in enumerate(self.levelMap.keys()):
+                        if levelText.casefold() == key:
+                            itemView.setHidden(not self.lstChecked[i])
+                            
+                    self._MarkerItem(levelText, itemView)
+                        
+                    level = self.levelMap[levelText.casefold()]
+                    itemView.setText(1, level)
+                    itemView.setText(2, logLine['model'])
+                    itemView.setText(3, logLine['message'])
+                    
+                    if self.textFilter != '':
+                        bFound = False
+                        for col in range(itemView.columnCount()):
+                            if self.textFilter.casefold() in itemView.text(col).casefold():
+                                bFound = True
+                            itemView.setHidden(not bFound)
+                    
+        for i, (button, levelText) in enumerate(zip(self.lstButton, list(self.levelMap.values()))):
+            button.setText(levelText + f'({lstLevelCount[i]})')
+            
+    def OnClicked_btnExport(self):
+        currentPath = os.getcwd()
+                
+        dlg = QFileDialog()
+        dlg.setDirectory(currentPath)
+        dlg.setFileMode(QFileDialog.Directory)
+        dlg.setFilter(QDir.Files)
+
+        lstExportFilepath = []
+        
+        if dlg.exec_():
+            logPath = os.path.join(os.getcwd(), 'logs')
+            
+            for idx in range(self.treeLogList.topLevelItemCount()):
+                item = self.treeLogList.topLevelItem(idx)
+                if isinstance(item, QTreeWidgetItem) and item.checkState(0) == Qt.Checked:
+                
+                    if isinstance(item, QTreeWidgetItem):
+                        
+                        if item.childCount() > 0:
+                            folderName = item.data(0, self.ROLE_FOLDER)
+                            lstExportFilepath.append(folderName)
+                
+            outFilePath = dlg.selectedFiles()[0]
+            
+            # self.pbrProgress.setMaximum(len(lstExportFilepath))
+            nValue = 0
+            for dirname in lstExportFilepath:
+                pathSrc = os.path.join(logPath, dirname)
+                pathDst = os.path.join(outFilePath, dirname)
+                shutil.copytree(pathSrc, pathDst)
+                
+                nValue += 1
+                # self.pbrProgress.setValue(nValue)
+            MessageBox.ShowInformation('log export finished')
+            self.close()
+            
+    def OnTextEdit(self, text:str):
+        self.textFilter = text
+        for i in range(self.treeLogList.topLevelItemCount()):
+            item = self.treeLogList.topLevelItem(i)
+            
+            if isinstance(item, QTreeWidgetItem):
+                bHasSelected = False
+                for idxChild in range(item.childCount()):
+                    itemChild = item.child(idxChild)
+                    if itemChild:
+                        filename = itemChild.text(1)
+                        bSelected = text.casefold() in filename.casefold()
+                        
+                        logData = self.dicLogFile.get(filename)
+                        if logData:
+                            bFound = False
+                            for logLine in logData:
+                                for logColumn in logLine.values():
+                                    if text.casefold() in logColumn.casefold():
+                                        bFound = True
+                            bSelected |= bFound
+                        
+                        itemChild.setHidden(not bSelected)
+                        
+                        if bSelected:
+                            bHasSelected = True
+                        
+                item.setHidden(not bHasSelected)
+                
+        for i in range(self.treeLogView.topLevelItemCount()):
+            item = self.treeLogView.topLevelItem(i)
+            if isinstance(item, QTreeWidgetItem):
+                bFound = False
+                for col in range(item.columnCount()):
+                    if text.casefold() in item.text(col).casefold():
+                        bFound = True
+                        break
+                    
+                item.setHidden(not bFound)
+                    
+    
+    def _ItemExpand(self, item:QTreeWidgetItem):
+        self.treeLogList.expandItem(item)
+        self.treeLogList.scrollToItem(item, QAbstractItemView.PositionAtTop)
+        # self.treeLogList.setCurrentItem(item.child(0))
+        # self.treeLogList.itemClicked.emit(item.child(0), 0)
+        self.treeLogView.clear()
+        
+        self.itemLastExpand = item
+        
+    def _ReadNextLine(self, f, msg:str):
+        line = f.readline()
+        
+        while True:
+            if line == '':
+                return line
+            
+            lineNext = [text.strip() for text in line.split(',')]
+            bIsNewLine = lineNext[0].casefold() in self.levelMap
+            
+            if bIsNewLine:
+                break
+            
+            if isinstance(msg, str):
+                msg += line
+            else:
+                logger.error('error type in _ReadNextLine')
+                
+            line = f.readline()
+        
+        return line
+    
+    def _MarkerItem(
+        self, 
+        levelText:str, 
+        item:QTreeWidgetItem,
+        columns:List[int] = None,
+        indent:int = 0,
+        condition = ['e', 'c']
+    ):
+        treeWidget = item.treeWidget()
+        if treeWidget is None:
+            logger.error('QTreeWidgetItem has no treeWidget')
+            return
+        
+        if levelText.casefold() in condition:
+            
+            if columns is None:
+                columns = range(treeWidget.columnCount())
+
+            if isinstance(indent, int):
+                for col in columns:
+                    item.setData(col, self.ROLE_MARKER, True)
+                    item.setData(col, self.ROLE_INDENT, indent)
+            elif isinstance(indent, (list, tuple)):
+                if len(columns) == len(indent):
+                    for col, ind in zip(columns, indent):
+                        item.setData(col, self.ROLE_MARKER, True)
+                        item.setData(col, self.ROLE_INDENT, ind)
+                        
+                
 class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):
     
     def __init__(self, parent: QWidget = None):
@@ -6031,7 +6540,8 @@ class DlgJoystick(QDialog, Ui_DlgJoysitck):
         super().__init__(parent)
         self.setupUi(self)
         
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint)
        
         self.timer = QTimer()
         self.timer.timeout.connect(self.wdgRobot.Idle)
@@ -6055,6 +6565,9 @@ class DlgJoystick(QDialog, Ui_DlgJoysitck):
         self.close()
         
     def SetMoveDirect(self, nDirection:int):
+        if not self.timer.isActive():
+            self.timer.start(33)
+            
         if self.lastDirection == nDirection:
             return
         

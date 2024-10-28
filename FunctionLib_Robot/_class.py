@@ -106,9 +106,10 @@ class MOTORCONTROL(QObject):
         self.fbActualVelocity = 'GVL.Axis' + str(self.motorAxis) + '_Velocity'
         self.fbStatusVelocity = 'GVL.StatusVelocity_' + str(self.motorAxis)
         self.fResetStatus = 'GVL.ResetStatus_'+str(self.motorAxis)
-        # self.bLimitSwitch5 = 'GVL.LimitSwitch5'
-        # self.bLimitSwitch6 = 'GVL.LimitSwitch6'
+        self.bStopAll = 'GVL.bStopAllMotor'
         self.bDualAbsolute = 'GVL.bDualAbsolute'
+        self.bDualRotateVelocity = 'GVL.bDualRotateVelocity'
+        self.bDualLinearVelocity = 'GVL.bDualLinearVelocity'
 
         
 
@@ -206,6 +207,14 @@ class MOTORCONTROL(QObject):
     def bMoveVelocityEnable(self):
         self.plc.write_by_name(self.bDisableLimitSwitch, False)
         self.plc.write_by_name(self.bMoveSpeed, True)
+        sleep(0.1)
+        
+    def bDualRotateVelocityEnable(self):
+        self.plc.write_by_name(self.bDualRotateVelocity, True)
+        sleep(0.1)
+    
+    def bDualLinearVelocityEnable(self):
+        self.plc.write_by_name(self.bDualLinearVelocity, True)
         sleep(0.1)
 
     def bDualVelocityEnable(self):
@@ -306,6 +315,12 @@ class MOTORCONTROL(QObject):
             self.plc.write_by_name(self.bReset,True)
         while self.plc.read_by_name(self.fResetStatus) == True:
             self.plc.write_by_name(self.bReset,False)
+            
+    def bStopAllMove(self):
+        while self.plc.read_by_name(self.bStopAll) == False:
+            self.plc.write_by_name(self.bStopAll,True)
+        while self.plc.read_by_name(self.bStopAll) == True:
+            self.plc.write_by_name(self.bStopAll,False)
             
 
 class OperationLight():
@@ -797,6 +812,9 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     signalArrived = pyqtSignal()
     signalReachable = pyqtSignal(bool)
     
+    signalStop = pyqtSignal()
+    signalMove = pyqtSignal(int)
+    
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
@@ -810,13 +828,36 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.initProgress = 0
         self.bStop = False
         
+        self.entryPoint = []
+        self.targetPoint = []
+        self.jogStatus = False
+
         global entry
         global target
         
-        entry = 0
-        target = 0
         # print(self.get_camera_list())
         
+        self.open = False
+        # initial pygame lib
+        pygame.init()
+        pygame.joystick.init()
+        
+        self.findJoystick = False
+        if pygame.joystick.get_count() == 0:
+            logger.error('not found any joystick')
+        else:
+            self.findJoystick = True
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            
+            self.Status_FLDC_Up = False
+            self.Status_BLDC_Up = False
+            self.Status_FLDC_Down = False
+            self.Status_BLDC_Down = False
+            self.bStopJoystick = True
+        
+        
+    def cameraRegist(self):
         # frontCamera_ID = 0
         frontCamera_ID = 1
         sideCamera_ID = 0
@@ -1303,7 +1344,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         leftLine, rightLine= camera.poleEdgeFinder(corrected_image,50,100)
         poleWidth = abs(leftLine[1][0] - rightLine[-1][0])
         pole_midLine = leftLine[1][0] + poleWidth/2
-        diff_distance = ((imageWidth/2 - pole_midLine - 36)*(138/606))
+        diff_distance = ((imageWidth/2 - pole_midLine - 32)*(138/606))
         print(diff_distance)
         if abs(diff_distance) >= 0.5 and abs(diff_distance) < 100:
             diff_angle = -1*(math.asin(diff_distance/robotInitialLength))
@@ -1484,6 +1525,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         #先執行一般HomeProcessing
         self.DisplayRun()
         self.HomeProcessing()
+        self.cameraRegist()
         self.imageCalibraionProcess_front(self.cameraCali_Front, 0.9)
         self.imageCalibraionProcess_side(self.cameraCali_Side, 0.98)
         self.DisplaySafe()
@@ -1624,6 +1666,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
 
     def MoveToPoint(self):
         reachTarget = False
+        # upperHigh = 6.337
+        # upperHigh_test = input("input upper value:")
+        # if upperHigh_test == "":
+        #     print(f"lowerHigh:{upperHigh}")
+        # else:
+        #     upperHigh = float(upperHigh_test)
+        #     print(f"lowerHigh:{upperHigh}")
         while reachTarget == False:
             Release = self.plc.read_by_name(self.SupportMove)
             Release = True
@@ -1778,6 +1827,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
         self.entryPoint = self.movingPoint[0]  # from robot to entry point
         self.targetPoint = self.movingPoint[1] # from robot to target point
+        print(self.entryPoint,self.targetPoint)
         # self.absolutePosition()
         self.MoveToPoint()
         
@@ -1840,6 +1890,269 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     def EnableDynamicTrack(self):
         self.DynamicCompensation()
         print("Dynamic Tracking Done!")
+    
+    def FLDC_Up_StopMove(self):
+        self.FLDC_Up.MC_Stop()
+        sleep(0.5)
+        self.FLDC_Up.MC_Stop_Disable()
+        self.FLDC_Up.bMoveRelativeCommandDisable()
+        
+    def BLDC_Up_StopMove(self):
+        self.BLDC_Up.MC_Stop()
+        sleep(0.5)
+        self.BLDC_Up.MC_Stop_Disable()
+        self.BLDC_Up.bMoveRelativeCommandDisable()
+        
+    def FLDC_Down_StopMove(self):
+        self.FLDC_Down.MC_Stop()
+        sleep(0.5)
+        self.FLDC_Down.MC_Stop_Disable()
+        self.FLDC_Down.bMoveRelativeCommandDisable()
+        
+    def BLDC_Down_StopMove(self):
+        self.BLDC_Down.MC_Stop()
+        sleep(0.5)
+        self.BLDC_Down.MC_Stop_Disable()
+        self.BLDC_Down.bMoveRelativeCommandDisable()
+        
+    def StopMove_All(self):
+        self.FLDC_Up.MC_Stop()
+        self.FLDC_Up.bStopAll()
+        
+        
+        
+    def JoystickControl_Conti(self):
+        self.bStopJoystick = False
+        
+        if not pygame.get_init():
+            pygame.init()
+        if not pygame.joystick.get_init():
+            pygame.joystick.init()
+            
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            logger.error('not found any joystick')
+            return
+            
+        num_hats = self.joystick.get_numhats()
+        while not self.bStopJoystick:    
+            pygame.event.pump()
+            # RotateMove_up = self.joystick.get_axis(0)
+            # LinearMove_up = self.joystick.get_axis(1)
+            RotateMove_Down_Right = self.joystick.get_button(Button_B)
+            RotateMove_Down_Left = self.joystick.get_button(Button_X)
+            LinearMove_Down_Forward = self.joystick.get_button(Button_Y)
+            LinearMove_Down_Backward = self.joystick.get_button(Button_A)
+                
+            RotateMove_up, LinearMove_up = (0, 0)
+            if num_hats > 0:
+                RotateMove_up, LinearMove_up = self.joystick.get_hat(0)
+                
+            RotateMove_Up_Right = (RotateMove_up ==  1)
+            RotateMove_Up_Left  = (RotateMove_up == -1)
+            LinearMove_Up_Forward = (LinearMove_up ==  1)
+            LinearMove_Up_Backward = (LinearMove_up == -1)    
+            
+            if self.joystick.get_button(Button_L) and self.joystick.get_button(Button_R):
+                if RotateMove_Up_Right and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Down.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_RIGHT)
+                elif RotateMove_Up_Left and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Down.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_LEFT)
+                elif LinearMove_Up_Backward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(2,100,3)
+                    self.BLDC_Down.MoveVelocitySetting(2,100,3)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_BACKWARD)
+                elif LinearMove_Up_Forward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(2,100,1)
+                    self.BLDC_Down.MoveVelocitySetting(2,100,1)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_FORWARD)
+                # elif RotateMove_Down_Left and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                #     self.FLDC_Down.MoveVelocitySetting(1,100,1)
+                #     self.FLDC_Down.bMoveVelocityEnable()
+                #     self.Status_FLDC_Down = True
+                #     self.signalMove.emit(JOYSTICK_DOWN_LEFT)
+                # elif RotateMove_Down_Right and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                #     self.FLDC_Down.MoveVelocitySetting(1,100,3)
+                #     self.FLDC_Down.bMoveVelocityEnable()
+                #     self.Status_FLDC_Down = True
+                #     self.signalMove.emit(JOYSTICK_DOWN_RIGHT)
+                # elif LinearMove_Down_Forward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                #     self.BLDC_Down.MoveVelocitySetting(0.5,100,1)
+                #     self.BLDC_Down.bMoveVelocityEnable()
+                #     self.Status_BLDC_Down = True
+                #     self.signalMove.emit(JOYSTICK_DOWN_FORWARD)
+                # elif LinearMove_Down_Backward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                #     self.BLDC_Down.MoveVelocitySetting(0.5,100,3)
+                #     self.BLDC_Down.bMoveVelocityEnable()
+                #     self.Status_BLDC_Down = True
+                #     self.signalMove.emit(JOYSTICK_DOWN_BACKWARD)
+                
+            elif self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):            
+                if RotateMove_Up_Right and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_RIGHT)
+                elif RotateMove_Up_Left and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Up.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Up.bMoveVelocityEnable()
+                    self.Status_FLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_LEFT)
+                elif LinearMove_Up_Backward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(0.5,100,3)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_BACKWARD)
+                elif LinearMove_Up_Forward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    self.BLDC_Up.MoveVelocitySetting(0.5,100,1)
+                    self.BLDC_Up.bMoveVelocityEnable()
+                    self.Status_BLDC_Up = True
+                    self.signalMove.emit(JOYSTICK_UP_FORWARD)
+                elif RotateMove_Down_Left and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveVelocitySetting(1,100,1)
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Down = True
+                    self.signalMove.emit(JOYSTICK_DOWN_LEFT)
+                elif RotateMove_Down_Right and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
+                    self.FLDC_Down.MoveVelocitySetting(1,100,3)
+                    self.FLDC_Down.bMoveVelocityEnable()
+                    self.Status_FLDC_Down = True
+                    self.signalMove.emit(JOYSTICK_DOWN_RIGHT)
+                elif LinearMove_Down_Forward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveVelocitySetting(0.5,100,1)
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Down = True
+                    self.signalMove.emit(JOYSTICK_DOWN_FORWARD)
+                elif LinearMove_Down_Backward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
+                    self.BLDC_Down.MoveVelocitySetting(0.5,100,3)
+                    self.BLDC_Down.bMoveVelocityEnable()
+                    self.Status_BLDC_Down = True
+                    self.signalMove.emit(JOYSTICK_DOWN_BACKWARD)
+                
+            else:
+                self.signalMove.emit(0)
+                if self.Status_FLDC_Up:
+                    self.FLDC_Up.bStopAllMove()
+                    self.Status_FLDC_Down = False
+                    self.Status_FLDC_Up = False
+                elif self.Status_BLDC_Up:
+                    self.FLDC_Up.bStopAllMove()
+                    self.Status_BLDC_Down = False
+                    self.Status_BLDC_Up = False
+                elif self.Status_FLDC_Down:
+                    self.FLDC_Up.bStopAllMove()
+                    self.Status_FLDC_Down = False
+                elif self.Status_BLDC_Down:
+                    self.FLDC_Up.bStopAllMove()
+                    self.Status_BLDC_Down = False
+                    
+            sleep(0.05)
+        pygame.quit()
+    
+    def JoystickControl_StepRun(self, movement:float):
+        if len(self.entryPoint) == 0 or len(self.targetPoint) == 0:
+            logger.warning('drive to trajectory before joystick step run')
+            return
+        
+        print(f"entry point: {self.entryPoint}")
+        print(f"target point: {self.targetPoint}")
+        
+        self.bStopJoystick = False
+        
+        if not pygame.get_init():
+            pygame.init()
+        if not pygame.joystick.get_init():
+            pygame.joystick.init()
+            
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            logger.error('not found any joystick')
+            return
+            
+        num_hats = self.joystick.get_numhats()
+        bSwitch = True
+        while not self.bStopJoystick:
+            pygame.event.pump()
+            
+            # up layer control
+            if (self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R)) and bSwitch:        
+                RotateMove_up, LinearMove_up = (0, 0)
+                if num_hats > 0:
+                    RotateMove_up, LinearMove_up = self.joystick.get_hat(0)
+                
+                RotateMove_Up_Right = (RotateMove_up ==  1)
+                RotateMove_Up_Left  = (RotateMove_up == -1)
+                LinearMove_Up_Forward = (LinearMove_up ==  1)
+                LinearMove_Up_Backward = (LinearMove_up == -1)
+            
+                if RotateMove_Up_Right and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    # self.targetPoint[1] = self.targetPoint[1] - jogResolution_movement
+                    self.targetPoint[1] = self.targetPoint[1] - movement
+                    print(f"entry point: {self.entryPoint}")
+                    print(f"target point: {self.targetPoint}")
+                    self.MoveToPoint()
+                    # self.JogStatus = True
+                    self.signalMove.emit(JOYSTICK_UP_RIGHT)
+                    bSwitch = False
+                elif RotateMove_Up_Left and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    # self.targetPoint[1] = self.targetPoint[1] + jogResolution_movement
+                    self.targetPoint[1] = self.targetPoint[1] + movement
+                    print(f"entry point: {self.entryPoint}")
+                    print(f"target point: {self.targetPoint}")
+                    self.MoveToPoint()
+                    # self.JogStatus = True
+                    self.signalMove.emit(JOYSTICK_UP_LEFT)
+                    bSwitch = False
+                elif LinearMove_Up_Backward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    # self.targetPoint[0] = self.targetPoint[0] - jogResolution_movement
+                    self.targetPoint[0] = self.targetPoint[0] - movement
+                    print(f"entry point: {self.entryPoint}")
+                    print(f"target point: {self.targetPoint}")
+                    self.MoveToPoint()
+                    # self.JogStatus = True
+                    self.signalMove.emit(JOYSTICK_UP_BACKWARD)
+                    bSwitch = False
+                elif LinearMove_Up_Forward and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
+                    # self.targetPoint[0] = self.targetPoint[0] + jogResolution_movement
+                    self.targetPoint[0] = self.targetPoint[0] + movement
+                    print(f"entry point: {self.entryPoint}")
+                    print(f"target point: {self.targetPoint}")
+                    self.MoveToPoint()
+                    # self.JogStatus = True
+                    self.signalMove.emit(JOYSTICK_UP_FORWARD)
+                    bSwitch = False
+            elif not self.joystick.get_button(Button_L) and not self.joystick.get_button(Button_R):
+                bSwitch = True
+                self.signalMove.emit(0)
+                
+            sleep(0.05)
+            
+        
+        self.signalMove.emit(0)
+        pygame.quit()
+        
+    def Joystick_Stop(self):
+        self.bStopJoystick = True
                
 class LineLaser(MOTORCONTROL, QObject):
     signalInitFailed = pyqtSignal(int)
@@ -2913,11 +3226,12 @@ class LineLaser(MOTORCONTROL, QObject):
            
         return output     
     
-class joystickControl(MOTORCONTROL, QObject):
+class joystickControl(MOTORSUBFUNCTION, QObject):
     signalStop = pyqtSignal()
     signalMove = pyqtSignal(int)
     def __init__(self):
         QObject.__init__(self)
+        super().__init__()
         self.open = False
         # initial pygame lib
         pygame.init()
@@ -2944,6 +3258,7 @@ class joystickControl(MOTORCONTROL, QObject):
             self.Status_BLDC_Up = False
             self.Status_FLDC_Down = False
             self.Status_BLDC_Down = False
+            self.JogStatus = False
             self.bStop = True
     
     def FLDC_Up_StopMove(self):
@@ -2990,8 +3305,6 @@ class joystickControl(MOTORCONTROL, QObject):
             
             pygame.event.pump()    
             if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
-                # RotateMove_up = self.joystick.get_axis(0)
-                # LinearMove_up = self.joystick.get_axis(1)
                 RotateMove_Down_Right = self.joystick.get_button(Button_B)
                 RotateMove_Down_Left = self.joystick.get_button(Button_X)
                 LinearMove_Down_Forward = self.joystick.get_button(Button_Y)
@@ -3064,69 +3377,6 @@ class joystickControl(MOTORCONTROL, QObject):
                     
             sleep(0.05)
         pygame.quit()
-         
-            
-    def JoystickControl_StepRun(self):
-        self.bStop = False
-        while not self.bStop:
-            pygame.event.pump()
-            # up layer control
-            if self.joystick.get_button(Button_L) or self.joystick.get_button(Button_R):
-                RotateMove_up = self.joystick.get_axis(0)
-                LinearMove_up = self.joystick.get_axis(1)
-                RotateMove_Down_Right = self.joystick.get_button(Button_B)
-                RotateMove_Down_Left = self.joystick.get_button(Button_X)
-                LinearMove_Down_Forward = self.joystick.get_button(Button_Y)
-                LinearMove_Down_Backward = self.joystick.get_button(Button_A)
-            
-                if RotateMove_up > 0.9 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
-                    self.FLDC_Up.MoveRelativeSetting(-jogResolution_rotation,10)
-                    self.FLDC_Up.bMoveRelativeEnable()
-                    self.Status_FLDC_Up = True
-                elif RotateMove_up == -1 and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
-                    self.FLDC_Up.MoveRelativeSetting(jogResolution_rotation,10)
-                    self.FLDC_Up.bMoveRelativeEnable()
-                    self.Status_FLDC_Up = True
-                elif LinearMove_up > 0.9 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
-                    self.BLDC_Up.MoveRelativeSetting(-jogResolution_movement,5)
-                    self.BLDC_Up.bMoveRelativeEnable()
-                    self.Status_BLDC_Up = True
-                elif LinearMove_up == -1 and self.Status_FLDC_Up == False and self.Status_FLDC_Down == False and self.Status_BLDC_Down == False:
-                    self.BLDC_Up.MoveRelativeSetting(jogResolution_movement,5)
-                    self.BLDC_Up.bMoveRelativeEnable()
-                    self.Status_BLDC_Up = True
-                elif RotateMove_Down_Left and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
-                    self.FLDC_Down.MoveRelativeSetting(jogResolution_rotation,10)
-                    self.FLDC_Down.bMoveRelativeEnable()
-                    self.Status_FLDC_Down = True
-                elif RotateMove_Down_Right and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_BLDC_Down == False:
-                    self.FLDC_Down.MoveRelativeSetting(-jogResolution_rotation,10)
-                    self.FLDC_Down.bMoveRelativeEnable()
-                    self.Status_FLDC_Down = True
-                elif LinearMove_Down_Forward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
-                    self.BLDC_Down.MoveRelativeSetting(jogResolution_movement,5)
-                    self.BLDC_Down.bMoveRelativeEnable()
-                    self.Status_BLDC_Down = True
-                elif LinearMove_Down_Backward and self.Status_FLDC_Up == False and self.Status_BLDC_Up == False and self.Status_FLDC_Down == False:
-                    self.BLDC_Down.MoveRelativeSetting(-jogResolution_movement,5)
-                    self.BLDC_Down.bMoveRelativeEnable()
-                    self.Status_BLDC_Down = True
-        
-        
-                if self.Status_FLDC_Up:
-                    self.FLDC_Up_StopMove()
-                    self.Status_FLDC_Up = False
-                elif self.Status_BLDC_Up:
-                    self.BLDC_Up_StopMove()
-                    self.Status_BLDC_Up = False
-                elif self.Status_FLDC_Down:
-                    self.FLDC_Down_StopMove()
-                    self.Status_FLDC_Down = False
-                elif self.Status_BLDC_Down:
-                    self.BLDC_Down_StopMove()
-                    self.Status_BLDC_Down = False
-                    
-        self.signalMove.emit(0)
                     
     def Joystick_Stop(self):
         self.bStop = True

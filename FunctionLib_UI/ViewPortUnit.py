@@ -152,7 +152,8 @@ class ViewPortUnit(QObject):
         if self.bFocusMode:
             if hasattr(self, 'renderer') and \
                 (self.orientation != VIEW_3D or ViewPortUnit._bLockTarget3D) and \
-                self.orientation != VIEW_CROSS_SECTION:
+                self.orientation != VIEW_CROSS_SECTION and \
+                self.orientation != VIEW_ALONG_TRAJECTORY:
                 if pos is None:
                     pos = self.renderer.target
                 self.renderer.SetCameraToTarget(pos)
@@ -172,13 +173,14 @@ class ViewPortUnit(QObject):
         elif self.orientation == VIEW_SAGITTAL:
             self.dicom.target[0] = value * self.dicom.voxelSize[0]
             self.dicom.imagePosition[0] = value
-            
         
         self.signalSetSliceValue.emit(self.dicom.imagePosition)
         
         if self.orientation == VIEW_CROSS_SECTION:
             self.signalChangedTrajPosition.emit(value)
             self.signalUpdateExcept.emit(VIEW_CROSS_SECTION)
+        elif self.orientation == VIEW_ALONG_TRAJECTORY:
+            self.signalUpdateExcept.emit(VIEW_ALONG_TRAJECTORY)
         else:
             self.signalUpdateAll.emit()
             
@@ -201,8 +203,10 @@ class ViewPortUnit(QObject):
         if pos is not None:
             self.signalFocus.emit(pos)
             
-            if self.orientation == VIEW_CROSS_SECTION:
+            if isinstance(self.renderer, RendererCrossSectionObj):
                 self.renderer.SetTarget(posOriginal = pos)
+            elif isinstance(self.renderer, RendererAlongTrajectory):
+                self.renderer.RotationView()
             else:
                 self.renderer.image.ComputeStructuredCoordinates(pos, imagePos, pcoord)
                 imagePos += np.round(pcoord)
@@ -237,10 +241,7 @@ class ViewPortUnit(QObject):
         iPos = np.array(pos).astype(int)
         
         scrollValue = None
-        if self.orientation == VIEW_CROSS_SECTION:
-            # self.renderer.SetCrossSectionPosition(self.renderer.target)
-            pass
-        else:
+        if self.orientation not in [VIEW_CROSS_SECTION, VIEW_ALONG_TRAJECTORY]:
             if self.orientation == VIEW_SAGITTAL:
                 scrollValue = iPos[0]
             elif self.orientation == VIEW_CORONAL:
@@ -308,7 +309,8 @@ class ViewPortUnit(QObject):
                 self.renderer.SetTarget(posOriginal = self.renderer.target)
                 
                 self.renderer.FocusTarget()
-            # elif orientation == VIEW
+            elif orientation == VIEW_ALONG_TRAJECTORY:
+                self.uiScrollSlice.setMaximum(360)
             
             # self.uiScrollSlice.setValue(0)
             # renderer.signalUpdateView.connect(self.UpdateView)
@@ -438,6 +440,35 @@ class TrajectoryViewDelegate(QStyledItemDelegate):
             painter.fillRect(option.rect, color)
             painter.restore()
             option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 255, 255)))
+            
+class LogViewDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        self.treeWidget:QTreeWidget = parent
+        super().__init__()
+        
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        
+        super().paint(painter, option, index)
+        if index.data(Qt.UserRole + 1):
+            # treeWidget = index.model().parent()
+            # checkbox_rect = option.widget.style().subElementRect(QStyle.SE_ItemViewItemCheckIndicator, option, option.widget)
+            content_rect = option.widget.style().subElementRect(QStyle.SE_ItemViewItemText, option, option.widget)
+            
+            offset = content_rect.left()
+            
+            indent = index.data(Qt.UserRole + 3)
+            if indent:
+                offset += indent
+                
+            content_rect.setLeft(offset)
+            painter.save()
+            painter.fillRect(content_rect, QColor(255, 0, 0))
+            painter.restore()
+            painter.setPen(QColor(255, 255, 255))
+            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 0, 255)))
+            
+            content_rect.setLeft(content_rect.left() + 3)
+            painter.drawText(QRectF(content_rect), index.data(Qt.DisplayRole))
         
 # class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
 #     def __init__(self, nParts = 1):

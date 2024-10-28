@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from PyQt5.QtCore import Qt
 
@@ -29,28 +30,27 @@ BallStick_RY = 3
 DPad = 0
 maxManualLinearSpeed = 1000
 maxManualRotateSpeed = 200
-jogResolution_movement = 1
-jogResolution_rotation = 0.5
+jogResolution_movement = 5
 differential_time = 2
 normalSpeed = 1000
 shiftingFLDC_up = -20.5893
 shiftingBLDC_Up = -52.85
 shiftingFLDC_Down = -26.0881
 shiftingBLDC_Down = -52.85
-robotShifting = np.array([70, -11.5, 205])
+# robotShifting = np.array([70, -11.5, 205])
 
-robotInitialLength = 132.5 #110.38  #128.38
-upperHigh = 6.6 #6.1
-lowerHigh = -16.8 #-15.6
+robotInitialLength = 132.253 #132.93 #110.38  #128.38
+upperHigh = 6.798 #6.6 #6.1
+lowerHigh = -14.93 #-18.671 #-14.171 #-15.6
 global data
 data = ''
 
 "distance between point ball and robot base"
 baseShift_X = -182.5
-baseShift_Y = 32.48 #70 - 2.5
-baseShift_Z = -21.4 #15.5
+baseShift_Y = 32.5 #32.48 #70 - 2.5
+baseShift_Z = -22.24 #-21.04 #15.5
 
-diff_Pole_lightBoard = 67.24
+diff_Pole_lightBoard = 66.24 #67.24
 
 
 "Laser setting parameter"
@@ -121,10 +121,17 @@ ROLE_TRAJECTORY = Qt.UserRole + 5
 ROLE_DROPITEM   = Qt.UserRole + 6
 ROLE_LOCK       = Qt.UserRole + 7
 
+# MessageBox style
+MB_INFO = 0
+MB_WARNING = 1
+MB_ERROR = 2
+MB_QUESTION = 3
 
 IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
+
+DATABASE_PATH = os.path.join(os.getcwd(), 'database')
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
 ENABLE_REGISTRATION = True

@@ -5,12 +5,11 @@ from PyQt5.QtGui import *
 from PyQt5.QtGui import QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
-
-from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 from FunctionLib_Robot.logger import logger
 from FunctionLib_Robot.__init__ import *
 from typing import *
 import numpy as np
+import threading
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
@@ -22,6 +21,27 @@ def message_handler(mode, context, message):
 
 # 安装自定义的日志处理器
 qInstallMessageHandler(message_handler)
+
+class CustomGroupBox(QGroupBox):
+    def __init__(self, title:str, parent:QWidget = None):
+        super().__init__(title)
+        
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        
+        painter = QPainter(self)
+        pixmap = QPixmap('image/joystick.png')
+        
+        painter.drawPixmap(5, -10, pixmap.scaled(60, 60))
+        rect = QRectF(60, 0, 130, 48)
+        
+        painter.save()
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(93, 161, 209))
+        painter.drawRect(rect)
+        painter.restore()
+        rect.moveLeft(70)
+        painter.drawText(rect, 'Joystick')
 
 class MimeData(QMimeData):
     def __init__(self, item:QTreeWidgetItem):
@@ -845,7 +865,7 @@ class WidgetProgressing(QWidget):
 class NaviButton(QPushButton):
     angle = 0
     angleStep = 3.6
-    radius = 100
+    radius = 24.0
     circleWidth = 10
     
     def __init__(self, parent:QWidget):
@@ -860,7 +880,7 @@ class NaviButton(QPushButton):
         
         path = QPainterPath()
         rect = QRectF(self.rect())
-        path.addRoundedRect(rect, 24.0, 24.0)
+        path.addRoundedRect(rect, self.radius, self.radius)
         
         pathSub = QPainterPath()
         rectSub = QRectF(self.rect())
@@ -883,9 +903,9 @@ class NaviButton(QPushButton):
         painter.drawText(self.rect(), Qt.AlignCenter, self.text())
         
         
-    def OnSignal_Percent(self, percent:float):
+    def OnSignal_Percent(self, percent:float, text:str = 'Homing...'):
         self.rectWidth = self.width() * percent
-        self.setText(f'Homing...{percent:.1%}')
+        self.setText(f'{text}{percent:.1%}')
         self.update()
         
 class Indicator(QWidget):
@@ -1232,12 +1252,16 @@ class AnimationJoystickWidget(QWidget):
         self.idx = part
         if part not in range(2):
             self.opacity = 0
+            
+messageLock = threading.Lock()
 class MessageBox(QMessageBox):
+    
+    lock = threading.Lock()
     
     def __init__(self, icon:int, text:str):
         super().__init__()
         
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         if icon:
@@ -1390,7 +1414,8 @@ class MessageBox(QMessageBox):
             msgbox.addButtons('OK')
         else:
             msgbox.addButtons(*args, **kwargs)
-            
+        
+        msgbox.setFocus()
         ret = msgbox.exec_()  
         return ret
     
