@@ -80,6 +80,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalResetLaserUI = pyqtSignal()
     signalLoadingImage = pyqtSignal(float, str)
     signalImportDicomFinished = pyqtSignal()
+    signalStartExport = pyqtSignal(int)
+    signalPreImportFinished = pyqtSignal(dict, dict)
     
     player = QMediaPlayer()
     robot = None
@@ -354,6 +356,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalModelBuildingUI.connect(self.OnSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
         self.signalImportDicomFinished.connect(self.OnSignal_ImportDicomFinished)
+        self.signalStartExport.connect(self.OnSignal_StartExport)
+        self.signalPreImportFinished.connect(self.OnSignal_PreImportFinished)
         
         self.btnClose.clicked.connect(lambda:self.close())
         
@@ -1078,19 +1082,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
             
         if not self.bFromDatabase:
+            # self.signalStartExport.emit(nType)
             self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
-            # self.reader.Export(DATABASE_PATH, nType)
-            # self.reader.signalShowMessage.connect(self.OnSignal_ShowMessage)
-            # self.signalOnMessageReply.connect(self.reader.OnSignal_MessageboxReply)
-            # tExport = threading.Thread(target = self.reader.__Export, args = (DATABASE_PATH, nType))
-            # tExport.start()
             
         if retData is None:
             logger.error(f'load inhale dicom failed')
             return None
         
         # self.reader.Export('C:/Leon/innormal dicom/2/output/')
-        
         
         vtkImage = vtkImageData()
         vtkImage.DeepCopy(retData[0])
@@ -1842,6 +1841,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.reader = DICOM()
         self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
+        self.reader.signalExport.connect(self.OnSignal_ExportProgress)
         dicom = self.reader.LoadPath(path)
         
         model = QStandardItemModel()
@@ -3182,6 +3182,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if bChecked:
             InteractorStyleWipe.imageId = imageId
             
+    def OnThread_preImport(self):
+        retInhale = self._PreImportImage(TYPE_INHALE)
+        retExhale = self._PreImportImage(TYPE_EXHALE)
+        
+        self.signalPreImportFinished.emit(retInhale, retExhale)
+            
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
             # msg = DlgHintBox()
@@ -3244,49 +3250,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 self._SetProgress('Loading dicom image...', self.signalLoadingImage, 2)
                 
-                # tag = list(self.dicDicom.values())
-                retInhale = self._PreImportImage(TYPE_INHALE)
-                retExhale = self._PreImportImage(TYPE_EXHALE)
+                # retInhale = self._PreImportImage(TYPE_INHALE)
+                # retExhale = self._PreImportImage(TYPE_EXHALE)
+                t_preImport = threading.Thread(target = self.OnThread_preImport)
+                t_preImport.start()
                 
-                if retInhale is None or retExhale is None:
-                    return
-                
-                self._preImportData = [retInhale, retExhale]
-                
-                if ENABLE_LUNG_VOLUME_DETECT:
-                    
-                    self._SetProgress('Calculating Lung Volume...', nParts = 2)
-                    self.dicLungVolumeInfo = {}
-                    
-                    lung.ShowImage(
-                        name = 'inhale',
-                        arrImage = retInhale.get('arrImage'), 
-                        spacing = retInhale.get('spacing'),
-                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
-                        returnCallback = self.OnSignal_LungVolume
-                    )
-                    
-                    lung.ShowImage(
-                        name = 'exhale',
-                        arrImage = retExhale.get('arrImage'), 
-                        spacing = retExhale.get('spacing'),
-                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
-                        returnCallback = self.OnSignal_LungVolume
-                    )
-                
-                
-                    # if not self.ImportDicom_L(retInhale):
-                    #     return
-                    
-                    # if not self.ImportDicom_H(retExhale):
-                    #     return
-                    
-                    # self._SaveBootFile()
-                    # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-                    return
-                else:
-                    tImportDicom = threading.Thread(target = self._ImportDicom, args = (retInhale, retExhale))
-                    tImportDicom.start()
+                return
                     
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
@@ -3705,7 +3674,56 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if self.stkMain.currentWidget() != self.pgScene:
                 self.signalLoadingReady.emit()
                 
-    
+    def OnSignal_StartExport(self, nType:int):
+        self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
+                
+    def OnSignal_ExportProgress(self, fProgress:float, text:str):
+        bVisible = fProgress < 1
+        
+        self.pbrProgress.setValue(int(fProgress * 100))
+        self.lblProgressText.setText(text)
+        self.wdgProgressBar.setVisible(bVisible)
+        self.lblProgressText.setVisible(bVisible)
+        
+    def OnSignal_PreImportFinished(self, retInhale:dict, retExhale:dict):
+        if retInhale is None or retExhale is None:
+            return
+        
+        self._preImportData = [retInhale, retExhale]
+        
+        if ENABLE_LUNG_VOLUME_DETECT:
+            
+            self._SetProgress('Calculating Lung Volume...', nParts = 2)
+            self.dicLungVolumeInfo = {}
+            
+            lung.ShowImage(
+                name = 'inhale',
+                arrImage = retInhale.get('arrImage'), 
+                spacing = retInhale.get('spacing'),
+                progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                returnCallback = self.OnSignal_LungVolume
+            )
+            
+            lung.ShowImage(
+                name = 'exhale',
+                arrImage = retExhale.get('arrImage'), 
+                spacing = retExhale.get('spacing'),
+                progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                returnCallback = self.OnSignal_LungVolume
+            )
+        
+        
+            # if not self.ImportDicom_L(retInhale):
+            #     return
+            
+            # if not self.ImportDicom_H(retExhale):
+            #     return
+            
+            # self._SaveBootFile()
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        else:
+            tImportDicom = threading.Thread(target = self._ImportDicom, args = (retInhale, retExhale))
+            tImportDicom.start()
         
     def OnSignal_LoadingReady(self):
         # index = self.stkMain.currentIndex()
@@ -3775,7 +3793,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
     def OnSignal_ShowMessage(self, msg:str, messageboxStyle = MB_INFO, *buttons:str):
         if len(msg) > 0:
-            ret = 0
+            # 因為DICOM.signalShowMessage的buttons參數傳進來會是tuple(tuple(), )
+            # 也就是說buttons[0]才是真正的buttons list，所以需要額外處理
+            lstButton = np.array([])
+            for button in buttons:
+                lstButton = np.append(lstButton, button)
+                
+            buttons = tuple(lstButton)
+            
             if messageboxStyle == MB_INFO:
                 ret = MessageBox.ShowInformation(msg, *buttons)
             elif messageboxStyle == MB_ERROR:

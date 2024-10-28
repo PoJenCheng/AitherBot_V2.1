@@ -142,8 +142,9 @@ class QSignalObject(QObject):
 
 "DICOM function"
 class DICOM(QObject):
+    signalExport = pyqtSignal(float, str)
     signalProcess = pyqtSignal(float, str)
-    signalShowMessage = pyqtSignal(str, int, str, str)
+    signalShowMessage = pyqtSignal(str, int, tuple)
     lock = threading.Lock()
     __bConnected = False
     __cacheData:Dict[int, Dict[str, Any]] = {}
@@ -583,15 +584,16 @@ class DICOM(QObject):
                         os.makedirs(outPath, exist_ok = True)
                     else:
                         # ret = MessageBox.ShowWarning(f'patient "{patientName}" has already exist\nMake sure to rewrite?', 'Yes', 'No')
-                        self.signalShowMessage.emit(f'patient "{patientName}" has already exist\nMake sure to rewrite?', MB_WARNING, 'Yes', 'No')
+                        self.signalShowMessage.emit(f'patient "{patientName}" has already exist\nMake sure to rewrite?', MB_WARNING, ('Yes', 'No'))
                         while not self.bHasMessageboxReply:
                             QApplication.processEvents()
                         
                         self.bHasMessageboxReply = False
                         if self.messageboxReply == 1:
                             return
-                        
-                    for i, slice in enumerate(lstSeries):
+                    
+                    fTotal = len(lstSeries)
+                    for nSlice, slice in enumerate(lstSeries):
                         # self.ModifyTag(ds, (0x20, 0x37), [1.0, 0.0, 0.0, 0.0, 1.0, 0.0])
                         # self.ModifyTag(ds, (0x20, 0x32), imagePosition, incValue) # from layer 1
                         
@@ -606,20 +608,23 @@ class DICOM(QObject):
                             ds.Columns = shape[2]
                             ds.PixelData = arrImage.astype('<i2').tobytes()
                             ds.PixelSpacing = spacing.tolist()[:2]
+                            fTotal = shape[0]
                             
                             for i in range(ds.NumberOfFrames):
                                 ds.ImagePositionPatient = imagePosition.tolist()
                                 imagePosition += incValue
                                 self.SaveAsSingleFrameDicom(ds, i, outPath)
+                                self.signalExport.emit((i + 1) / fTotal, f'export {patientName}')
                         else:
                             ds.ImagePositionPatient = imagePosition.tolist()
                             imagePosition += incValue
                             ds.Rows = shape[1]
                             ds.Columns = shape[2]
-                            ds.PixelData = arrImage[i].astype('<i2').tobytes()
+                            ds.PixelData = arrImage[nSlice].astype('<i2').tobytes()
                             
-                            filePath = os.path.join(outPath, f'{i:04}.dcm')
+                            filePath = os.path.join(outPath, f'{nSlice:04}.dcm')
                             ds.save_as(filePath)
+                            self.signalExport.emit((nSlice + 1) / fTotal, f'export {patientName}')
             except Exception as msg:
                 logger.critical(msg)
             
@@ -796,7 +801,7 @@ class DICOM(QObject):
         spacingXY = series.get('spacingXY')
         spacingZ  = series.get('spacingZ')
         if not spacingXY or not spacingZ:
-            QMessageBox.critical(None, 'DICOM TAG MISSING', 'missing tag [Spacing]')
+            self.signalShowMessage.emit('DICOM TAG MISSING', MB_ERROR)
             return None
         spacing:list = spacingXY[:]
         spacing = np.append(spacing, spacingZ)
@@ -824,6 +829,7 @@ class DICOM(QObject):
                     images.append(dataSet.pixel_array * self.rescaleSlope + self.rescaleIntercept)
                 else:
                     images.append(dataSet.pixel_array)
+            QApplication.processEvents()
                 
         images = np.array(images).astype(np.int16)
         
