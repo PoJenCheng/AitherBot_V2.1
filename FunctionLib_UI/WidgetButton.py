@@ -5,12 +5,11 @@ from PyQt5.QtGui import *
 from PyQt5.QtGui import QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDragMoveEvent, QDropEvent, QMouseEvent
 from PyQt5.QtWidgets import *
 from datetime import date, datetime
-
-from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 from FunctionLib_Robot.logger import logger
 from FunctionLib_Robot.__init__ import *
 from typing import *
 import numpy as np
+import threading
 
 TYPE_INHALE = 0
 TYPE_EXHALE = 1
@@ -1253,12 +1252,16 @@ class AnimationJoystickWidget(QWidget):
         self.idx = part
         if part not in range(2):
             self.opacity = 0
+            
+messageLock = threading.Lock()
 class MessageBox(QMessageBox):
+    
+    lock = threading.Lock()
     
     def __init__(self, icon:int, text:str):
         super().__init__()
         
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         if icon:
@@ -1411,7 +1414,8 @@ class MessageBox(QMessageBox):
             msgbox.addButtons('OK')
         else:
             msgbox.addButtons(*args, **kwargs)
-            
+        
+        msgbox.setFocus()
         ret = msgbox.exec_()  
         return ret
     
