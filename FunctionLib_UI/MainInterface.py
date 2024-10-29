@@ -176,6 +176,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.bFromDatabase = False
         
+        self.wdgProgressBar.setVisible(False)
+        self.lblProgressText.setVisible(False)
+        
         # interactors
         self.lstInteractorWipe = []
         
@@ -521,8 +524,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnConfirmFusion.clicked.connect(self.OnClicked_btnConfirmFusion)
         
         # platform control
-        self.btnPlatformForward.clicked.connect(self.OnClicked_btnPlatformForward)
-        self.btnPlatformBackward.clicked.connect(self.OnClicked_btnPlatformBackward)
+        self.btnPlatformForward.pressed.connect(self.OnPressed_btnPlatformForward)
+        self.btnPlatformForward.released.connect(self.OnRelease_btnPlatformForward)
+        self.btnPlatformBackward.pressed.connect(self.OnPressed_btnPlatformBackward)
+        self.btnPlatformBackward.released.connect(self.OnRelease_btnPlatformBackward)
         
         # fusion Axial view
         self.btnMoveUpA.clicked.connect(self.OnClicked_btnMoveUp)
@@ -2719,11 +2724,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             movement = float(self.comboBox.currentText())
             self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
-    def OnClicked_btnPlatformForward(self):
-        pass
+    def OnPressed_btnPlatformForward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 1)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformForward(self):
+        self.robot.Platform_Left.MC_Stop()
+        
+    def OnPressed_btnPlatformBackward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 3)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformBackward(self):
+        self.robot.Platform_Left.MC_Stop()
     
-    def OnClicked_btnPlatformBackward(self):
-        pass
+    
     
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
@@ -4156,11 +4175,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
                 
     def Robot_OnThreadHomingProcess(self):
+        self.robot.ForwardKinamatic()
         if self.robot.bConnected == True:
             if self.robot.HomeProcessing_image() == True:
                 print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
+            
                 
         
     def Robot_OnSignalFootPedal(self, bPress:bool):
