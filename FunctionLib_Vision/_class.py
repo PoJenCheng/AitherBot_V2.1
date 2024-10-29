@@ -12,12 +12,17 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
+import pydicom.dataset
+import pydicom.tag
+import threading
 import vtkmodules.all as vtk
+from typing import Any, Dict
 from pydicom.dataset import Dataset, FileDataset
 from numpy._typing import _ArrayLike
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from FunctionLib_UI.WidgetButton import MessageBox
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonColor import vtkNamedColors
@@ -137,7 +142,12 @@ class QSignalObject(QObject):
 
 "DICOM function"
 class DICOM(QObject):
+    signalExport = pyqtSignal(float, str)
     signalProcess = pyqtSignal(float, str)
+    signalShowMessage = pyqtSignal(str, int, tuple)
+    lock = threading.Lock()
+    __bConnected = False
+    __cacheData:Dict[int, Dict[str, Any]] = {}
     
     def __init__(self):
         super().__init__()
@@ -149,6 +159,10 @@ class DICOM(QObject):
         self.rescaleSlope = None
         self.rescaleIntercept = None
         self.currentSeries = {}
+        self.bHasMessageboxReply = False
+        self.messageboxReply = 0
+        
+        
         
     def _RotateImage(self, images:_ArrayLike, spacing:_ArrayLike, axis:str, turns:int):
         if turns == 0:
@@ -236,9 +250,8 @@ class DICOM(QObject):
                 metadataFileList.append(s)
                 count += 1
                 self.signalProcess.emit(np.round(count / totalFiles, 2), s)
-            except:
-                continue
-        studyNumber = np.unique(metadataStudy)
+            except Exception as msg:
+                logger.error(msg)
         # if studyNumber.shape[0]>1 or len(metadataStudy)==0:
         #     metadata = 0
         #     metadataSeriesNum = 0
@@ -331,6 +344,26 @@ class DICOM(QObject):
                     #     series['data'] = newList
                     #     # shutil.copy(str(img.filename), destDir)
                     
+                    bIsMultiFrame = False
+                    # 讀取DimX
+                    dimension = np.array([], int)
+                    # 讀取multiframe data
+                    frames = self.FindTag(slice, (0x28, 0x8))            
+                    if frames and frames > 1:
+                        logger.info(f'is a multi-frame dicom, {frames} frame in the series')
+                        dimension = np.append(dimension, frames)
+                        bIsMultiFrame = True
+                        
+                    dimY = self.FindTag(slice, (0x28, 0x10))            
+                    if dimY:
+                        dimension = np.append(dimension, dimY)
+                        
+                    dimX = self.FindTag(slice, (0x28, 0x11))            
+                    if dimX:
+                        dimension = np.append(dimension, dimX)
+                        
+                    series['dimension'] = dimension
+                    
                         
                     # get image orientation
                     imageOrientation = self.FindTag(slice, (0x20, 0x37))
@@ -357,7 +390,9 @@ class DICOM(QObject):
                             bFoundImagePosition = True
                             logger.info(f'found tag(0x20, 0x32) = {elem} in patient ID = {slice.PatientID}')
                             for ds in slices:
+                                # 這個在multi frame dicom中，如果image position patient是由大到小，這個寫法是無效的 
                                 ds.ImagePositionPatient = elem
+                                
                             
                     if bFoundImagePosition:
                         x = imageOrientation[:3]
@@ -365,7 +400,21 @@ class DICOM(QObject):
                         z = np.cross(x, y)
                         direct_idx = np.argmax(np.abs(z))
                         bReverse = z[direct_idx] < 0
-                        slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
+                        
+                        if bIsMultiFrame:
+                            for i, _slice in enumerate(slices):
+                                tags = self.FindTag(_slice, (0x20, 0x32), True, sequenceTag = (0x20, 0x9113))
+                                if isinstance(tags, list) and hasattr(_slice, 'pixel_array'):
+                                    
+                                    if _slice.pixel_array.shape[0] == len(tags):
+                                        idxSorted = np.argsort(np.array(tags)[:, direct_idx])
+                                        if bReverse:
+                                            idxSorted = idxSorted[::-1]
+                                            
+                                        series['SortedIndex'] = idxSorted
+                                        
+                        else:
+                            slices.sort(key = lambda x:x.ImagePositionPatient[direct_idx], reverse = bReverse)
                     else:
                         logger.error(f'missing:ImagePositionPatient')
                         
@@ -440,23 +489,7 @@ class DICOM(QObject):
                             else:
                                 series['acquisitionDate'] = 'NONE'
                                 
-                    # 讀取DimX
-                    dimension = np.array([], int)
-                    # 讀取multiframe data
-                    frames = self.FindTag(slice, (0x28, 0x8))            
-                    if frames and frames > 1:
-                        logger.info(f'is a multi-frame dicom, {frames} frame in the series')
-                        dimension = np.append(dimension, frames)
-                        
-                    dimY = self.FindTag(slice, (0x28, 0x10))            
-                    if dimY:
-                        dimension = np.append(dimension, dimY)
-                        
-                    dimX = self.FindTag(slice, (0x28, 0x11))            
-                    if dimX:
-                        dimension = np.append(dimension, dimX)
-                        
-                    series['dimension'] = dimension
+                    
                                 
         self.signalProcess.emit(1.0, '')
                         
@@ -497,52 +530,103 @@ class DICOM(QObject):
         return dicPatient
        
         ############################################################################################
-        
-    def Export(self, path:str, selectedID:int = 0):
-        try:
-            ret = self.GetData(index = selectedID)
-            if ret is None:
-                logger.error('Export dicom error')
-                return
+    def SetThreadExport(self, path:str, selectedID:int, callbackShowMessage, signalMessageReply:pyqtSignal):
+        if not DICOM.__bConnected:
+            self.signalShowMessage.connect(callbackShowMessage)
+            signalMessageReply.connect(self.OnSignal_MessageboxReply)
+            DICOM.__bConnected = True
             
-            _, spacing, dimension, series = ret
-            if isinstance(series, list):
-                imagePosition = np.array([0, 0, 0], dtype = np.float64)
-                incValue = np.array([0, 0, spacing[2]], dtype = np.float64)
-                for i, slice in enumerate(series):
-                    ds = slice.copy()
-                    # self.ModifyTag(ds, (0x20, 0x37), [1.0, 0.0, 0.0, 0.0, 1.0, 0.0])
-                    # self.ModifyTag(ds, (0x20, 0x32), imagePosition, incValue) # from layer 1
+        tExport = threading.Thread(target = self.__Export, args = (path, selectedID))
+        tExport.start()
+        
+    def __Export(self, path:str, selectedID:int = 0):
+        with DICOM.lock:
+            # 目前此function設計成要在thread中執行，需設置對應signal和slot
+            try:
+                ret = None
+                arrImage = None
+                if selectedID < len(self.__cacheData):
+                    ret = list(self.__cacheData[selectedID].values())
+                    arrImage = self.__cacheData[selectedID]['image']
+                else:
+                    ret = self.GetData(index = selectedID)
+                    if ret is None:
+                        logger.error('Export dicom error')
+                        return
+                    arrImage = self.arrImage.astype(int)
+                
+                _, spacing, dimension, lstSeries = ret
+                
+                if isinstance(lstSeries, list):
+                    imagePosition = np.array([0, 0, 0], dtype = np.float64)
+                    incValue = np.array([0, 0, spacing[2]], dtype = np.float64)
+                    
                     
                     if self.rescaleIntercept and self.rescaleSlope:
-                        self.arrImage = (self.arrImage - self.rescaleIntercept) / self.rescaleSlope
+                        arrImage = (arrImage - self.rescaleIntercept) / self.rescaleSlope
                         
-                    # if 'ImageOrientationPatient' not in ds:
-                    #     ds.ImageOrientationPatient = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+                    shape = arrImage.shape
+                    patientName = lstSeries[0].PatientName
+                    patientID = lstSeries[0].PatientID
+                    studyUID = lstSeries[0].StudyInstanceUID
+                    seriesUID = lstSeries[0].SeriesInstanceUID
+                    
+                    if hasattr(lstSeries[0], 'StudyID'):
+                        studyUID = str(lstSeries[0].StudyID)
                         
-                    shape = self.arrImage.shape
-                    if 'NumberOfFrames' in ds:
-                        ds.NumberOfFrames = shape[0]
-                        ds.Rows = shape[1]
-                        ds.Columns = shape[2]
-                        ds.PixelData = self.arrImage.astype('<i2').tobytes()
-                        ds.PixelSpacing = spacing.tolist()[:2]
+                    if hasattr(lstSeries[0], 'SeriesNumber'):
+                        seriesUID = str(lstSeries[0].SeriesNumber)
+                    
+                    folderName = str(patientName) + '_' + patientID
+                    outPath = os.path.join(path, folderName, studyUID, seriesUID)
+                    
+                    if not os.path.exists(outPath):
+                        os.makedirs(outPath, exist_ok = True)
+                    else:
+                        # ret = MessageBox.ShowWarning(f'patient "{patientName}" has already exist\nMake sure to rewrite?', 'Yes', 'No')
+                        self.signalShowMessage.emit(f'patient "{patientName}" has already exist\nMake sure to rewrite?', MB_WARNING, ('Yes', 'No'))
+                        while not self.bHasMessageboxReply:
+                            QApplication.processEvents()
                         
-                        for i in range(ds.NumberOfFrames):
+                        self.bHasMessageboxReply = False
+                        if self.messageboxReply == 1:
+                            return
+                    
+                    fTotal = len(lstSeries)
+                    for nSlice, slice in enumerate(lstSeries):
+                        # self.ModifyTag(ds, (0x20, 0x37), [1.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+                        # self.ModifyTag(ds, (0x20, 0x32), imagePosition, incValue) # from layer 1
+                        
+                            
+                        # if 'ImageOrientationPatient' not in ds:
+                        #     ds.ImageOrientationPatient = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+                        ds = slice.copy()
+                            
+                        if 'NumberOfFrames' in ds:
+                            ds.NumberOfFrames = shape[0]
+                            ds.Rows = shape[1]
+                            ds.Columns = shape[2]
+                            ds.PixelData = arrImage.astype('<i2').tobytes()
+                            ds.PixelSpacing = spacing.tolist()[:2]
+                            fTotal = shape[0]
+                            
+                            for i in range(ds.NumberOfFrames):
+                                ds.ImagePositionPatient = imagePosition.tolist()
+                                imagePosition += incValue
+                                self.SaveAsSingleFrameDicom(ds, i, outPath)
+                                self.signalExport.emit((i + 1) / fTotal, f'export {patientName}')
+                        else:
                             ds.ImagePositionPatient = imagePosition.tolist()
                             imagePosition += incValue
-                            self.SaveAsSingleFrameDicom(ds, i, path)
-                    else:
-                        ds.ImagePositionPatient = imagePosition.tolist()
-                        imagePosition += incValue
-                        ds.Rows = shape[1]
-                        ds.Columns = shape[2]
-                        ds.PixelData = self.arrImage[i].astype('<i2').tobytes()
-                        
-                        path = os.path.join(path, f'{i:04}.dcm')
-                        ds.save_as(path)
-        except Exception as msg:
-            logger.critical(msg)
+                            ds.Rows = shape[1]
+                            ds.Columns = shape[2]
+                            ds.PixelData = arrImage[nSlice].astype('<i2').tobytes()
+                            
+                            filePath = os.path.join(outPath, f'{nSlice:04}.dcm')
+                            ds.save_as(filePath)
+                            self.signalExport.emit((nSlice + 1) / fTotal, f'export {patientName}')
+            except Exception as msg:
+                logger.critical(msg)
             
     def SaveAsSingleFrameDicom(self, ds:Dataset, frame_index:int, output_dir:str):
         try:
@@ -717,7 +801,7 @@ class DICOM(QObject):
         spacingXY = series.get('spacingXY')
         spacingZ  = series.get('spacingZ')
         if not spacingXY or not spacingZ:
-            QMessageBox.critical(None, 'DICOM TAG MISSING', 'missing tag [Spacing]')
+            self.signalShowMessage.emit('DICOM TAG MISSING', MB_ERROR)
             return None
         spacing:list = spacingXY[:]
         spacing = np.append(spacing, spacingZ)
@@ -745,12 +829,19 @@ class DICOM(QObject):
                     images.append(dataSet.pixel_array * self.rescaleSlope + self.rescaleIntercept)
                 else:
                     images.append(dataSet.pixel_array)
+            QApplication.processEvents()
                 
         images = np.array(images).astype(np.int16)
+        
         
         if len(images.shape) > 3:
             logger.info(f'this is multi-frame dicom')
             images = images[0] 
+            
+            # multi frame dicom根據image patient position(0x20, 0x32)的排序
+            imageSliceSortedIndex = series.get('SortedIndex')
+            if imageSliceSortedIndex is not None:
+                images = images[imageSliceSortedIndex]
         
         imageOrientation = series.get('orientation')
         rotate_matrix = np.identity(3)
@@ -758,7 +849,6 @@ class DICOM(QObject):
             bGantryTilt = False
             for angle in imageOrientation:
                 if abs(angle - round(angle)) > 0.001:
-                    logger.warning('dicom have a gantry tilt')
                     bGantryTilt = True
                 
             if not bGantryTilt:     
@@ -790,7 +880,9 @@ class DICOM(QObject):
                     # rotate z axis
                     bChanged = True
                     images, spacing = self._RotateImage(images, spacing, 'z', rot_times[0])
-                    
+            else:
+                logger.warning('dicom have a gantry tilt')
+                
         self.arrImage = images.copy()
         dimension = np.array(images.shape)[::-1] # z,y,x to x,y,z
         
@@ -808,25 +900,108 @@ class DICOM(QObject):
         
         imageData:vtk.vtkImageData = importer.GetOutput()
         # spacing_rotated = np.round(spacing_rotated, 6)
-        return imageData, spacing, dimension, listSeries
+        self.__cacheData[index] = {}
+        self.__cacheData[index].update({'image':self.arrImage.copy(),
+                                        'spacing':spacing,
+                                        'dimension':dimension,
+                                        'series':listSeries
+                                        })
             
-    def FindTag(self, dataSet:pydicom.Dataset, tag:tuple, layer = 0):
+        
+        return imageData, spacing, dimension, listSeries
+    
+    def _RecursiveFind(
+        self, 
+        dataSet:pydicom.Dataset, 
+        tag:tuple, 
+        bFoundAll = False, 
+        layer = 0, 
+        lstTag = None,
+        sequenceTag = None,
+        parentSQ = None
+    ):
+        if lstTag is None:
+            lstTag:list[pydicom.DataElement] = []
+            
+        if parentSQ is None:
+            parentSQ = []
+        
+            
         if tag in dataSet:
-            return dataSet[tag].value
+            bSkip = False
+            if sequenceTag:
+                # 檢查其父代的sequence tag是否包含目標值
+                bFound = False
+                for _tag in parentSQ:
+                    bFound |= (_tag == sequenceTag)
+                
+                # 如果找不到則略過
+                bSkip = not bFound
+            
+            if not bSkip:        
+                if bFoundAll:
+                    lstTag.append(dataSet[tag])
+                else:
+                    return dataSet[tag]
         
         foundElem = None
         for elem in dataSet:
             if elem.VR == 'SQ':
+                parentSQ.append(elem.tag)
                 #Sequence
                 for item in elem.value:
-                    foundElem = self.FindTag(item, tag, layer + 1)
+                    foundElem = self._RecursiveFind(
+                        item, 
+                        tag, 
+                        bFoundAll, 
+                        layer + 1, 
+                        lstTag, 
+                        sequenceTag,
+                        parentSQ
+                    )
                     if foundElem is not None:
-                        # print(f'found element [{foundElem}] in SQ [{elem.name}]')
-                        return foundElem
+                        
+                        if not bFoundAll:
+                            return foundElem
+                        
+                parentSQ.pop()
         
-        # if layer == 0 and foundElem is None:
-        #     print(f'Tag[{tag}] not found')
+        if bFoundAll:
+            return lstTag
+        
         return foundElem
+            
+    def FindTag(
+        self, 
+        dataSet:pydicom.Dataset, 
+        tag:tuple, 
+        bFoundAll = False, 
+        layer = 0,
+        sequenceTag = None
+    ):
+        elem = self._RecursiveFind(dataSet, tag, bFoundAll, layer, sequenceTag = sequenceTag)
+        
+        
+        if isinstance(elem, list):
+            lstElem = elem
+            lstValue = []
+            for elem in lstElem:
+                lstValue.append(elem.value)
+            
+            return lstValue
+                
+        elif elem:
+            return elem.value
+        
+        return None
+    
+    def ReplaceTag(self, dataSet:pydicom.Dataset, tag:tuple, value):
+        elem = self._RecursiveFind(dataSet, tag, True)
+        
+        if isinstance(elem, list):
+            for el in elem:
+                el.value = value
+            
     
     def ModifyTag(self, dataSet:pydicom.Dataset, tag:tuple, value, incValue = None, nLayer = 0):
         
@@ -1037,6 +1212,10 @@ class DICOM(QObject):
         pixel2Mm.append(abs(imageTag.SpacingBetweenSlices))
         ############################################################################################
         return pixel2Mm
+    
+    def OnSignal_MessageboxReply(self, reply:int):
+        self.bHasMessageboxReply = True
+        self.messageboxReply = reply
     
 "registration function"
 class REGISTRATION(QObject):

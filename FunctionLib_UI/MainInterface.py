@@ -70,15 +70,20 @@ LAN_CN = 1
 
 class MainInterface(QMainWindow,Ui_MainWindow):
     signalLoadingReady = pyqtSignal()
+    signalShowProgressDlg = pyqtSignal(dict)
     signalSetProgress = pyqtSignal(QProgressBar, int)
     signalSetCheck = pyqtSignal(QWidget, bool)
     signalShowPlot = pyqtSignal(float) # for Laser test
-    signalShowMessage = pyqtSignal(str, bool)
+    signalShowMessage = pyqtSignal(str, int)
+    signalOnMessageReply = pyqtSignal(int)
     signalModelBuildingPass = pyqtSignal(bool)
     signalModelBuildingUI = pyqtSignal(bool)
     signalModelCycle = pyqtSignal(tuple, int)
     signalResetLaserUI = pyqtSignal()
     signalLoadingImage = pyqtSignal(float, str)
+    signalImportDicomFinished = pyqtSignal()
+    signalStartExport = pyqtSignal(int)
+    signalPreImportFinished = pyqtSignal(dict, dict)
     
     player = QMediaPlayer()
     robot = None
@@ -170,6 +175,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.bDoneRegistration = False
         self._preImportData = []
         
+        self.bFromDatabase = False
+        
+        self.wdgProgressBar.setVisible(False)
+        self.lblProgressText.setVisible(False)
+        
         # interactors
         self.lstInteractorWipe = []
         
@@ -221,6 +231,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.stkSignalLight.setCurrentWidget(self.pgRedLight)
         self.cbxLanguage.setCurrentIndex(self.language)
+        
+        self.lblProgressText.setVisible(False)
+        self.pbrProgress.setVisible(False)
         
         # Figure in Inhale
         fig = Figure(figsize=(5,5))
@@ -350,6 +363,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalShowMessage.connect(self.OnSignal_ShowMessage)
         self.signalModelBuildingUI.connect(self.OnSignal_ModelBuilding)
         self.signalModelBuildingPass.connect(self.Laser_OnSignalModelPassed)
+        self.signalImportDicomFinished.connect(self.OnSignal_ImportDicomFinished)
+        self.signalStartExport.connect(self.OnSignal_StartExport)
+        self.signalPreImportFinished.connect(self.OnSignal_PreImportFinished)
+        self.signalShowProgressDlg.connect(self.OnSignal_ShowProgressDlg)
         
         self.btnClose.clicked.connect(lambda:self.close())
         
@@ -506,6 +523,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
         
         self.btnConfirmFusion.clicked.connect(self.OnClicked_btnConfirmFusion)
+        
+        # platform control
+        self.btnPlatformForward.pressed.connect(self.OnPressed_btnPlatformForward)
+        self.btnPlatformForward.released.connect(self.OnRelease_btnPlatformForward)
+        self.btnPlatformBackward.pressed.connect(self.OnPressed_btnPlatformBackward)
+        self.btnPlatformBackward.released.connect(self.OnRelease_btnPlatformBackward)
         
         # fusion Axial view
         self.btnMoveUpA.clicked.connect(self.OnClicked_btnMoveUp)
@@ -841,6 +864,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         headItem.setData(0, ROLE_VISIBLE, visibleStatus)
         headItem.setIcon(0, QIcon(icon))
         
+    def _CopyDicomToDatabase(self, filePath:str):
+        
+        for dirPath, dirNames, fileNames in os.walk(filePath):
+            pathSrc = ''
+            pathDst = ''
+            for dirName in dirNames:
+                pathSrc = os.path.join(filePath, dirName)
+                pathDst = os.path.join(DATABASE_PATH, dirName)
+                shutil.copytree(pathSrc, pathDst)
+                
+            for fileName in fileNames:
+                pathSrc = os.path.join(filePath, fileName)
+                pathDst = os.path.join(DATABASE_PATH, fileName)
+                shutil.copytree(pathSrc, pathDst)
+                
+            break
+        
+        logger.info('copy dicom to database finished')
+        
     def _DetectUnexpectedShutdown(self):
         statusValue = self._GetBootFileInfo('status')
         if isinstance(statusValue, str) and int(statusValue) != 0:
@@ -1041,6 +1083,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if nType not in [TYPE_INHALE, TYPE_EXHALE]:
             return None
         
+        
         retData = tuple()
         path = ''
         
@@ -1052,6 +1095,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             retData = self.reader.GetData(index = nType)
             path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
+            
+        if not self.bFromDatabase:
+            # self.signalStartExport.emit(nType)
+            self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
             
         if retData is None:
             logger.error(f'load inhale dicom failed')
@@ -1073,6 +1120,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalLoadingImage.emit(1.0, 'Loading image succeed')
         
         return dicRetValue
+    
+    def _ImportDicom(self, retInhale, retExhale):
+        if not self.ImportDicom_L(retInhale):
+            return
+        
+        if not self.ImportDicom_H(retExhale):
+            return
+        
+        self._SaveBootFile()
+        
+        self.signalImportDicomFinished.emit()
         
     def _RemoveTrajectoryItem(self):
         ret = self._GetCurrentTrajectory(TRAJECTORY_CURRENT)
@@ -1089,19 +1147,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        # self.ui_SP = SystemProcessing()
-        # self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        # self.ui_SP.show()
-        # QApplication.processEvents()
-        if self.dlgSystemProcessing is None:
-            self.dlgSystemProcessing = SystemProcessing(2)
-            self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-            
-        self.dlgSystemProcessing.setWindowTitle('Registration')
-        self.dlgSystemProcessing.label_Processing.setText('Registing Robot Position...')
-        self.dlgSystemProcessing.show()
-        QApplication.processEvents()
-        self.regFn.signalProgress.connect(self.dlgSystemProcessing.UpdateProgress)
+        
+        
+        self.signalShowProgressDlg.emit({'content':'Registing Robot Position...', 
+                                         'signal':self.regFn.signalProgress, 
+                                         'nParts':2,
+                                         'bReset':False})
         
         
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
@@ -1127,11 +1178,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             ############################################################################################
         except Exception as e:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
-            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            self.dlgSystemProcessing.close()
-            MessageBox.ShowCritical("get candidate ball error", "OK")
+            
+            self.signalShowProgressDlg.emit(dict())
+            self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
+            # MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error(f'get candidate ball error / SetRegistration_L() error:{e}')
             logger.critical(e)
             return False
@@ -1148,10 +1198,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
         else:
-            self.dlgSystemProcessing.close()
-            MessageBox.ShowCritical("get candidate ball error", "OK")
+            self.signalShowProgressDlg.emit(dict())
+            self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
             logger.error('get candidate ball error / SetRegistration_L() error')
-            self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
             return False
@@ -1320,13 +1369,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 cv2.imencode('.png', image)[1].tofile(pathImageOut)
                 
     def _SetProgress(self, content:str, signal:pyqtSignal = None, nParts:int = 1, prefix = ''):
-        self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
-        self.dlgSystemProcessing.label_Processing.setText(content)
-        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-        if signal:
-            signal.connect(self.dlgSystemProcessing.UpdateProgress)
-        self.dlgSystemProcessing.show()
-        QApplication.processEvents()
+        self.OnSignal_ShowProgressDlg({'content':content,
+                                       'signal':signal,
+                                       'nParts':nParts,
+                                       'prefix':prefix})
+        
+    def OnSignal_ShowProgressDlg(self, kwargs:dict):
+        content = kwargs.get('content', '')
+        signal = kwargs.get('signal', None)
+        nParts = kwargs.get('nParts')
+        prefix = kwargs.get('prefix', '')
+        bReset = kwargs.get('bReset', True)
+        
+        if self.dlgSystemProcessing is not None and (content is None or content == ''):
+            self.dlgSystemProcessing.close()
+        else:
+            if bReset or (self.dlgSystemProcessing is None):
+                self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
+                self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+                if signal:
+                    signal.connect(self.dlgSystemProcessing.UpdateProgress)
+            self.dlgSystemProcessing.label_Processing.setText(content)
+            self.dlgSystemProcessing.show()
         
     def _SetHintBox_dicom(self):
         lstIndex = [0, 0, 1, 2]
@@ -1797,6 +1861,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.reader = DICOM()
         self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
+        self.reader.signalExport.connect(self.OnSignal_ExportProgress)
         dicom = self.reader.LoadPath(path)
         
         model = QStandardItemModel()
@@ -1943,7 +2008,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
-            MessageBox.ShowCritical('image error')
+            self.signalShowMessage.emit('image error', MB_ERROR)
+            # MessageBox.ShowCritical('image error')
             logger.critical('import dicom error')
             return False
         
@@ -1955,16 +2021,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, pathInhale, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            MessageBox.ShowCritical('missing current tag [LOW]')
+            self.signalShowMessage.emit('missing current tag [LOW]', MB_ERROR)
+            # MessageBox.ShowCritical('missing current tag [LOW]')
             return False
             
         if ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
-                MessageBox.ShowCritical('Registration Failed')
+                self.signalShowMessage.emit('Registration Failed', MB_ERROR)
+                # MessageBox.ShowCritical('Registration Failed')
                 return False
             
         
-        self.ShowDicom()
+        # self.ShowDicom()
         
         self.signalLoadingImage.emit(1.0, 'Loading Inhale image Completed')
         # self.bDicomChanged = False
@@ -1987,21 +2055,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         spacing = dicData.get('spacing')
         
         if self.vtkImageHigh is None:
-            MessageBox.ShowCritical('image error')
+            self.signalShowMessage.emit('image error', MB_ERROR)
+            # MessageBox.ShowCritical('image error')
             return False
         
         grayscaleRange = self.vtkImageHigh.GetScalarRange()
         dicomTag = self.SetDicomData(self.dicomHigh, pathExhale, 'HIGH', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            MessageBox.ShowCritical('missing current tag [HIGH]')
+            self.signalShowMessage.emit('missing current tag [HIGH]', MB_ERROR)
+            # MessageBox.ShowCritical('missing current tag [HIGH]')
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
         if ENABLE_REGISTRATION:
             self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
-                MessageBox.ShowCritical('Registration Failed')
+                self.signalShowMessage.emit('Registration Failed', MB_ERROR)
+                # MessageBox.ShowCritical('Registration Failed')
                 return False
         
         matrix = self._CalculateExhaleToInhaleMatrix()
@@ -2012,7 +2083,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.signalLoadingImage.emit(0.6, 'Start Visualizing image...')
             self.dicomHigh.LoadImage(self.vtkImageHigh)
             
-        self.ShowDicom()
+        # self.ShowDicom()
         self.signalLoadingImage.emit(1.0, 'Loading Exhale image Completed')
         # self.bDicomChanged = False
         return True
@@ -2654,6 +2725,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             movement = float(self.comboBox.currentText())
             self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
+    def OnPressed_btnPlatformForward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 1)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformForward(self):
+        self.robot.Platform_Left.MC_Stop()
+        
+    def OnPressed_btnPlatformBackward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 3)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformBackward(self):
+        self.robot.Platform_Left.MC_Stop()
+    
+    
     
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
@@ -3131,6 +3221,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if bChecked:
             InteractorStyleWipe.imageId = imageId
             
+    def OnThread_preImport(self):
+        retInhale = self._PreImportImage(TYPE_INHALE)
+        retExhale = self._PreImportImage(TYPE_EXHALE)
+        
+        self.signalPreImportFinished.emit(retInhale, retExhale)
+            
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
             # msg = DlgHintBox()
@@ -3193,57 +3289,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
                 self._SetProgress('Loading dicom image...', self.signalLoadingImage, 2)
                 
-                # tag = list(self.dicDicom.values())
-                retInhale = self._PreImportImage(TYPE_INHALE)
-                retExhale = self._PreImportImage(TYPE_EXHALE)
+                # retInhale = self._PreImportImage(TYPE_INHALE)
+                # retExhale = self._PreImportImage(TYPE_EXHALE)
+                t_preImport = threading.Thread(target = self.OnThread_preImport)
+                t_preImport.start()
                 
-                if retInhale is None or retExhale is None:
-                    return
-                
-                self._preImportData = [retInhale, retExhale]
-                
-                if ENABLE_LUNG_VOLUME_DETECT:
-                    
-                    self._SetProgress('Calculating Lung Volume...', nParts = 2)
-                    self.dicLungVolumeInfo = {}
-                    
-                    lung.ShowImage(
-                        name = 'inhale',
-                        arrImage = retInhale.get('arrImage'), 
-                        spacing = retInhale.get('spacing'),
-                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
-                        returnCallback = self.OnSignal_LungVolume
-                    )
-                    
-                    lung.ShowImage(
-                        name = 'exhale',
-                        arrImage = retExhale.get('arrImage'), 
-                        spacing = retExhale.get('spacing'),
-                        progressCallback = self.dlgSystemProcessing.UpdateProgress,
-                        returnCallback = self.OnSignal_LungVolume
-                    )
-                
-                
-                    # if not self.ImportDicom_L(retInhale):
-                    #     return
-                    
-                    # if not self.ImportDicom_H(retExhale):
-                    #     return
-                    
-                    # self._SaveBootFile()
-                    # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-                    return
-                else:
-                    if not self.ImportDicom_L(retInhale):
-                        return
-                    
-                    if not self.ImportDicom_H(retExhale):
-                        return
-                    
-                    self._SaveBootFile()
-                    self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-                    
-                    self.ShowFusion()
+                return
                     
             elif button == self.btnNext_startAdjustLaser:
                 self.Laser_StopLaserProfile()
@@ -3275,10 +3326,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
 
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
+                    self.bFromDatabase = 'database' in filePath
+                    
                     self.ImportDicom(filePath)
                     
                 else:
                     return
+            elif button == self.btnFromDB:
+                self.bFromDatabase = True
+                currentPath = os.path.join(os.getcwd(), 'database')
+                self.ImportDicom(currentPath)
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -3662,7 +3719,56 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if self.stkMain.currentWidget() != self.pgScene:
                 self.signalLoadingReady.emit()
                 
-    
+    def OnSignal_StartExport(self, nType:int):
+        self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
+                
+    def OnSignal_ExportProgress(self, fProgress:float, text:str):
+        bVisible = fProgress < 1
+        
+        self.pbrProgress.setValue(int(fProgress * 100))
+        self.lblProgressText.setText(text)
+        self.pbrProgress.setVisible(bVisible)
+        self.lblProgressText.setVisible(bVisible)
+        
+    def OnSignal_PreImportFinished(self, retInhale:dict, retExhale:dict):
+        if retInhale is None or retExhale is None:
+            return
+        
+        self._preImportData = [retInhale, retExhale]
+        
+        if ENABLE_LUNG_VOLUME_DETECT:
+            
+            self._SetProgress('Calculating Lung Volume...', nParts = 2)
+            self.dicLungVolumeInfo = {}
+            
+            lung.ShowImage(
+                name = 'inhale',
+                arrImage = retInhale.get('arrImage'), 
+                spacing = retInhale.get('spacing'),
+                progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                returnCallback = self.OnSignal_LungVolume
+            )
+            
+            lung.ShowImage(
+                name = 'exhale',
+                arrImage = retExhale.get('arrImage'), 
+                spacing = retExhale.get('spacing'),
+                progressCallback = self.dlgSystemProcessing.UpdateProgress,
+                returnCallback = self.OnSignal_LungVolume
+            )
+        
+        
+            # if not self.ImportDicom_L(retInhale):
+            #     return
+            
+            # if not self.ImportDicom_H(retExhale):
+            #     return
+            
+            # self._SaveBootFile()
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        else:
+            tImportDicom = threading.Thread(target = self._ImportDicom, args = (retInhale, retExhale))
+            tImportDicom.start()
         
     def OnSignal_LoadingReady(self):
         # index = self.stkMain.currentIndex()
@@ -3681,27 +3787,32 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 ret = MessageBox.ShowWarning('inhale dicom volume is smaller than exhale.\nSwap image?', 'No', 'Yes')
             
             # 0: no swap 1:swap
-            if ret == 0:
-                if not self.ImportDicom_L(self._preImportData[0]):
-                    return
+            args = (self._preImportData[0], self._preImportData[1])
+            if ret == 1:
+                args = (self._preImportData[1], self._preImportData[0])
                 
-                if not self.ImportDicom_H(self._preImportData[1]):
-                    return
-            else:
-                if not self.ImportDicom_L(self._preImportData[1]):
-                    return
+            tImportDicom = threading.Thread(target = self._ImportDicom, args = args)
+            tImportDicom.start()
                 
-                if not self.ImportDicom_H(self._preImportData[0]):
-                    return
-                
-            self._SaveBootFile()
-            self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            # self._SaveBootFile()
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
             
-            self.ShowFusion()
-            index = self.stkScene.currentIndex()
-            index = min(self.stkScene.count() - 1, index + 1)
-            self.stkScene.setCurrentIndex(index)
-            self.dicLungVolumeInfo = {}
+            # self.ShowFusion()
+            # index = self.stkScene.currentIndex()
+            # index = min(self.stkScene.count() - 1, index + 1)
+            # self.stkScene.setCurrentIndex(index)
+            # self.dicLungVolumeInfo = {}
+            
+    def OnSignal_ImportDicomFinished(self):
+        # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        # self.ShowFusion()
+        
+        self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        self.ShowFusion()
+        index = self.stkScene.currentIndex()
+        index = min(self.stkScene.count() - 1, index + 1)
+        self.stkScene.setCurrentIndex(index)
+        self.dicLungVolumeInfo = {}
         
     def OnSignal_ModelBuilding(self, bValid):
         if bValid:
@@ -3725,12 +3836,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         else:
             widget.setStyleSheet('border-image:none;')
             
-    def OnSignal_ShowMessage(self, msg:str, bIsError = False):
+    def OnSignal_ShowMessage(self, msg:str, messageboxStyle = MB_INFO, *buttons:str):
         if len(msg) > 0:
-            if not bIsError:
-                MessageBox.ShowInformation(msg)
-            else:
-                MessageBox.ShowCritical(msg)
+            # 因為DICOM.signalShowMessage的buttons參數傳進來會是tuple(tuple(), )
+            # 也就是說buttons[0]才是真正的buttons list，所以需要額外處理
+            lstButton = np.array([])
+            for button in buttons:
+                lstButton = np.append(lstButton, button)
+                
+            buttons = tuple(lstButton)
+            
+            if messageboxStyle == MB_INFO:
+                ret = MessageBox.ShowInformation(msg, *buttons)
+            elif messageboxStyle == MB_ERROR:
+                ret = MessageBox.ShowCritical(msg, *buttons)
+            elif messageboxStyle == MB_WARNING:
+                ret = MessageBox.ShowWarning(msg, *buttons)
+            elif messageboxStyle == MB_QUESTION:
+                ret = MessageBox.ShowQuestion(msg, *buttons)
+            self.signalOnMessageReply.emit(ret)    
+            
                 
     def OnSignal_ProcessClose(self):
         self.dlgSystemProcessing = None
@@ -3808,7 +3933,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # selectedBallKey = self.currentTag.get("selectedBallKey")
         if selectedBallKey is None or selectedBallKey == []:
             # QMessageBox.critical(self, "error", "please redo registration, select the ball")
-            MessageBox.ShowCritical("please redo registration, select the ball")
+            self.signalShowMessage.emit("please redo registration, select the ball", MB_ERROR)
+            # MessageBox.ShowCritical("please redo registration, select the ball")
             logger.warning("pair error / ShowRegistrationDifference_L() error")
             # self.logUI.warning('pair error / ShowRegistrationDifference_L() error')
             return False
@@ -4056,11 +4182,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
                 
     def Robot_OnThreadHomingProcess(self):
+        self.robot.ForwardKinamatic()
         if self.robot.bConnected == True:
             if self.robot.HomeProcessing_image() == True:
                 print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
                 self.homeStatus = True
+            
                 
         
     def Robot_OnSignalFootPedal(self, bPress:bool):
@@ -4148,10 +4276,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             else:
                 self.robot.currentPath = []
                 logger.error('Robot cannot reach to the setting point.')
-                self.signalShowMessage.emit('Robot cannot reach to the setting point', True)
+                self.signalShowMessage.emit('Robot cannot reach to the setting point', MB_ERROR)
         else:
             logger.warning("Please execute home processing first.")
-            self.signalShowMessage.emit('Please execute home processing first.', True)
+            self.signalShowMessage.emit('Please execute home processing first.', MB_ERROR)
         
     def ReleaseRobotArm(self):
         self.FixArmStatus = False
@@ -5536,6 +5664,10 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
     signalProgress = pyqtSignal(float, str)
     signalReadFinished = pyqtSignal()
     
+    ROLE_MARKER = Qt.UserRole + 1
+    ROLE_FOLDER = Qt.UserRole + 2
+    ROLE_INDENT = Qt.UserRole + 3
+    
     def __init__(self, parent:QWidget = None):
         super().__init__(parent)
         self.setupUi(self)
@@ -5669,7 +5801,7 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                         self._MarkerItem(levelText, item, indent = [22, 0])
                         self._MarkerItem(levelText, itemChild, [1])
                                 
-                item.setData(0, Qt.UserRole + 2, folderName)
+                item.setData(0, self.ROLE_FOLDER, folderName)
                 # item name以日期命名，後面加註該日期中，(error, critical)的數目
                 item.setText(0, folderName + f'({lstLevelCountByFolder[-2]}, {lstLevelCountByFolder[-1]})')
                 
@@ -5782,9 +5914,6 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                 lstLevelCount = self.lstLevelCount
         else:
             
-            
-            
-            folderName = item.parent().data(0, Qt.UserRole + 2)
             filename = item.text(1)
             
             logData = self.dicLogFile.get(filename)
@@ -5841,7 +5970,7 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
                     if isinstance(item, QTreeWidgetItem):
                         
                         if item.childCount() > 0:
-                            folderName = item.data(0, Qt.UserRole + 2)
+                            folderName = item.data(0, self.ROLE_FOLDER)
                             lstExportFilepath.append(folderName)
                 
             outFilePath = dlg.selectedFiles()[0]
@@ -5950,13 +6079,13 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
 
             if isinstance(indent, int):
                 for col in columns:
-                    item.setData(col, Qt.UserRole + 1, True)
-                    item.setData(col, Qt.UserRole + 3, indent)
+                    item.setData(col, self.ROLE_MARKER, True)
+                    item.setData(col, self.ROLE_INDENT, indent)
             elif isinstance(indent, (list, tuple)):
                 if len(columns) == len(indent):
                     for col, ind in zip(columns, indent):
-                        item.setData(col, Qt.UserRole + 1, True)
-                        item.setData(col, Qt.UserRole + 3, ind)
+                        item.setData(col, self.ROLE_MARKER, True)
+                        item.setData(col, self.ROLE_INDENT, ind)
                         
                 
 class DlgHint(QWidget, FunctionLib_UI.Ui_DlgHint.Ui_Form):

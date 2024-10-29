@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from PyQt5.QtCore import Qt
 
@@ -36,11 +37,12 @@ shiftingFLDC_up = -20.5893
 shiftingBLDC_Up = -52.85
 shiftingFLDC_Down = -26.0881
 shiftingBLDC_Down = -52.85
-shiftingPlatform_Left = -146.3998
+shiftingPlatform_Left_back = -146.3998
+shiftingPlatform_Left_forward = 200
 # robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 132.253 #132.93 #110.38  #128.38
-upperHigh = 6.798 #6.6 #6.1
+upperHigh = 9.8 #6.798 #6.6 #6.1
 lowerHigh = -14.93 #-18.671 #-14.171 #-15.6
 global data
 data = ''
@@ -61,6 +63,16 @@ yellowLightCriteria_LowAccuracy = 75
 greenLightCriteria_LowAccuracy = 85
 yellowLightCriteria_HighAccuracy = 80
 greenLightCriteria_HighAccuracy = 95
+
+"Joint Limit Setting"
+max_linearMotion = 53
+min_linearMotion = -1
+diff_linearMotion = 16
+diff_rotateMotion = 18
+
+"Joystick speed setting"
+linearSpeed = 2
+rotateSpeed = 2
 
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
@@ -121,10 +133,17 @@ ROLE_TRAJECTORY = Qt.UserRole + 5
 ROLE_DROPITEM   = Qt.UserRole + 6
 ROLE_LOCK       = Qt.UserRole + 7
 
+# MessageBox style
+MB_INFO = 0
+MB_WARNING = 1
+MB_ERROR = 2
+MB_QUESTION = 3
 
 IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
+
+DATABASE_PATH = os.path.join(os.getcwd(), 'database')
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊
 ENABLE_REGISTRATION = True
