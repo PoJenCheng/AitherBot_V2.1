@@ -513,10 +513,14 @@ class Ui_MainWindow(object):
 "#btnJoystick:pressed{\n"
 "    background-color:rgb(210, 210, 210);\n"
 "}\n"
-"")
+"\n"
+"QGroupBox{\n"
+"    font: 12px \"Arial\";\n"
+"    color:#fff;\n"
+"}")
         self.wdgNaviBar.setObjectName("wdgNaviBar")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.wdgNaviBar)
-        self.verticalLayout.setContentsMargins(11, -1, 11, -1)
+        self.verticalLayout.setContentsMargins(11, -1, 11, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.btnSceneRobot = QtWidgets.QPushButton(self.wdgNaviBar)
         self.btnSceneRobot.setEnabled(False)
@@ -556,6 +560,28 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.btnSceneView)
         spacerItem18 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem18)
+        self.gbxPlatform = QtWidgets.QGroupBox(self.wdgNaviBar)
+        self.gbxPlatform.setMinimumSize(QtCore.QSize(0, 100))
+        self.gbxPlatform.setObjectName("gbxPlatform")
+        self.gridLayout_55 = QtWidgets.QGridLayout(self.gbxPlatform)
+        self.gridLayout_55.setContentsMargins(4, 8, 4, 6)
+        self.gridLayout_55.setSpacing(0)
+        self.gridLayout_55.setObjectName("gridLayout_55")
+        self.btnPlatformForward = QtWidgets.QPushButton(self.gbxPlatform)
+        self.btnPlatformForward.setMinimumSize(QtCore.QSize(64, 64))
+        self.btnPlatformForward.setMaximumSize(QtCore.QSize(64, 64))
+        self.btnPlatformForward.setStyleSheet("image:url(image/slice_up.png)")
+        self.btnPlatformForward.setText("")
+        self.btnPlatformForward.setObjectName("btnPlatformForward")
+        self.gridLayout_55.addWidget(self.btnPlatformForward, 0, 0, 1, 1)
+        self.btnPlatformBackward = QtWidgets.QPushButton(self.gbxPlatform)
+        self.btnPlatformBackward.setMinimumSize(QtCore.QSize(64, 64))
+        self.btnPlatformBackward.setMaximumSize(QtCore.QSize(64, 64))
+        self.btnPlatformBackward.setStyleSheet("image:url(image/slice_down.png)")
+        self.btnPlatformBackward.setText("")
+        self.btnPlatformBackward.setObjectName("btnPlatformBackward")
+        self.gridLayout_55.addWidget(self.btnPlatformBackward, 0, 1, 1, 1)
+        self.verticalLayout.addWidget(self.gbxPlatform)
         self.btnJoystick = QtWidgets.QPushButton(self.wdgNaviBar)
         self.btnJoystick.setEnabled(True)
         self.btnJoystick.setMinimumSize(QtCore.QSize(144, 144))
@@ -1840,7 +1866,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.btnFromUSB.sizePolicy().hasHeightForWidth())
         self.btnFromUSB.setSizePolicy(sizePolicy)
-        self.btnFromUSB.setMinimumSize(QtCore.QSize(300, 300))
+        self.btnFromUSB.setMinimumSize(QtCore.QSize(380, 300))
         self.btnFromUSB.setStyleSheet("QPushButton{\n"
 "font: 48pt \"Arial\";\n"
 "color:#666666;\n"
@@ -1868,15 +1894,15 @@ class Ui_MainWindow(object):
 "}")
         self.btnFromUSB.setObjectName("btnFromUSB")
         self.horizontalLayout_11.addWidget(self.btnFromUSB)
-        self.btnFromCD = QtWidgets.QPushButton(self.pgImportDicom)
-        self.btnFromCD.setEnabled(False)
+        self.btnFromDB = QtWidgets.QPushButton(self.pgImportDicom)
+        self.btnFromDB.setEnabled(True)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btnFromCD.sizePolicy().hasHeightForWidth())
-        self.btnFromCD.setSizePolicy(sizePolicy)
-        self.btnFromCD.setMinimumSize(QtCore.QSize(300, 300))
-        self.btnFromCD.setStyleSheet("QPushButton{\n"
+        sizePolicy.setHeightForWidth(self.btnFromDB.sizePolicy().hasHeightForWidth())
+        self.btnFromDB.setSizePolicy(sizePolicy)
+        self.btnFromDB.setMinimumSize(QtCore.QSize(380, 300))
+        self.btnFromDB.setStyleSheet("QPushButton{\n"
 "font: 48pt \"Arial\";\n"
 "color:#666666;\n"
 "border-radius:24px;\n"
@@ -1901,8 +1927,8 @@ class Ui_MainWindow(object):
 "QPushButton:disabled{\n"
 "    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));\n"
 "}")
-        self.btnFromCD.setObjectName("btnFromCD")
-        self.horizontalLayout_11.addWidget(self.btnFromCD)
+        self.btnFromDB.setObjectName("btnFromDB")
+        self.horizontalLayout_11.addWidget(self.btnFromDB)
         spacerItem40 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_11.addItem(spacerItem40)
         self.gridLayout_20.addLayout(self.horizontalLayout_11, 1, 0, 1, 1)
@@ -3060,7 +3086,7 @@ class Ui_MainWindow(object):
 "")
         self.toolBox.setObjectName("toolBox")
         self.pgImage = QtWidgets.QWidget()
-        self.pgImage.setGeometry(QtCore.QRect(0, 0, 283, 314))
+        self.pgImage.setGeometry(QtCore.QRect(0, 0, 222, 314))
         self.pgImage.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pgImage.setObjectName("pgImage")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pgImage)
@@ -3213,7 +3239,7 @@ class Ui_MainWindow(object):
 "")
         self.toolTrajectory.setObjectName("toolTrajectory")
         self.page = QtWidgets.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 300, 482))
+        self.page.setGeometry(QtCore.QRect(0, 0, 250, 308))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -3519,6 +3545,7 @@ class Ui_MainWindow(object):
 "    border-top:2px solid #444;\n"
 "    border-left:2px solid #444;\n"
 "}")
+        self.gbxJoystick.setTitle("")
         self.gbxJoystick.setCheckable(False)
         self.gbxJoystick.setObjectName("gbxJoystick")
         self.gridLayout_54 = QtWidgets.QGridLayout(self.gbxJoystick)
@@ -4119,6 +4146,29 @@ class Ui_MainWindow(object):
         self.horizontalLayout_16.addWidget(self.stkScene)
         self.stkMain.addWidget(self.pgScene)
         self.gridLayout_4.addWidget(self.stkMain, 0, 0, 1, 1)
+        self.wdgProgressBar = QtWidgets.QWidget(self.centralwidget)
+        self.wdgProgressBar.setMinimumSize(QtCore.QSize(0, 25))
+        self.wdgProgressBar.setStyleSheet("color:#fff;\n"
+"font: 20px \"Arial\";")
+        self.wdgProgressBar.setObjectName("wdgProgressBar")
+        self.horizontalLayout_47 = QtWidgets.QHBoxLayout(self.wdgProgressBar)
+        self.horizontalLayout_47.setContentsMargins(11, 5, 0, 5)
+        self.horizontalLayout_47.setSpacing(11)
+        self.horizontalLayout_47.setObjectName("horizontalLayout_47")
+        self.lblProgressText = QtWidgets.QLabel(self.wdgProgressBar)
+        self.lblProgressText.setMinimumSize(QtCore.QSize(144, 0))
+        self.lblProgressText.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lblProgressText.setObjectName("lblProgressText")
+        self.horizontalLayout_47.addWidget(self.lblProgressText)
+        self.pbrProgress = QtWidgets.QProgressBar(self.wdgProgressBar)
+        self.pbrProgress.setProperty("value", 0)
+        self.pbrProgress.setAlignment(QtCore.Qt.AlignCenter)
+        self.pbrProgress.setTextVisible(False)
+        self.pbrProgress.setInvertedAppearance(False)
+        self.pbrProgress.setObjectName("pbrProgress")
+        self.horizontalLayout_47.addWidget(self.pbrProgress)
+        self.horizontalLayout_47.setStretch(1, 1)
+        self.gridLayout_4.addWidget(self.wdgProgressBar, 1, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1924, 25))
@@ -4130,7 +4180,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stkMain.setCurrentIndex(4)
-        self.stkScene.setCurrentIndex(15)
+        self.stkScene.setCurrentIndex(13)
         self.stkViewer.setCurrentIndex(2)
         self.cbxRightTop.setCurrentIndex(1)
         self.cbxRightBottom.setCurrentIndex(3)
@@ -4149,7 +4199,7 @@ class Ui_MainWindow(object):
         self.btnNext_scanCT.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnNext_endBuildModel.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnNext_scanCT_4.clicked.connect(MainWindow.NextScene) # type: ignore
-        self.btnFromCD.clicked.connect(MainWindow.NextScene) # type: ignore
+        self.btnFromDB.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnFromUSB.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnImport.clicked.connect(MainWindow.NextScene) # type: ignore
         self.btnConfirm.clicked.connect(MainWindow.NextScene) # type: ignore
@@ -4183,6 +4233,7 @@ class Ui_MainWindow(object):
         self.btnSceneRobot.setText(_translate("MainWindow", "Robot Setting"))
         self.btnSceneLaser.setText(_translate("MainWindow", "Laser Setting"))
         self.btnSceneView.setText(_translate("MainWindow", "Image View"))
+        self.gbxPlatform.setTitle(_translate("MainWindow", "Platform Control"))
         self.btnRobotRelease.setText(_translate("MainWindow", "Release Robot arm"))
         self.btnRobotFix.setText(_translate("MainWindow", "Fix Robot arm"))
         self.btnRobotSetTarget.setText(_translate("MainWindow", "Setting Target"))
@@ -4243,7 +4294,8 @@ class Ui_MainWindow(object):
         self.label_title_12.setText(_translate("MainWindow", "Select Dicom Source"))
         self.btnFromUSB.setText(_translate("MainWindow", "FILE \n"
 "SYSTEM"))
-        self.btnFromCD.setText(_translate("MainWindow", "CD ROM"))
+        self.btnFromDB.setText(_translate("MainWindow", "DATA\n"
+"BASE"))
         self.btnInhale.setText(_translate("MainWindow", "Inhale"))
         self.btnExhale.setText(_translate("MainWindow", "Exhale"))
         self.lblInhale.setText(_translate("MainWindow", "Inhale Dicom"))
@@ -4306,7 +4358,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPlanning), _translate("MainWindow", "Planning"))
         self.btnDriveTo.setText(_translate("MainWindow", "Drive To Entry Point"))
         self.btnTracking.setText(_translate("MainWindow", "Breathing Tracking"))
-        self.gbxJoystick.setTitle(_translate("MainWindow", "      "))
         self.lblMode.setText(_translate("MainWindow", "- mode -"))
         self.btnMoveContinuous.setText(_translate("MainWindow", "Continuous"))
         self.btnMoveInching.setText(_translate("MainWindow", "Inching Move"))
@@ -4337,5 +4388,6 @@ class Ui_MainWindow(object):
 "is tightened securely"))
         self.label_title_11.setText(_translate("MainWindow", "Install adaptor"))
         self.btnNext_scanCT_4.setText(_translate("MainWindow", "Confirm"))
+        self.lblProgressText.setText(_translate("MainWindow", "Progress"))
 from FunctionLib_UI.WidgetButton import CustomGroupBox, TreeWidget, WidgetButton
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
