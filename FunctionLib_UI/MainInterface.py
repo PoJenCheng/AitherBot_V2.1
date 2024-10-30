@@ -2726,8 +2726,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
     def OnPressed_btnPlatformForward(self):
+        self.robot.Platform_Left_Stop()
         self.robot.Platform_Left.MoveVelocitySetting(10, 300, 1)
-        self.robot.Platform_Left.MC_Stop_Disable()
         self.robot.Platform_Left.bMoveVelocityEnable()
         sleep(0.01)
         
@@ -3486,11 +3486,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         elif currentWidget == self.pgSterileStep3:
             self.GetRobotPosition()
         elif currentWidget == self.pgImportDicom:
-            self.wdgRobotCalibration = DlgRobotCalibration()
-            self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
-            # sys.exit(self.wdgRobotCalibration.exec_())
-            self.wdgRobotCalibration.exec_()
-            
+            if self.robot:
+                self.wdgRobotCalibration = DlgRobotCalibration()
+                self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
+                # sys.exit(self.wdgRobotCalibration.exec_())
+                self.wdgRobotCalibration.exec_()
+                
             if self.bFirstCheckResume:
                 self._DetectUnexpectedShutdown()
                 self.bFirstCheckResume = False
@@ -3774,6 +3775,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # index = self.stkMain.currentIndex()
         # self.stkMain.setCurrentIndex(index + 1)
         self.stkMain.setCurrentWidget(self.pgScene)
+        # if self.robot:
+        #     self.wdgRobotCalibration = DlgRobotCalibration()
+        #     self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
+        #     # sys.exit(self.wdgRobotCalibration.exec_())
+        #     self.wdgRobotCalibration.exec_()
+                
         if self.stkScene.currentWidget() == self.pgUnlockRobot:
             self.wdgAnimateUnlock.Start()
             

@@ -72,6 +72,7 @@ class MOTORCONTROL(QObject):
         self.RelativeVelocity = 'GVL.RelativeVelocity_' + str(self.motorAxis)
         self.MoveRelativeStatus = 'GVL.MoveRelativeStatus_' + \
             str(self.motorAxis)
+        self.MoveVelocityStatus = 'GVL.VelocityStatus_' + str(self.motorAxis)
         self.bSetPosition = 'GVL.bSetPosition_' + str(self.motorAxis)
         self.SetPositionStatus = 'GVL.SetPositionStatus_' + str(self.motorAxis)
         self.MC_Power_Error = 'GVL.MC_Power_Error_' + str(self.motorAxis)
@@ -182,6 +183,7 @@ class MOTORCONTROL(QObject):
         self.plc.write_by_name(self.bMotorStop, False)
         while self.plc.read_by_name(self.StopSatus) == True:
             self.plc.write_by_name(self.bMotorStop, False)
+            self.plc.write_by_name(self.bDisableLimitSwitch, True)
 
     def MotorDisabled(self):
         while self.plc.read_by_name(self.bServoEnableLabel) == True:
@@ -208,9 +210,16 @@ class MOTORCONTROL(QObject):
         sleep(0.1)
 
     def bMoveVelocityEnable(self):
-        self.plc.write_by_name(self.bDisableLimitSwitch, False)
-        self.plc.write_by_name(self.bMoveSpeed, True)
-        sleep(0.1)
+        if self.plc.read_by_name(self.bMoveSpeed) == True:
+            self.plc.write_by_name(self.bMoveSpeed, False)
+            self.plc.write_by_name(self.bMoveSpeed, True)
+        else:
+            if self.plc.read_by_name(self.bLimitSwitch) == True:
+                self.plc.write_by_name(self.bMoveSpeed, True)
+            else:
+                self.plc.write_by_name(self.bDisableLimitSwitch, False)
+                self.plc.write_by_name(self.bMoveSpeed, True)
+            sleep(0.1)
         
     def bDualRotateVelocityEnable(self):
         self.plc.write_by_name(self.bDualRotateVelocity, True)
@@ -312,6 +321,12 @@ class MOTORCONTROL(QObject):
         if moveRelativeStatus is True:
             self.plc.write_by_name(self.bMoveRelative, False)
             moveRelativeStatus = self.plc.read_by_name(self.bMoveRelative)
+            
+    def bMoveVelocityCommandDisable(self):
+        moveVelocityStatus = self.plc.read_by_name(self.bVelocityLabel)
+        if moveVelocityStatus is True:
+            self.plc.write_by_name(self.bVelocityLabel,False)
+            moveVelocityStatus = self.plc.read_by_name(self.bVelocityLabel)
             
     def ResetMC(self):
         while self.plc.read_by_name(self.fResetStatus) == False:
@@ -818,12 +833,16 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     signalStop = pyqtSignal()
     signalMove = pyqtSignal(int)
     
+    CalibrationLight_1 = 'GVL.calibrationLight_1'
+    CalibrationLight_2 = 'GVL.calibrationLight_2'
+    
+    lightPLC = None
+        
     def __init__(self):
         QObject.__init__(self)
         OperationLight.__init__(self)
         self.SupportMove = 'GVL.SupportMove'
-        self.CalibrationLight_1 = 'GVL.calibrationLight_1'
-        self.CalibrationLight_2 = 'GVL.calibrationLight_2'
+        
         self.RobotArmEn1 = 'GVL.RobotArmEn1'
         self.RobotArmEn2 = 'GVL.RobotArmEn2'
         
@@ -1082,6 +1101,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
 
         "Motor Enable"
         motorEnableStatus = False
+        MOTORSUBFUNCTION.lightPLC = self.plc
         
     def OnSignal_progress(self, progress:float):
         self.fHomeProgress = progress
@@ -1131,6 +1151,13 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.BLDC_Down.MC_Stop_Disable()
         self.BLDC_Up.bMoveRelativeCommandDisable()
         self.BLDC_Down.bMoveRelativeCommandDisable()
+        
+    def Platform_Left_Stop(self):
+        self.Platform_Left.MC_Stop()
+        sleep(0.5)
+        self.Platform_Left.MC_Stop_Disable()
+        self.Platform_Left.bMoveVelocityCommandDisable()
+        
 
     def Home(self, BLDC_Up_Speed, BLDC_Down_Speed, Dir, progressMaximum:float):
         homeSwitch = self.BLDC_Up.homeValue() * self.BLDC_Down.homeValue()
@@ -1212,7 +1239,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                     self.Platform_Left.MC_Stop()
                     
             if progressMax is not None:
-                self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMax)
+                self.fHomeProgress = min(self.fHomeProgress + 0.0002, progressMax)
                 self.signalHomingProgress.emit(self.fHomeProgress)
                     
         sleep(0.01)
@@ -1222,7 +1249,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         while self.Platform_Left.fbMoveRelative() == False:
             sleep(0.01)
             if progressMax is not None:
-                self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMax)
+                self.fHomeProgress = min(self.fHomeProgress + 0.0002, progressMax)
                 self.signalHomingProgress.emit(self.fHomeProgress)
         self.Platform_Left.MC_Stop()
         sleep(0.5)
@@ -1235,7 +1262,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         while self.Platform_Left.fbMoveRelative() == False:
             sleep(0.01)
             if progressMax is not None:
-                self.fHomeProgress = min(self.fHomeProgress + 0.0001, progressMax)
+                self.fHomeProgress = min(self.fHomeProgress + 0.0002, progressMax)
                 self.signalHomingProgress.emit(self.fHomeProgress)
         self.Platform_Left.MC_Stop()
         sleep(0.5)
@@ -1375,7 +1402,6 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
             try:
                 caliAngle = camera.findAngle(((leftLine[0])+(rightLine[0]))/2)
                 caliAngle = caliAngle/4
-                print(caliAngle)
                 
                 if caliAngle >= 0.2 and caliAngle < 10:
                     # 根據取得的歪斜角度進行補償
@@ -1403,7 +1429,6 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         poleWidth = abs(leftLine[1][0] - rightLine[-1][0])
         pole_midLine = leftLine[1][0] + poleWidth/2
         diff_distance = ((imageWidth/2 - pole_midLine - 32)*(138/606))
-        print(diff_distance)
         if abs(diff_distance) >= 0.5 and abs(diff_distance) < 100:
             diff_angle = -1*(math.asin(diff_distance/robotInitialLength))
             caliAngle = diff_angle*180/math.pi
@@ -1421,7 +1446,6 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         caliStatus = False
         upperData, lowerData = camera.poleEdgeFinder(corrected_image,30,100)
         diff_distance = (upperData[0][0]-lowerData[0][0])*(138/606)
-        print(diff_distance)
         if diff_distance > 0.1 :
             self.BLDC_Up.MoveRelativeSetting(diff_distance, 1)
             self.BLDC_Up.bMoveRelativeEnable()
@@ -1568,13 +1592,14 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                     caliStatus = True
                     
             if progressMax is not None:
-                self.fHomeProgress = min(self.fHomeProgress + 0.001, progressMax)
+                self.fHomeProgress = min(self.fHomeProgress + 0.005, progressMax)
                 self.signalHomingProgress.emit(self.fHomeProgress)
         
+        self.cameraCali_Side.releaseCamera()
         # close calibration light
         self.plc.write_by_name(self.CalibrationLight_1,False)
         self.plc.write_by_name(self.CalibrationLight_2,False)
-        
+        self.fHomeProgress = progressMax
         # set zero
         self.SetZero()
 
@@ -1750,8 +1775,8 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
                 upperMotion = self.Upper_RobotMovingPoint(upperPointX, upperPointY)
                 lowerMotion = self.Lower_RobotMovingPoint(lowerPointX, lowerPointY)
 
-                print(upperMotion)
-                print(lowerMotion)
+                logger.info(f'upper motion:{upperMotion}')
+                logger.info(f'lower motion:{lowerMotion}')
                 # upperMotion = [38.48377285883819, 7.959463888190757]
                 # lowerMotion = [38.29635404259213, 8.09430240463848]
 
@@ -3519,8 +3544,12 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.boardWidth = 138
         self.boardHeight = 88
         
-        self.pixelWidth  = 606
-        self.pixelHeight = 606
+        self.pixelWidth  = 605
+        self.pixelHeight = 388
+        
+        self.cameraCali_Front = None
+        self.cameraCali_Side = None
+        
         self.entry = np.zeros(3, dtype = int)
         self.target = np.zeros(3, dtype = int)
         self.entryRobot = np.zeros(3, dtype = int)
@@ -3542,63 +3571,35 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.cameraRegist()
         
     def OnClicked_btnGetImage(self):
-        self.cameraRegist()
+            
+        self.imageFront, width_f, height_f = self.__CaptureImage(self.cameraCali_Front)
+        self.imageSide, width_s, height_s = self.__CaptureImage(self.cameraCali_Side)
         
-        caliStatus = False
-        caliStatus_rotate_camera1 = False
-        caliStatus_movement_camera1 = False
+        self.qImgSide = self.__ImageToQImage(self.imageSide)
+        self.qImgFront = self.__ImageToQImage(self.imageFront)
+        # self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+        # self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
         
-        # Open calibration light
-        # self.plc.write_by_name(self.CalibrationLight_1,True)
-        # self.plc.write_by_name(self.CalibrationLight_2,False)
+        ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
+        ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
             
-        while caliStatus == False:
-            # 開始攝影
-            camera = self.cameraCali_Front
-            ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
-            sleep(1)  # 等待攝影完成
-
-            # 取得影像數據
-            image_data = ueye.get_data(camera.mem_ptr, camera.original_width, \
-                camera.original_height, 8, camera.original_width, copy=True)
-
-            # 確保無符號 8 位整數
-            image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
-
-            # 縮放圖像至原始尺寸的一半
-            self.scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
-            self.scaled_width = camera.original_width // 2
-            self.scaled_height = camera.original_height // 2
-            
-            cv2.imwrite("imageFront.jpg",self.scaled_image)
-            
-            points = camera.FindCrossPoint('imageFront.jpg')
-
-            CalibrationResult = camera.CameraCalibration(self.scaled_image,points[1],points[2],points[0],points[3])
-            corrected_image = CalibrationResult[0]
-            imageWidth = CalibrationResult[1]
-            
-            self.qImgSide = self.__ImageToQImage(self.imageSide)
-            self.qImgFront = self.__ImageToQImage(self.imageFront)
-            # self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
-            # self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
-            
-            ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
-            ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
+        if ret == False:
+            QMessageBox.critical(None, 'error', f'out of canvas range')
+        self.update()
+        
+        # cv2.imwrite("imageFront_cal.jpg",corrected_image)
+        
+        # # 修改成adaptive threshold image
+        # src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
+        # dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
+        # cv2.imwrite("imageFrontAdaptive.jpg",dst)
                 
-            if ret == False:
-                QMessageBox.critical(None, 'error', f'out of canvas range')
-            self.update()
-            
-            # cv2.imwrite("imageFront_cal.jpg",corrected_image)
-            
-            # # 修改成adaptive threshold image
-            # src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
-            # dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
-            # cv2.imwrite("imageFrontAdaptive.jpg",dst)
-                    
-            
+        
         # cv2.imwrite("imageFront_done.jpg",corrected_image)
+        
+        # close calibration light
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_2,False)
         return True
         
     
@@ -3613,8 +3614,8 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
         
         imageSize = self.pixelWidth * self.pixelHeight * 3
-        self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
-        self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelWidth, self.pixelHeight, 3)    
+        self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeight, self.pixelWidth,  3)    
+        self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeight, self.pixelWidth,  3)    
         
         self.qImgSide = self.__ImageToQImage(self.imageSide)
         self.qImgFront = self.__ImageToQImage(self.imageFront)
@@ -3623,10 +3624,57 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.update()
     
     def __ImageToQImage(self, image:np.ndarray):
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis = -1)
         h, w, ch = image.shape
         qImg = QImage(image.data, w, h, ch * w, QImage.Format_RGB888)
         return qImg
     
+    def __CaptureImage(self, camera:imageCalibration):
+        # Open calibration light
+        filename_image = 'imageFront.jpg'
+        if camera == self.cameraCali_Front:
+            MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,True)
+            MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_2,False)
+        elif camera == self.cameraCali_Side:
+            MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
+            MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_2,True)
+            filename_image = 'imageSide.jpg'
+        
+        sleep(0.5)
+        # 開始攝影
+        ueye.is_CaptureVideo(camera.camera, ueye.IS_WAIT)
+        sleep(1)  # 等待攝影完成
+
+        # 取得影像數據
+        image_data = ueye.get_data(
+                                    camera.mem_ptr, 
+                                    camera.original_width, 
+                                    camera.original_height, 
+                                    8, 
+                                    camera.original_width, 
+                                    copy=True
+                                    )
+
+        # 確保無符號 8 位整數
+        image = np.array(image_data, dtype=np.uint8).reshape((camera.original_height, camera.original_width))
+
+        # 縮放圖像至原始尺寸的一半
+        scaled_image = cv2.resize(image, (camera.original_width // 2, camera.original_height // 2))
+        scaled_width = camera.original_width // 2
+        scaled_height = camera.original_height // 2
+        
+        cv2.imwrite(filename_image, scaled_image)
+        
+        points = camera.FindCrossPoint(filename_image)
+
+        CalibrationResult = camera.CameraCalibration(scaled_image, points[1],points[2],points[0],points[3])
+        corrected_image = CalibrationResult[0]
+        imageWidth = CalibrationResult[1]
+        imageHeight = CalibrationResult[2]
+        
+        return corrected_image, imageWidth, imageHeight
+        
     def __DrawLine(self, qImg:QImage, point1:np.ndarray, point2:np.ndarray, color:QColor = QColor(0, 255, 0)):
         painter = QPainter(qImg)
         painter.setPen(color)
