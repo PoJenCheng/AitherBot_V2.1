@@ -43,6 +43,7 @@ from FunctionLib_UI.Ui_toolBox import *
 from FunctionLib_UI.Ui_dlgInstallAdaptor import *
 from FunctionLib_Robot.__init__ import *
 from FunctionLib_Robot.logger import logger
+from FunctionLib_Robot._class import DlgRobotCalibration
 from FunctionLib_UI.Ui__Aitherbot import *
 from FunctionLib_UI.Ui_DlgJoystick import *
 from FunctionLib_UI.Ui_DlgFootPedal import *
@@ -2725,8 +2726,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
     def OnPressed_btnPlatformForward(self):
+        self.robot.Platform_Left_Stop()
         self.robot.Platform_Left.MoveVelocitySetting(10, 300, 1)
-        self.robot.Platform_Left.MC_Stop_Disable()
         self.robot.Platform_Left.bMoveVelocityEnable()
         sleep(0.01)
         
@@ -5512,7 +5513,6 @@ class HomingWidget(QDialog, Ui_dlgHoming):
     def OnSignal_Percent(self, percent:float):
         self.percent = percent
         percent = min(1, percent)
-        print(percent)
         self.btnStartHoming.OnSignal_Percent(percent)
         if percent >= 1:
             self.OnSignal_Finished()
