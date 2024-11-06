@@ -4173,7 +4173,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
         self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
         
-        self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.uiHoming.setWindowFlags(Qt.FramelessWindowHint)
         self.uiHoming.setModal(True)
         # self.uiHoming.exec_()
         self.uiHoming.show()
@@ -5526,7 +5527,6 @@ class HomingWidget(QDialog, Ui_dlgHoming):
     def OnSignal_Percent(self, percent:float):
         self.percent = percent
         percent = min(1, percent)
-        print(percent)
         self.btnStartHoming.OnSignal_Percent(percent)
         if percent >= 1:
             self.OnSignal_Finished()

@@ -660,12 +660,6 @@ class imageCalibration():
 
         
         # points = [(point[0], point[1]) for point in box]
-
-        # 輸出四個頂點座標
-        print("左下角:", points[0])
-        print("左上角:", points[1])
-        print("右上角:", points[2])
-        print("右下角:", points[3])
         
         return points
 
@@ -3533,6 +3527,9 @@ class joystickControl(MOTORSUBFUNCTION, QObject):
 class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
     signalRobotRun = pyqtSignal(np.ndarray, np.ndarray)
     
+    IMG_FRONT = 0
+    IMG_SIDE = 1
+    
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi(self)
@@ -3544,16 +3541,22 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.boardWidth = 138
         self.boardHeight = 88
         
-        self.pixelWidth  = 605
-        self.pixelHeight = 388
+        self.pixelWidthFront  = 605
+        self.pixelHeightFront = 388
+        self.pixelWidthSide  = 605
+        self.pixelHeightSide = 388
+        self.rateFront = np.array([self.pixelWidthFront / 138, self.pixelHeightFront / 88, self.pixelWidthFront / 138])
+        self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
         
         self.cameraCali_Front = None
         self.cameraCali_Side = None
         
-        self.entry = np.zeros(3, dtype = int)
-        self.target = np.zeros(3, dtype = int)
-        self.entryRobot = np.zeros(3, dtype = int)
-        self.targetRobot = np.zeros(3, dtype = int)
+        self.entryF = np.zeros(3, dtype = np.float64)
+        self.entryS = np.zeros(3, dtype = np.float64)
+        self.targetF = np.zeros(3, dtype = np.float64)
+        self.targetS = np.zeros(3, dtype = np.float64)
+        self.entryRobot = np.zeros(3, dtype = np.float64)
+        self.targetRobot = np.zeros(3, dtype = np.float64)
         
         self.lstCoord = [self.ledX1, 
                          self.ledY1, 
@@ -3572,19 +3575,40 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         
     def OnClicked_btnGetImage(self):
             
-        self.imageFront, width_f, height_f = self.__CaptureImage(self.cameraCali_Front)
-        self.imageSide, width_s, height_s = self.__CaptureImage(self.cameraCali_Side)
+        self.imageFront, self.pixelWidthFront, self.pixelHeightFront = self.__CaptureImage(self.cameraCali_Front)
+        self.imageSide, self.pixelWidthSide, self.pixelHeightSide = self.__CaptureImage(self.cameraCali_Side)
+        
+        self.rateFront = np.array([self.pixelWidthFront / 138, self.pixelHeightFront / 88, self.pixelWidthFront / 138])
+        self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
+        
+        # self.entryF, self.entryS = self.GetPositionInImage(self.imageFront, self.imageSide, self.entryF)
+        # self.targetF, self.targetS = self.GetPositionInImage(self.imageFront, self.imageSide, self.targetF)
+        points = self.GetPositionInImage(self.imageFront, self.imageSide, self.entryF)
         
         self.qImgSide = self.__ImageToQImage(self.imageSide)
         self.qImgFront = self.__ImageToQImage(self.imageFront)
-        # self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgSide))
-        # self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgFront))
         
-        ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
-        ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
+        if points is None:
+            logger.warning('no instrument in camera')
+            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+            self.update()
+            return
+        
+        self.entryF, self.targetF, self.entryS, self.targetS = points
             
-        if ret == False:
-            QMessageBox.critical(None, 'error', f'out of canvas range')
+        logger.debug(f'entry : robot = {self.entryRobot}, camera front = {self.entryF}, side = {self.entryS}')
+        logger.debug(f'target : robot = {self.targetRobot}, camera front = {self.targetF}, side = {self.targetS}')
+        
+        if self.entryF is not None and self.targetF is not None:
+            ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+            ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+            ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+            ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+            self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+            self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+            if ret == False:
+                QMessageBox.critical(None, 'error', f'out of canvas range')
         self.update()
         
         # cv2.imwrite("imageFront_cal.jpg",corrected_image)
@@ -3613,9 +3637,9 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         
         self.cameraCali_Side, self.cameraCali_Front = imageCalibration.checkCameraID(self.cameraCali_Side, self.cameraCali_Front)
         
-        imageSize = self.pixelWidth * self.pixelHeight * 3
-        self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeight, self.pixelWidth,  3)    
-        self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeight, self.pixelWidth,  3)    
+        imageSize = self.pixelWidthFront * self.pixelHeightFront * 3
+        self.imageSide = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeightSide, self.pixelWidthSide,  3)    
+        self.imageFront = np.array([255] * imageSize, dtype = np.uint8).reshape(self.pixelHeightFront, self.pixelWidthFront,  3)    
         
         self.qImgSide = self.__ImageToQImage(self.imageSide)
         self.qImgFront = self.__ImageToQImage(self.imageFront)
@@ -3629,6 +3653,27 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         h, w, ch = image.shape
         qImg = QImage(image.data, w, h, ch * w, QImage.Format_RGB888)
         return qImg
+    
+    def __CalibrationViewAngle(self, point:np.ndarray, length:float = 138.0, height:float = 88.0):
+        try:
+            halfLength = length * 0.5
+            halfHeight = height * 0.5
+            if len(point) == 3:
+                realX = ((point[0] - halfLength) / (length - point[2])) * length + halfLength
+                realZ = ((point[2] - halfLength) / point[0]) * length + halfLength
+                
+                realY1 = ((point[1] - halfHeight) / (length - point[2])) * length + halfHeight
+                realY2 = ((point[1] - halfHeight) / point[0]) * length + halfHeight
+                
+                # return np.array([[realX, realY1, realZ], [realX, realY2, realZ]]) 
+                return np.array([[realX, point[1], realZ], [realX, point[1], realZ]]) 
+            else:
+                logger.error('input point error')
+                return np.zeros(3)
+                
+        except Exception as msg:
+            logger.error(msg)
+            return np.zeros(3)
     
     def __CaptureImage(self, camera:imageCalibration):
         # Open calibration light
@@ -3673,21 +3718,40 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         imageWidth = CalibrationResult[1]
         imageHeight = CalibrationResult[2]
         
+        cv2.imwrite(filename_image.split('.')[0] + "_cal.jpg",corrected_image)
+        
         return corrected_image, imageWidth, imageHeight
         
-    def __DrawLine(self, qImg:QImage, point1:np.ndarray, point2:np.ndarray, color:QColor = QColor(0, 255, 0)):
+    def __DrawLine(self, point1:np.ndarray, point2:np.ndarray, nImageType:int, color:QColor = QColor(0, 255, 0)):
+        qImg = None
+        point = np.zeros(2)
+        canvas = None
+        if nImageType == DlgRobotCalibration.IMG_FRONT:
+            qImg = self.qImgFront
+            p1 = (point1 * self.rateFront).astype(int)
+            p2 = (point2 * self.rateFront).astype(int)
+            point1 = p1[:2]
+            point2 = p2[:2]
+            canvas = self.canvasXZ
+        elif nImageType == DlgRobotCalibration.IMG_SIDE:
+            qImg = self.qImgSide
+            p1 = (point1 * self.rateSide).astype(int)
+            p2 = (point2 * self.rateSide).astype(int)
+            point1 = p1[1:][::-1]
+            point2 = p2[1:][::-1]
+            canvas = self.canvasYZ
+        
         painter = QPainter(qImg)
         painter.setPen(color)
         painter.drawLine(point1[0], point1[1], point2[0], point2[1])
         painter.end()
-    
+        
+        canvas.setPixmap(QPixmap.fromImage(qImg))
+        self.update()
+        
     def __DrawOnQImage(self, qImg:QImage, x:int, y:int, color:QColor = QColor(255, 0, 0), radius:int = 10):
         painter = QPainter(qImg)
         painter.setPen(color)
-        # x_left = max(0, x - 20)
-        # x_right = min(self.pixelWidth, x + 20)
-        # y_top = max(0, y - 20)
-        # y_bottom = min(self.pixelHeight, y + 20)
         
         linearColor = QRadialGradient(x, y, radius, x, y)
         arrColor = np.array([color.red(), color.green(), color.blue()], dtype = int)
@@ -3701,29 +3765,24 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         painter.setBrush(linearColor)
         painter.drawEllipse(QPoint(x, y), radius, radius)
         
-        # painter.drawLine(x_left, y, x_right, y)
-        # painter.drawLine(x, y_top, x, y_bottom)
-        
         painter.end()
     
-    def DrawPoint(self, point:np.ndarray, color:QColor):
+    def DrawPoint(self, point:np.ndarray, color:QColor, nImageID:int):
         try:
             
-            x, y, z = point
-            if x not in range(self.pixelWidth) or y not in range(self.pixelHeight) or z not in range(self.pixelWidth):
-                return False
+            # x, y, z = point
+            # if x not in range(self.pixelWidth) or y not in range(self.pixelHeight) or z not in range(self.pixelWidth):
+            #     return False
             
-            # qImg = self.__ImageToQImage(self.imageSide)
-            self.__DrawOnQImage(self.qImgFront, x, y, color)
-            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+            if nImageID == DlgRobotCalibration.IMG_FRONT:
+                pointFront = (point * self.rateFront).astype(int)
+                self.__DrawOnQImage(self.qImgFront, pointFront[0], pointFront[1], color)
+                self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+            elif nImageID == DlgRobotCalibration.IMG_SIDE:
             
-            # qImg = self.__ImageToQImage(self.imageFront)
-            self.__DrawOnQImage(self.qImgSide, z, y, color)
-            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
-            
-            # draw path line
-            self.__DrawLine(self.qImgFront, self.entry[:2], self.target[:2]) # x, y
-            self.__DrawLine(self.qImgSide, self.entry[1:][::-1], self.target[1:][::-1]) # z, y
+                pointSide = (point * self.rateSide).astype(int)
+                self.__DrawOnQImage(self.qImgSide, pointSide[2], pointSide[1], color)
+                self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
             
             self.update()
             
@@ -3731,6 +3790,43 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             logger.debug(msg)
             
         return True
+    
+    def GetPositionInImage(self, imageFront:np.ndarray, imageSide:np.ndarray, point:np.ndarray):
+        try:
+            y = point[1]
+            pixelY = max(int((y * self.pixelHeightFront) / 88), 0)
+            
+            dataX = []
+            diameterLast = 0
+            y1, y2 = 0, 0
+            
+            pointsFront = self.GetPolyCenterLine(imageFront)
+            pointsSide = self.GetPolyCenterLine(imageSide)
+            
+            if pointsFront is None or pointsSide is None:
+                return None
+            
+            pointFrontEntry, pointFrontTarget = pointsFront
+            pointSideEntry, pointSideTarget = pointsSide
+            
+            pointFrontEntry /= self.rateFront[:2]
+            pointFrontTarget /= self.rateFront[:2]
+            pointSideEntry /= self.rateSide[:2]
+            pointSideTarget /= self.rateSide[:2]
+            
+            pEntryFront = np.array([pointFrontEntry[0], pointFrontEntry[1], pointSideEntry[0]])
+            pTargetFront = np.array([pointFrontTarget[0], pointFrontTarget[1], pointSideTarget[0]])
+            pEntrySide = np.array([pointFrontEntry[0], pointSideEntry[1], pointSideEntry[0]])
+            pTargetSide = np.array([pointFrontTarget[0], pointSideTarget[1], pointSideTarget[0]])
+            
+            return np.array([pEntryFront, pTargetFront, pEntrySide, pTargetSide], dtype = np.float64)
+            
+
+        except Exception as msg:
+            logger.critical(msg)
+
+            return None
+        
         
     def OnEditFinished(self):
         lstPoint = []
@@ -3738,32 +3834,111 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             text = lineEdit.text()
             if text == '':
                 return
-            lstPoint.append(int(text))
+            lstPoint.append(float(text))
             
         
-        lstPoint = np.array(lstPoint)
-        self.entryRobot = lstPoint[:3].copy()
-        self.targetRobot = lstPoint[3:].copy()
+        lstPoint = np.array(lstPoint, np.float64)
+        self.entryRobot = lstPoint[:3].copy().astype(np.float64)
+        self.targetRobot = lstPoint[3:].copy().astype(np.float64)
+        self.entryRobot[1] -= self.baseShiftHeight
+        self.targetRobot[1] -= self.baseShiftHeight
         
         # calculate robot to pixel coordinate
         # lstPoint[::3] = (self.boardWidth - 1) - (lstPoint[::3] + self.baseShiftX)
         lstPoint[::3] = (lstPoint[::3] + self.baseShiftX)
-        lstPoint[1::3] = (self.boardHeight - 1) - (lstPoint[1::3] + self.baseShiftHeight)
+        # lstPoint[1::3] = (self.boardHeight - 1) - (lstPoint[1::3] + self.baseShiftHeight)
+        lstPoint[1::3] = -lstPoint[1::3]
         lstPoint[2::3] = self.baseDistance - (lstPoint[2::3] + robotInitialLength)
         
-        rateW = (self.pixelWidth / 138) 
-        rateH = (self.pixelHeight / 88) 
-        transform = np.array([rateW, rateH, rateW])
         
-        self.entry = (lstPoint[:3] * transform).astype(int)
-        self.target = (lstPoint[3:] * transform).astype(int)
+        # rateW = (self.pixelWidth / 138) 
+        # rateH = (self.pixelHeight / 88) 
+        # transform = np.array([rateW, rateH, rateW])
+        
+        self.entryF = lstPoint[:3]
+        self.entryS = self.entryF.copy()
+        self.targetF = lstPoint[3:]
+        self.targetS = self.targetF.copy()
+        
+        
+        self.entryF, _ = self.__CalibrationViewAngle(self.entryF)
+        
+
+        self.targetF, _ = self.__CalibrationViewAngle(self.targetF)
         
         self.qImgSide = self.__ImageToQImage(self.imageSide) # XY plane
         self.qImgFront = self.__ImageToQImage(self.imageFront) # YZ plane
         
         
-        ret = self.DrawPoint(self.entry, QColor(255, 0, 0))
-        ret &= self.DrawPoint(self.target, QColor(0, 0, 255))
-            
+        ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+        self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
         if ret == False:
             QMessageBox.critical(None, 'error', f'out of canvas range')
+            
+    def GetPolyCenterLine(self, image:np.ndarray = None, path:str = None):
+        if image is None and path is None:
+            logger.warning('at least one parameter')
+            return None
+        elif image is None:
+            image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            
+        try:
+
+            # 創建一個稍微小於原影像的蒙版，忽略邊界區域
+            border = 5  # 邊界大小
+            masked_image = image[border:-border, border:-border]  # 移除邊界
+
+            # 二值化處理
+            _, binary = cv2.threshold(masked_image, 200, 255, cv2.THRESH_BINARY_INV)
+            
+            # 檢測輪廓
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            if len(contours) == 0:
+                logger.warning('no instrument inside the view of camera')
+                QMessageBox.warning(None, 'ERROR', 'no instrument inside the view of camera')
+                return None
+            
+            center_line_start, center_line_end = None, None
+            # 遍歷輪廓
+            for contour in contours:
+                # 排除過大或過小的輪廓（根據矩形物體的預期大小設置）
+                rect = cv2.minAreaRect(contour)
+                width, height = rect[1]
+                
+                if width > image.shape[1] * 0.5:
+                    continue
+
+                # 繪製矩形和中心線
+                box = cv2.boxPoints(rect)
+                box = np.int_(box)
+                
+                box = box[np.lexsort((box[:, 0], box[:, 1]))]
+                edgeLen1 = np.linalg.norm(box[0] - box[1])
+                edgeLen2 = np.linalg.norm(box[0] - box[2])
+                
+                if edgeLen1 > edgeLen2:
+                    box[[1, 2]] = box[[2, 1]]
+                
+                for point in box:
+                    point += np.array([5, 5])
+                    
+                center_line_start = np.array((box[0] + box[1]) / 2)
+                center_line_end = np.array((box[2] + box[3]) / 2)
+
+                # imgColor = cv2.cvtColor(image[border:-border, border:-border], cv2.COLOR_GRAY2BGR)
+                # cv2.line(imgColor, center_line_start, center_line_end, (127, 0, 127), 2)
+                
+            return center_line_start, center_line_end
+
+            # 顯示結果
+            # cv2.imshow('Center Line Detection', imgColor)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+        except Exception as msg:
+            logger.critical(msg)
+            return None
