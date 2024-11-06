@@ -8,3 +8,4 @@ global last_BLDC_Down_Motion
 global last_FLDC_Down_Motion
 global last_BLDC_Up_Motion
 global last_FLDC_Up_Motion
+global jogStrickEnable

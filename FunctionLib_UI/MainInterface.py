@@ -69,6 +69,7 @@ LAN_CN = 1
 
 class MainInterface(QMainWindow,Ui_MainWindow):
     signalLoadingReady = pyqtSignal()
+    signalShowProgressDlg = pyqtSignal(dict)
     signalSetProgress = pyqtSignal(QProgressBar, int)
     signalSetCheck = pyqtSignal(QWidget, bool)
     signalShowPlot = pyqtSignal(float) # for Laser test
@@ -175,6 +176,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.bFromDatabase = False
         
+        self.wdgProgressBar.setVisible(False)
+        self.lblProgressText.setVisible(False)
+        
         # interactors
         self.lstInteractorWipe = []
         
@@ -226,6 +230,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.stkSignalLight.setCurrentWidget(self.pgRedLight)
         self.cbxLanguage.setCurrentIndex(self.language)
+        
+        self.lblProgressText.setVisible(False)
+        self.pbrProgress.setVisible(False)
         
         # Figure in Inhale
         fig = Figure(figsize=(5,5))
@@ -358,6 +365,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalImportDicomFinished.connect(self.OnSignal_ImportDicomFinished)
         self.signalStartExport.connect(self.OnSignal_StartExport)
         self.signalPreImportFinished.connect(self.OnSignal_PreImportFinished)
+        self.signalShowProgressDlg.connect(self.OnSignal_ShowProgressDlg)
         
         self.btnClose.clicked.connect(lambda:self.close())
         
@@ -514,6 +522,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnConfirmUniversal.clicked.connect(self._Robot_driveTo)
         
         self.btnConfirmFusion.clicked.connect(self.OnClicked_btnConfirmFusion)
+        
+        # platform control
+        self.btnPlatformForward.pressed.connect(self.OnPressed_btnPlatformForward)
+        self.btnPlatformForward.released.connect(self.OnRelease_btnPlatformForward)
+        self.btnPlatformBackward.pressed.connect(self.OnPressed_btnPlatformBackward)
+        self.btnPlatformBackward.released.connect(self.OnRelease_btnPlatformBackward)
         
         # fusion Axial view
         self.btnMoveUpA.clicked.connect(self.OnClicked_btnMoveUp)
@@ -1132,19 +1146,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def _Registration(self, image, spacing):
         """automatic find registration ball center + open another ui window to let user selects ball in order (origin -> x axis -> y axis)
         """
-        # self.ui_SP = SystemProcessing()
-        # self.ui_SP.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        # self.ui_SP.show()
-        # QApplication.processEvents()
-        if self.dlgSystemProcessing is None:
-            self.dlgSystemProcessing = SystemProcessing(2)
-            self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-            
-        self.dlgSystemProcessing.setWindowTitle('Registration')
-        self.dlgSystemProcessing.label_Processing.setText('Registing Robot Position...')
-        self.dlgSystemProcessing.show()
-        QApplication.processEvents()
-        self.regFn.signalProgress.connect(self.dlgSystemProcessing.UpdateProgress)
+        
+        
+        self.signalShowProgressDlg.emit({'content':'Registing Robot Position...', 
+                                         'signal':self.regFn.signalProgress, 
+                                         'nParts':2,
+                                         'bReset':False})
         
         
         if self.currentTag.get("regBall") is not None or self.currentTag.get("candidateBall") is not None:
@@ -1170,10 +1177,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             ############################################################################################
         except Exception as e:
-            # self.ui_SP.close()
-            # self.logUI.warning('get candidate ball error / SetRegistration_L() error')
-            # QMessageBox.critical(self, "error", "get candidate ball error / SetRegistration_L() error")
-            self.dlgSystemProcessing.close()
+            
+            self.signalShowProgressDlg.emit(dict())
             self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
             # MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error(f'get candidate ball error / SetRegistration_L() error:{e}')
@@ -1192,11 +1197,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             ## 顯示定位球註冊結果 ############################################################################################
             "open another ui window to check registration result"
         else:
-            self.dlgSystemProcessing.close()
+            self.signalShowProgressDlg.emit(dict())
             self.signalShowMessage.emit("get candidate ball error", MB_ERROR)
-            # MessageBox.ShowCritical("get candidate ball error", "OK")
             logger.error('get candidate ball error / SetRegistration_L() error')
-            self.dlgSystemProcessing.close()
             ## 顯示手動註冊定位球視窗 ############################################################################################
             "Set up the coordinate system manually"
             return False
@@ -1365,12 +1368,28 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 cv2.imencode('.png', image)[1].tofile(pathImageOut)
                 
     def _SetProgress(self, content:str, signal:pyqtSignal = None, nParts:int = 1, prefix = ''):
-        self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
-        self.dlgSystemProcessing.label_Processing.setText(content)
-        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-        if signal:
-            signal.connect(self.dlgSystemProcessing.UpdateProgress)
-        self.dlgSystemProcessing.show()
+        self.OnSignal_ShowProgressDlg({'content':content,
+                                       'signal':signal,
+                                       'nParts':nParts,
+                                       'prefix':prefix})
+        
+    def OnSignal_ShowProgressDlg(self, kwargs:dict):
+        content = kwargs.get('content', '')
+        signal = kwargs.get('signal', None)
+        nParts = kwargs.get('nParts')
+        prefix = kwargs.get('prefix', '')
+        bReset = kwargs.get('bReset', True)
+        
+        if self.dlgSystemProcessing is not None and (content is None or content == ''):
+            self.dlgSystemProcessing.close()
+        else:
+            if bReset or (self.dlgSystemProcessing is None):
+                self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
+                self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+                if signal:
+                    signal.connect(self.dlgSystemProcessing.UpdateProgress)
+            self.dlgSystemProcessing.label_Processing.setText(content)
+            self.dlgSystemProcessing.show()
         
     def _SetHintBox_dicom(self):
         lstIndex = [0, 0, 1, 2]
@@ -1988,7 +2007,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
-            self.signalShowMessage.emit('image error')
+            self.signalShowMessage.emit('image error', MB_ERROR)
             # MessageBox.ShowCritical('image error')
             logger.critical('import dicom error')
             return False
@@ -2001,13 +2020,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         dicomTag = self.SetDicomData(self.dicomLow, pathInhale, 'LOW', grayscaleRange, dimension, spacing)
         
         if not dicomTag:
-            self.signalShowMessage.emit('missing current tag [LOW]')
+            self.signalShowMessage.emit('missing current tag [LOW]', MB_ERROR)
             # MessageBox.ShowCritical('missing current tag [LOW]')
             return False
             
         if ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
-                self.signalShowMessage.emit('Registration Failed')
+                self.signalShowMessage.emit('Registration Failed', MB_ERROR)
                 # MessageBox.ShowCritical('Registration Failed')
                 return False
             
@@ -2705,6 +2724,25 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             movement = float(self.comboBox.currentText())
             self._Joystick_Run(self.robot.JoystickControl_StepRun, lambda:self.btnMoveInching.setChecked(False), movement)
                 
+    def OnPressed_btnPlatformForward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 1)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformForward(self):
+        self.robot.Platform_Left.MC_Stop()
+        
+    def OnPressed_btnPlatformBackward(self):
+        self.robot.Platform_Left.MoveVelocitySetting(10, 300, 3)
+        self.robot.Platform_Left.MC_Stop_Disable()
+        self.robot.Platform_Left.bMoveVelocityEnable()
+        sleep(0.01)
+        
+    def OnRelease_btnPlatformBackward(self):
+        self.robot.Platform_Left.MC_Stop()
+    
+    
     
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
@@ -3682,7 +3720,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.pbrProgress.setValue(int(fProgress * 100))
         self.lblProgressText.setText(text)
-        self.wdgProgressBar.setVisible(bVisible)
+        self.pbrProgress.setVisible(bVisible)
         self.lblProgressText.setVisible(bVisible)
         
     def OnSignal_PreImportFinished(self, retInhale:dict, retExhale:dict):
@@ -4137,6 +4175,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
                 
     def Robot_OnThreadHomingProcess(self):
+        self.robot.ForwardKinamatic()
         if self.robot.bConnected == True:
             if self.robot.HomeProcessing_image() == True:
                 print("Home processing is done!")

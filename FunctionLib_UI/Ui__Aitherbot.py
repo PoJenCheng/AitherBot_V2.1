@@ -513,10 +513,14 @@ class Ui_MainWindow(object):
 "#btnJoystick:pressed{\n"
 "    background-color:rgb(210, 210, 210);\n"
 "}\n"
-"")
+"\n"
+"QGroupBox{\n"
+"    font: 12px \"Arial\";\n"
+"    color:#fff;\n"
+"}")
         self.wdgNaviBar.setObjectName("wdgNaviBar")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.wdgNaviBar)
-        self.verticalLayout.setContentsMargins(11, -1, 11, -1)
+        self.verticalLayout.setContentsMargins(11, -1, 11, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.btnSceneRobot = QtWidgets.QPushButton(self.wdgNaviBar)
         self.btnSceneRobot.setEnabled(False)
@@ -556,6 +560,28 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.btnSceneView)
         spacerItem18 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem18)
+        self.gbxPlatform = QtWidgets.QGroupBox(self.wdgNaviBar)
+        self.gbxPlatform.setMinimumSize(QtCore.QSize(0, 100))
+        self.gbxPlatform.setObjectName("gbxPlatform")
+        self.gridLayout_55 = QtWidgets.QGridLayout(self.gbxPlatform)
+        self.gridLayout_55.setContentsMargins(4, 8, 4, 6)
+        self.gridLayout_55.setSpacing(0)
+        self.gridLayout_55.setObjectName("gridLayout_55")
+        self.btnPlatformForward = QtWidgets.QPushButton(self.gbxPlatform)
+        self.btnPlatformForward.setMinimumSize(QtCore.QSize(64, 64))
+        self.btnPlatformForward.setMaximumSize(QtCore.QSize(64, 64))
+        self.btnPlatformForward.setStyleSheet("image:url(image/slice_up.png)")
+        self.btnPlatformForward.setText("")
+        self.btnPlatformForward.setObjectName("btnPlatformForward")
+        self.gridLayout_55.addWidget(self.btnPlatformForward, 0, 0, 1, 1)
+        self.btnPlatformBackward = QtWidgets.QPushButton(self.gbxPlatform)
+        self.btnPlatformBackward.setMinimumSize(QtCore.QSize(64, 64))
+        self.btnPlatformBackward.setMaximumSize(QtCore.QSize(64, 64))
+        self.btnPlatformBackward.setStyleSheet("image:url(image/slice_down.png)")
+        self.btnPlatformBackward.setText("")
+        self.btnPlatformBackward.setObjectName("btnPlatformBackward")
+        self.gridLayout_55.addWidget(self.btnPlatformBackward, 0, 1, 1, 1)
+        self.verticalLayout.addWidget(self.gbxPlatform)
         self.btnJoystick = QtWidgets.QPushButton(self.wdgNaviBar)
         self.btnJoystick.setEnabled(True)
         self.btnJoystick.setMinimumSize(QtCore.QSize(144, 144))
@@ -4207,6 +4233,7 @@ class Ui_MainWindow(object):
         self.btnSceneRobot.setText(_translate("MainWindow", "Robot Setting"))
         self.btnSceneLaser.setText(_translate("MainWindow", "Laser Setting"))
         self.btnSceneView.setText(_translate("MainWindow", "Image View"))
+        self.gbxPlatform.setTitle(_translate("MainWindow", "Platform Control"))
         self.btnRobotRelease.setText(_translate("MainWindow", "Release Robot arm"))
         self.btnRobotFix.setText(_translate("MainWindow", "Fix Robot arm"))
         self.btnRobotSetTarget.setText(_translate("MainWindow", "Setting Target"))
