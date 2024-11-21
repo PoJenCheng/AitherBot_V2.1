@@ -7,11 +7,13 @@ import sys
 import shutil
 import threading
 import time
+from pathlib import Path
 from datetime import datetime, timedelta
 from functools import reduce
 from time import sleep
 from xml.dom.minidom import parse
 import xml.dom.minidom as xdom
+from BreathDevice.BreathDevice import BreathingDetect
 
 from PyQt5.QtGui import QCloseEvent
 import cv2
@@ -37,6 +39,8 @@ import FunctionLib_UI.Ui_DlgHintBox
 import FunctionLib_UI.Ui_DlgRobotMoving
 import FunctionLib_UI.ui_processing
 import FunctionLib_UI.Ui_step
+from FunctionLib_UI.Ui_DlgProcessing import *
+from FunctionLib_UI.Ui_DlgBreathingDetector import *
 from FunctionLib_UI.Ui_DlgLogViewer import *
 from FunctionLib_UI.Ui_homing import *
 from FunctionLib_UI.Ui_toolBox import *
@@ -52,6 +56,7 @@ from FunctionLib_UI.ViewPortUnit import *
 from FunctionLib_UI.WidgetButton import *
 from FunctionLib_UI.Ui_DlgExportLog import *
 from FunctionLib_UI.Ui_formFluoroSlider import *
+from FunctionLib_Vision._class import XFile
 import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
@@ -83,6 +88,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     signalImportDicomFinished = pyqtSignal()
     signalStartExport = pyqtSignal(int)
     signalPreImportFinished = pyqtSignal(dict, dict)
+    signalResumeImageFinished = pyqtSignal(bool)
     
     player = QMediaPlayer()
     robot = None
@@ -162,6 +168,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # super(MainInterface, self).__init__()
         QMainWindow.__init__(self)
         
+        # self.dlg = DlgBreathingDetector()
+        # detector = BreathingDetect()
+        # detector.signalUpdateData.connect(self.dlg.Draw)
+        # detector.signalUpdatePercentLine.connect(self.dlg.DrawPercentLine)
+        # detector.signalUpdatePercent.connect(self.dlg.UpdatePercent)
+        
+        # t = threading.Thread(target = BreathingDetect.RunDetector, args = (detector, ))
+        # t.start()
+        
+        # self.dlg.exec_()
+        
         self.language = lang
         self.setupUi(self)
         self.dlgShowHint = None
@@ -172,12 +189,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.tempResumeData = {}
         self.bFirstCheckResume = True
         self.bDoneRegistration = False
+        self.bResumeFinished = False
         self._preImportData = []
         
         self.bFromDatabase = False
-        
-        self.wdgProgressBar.setVisible(False)
-        self.lblProgressText.setVisible(False)
         
         # interactors
         self.lstInteractorWipe = []
@@ -315,6 +330,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         headerItem.setText(2, 'color')
         
         self.treeTrajectory.setHeaderItem(headerItem)
+        self.treeDatabase.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         
         # 暫時隱藏之後考慮刪除的button
         self.btnRobotFix.setHidden(True)
@@ -366,6 +382,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalStartExport.connect(self.OnSignal_StartExport)
         self.signalPreImportFinished.connect(self.OnSignal_PreImportFinished)
         self.signalShowProgressDlg.connect(self.OnSignal_ShowProgressDlg)
+        self.signalResumeImageFinished.connect(self.OnSignal_ResumeImageFinished)
         
         self.btnClose.clicked.connect(lambda:self.close())
         
@@ -437,6 +454,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.cbxLanguage.currentIndexChanged.connect(self.OnChanged_cbxLanguage)
         
         self.btnCancel.clicked.connect(self.OnClicked_btnCancel)
+        self.btnCanceIImportDB.clicked.connect(self.OnClicked_btnCancel)
         self.btnSetEntry.clicked.connect(self.OnClicked_btnSetEntry)
         self.btnSetTarget.clicked.connect(self.OnClicked_btnSetTarget)
         
@@ -454,6 +472,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnLockTrajectory.clicked.connect(self.OnClicked_btnTrajectoryLock)
         
         self.btnJoystick.clicked.connect(self.OnClicked_btnJoystick)
+        
+        self.btnImportDB.clicked.connect(self.OnClicked_btnImportDB)
         
         for combobox in self.dicViewSelector_L.values():
             combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
@@ -494,6 +514,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.treeDicom.entered.connect(self.OnEntered_treeDicom)
         # self.treeDicom.installEventFilter(self)
         self.treeDicom.setItemDelegate(TreeViewDelegate())
+        
+        self.treeDatabase.itemClicked.connect(self.OnItemClicked_database)
         
         self.btnInhale.installEventFilter(self)
         self.btnExhale.installEventFilter(self)
@@ -883,13 +905,24 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         logger.info('copy dicom to database finished')
         
     def _DetectUnexpectedShutdown(self):
-        statusValue = self._GetBootFileInfo('status')
-        if isinstance(statusValue, str) and int(statusValue) != 0:
+        # statusValue = self._GetBootFileInfo('status')
+        if XFile.GetBootFileInfo() is not None:
             ret = MessageBox.ShowWarning('Detected unexpected shutdown, resume it?', 'YES', "NO")
             if ret == 0:
-                return self._ResumeFromShutdown()
+                # return self._ResumeFromShutdown()
+                self._EnabledUI_ImportDicom(False)
+                
+                self.bResumeFinished = False
+                tResume = threading.Thread(target = self._ResumeFromShutdown)
+                tResume.start()
+                while not self.bResumeFinished:
+                    QCoreApplication.processEvents()
                 
         return True
+    
+    def _EnabledUI_ImportDicom(self, bEnabled = True):
+        self.btnFromFS.setEnabled(bEnabled)
+        self.btnFromDB.setEnabled(bEnabled)
     
     def _EnableDevice(self, nDevice:int = 0):
         if nDevice == (DEVICE_ALL):
@@ -1078,6 +1111,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         idxPatient:int = None, 
         idxStudy:int = None, 
         idxSeries:int = None,
+        bResume:bool = False
     ):
         if nType not in [TYPE_INHALE, TYPE_EXHALE]:
             return None
@@ -1095,9 +1129,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             retData = self.reader.GetData(index = nType)
             path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
             
-        if not self.bFromDatabase:
+        if not self.bFromDatabase and not bResume:
             # self.signalStartExport.emit(nType)
             self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
+        else:
+            XFile.folderPath = {}
             
         if retData is None:
             logger.error(f'load inhale dicom failed')
@@ -1121,13 +1157,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return dicRetValue
     
     def _ImportDicom(self, retInhale, retExhale):
+        self.signalShowProgressDlg.emit({'content':'Import Dicom...', 
+                                         'signal':self.signalLoadingImage, 
+                                         'nParts':2})
+        
         if not self.ImportDicom_L(retInhale):
             return
         
         if not self.ImportDicom_H(retExhale):
             return
         
-        self._SaveBootFile()
+        XFile.SaveBootFile(self.dicDicom)
         
         self.signalImportDicomFinished.emit()
         
@@ -1231,17 +1271,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # 執行homing process
         
         # resume lost data
-        if len(self.tempResumeData) == 0:
+        if len(XFile.tempResumeData) == 0:
             logger.error(f'no available resume data')
+            self.signalResumeImageFinished.emit(False)
             return False
             
         try:
             dicom = list(self.dicDicom.values())
-            pathData = self.tempResumeData['path']
+            pathData = XFile.tempResumeData['path']
             dicom[0]['path'] = pathData[0]['text']
             dicom[1]['path'] = pathData[1]['text']
                     
-            dataTrajectory = self.tempResumeData.get('trajectory')
+            dataTrajectory = XFile.tempResumeData.get('trajectory')
             
             if dataTrajectory:
                 for data in dataTrajectory:
@@ -1257,50 +1298,71 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             if None in (pathInhale, pathExhale):
                 logger.critical('resume dicom data is empty')
+                self.signalResumeImageFinished.emit(False)
                 return
         
-            QApplication.processEvents()
-            
             self.reader = DICOM()
+            
+            self.signalShowProgressDlg.emit({
+                'content':'Resume from shutdown...',
+                'signal':(self.reader.signalProcess, 
+                          self.signalLoadingImage, 
+                          self.regFn.signalProgress),
+                'nParts':6
+            })
+            
             self.reader.LoadPath(pathInhale)
-            retInhale = self._PreImportImage(TYPE_INHALE, 0, 0, 0)
+            
+            retInhale = self._PreImportImage(TYPE_INHALE, 0, 0, 0, True)
             
             if retInhale is None:
                 logger.error('inhale resume data is None')
+                self.signalResumeImageFinished.emit(False)
                 return
+            # self.signalShowProgressDlg.emit({'content':'Registing Robot Position...', 
+            #                          'signal':self.regFn.signalProgress})
             
             if not self.ImportDicom_L(retInhale):
+                self.signalResumeImageFinished.emit(False)
                 return
             
+            
             self.reader.LoadPath(pathExhale)
-            retExhale = self._PreImportImage(TYPE_EXHALE, 0, 0, 0)
+            retExhale = self._PreImportImage(TYPE_EXHALE, 0, 0, 0, True)
+            
             
             if retExhale is None:
                 logger.error('exhale resume data is None')
+                self.signalResumeImageFinished.emit(False)
                 return
             
             if not self.ImportDicom_H(retExhale):
+                self.signalResumeImageFinished.emit(False)
                 return
             
-            lstItem = []
-            for i in range(DISPLAY.CountOfTrajectory()):
-                owner = DISPLAY.trajectory.getOwner(i)
-                
-                idx = int(owner == 'E') # I = 0, E = 1
-                # add to renderer
-                self._ModifyTrajectory(i, dicom[idx]['display'])
-                lstItem.append({'owner':owner})
-                    
-            self._AddTrajectoryTreeItems(lstItem)
-            if len(lstItem) > 0:
-                self.SetUIEnable_Trajectory(True)
-            # self._SaveBootFile()
             
-            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
-            self.ShowFusion()
-            self.stkScene.setCurrentWidget(self.pgImageView)
+            self.signalResumeImageFinished.emit(True)
+            logger.debug('resume finished')
+            # lstItem = []
+            # for i in range(DISPLAY.CountOfTrajectory()):
+            #     owner = DISPLAY.trajectory.getOwner(i)
+                
+            #     idx = int(owner == 'E') # I = 0, E = 1
+            #     # add to renderer
+            #     self._ModifyTrajectory(i, dicom[idx]['display'])
+            #     lstItem.append({'owner':owner})
+                    
+            # self._AddTrajectoryTreeItems(lstItem)
+            # if len(lstItem) > 0:
+            #     self.SetUIEnable_Trajectory(True)
+            # # self._SaveBootFile()
+            
+            # # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            # self.ShowFusion()
+            # self.stkScene.setCurrentWidget(self.pgImageView)
         except Exception as msg:
             logger.critical(msg)
+            self.bResumeFinished = True
             return False
         
         return True
@@ -1367,29 +1429,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
                 cv2.imencode('.png', image)[1].tofile(pathImageOut)
                 
-    def _SetProgress(self, content:str, signal:pyqtSignal = None, nParts:int = 1, prefix = ''):
+    def _SetProgress(self, content:str, signal:pyqtSignal = None, nParts:int = 1, prefix = '', bReset = True):
         self.OnSignal_ShowProgressDlg({'content':content,
                                        'signal':signal,
                                        'nParts':nParts,
-                                       'prefix':prefix})
-        
-    def OnSignal_ShowProgressDlg(self, kwargs:dict):
-        content = kwargs.get('content', '')
-        signal = kwargs.get('signal', None)
-        nParts = kwargs.get('nParts')
-        prefix = kwargs.get('prefix', '')
-        bReset = kwargs.get('bReset', True)
-        
-        if self.dlgSystemProcessing is not None and (content is None or content == ''):
-            self.dlgSystemProcessing.close()
-        else:
-            if bReset or (self.dlgSystemProcessing is None):
-                self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
-                self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-                if signal:
-                    signal.connect(self.dlgSystemProcessing.UpdateProgress)
-            self.dlgSystemProcessing.label_Processing.setText(content)
-            self.dlgSystemProcessing.show()
+                                       'prefix':prefix,
+                                       'bReset':bReset})
         
     def _SetHintBox_dicom(self):
         lstIndex = [0, 0, 1, 2]
@@ -1444,8 +1489,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     self.currentTag.update({"flageSelectedPoint": True})
                     
                     self._ModifyTrajectory(idx, currentDicom)
+                    XFile.SaveBootFile(self.dicDicom)
                     self._AddCrossSectionItemInSelector()
-                    self._SaveBootFile()
                     self.SetUIEnable_Trajectory(True)
                     
                     trajectory = None
@@ -1463,19 +1508,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                                 
                                 trajectory = [entry, target]
                                 
-                    if self.robot and trajectory is not None:
-                        ret = self.GetTransformedTrajectory(trajectory, trajectory)
-                        if ret is None:
-                            return
+                    if DEVICE_ENABLED in [DEVICE_ALL, DEVICE_ROBOT]:
+                        if self.robot and trajectory is not None:
+                            ret = self.GetTransformedTrajectory(trajectory, trajectory)
+                            if ret is None:
+                                return
+                            
+                            pathInhale, pathExhale = ret
+                            bReachable = self.robot.reachable_check(*pathInhale, *pathExhale)
+                            if not bReachable:
+                                MessageBox.ShowCritical('this trajectory is not reachable')
+                            else:
+                                self.OnClicked_btnAddTrajectory(dicomLabel)
+                                # self._SetupTrajectoryPoint(POINT_ENTRY, trajectory[0])
+                                # self._SetupTrajectoryPoint(POINT_TARGET, trajectory[1])
+                    elif trajectory is not None:
+                        self.OnClicked_btnAddTrajectory(dicomLabel)
                         
-                        pathInhale, pathExhale = ret
-                        bReachable = self.robot.reachable_check(*pathInhale, *pathExhale)
-                        if not bReachable:
-                            MessageBox.ShowCritical('this trajectory is not reachable')
-                        else:
-                            self.OnClicked_btnAddTrajectory(dicomLabel)
-                            # self._SetupTrajectoryPoint(POINT_ENTRY, trajectory[0])
-                            # self._SetupTrajectoryPoint(POINT_TARGET, trajectory[1])
                             
                 self.UpdateView()
                 
@@ -1488,200 +1537,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             if isinstance(button, QPushButton):
                 button.setChecked(True)
             self.buttonGroup.blockSignals(False)
-                
-    def _GetBootFileInfo(self, tagName:str):
-        try:
-            if os.path.exists('temp.xml'):
-                dom = xdom.parse('temp.xml')
-                root = dom.documentElement
-                
-                data = self._XmlGetNode(root, 'dicom')
-                if len(data) > 0:
-                    self.tempResumeData['path'] = data
-                    
-                    
-                dataTrajectory = self._XmlGetNode(root, 'trajectory')
-                if len(dataTrajectory) > 0:
-                    self.tempResumeData['trajectory'] = dataTrajectory
-                
-                return dom.getElementsByTagName(tagName)[0].childNodes[0].nodeValue
-        except Exception as msg:
-            logger.critical(msg)
-            
-        return None
-        
-    def _XmlGetNode(self, dom:xdom.Element, tagName:str = None, data:list = None):
-        nodeList = []
-        dataList = []
-        if data is not None:
-            dataList = data
-            
-        if tagName is not None:
-            nodeList = dom.getElementsByTagName(tagName)
-        elif dom.nodeType == xdom.Node.ELEMENT_NODE:
-            nodeList = dom.childNodes
-        
-        dicData = {}
-        if dom.hasAttribute('owner'):
-            dicData['owner'] = dom.getAttribute('owner')
-            dataList.append(dicData)
-            
-        for node in nodeList:
-            
-            if node.nodeType == xdom.Node.TEXT_NODE:
-                if isinstance(node.nodeValue, str):
-                    nodeValue = node.nodeValue.strip()
-                    if nodeValue:
-                        dicData['text'] = nodeValue
-                        if dicData not in dataList:
-                            dataList.append(dicData)
-                        return dataList 
-            else:
-                self._XmlGetNode(node, data = dataList)
-            
-        return dataList
-                
-    def _XmlModifyTag(self, tagName:str, value:str):
-        """ 
-        因為當dom.writexml再次輸出後，為了保持原有的縮排格和換行，newl和addindent都設為空白
-        會使得root node緊接在document type node之後，太醜了…
-        所以才另外這樣改寫
-        """
-         
-        if os.path.exists('temp.xml'):
-            dom = xdom.parse('temp.xml')
-            dom.getElementsByTagName(tagName)[0].childNodes[0].nodeValue = value
-            
-            # 將原本的root完整內容轉成文字，且保留原本縮排和換行不進行改變
-            root:xdom.Element = dom.documentElement
-            # 原本的root node text，最前方加上換行以保持美觀
-            root_text = '\n' + root.toprettyxml(indent = '', newl = '')
-            
-            # 開新的root，覆蓋掉原本的
-            dom = xdom.Document()
-            
-            try:
-                with open('temp.xml', 'w') as f:
-                    # 這裡的dom.xwritexml只有輸出document type node
-                    # 原本的root當成一般文字輸出
-                    dom.writexml(f, encoding = 'UTF-8')
-                    f.write(root_text)
-            except Exception as msg:
-                logger.critical(msg)
-                
-    def _XmlAppendTextNode(self, node:xdom.Element, value:str):
-        nLayer = 1
-        parent = node.parentNode
-        while parent and parent.nodeType == node.ELEMENT_NODE:
-            nLayer += 1
-            parent = parent.parentNode
-            
-            
-        indent = '\n' + '\t' * nLayer
-        indentEnd = '\n' + '\t' * (nLayer - 1)
-        value = indent + indent.join(value.split('\n')) + indentEnd
-        
-        textNode = xdom.Document().createTextNode(value)
-        node.appendChild(textNode)
-        
-                
-    def _SaveBootFile(self):
-            
-        dom = xdom.Document()
-        root = dom.createElement('root')
-        dom.appendChild(root)
-        
-        # close status, if close innormally it will keep 1 value, else 0
-        sceneIndex = self.stkScene.currentIndex()
-        statusTextNode = dom.createTextNode(str(sceneIndex))
-        
-        statusNode = dom.createElement('status')
-        statusNode.appendChild(statusTextNode)
-        
-        root.appendChild(statusNode)
-        
-        # save dicom path
-        # pathInhale = self.reader.GetSelectedDicomPath(0).replace('\\', '/')
-        # pathExhale = self.reader.GetSelectedDicomPath(1).replace('\\', '/')
-        dicom = list(self.dicDicom.values())
-        pathInhale = dicom[0].get('path')
-        pathExhale = dicom[1].get('path')
-        logger.info(f'inhale dicom = {pathInhale}')
-        logger.info(f'exhale dicom = {pathExhale}')
-        
-        # save to xml node
-        inhaleNode = dom.createElement('inhale')
-        exhaleNode = dom.createElement('exhale')
-        
-        if None not in (pathInhale, pathExhale):
-            inhalePathNode = dom.createTextNode(pathInhale)
-            exhalePathNode = dom.createTextNode(pathExhale)
-            
-            inhaleNode.appendChild(inhalePathNode)
-            exhaleNode.appendChild(exhalePathNode)
-        
-        dicomNode = dom.createElement('dicom')
-        dicomNode.appendChild(inhaleNode)
-        dicomNode.appendChild(exhaleNode)
-        
-        root.appendChild(dicomNode)
-        
-        # registration result
-        dicomInhale = list(self.dicDicom.values())[0]
-        matrix = dicomInhale.get('matrix')
-        if matrix is not None:
-            logger.info(f'registration matrix = {matrix}')
-            
-            # save to xml node
-            # indent = '\n' + '\t' * 2
-            # strMatrix = indent.join([','.join(map(str, row)) for row in matrix])
-            # strMatrix = indent + strMatrix + '\n\t'
-            # matrixTextNode = dom.createTextNode(strMatrix)
-            
-            # matrixNode = dom.createElement('matrix')
-            # matrixNode.appendChild(matrixTextNode)
-            
-            strMatrix = '\n'.join([','.join([f'{num:13.8f}' for num in row]) for row in matrix])
-            matrixNode = dom.createElement('matrix')
-            root.appendChild(matrixNode)
-            # 要取得正確的縮排層數，必須先將node加入到node tree
-            self._XmlAppendTextNode(matrixNode, strMatrix)
-            
-            
-        # save trajectory (if exist)
-        strTrajectoryList = []
-        for i in range(DISPLAY.trajectory.count()):
-            entry = DISPLAY.trajectory[i][0]
-            target = DISPLAY.trajectory[i][1]
-            
-            logger.info(f'trajectory {i} entry : {entry}, target : {target}')
-            
-            text = ','.join([f'{num:.6f}' for num in np.append(entry, target)])
-            strTrajectoryList.append(text)
-            
-        # save to xml node
-        if len(strTrajectoryList) > 0:
-            trajectoryNode = dom.createElement('trajectory')
-            
-            for i, text in enumerate(strTrajectoryList, 1):
-                textNode = dom.createTextNode(text)
-                
-                numOfTrajectoryNode = dom.createElement(f'T{i}')
-                numOfTrajectoryNode.appendChild(textNode)
-                
-                owner = DISPLAY.trajectory.getOwner(i - 1)
-                if owner:
-                    numOfTrajectoryNode.setAttribute('owner', owner)
-                
-                trajectoryNode.appendChild(numOfTrajectoryNode)
-                
-            root.appendChild(trajectoryNode)
-            
-        try:  
-            with open('temp.xml', 'w', encoding = 'UTF-8') as f:
-                dom.writexml(f, indent = '', addindent = '\t', newl = '\n', encoding = 'UTF-8')
-        except Exception as msg:
-            logger.error(msg)
                 
     def _SetTrajectoryVisible(self, index:int, bVisible:bool):
         # display = self.currentTag.get('display')
@@ -1851,6 +1706,116 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def GetViewPort(self):
         return self.viewport_L
+    
+    def ImportDatabase(self):
+        self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
+        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+        self.dlgSystemProcessing.show()
+        QApplication.processEvents()
+        
+        # search for project file
+        projectFiles = []
+        for dirPath, dirNames, fileNames in os.walk(DATABASE_PATH):
+            for f in fileNames:
+                extName = Path(f).suffix[1:]
+                if extName == 'ai':
+                    projectFiles.append(os.path.join(dirPath, f))
+        
+                 
+        self.reader = DICOM()
+        self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
+        self.reader.signalExport.connect(self.OnSignal_ExportProgress)
+        self.treeDatabase.clear()
+        
+        for file in projectFiles:
+            inhalePath = XFile.GetBootFileInfo(file, 'inhale')
+            
+            dicom = self.reader.LoadPath(inhalePath)
+            
+            for keyPatient, dicPatient in dicom.items():
+                for keyStudy, dicStudy in dicPatient.items():
+                    for keySeries, dicSeries in dicStudy.items():
+                        slices = dicSeries.get('data')
+                        if slices is None:
+                            continue
+                        
+                        slice = dicSeries['data'][0]
+                        
+                        # dim = np.array(slice.pixel_array).shape
+                        dim = dicSeries.get('dimension')
+                        if dim is None:
+                            logger.critical('dicom data missing dimension information')
+                            continue
+                        
+                        numOfSlices = len(dicSeries['data'])
+                        if len(dim) < 3 or (numOfSlices != dim[0] and numOfSlices > 1):
+                            dim = np.append(len(dicSeries['data']), dim)
+                            
+                        # 如果slice張數小於SKIP_SLICES(5張)，則略過
+                        if dim[0] <= SKIP_SLICES:
+                            continue
+                        strDim = f'{dim[2]:<6}x {dim[1]:<6}x {dim[0]:<6}'
+                        
+                        lstData = []
+                        lstData.append(str(slice.PatientName))
+                        lstData.append(str(slice.PatientID))
+                        lstData.append(str(slice.Modality))
+                        lstData.append(strDim)
+                        # lstData.append(str(slice.PatientSex))
+                        
+                        
+                        spacing = []
+                        spacingXY = dicSeries.get('spacingXY')
+                        spacingZ = dicSeries.get('spacingZ')
+                        strSpacing = ''
+                        if spacingXY is None:
+                            # QMessageBox.critical(None, 'dicom error', f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                            MessageBox.ShowCritical(f'series UID [{slice.SeriesInstanceUID}] missing spacing infomation')
+                            strSpacing = 'NONE'
+                        else:
+                            spacing = spacingXY[:]
+                            if spacingZ:
+                                spacing.append(spacingZ)
+                            else:
+                                spacing.append('NONE')
+                            strSpacingX = f'{spacing[0]:<.3f}'.ljust(6)
+                            strSpacingY = f'{spacing[1]:<.3f}'.ljust(6)
+                            strSpacingZ = f'{spacing[2]:<.3f}'.ljust(6)
+                            strSpacing = f'{strSpacingX}x {strSpacingY}x {strSpacingZ}'
+                            
+                        lstData.append(strSpacing)
+                        lstData.append(dicSeries.get('acquisitionDate'))
+                        lstData.append(dicSeries.get('path'))
+                        
+                        # itemRow = QTreeWidgetItem(lstData)
+                        itemRow = QTreeWidgetItem(self.treeDatabase)
+                        itemRow.setData(0, ROLE_PATIENT, keyPatient)
+                        itemRow.setData(0, ROLE_STUDY, keyStudy)
+                        itemRow.setData(0, ROLE_SERIES, keySeries)
+                        itemRow.setData(0, ROLE_PATH, dicSeries.get('path'))
+                        
+                        for i, text in enumerate(lstData):
+                            itemRow.setText(i, text)
+                        
+                        # for i in range(itemRow.columnCount()):
+                            font = itemRow.font(i)
+                            font.setPointSize(12)
+                            itemRow.setFont(i, font)
+                            if i < len(lstData) - 1:
+                                itemRow.setTextAlignment(i, Qt.AlignCenter)
+                        
+                        # self.treeDatabase.addTopLevelItem(itemRow)
+                        
+                        
+                        # change background-color
+                        # for i in range(len(row)):
+                        #     if i % 2 == 1:
+                        #         row[i].setData(QColor(0, 0, 255, 30), role = Qt.BackgroundRole)
+                        #     else:
+                        #         row[i].setData(QColor(0, 255, 255, 30), role = Qt.BackgroundRole)
+                        
+                        # model.appendRow(row)
+        
             
     def ImportDicom(self, path):
         self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
@@ -2068,7 +2033,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             return False
         
         if ENABLE_REGISTRATION:
-            self.signalLoadingImage.emit(1.0, 'Start Registration...')
+            # self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
                 self.signalShowMessage.emit('Registration Failed', MB_ERROR)
                 # MessageBox.ShowCritical('Registration Failed')
@@ -2581,6 +2546,35 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._Robot_driveTo()
             # self.stkScene.setCurrentWidget(self.pgImageView)
             
+    def OnClicked_btnImportDB(self):
+        self.btnImportDB.setEnabled(False)
+        self.btnCanceIImportDB.setEnabled(False)
+        try:
+            item = self.treeDatabase.currentItem()
+            path = item.data(0, ROLE_PATH)
+            if isinstance(path, str) and len(path) > 0:
+                pathObj = Path(path)
+                path = pathObj.parents[2]
+                path = os.path.join(path, Path(path).parts[-1] + '.ai')
+                
+                if os.path.exists(path):
+                    if not XFile.GetBootFileInfo(path):
+                        logger.error('database path error')
+                        return
+                    
+                    # self._ResumeFromShutdown()
+                    self.bResumeFinished = False
+                    tResume = threading.Thread(target = self._ResumeFromShutdown)
+                    tResume.start()
+                    while not self.bResumeFinished:
+                        QCoreApplication.processEvents()
+                        
+        except Exception as msg:
+            logger.error(msg)
+            
+        self.btnImportDB.setEnabled(True)
+        self.btnCanceIImportDB.setEnabled(True)
+            
     def OnClicked_btnJoystick(self):
         button = self.sender()
         if isinstance(button, QPushButton):
@@ -2709,7 +2703,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         #     button.setText(owner)
             
         DISPLAY.trajectory.setOwner(idx, owner)
-        self._SaveBootFile()
+        XFile.SaveBootFile(self.dicDicom)
         
     def OnClicked_btnMoveContinuous(self):
         btn = self.sender()
@@ -2742,8 +2736,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def OnRelease_btnPlatformBackward(self):
         self.robot.Platform_Left.MC_Stop()
     
-    
-    
             
     def OnItemClicked(self, item:QTreeWidgetItem, column):
         if column == 0:
@@ -2759,6 +2751,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
             self._CheckTrajectoryVisibleItem()
             self._SetTrajectoryVisible(idx, bVisible)
+            
+    def OnItemClicked_database(self, item:QTreeWidgetItem, column:int):
+        item = self.treeDatabase.currentItem()
+        self.btnImportDB.setEnabled(item is not None)
             
     def OnItemSelectionChanged_treeTrajectory(self, current:QTreeWidgetItem = None, prev:QTreeWidgetItem = None):
         column = self.treeTrajectory.currentColumn()
@@ -3225,6 +3221,26 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         retExhale = self._PreImportImage(TYPE_EXHALE)
         
         self.signalPreImportFinished.emit(retInhale, retExhale)
+        
+    def OnThread_ShowProgressDlg(self, content:str, signal:pyqtSignal, nParts:int = 1, prefix:str = ''):
+        tProgress = threading.Thread(
+            target = self.OnSignal_ShowProgressDlg, 
+            args = ({
+                    'content':content,
+                    'signal':signal,
+                    'nParts':nParts,
+                    'prefix':prefix
+            })
+        )
+        
+        tProgress.start()
+        # args = {
+        #         'content':content,
+        #         'signal':signal,
+        #         'nParts':nParts,
+        #         'prefix':prefix
+        #         }
+        # self.signalShowProgressDlg.emit(args) 
             
     def OnCurrentChange_tabWidget(self, index:int):
         if self.tabWidget.currentWidget() == self.tabGuidance:
@@ -3313,7 +3329,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             elif button == self.btnNext_scanCT_2:
                 if self.tCheckExhale:
                     self.tCheckExhale.stop()
-            elif button == self.btnFromUSB:
+            elif button == self.btnFromFS:
                 ## 開啟視窗選取資料夾 ############################################################################################
                 # self.logUI.info('Import Dicom inhale/_Low')
                 currentPath = os.path.join(os.getcwd(), 'database')
@@ -3329,12 +3345,17 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                     self.ImportDicom(filePath)
                     
+                    self.stkScene.setCurrentWidget(self.pgDicomList)
+                    return
                 else:
                     return
             elif button == self.btnFromDB:
                 self.bFromDatabase = True
                 currentPath = os.path.join(os.getcwd(), 'database')
-                self.ImportDicom(currentPath)
+                self.ImportDatabase()
+                
+                self.stkScene.setCurrentWidget(self.pgDatabaseList)
+                return
                 
         self.player.stop()
         index = self.stkScene.currentIndex()
@@ -3847,12 +3868,71 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 ret = MessageBox.ShowWarning(msg, *buttons)
             elif messageboxStyle == MB_QUESTION:
                 ret = MessageBox.ShowQuestion(msg, *buttons)
-            self.signalOnMessageReply.emit(ret)    
+            self.signalOnMessageReply.emit(ret)   
+            
+    def OnSignal_ShowProgressDlg(self, kwargs:dict):
+        with SystemProcessing.lock:
+        
+            content = kwargs.get('content', '')
+            signal = kwargs.get('signal', None)
+            nParts = kwargs.get('nParts', 1)
+            prefix = kwargs.get('prefix', '')
+            bReset = kwargs.get('bReset', True)
+            
+            logger.debug(f'progress dlg setting, content = {content}, part = {nParts}, reset = {bReset}')
+            if self.dlgSystemProcessing is not None and (content is None or content == ''):
+                self.dlgSystemProcessing.close()
+            else:
+                if bReset or (self.dlgSystemProcessing is None):
+                    self.dlgSystemProcessing = SystemProcessing(nParts, prefix)
+                    self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
+                    # if signal:
+                    #     if isinstance(signal, pyqtBoundSignal):
+                    #         signal.connect(self.dlgSystemProcessing.UpdateProgress)
+                    #     elif isinstance(signal, tuple):
+                    #         for _signal in signal:
+                    #             if isinstance(_signal, pyqtBoundSignal):
+                    #                 _signal.connect(self.dlgSystemProcessing.UpdateProgress)
+                if isinstance(signal, tuple):
+                    self.dlgSystemProcessing.ConnectSignals(*signal)
+                elif signal:
+                    self.dlgSystemProcessing.ConnectSignals(signal)
+                    
+                self.dlgSystemProcessing.label_Processing.setText(content)
+                self.dlgSystemProcessing.show()
             
                 
     def OnSignal_ProcessClose(self):
         self.dlgSystemProcessing = None
             
+    def OnSignal_ResumeImageFinished(self, bSucceed:bool):
+        if bSucceed:
+            dicom = list(self.dicDicom.values())
+            
+            lstItem = []
+            for i in range(DISPLAY.CountOfTrajectory()):
+                owner = DISPLAY.trajectory.getOwner(i)
+                
+                idx = int(owner == 'E') # I = 0, E = 1
+                # add to renderer
+                self._ModifyTrajectory(i, dicom[idx]['display'])
+                lstItem.append({'owner':owner})
+                    
+            self._AddTrajectoryTreeItems(lstItem)
+            if len(lstItem) > 0:
+                self.SetUIEnable_Trajectory(True)
+            # self._SaveBootFile()
+            
+            # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+            logger.debug('ready show fusion')
+            startTime = time.time()
+            self.ShowFusion()
+            self.stkScene.setCurrentWidget(self.pgImageView)
+            deltaTime = time.time() - startTime
+            logger.debug(f'show fusion finished, {deltaTime} s pass')
+        
+        self.bResumeFinished = True
+        self._EnabledUI_ImportDicom(True)
             
     def sti_LaserOutput(self):
         # if not hasattr(self, 'dataTmp'):
@@ -5694,8 +5774,8 @@ class DlgLogViewer(QDialog, Ui_DlgLogViewer):
         self.btnExport.clicked.connect(self.OnClicked_btnExport)
         self.btnExport.radius = 0
         
-        self.treeLogList.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.treeLogView.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.treeLogList.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.treeLogView.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         
         self.signalReadFinished.connect(self._Load)
         self.signalProgress.connect(self.btnExport.OnSignal_Percent)
@@ -6568,33 +6648,48 @@ class DlgRobotMoving(QDialog, FunctionLib_UI.Ui_DlgRobotMoving.Ui_DlgRobotMoving
         
         self.lblRobotMoving.setStyleSheet(strStyleSheet)
             
-class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
+# class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
+class SystemProcessing(QDialog, Ui_DlgProcessing):
     signalClose = pyqtSignal()
-    
+    lock = threading.Lock()
+    lstSignal:List[pyqtSignal] = []
     def __init__(self, nParts = 1, prefix:str = ''):
         """show loading window"""
         ## 顯示 loading 畫面 ############################################################################################
         self.nParts = max(nParts, 1)
-        self.nPartSize = 100 // self.nParts
+        self.nPartSize = np.round(100 / self.nParts, 6)
         self.idPart = 0
         self.prefix = prefix
+        self.totalProgress = 0.0
         super(SystemProcessing, self).__init__()
         self.setupUi(self)
+        SystemProcessing.lstSignal = []
         ############################################################################################
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        
+    def ConnectSignals(self, *signals:pyqtSignal):
+        for signal in signals:
+            if isinstance(signal, pyqtBoundSignal) and \
+                signal not in SystemProcessing.lstSignal:
+                    
+                SystemProcessing.lstSignal.append(signal)
+                signal.connect(self.UpdateProgress)
+            
     
     def UpdateProgress(self, value:float, content:str = ''):
-        progress = int(value * 100 // self.nParts)
-        progress += self.idPart * int(self.nPartSize)
-        self.pgbLoadDIcom.setValue(progress)
+        progress = np.round(value * 100 / self.nParts, 6)
+        progress += self.idPart * self.nPartSize
+        # logger.debug(f'value = {value:.6f}, progress = {progress:.6f}, part = {self.idPart} / {self.nParts}, {content}')
+        self.pgbLoadDIcom.setValue(int(progress))
             
         content = content.replace('\\', '/')
         self.lblContent.setText(self.prefix + content)
         if progress >= 100:
             self.signalClose.emit()
             self.close()
-        self.idPart = progress // self.nPartSize
+        self.idPart = int(np.round(progress, 6) / self.nPartSize)
+
         
 class DlgJoystick(QDialog, Ui_DlgJoysitck):
     ROBOT_UPPER = 1
@@ -6799,6 +6894,126 @@ class DlgResumeSupportArm(DlgFootPedal):
                         self.lblHintAxis2.setText('')
         
         self.lastValue = value
+        
+class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
+    ID_PITCH = 0
+    ID_ROLL = 1
+    ID_ALL = 2
+    
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+        self.dataPitch = None
+        self.dataRoll = None
+        self.dataMerge = None
+        
+        plt.rcParams['axes.prop_cycle'] = cycler(color=['y', 'g'])
+        # plt.rcParams['axes.unicode_minus'] = False
+        
+        fig = Figure(figsize=(2.5, 2.5), dpi=100) #创建画布,设置宽高，每英寸像素点数
+        fig.set_facecolor('#000000')
+        fig.subplots_adjust(wspace = 0.1, left = 0.05, right = 0.99)
+        
+        titleText = fig.suptitle('')
+        titleText.set_color('#C7C7C7')
+        titleText.set_fontsize(24)
+        self.titleText = titleText
+       
+        self.axePitch = fig.add_subplot(221)
+        self.axeRoll = fig.add_subplot(222)
+        self.axeAll = fig.add_subplot(212)
+        
+        self.axePitch.set_title('pitch').set_color('#C7C7C7')
+        self.axeRoll.set_title('roll').set_color('#C7C7C7')
+        self.axeAll.set_title('merge').set_color('#C7C7C7')
+        
+        self.lineData = []
+        self.linePercent = []
+        for axe in [self.axePitch, self.axeRoll, self.axeAll]:
+        
+            axe.set_facecolor('#000000')
+            axe.set_ylabel('Lung Volume (mL)')
+            
+            axe.spines['top'].set_color('#C7C7C7')
+            axe.spines['bottom'].set_color('#C7C7C7')
+            axe.spines['left'].set_color('#C7C7C7')
+            axe.spines['right'].set_color('#C7C7C7')
+            axe.tick_params(axis = 'x', colors = '#C7C7C7')
+            axe.tick_params(axis = 'y', colors = '#C7C7C7')
+        
+            lineData, linePercent = axe.plot([], [], [], [])
+            self.lineData.append(lineData)
+            self.linePercent.append(linePercent)
+        
+            axe.set_xlim([1,30])
+            axe.set_xlabel('time (second)')
+            
+            # axe.set_ylim([0, 20])
+        
+        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas.setParent(self)
+        
+        layout = QVBoxLayout(self.wdgDetector)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.canvas)
+        # FigureCanvasQTAgg.updateGeometry(self)
+        
+        self.idle = QTimer()
+        self.idle.timeout.connect(lambda:self.canvas.draw())
+        self.idle.start(100)
+        
+    def Draw(self, dataPitch:list, dataRoll:list, dataMerge:list):
+        
+        lenOfData = len(dataPitch)
+        self.axePitch.set_xlim(0, lenOfData + 30)
+        
+        minPitch = min(np.min(dataPitch), 0)
+        maxPitch = max(np.max(dataPitch), 10)
+        self.axePitch.set_ylim(minPitch, maxPitch)
+        self.lineData[self.ID_PITCH].set_data(range(lenOfData), dataPitch)
+        
+        self.axeRoll.set_xlim(0, lenOfData + 30)
+        
+        minRoll = min(np.min(dataRoll), 0)
+        maxRoll = max(np.max(dataRoll), 10)
+        self.axeRoll.set_ylim(minRoll, maxRoll)
+        self.lineData[self.ID_ROLL].set_data(range(lenOfData), dataRoll)
+        
+        
+        self.axeAll.set_xlim(0, lenOfData + 30)
+        
+        minMerge = min(np.min(dataMerge), 0)
+        maxMerge = max(np.max(dataMerge), 10)
+        self.axeAll.set_ylim(minMerge, maxMerge)
+        self.lineData[self.ID_ALL].set_data(range(lenOfData), dataMerge)
+        
+        self.dataPitch = dataPitch
+        self.dataRoll = dataRoll
+        
+        # self.canvas.draw()
+        
+    def DrawPercentLine(self, pitch:float, roll:float, mergeValue:float):
+        if self.dataPitch is None or self.dataRoll is None:
+            return
+        
+        dataLength = len(self.dataPitch)
+        data = [pitch] * dataLength
+        self.linePercent[self.ID_PITCH].set_data(range(dataLength), data)
+        
+        dataLength = len(self.dataRoll)
+        data = [roll] * dataLength
+        self.linePercent[self.ID_ROLL].set_data(range(dataLength), data)
+        
+        data = [mergeValue] * dataLength
+        self.linePercent[self.ID_ALL].set_data(range(dataLength), data)
+        
+        # self.canvas.draw()
+        
+    def UpdatePercent(self, pitch:float, roll:float, merge:float):
+        
+        self.titleText.set_text(f'pitch : {pitch:.2%}, roll : {roll:.2%}, merge : {merge:.2%}')
+        
             
 class WidgetArrow(QWidget):
     styleBlack = 'image:url(image/arrow-black.png)'

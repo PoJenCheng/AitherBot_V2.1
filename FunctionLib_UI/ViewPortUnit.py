@@ -469,6 +469,34 @@ class LogViewDelegate(QStyledItemDelegate):
             
             content_rect.setLeft(content_rect.left() + 3)
             painter.drawText(QRectF(content_rect), index.data(Qt.DisplayRole))
+            
+class TreeDatabaseDelegate(QStyledItemDelegate):
+    def __init__(self):
+        super().__init__()
+        
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        
+        super().paint(painter, option, index)
+        if index.data(Qt.UserRole + 1):
+            # treeWidget = index.model().parent()
+            # checkbox_rect = option.widget.style().subElementRect(QStyle.SE_ItemViewItemCheckIndicator, option, option.widget)
+            content_rect = option.widget.style().subElementRect(QStyle.SE_ItemViewItemText, option, option.widget)
+            
+            offset = content_rect.left()
+            
+            indent = index.data(Qt.UserRole + 3)
+            if indent:
+                offset += indent
+                
+            content_rect.setLeft(offset)
+            painter.save()
+            painter.fillRect(content_rect, QColor(255, 0, 0))
+            painter.restore()
+            painter.setPen(QColor(255, 255, 255))
+            option.palette.setBrush(QPalette.Text, QBrush(QColor(255, 0, 255)))
+            
+            content_rect.setLeft(content_rect.left() + 3)
+            painter.drawText(QRectF(content_rect), index.data(Qt.DisplayRole))
         
 # class SystemProcessing(QWidget, FunctionLib_UI.ui_processing.Ui_Form):
 #     def __init__(self, nParts = 1):

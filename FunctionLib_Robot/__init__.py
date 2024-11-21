@@ -92,6 +92,11 @@ BreathingCycle_Slope_Threshold = 0.5
 TIMEOVER_ROBOT = 60
 TIMEOVER_LASER = 5
 
+# DICOM / indicator type
+TYPE_INHALE = 0
+TYPE_EXHALE = 1
+TYPE_ROBOTARM = 2
+
 # enabled device setting, default is DEVICE_ALL
 DEVICE_NONE = 0
 DEVICE_ROBOT = 1
@@ -132,6 +137,12 @@ ROLE_GROUP      = Qt.UserRole + 4
 ROLE_TRAJECTORY = Qt.UserRole + 5
 ROLE_DROPITEM   = Qt.UserRole + 6
 ROLE_LOCK       = Qt.UserRole + 7
+
+# DICOM, DATABASE item data
+ROLE_PATIENT    = Qt.UserRole + 1
+ROLE_STUDY      = Qt.UserRole + 2
+ROLE_SERIES     = Qt.UserRole + 3
+ROLE_PATH       = Qt.UserRole + 4
 
 # MessageBox style
 MB_INFO = 0

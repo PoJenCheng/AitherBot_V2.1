@@ -11,9 +11,6 @@ from typing import *
 import numpy as np
 import threading
 
-TYPE_INHALE = 0
-TYPE_EXHALE = 1
-TYPE_ROBOTARM = 2
 
 def message_handler(mode, context, message):
     if "QDrag:" not in message:

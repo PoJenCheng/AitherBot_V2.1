@@ -6,6 +6,8 @@ import shutil
 import sys
 from datetime import datetime, timedelta
 from multiprocessing.sharedctypes import Value
+from xml.dom.minidom import parse
+import xml.dom.minidom as xdom
 
 # from keras.models import load_model
 import cv2
@@ -16,6 +18,7 @@ import pydicom.dataset
 import pydicom.tag
 import threading
 import vtkmodules.all as vtk
+from pydicom.datadict import tag_for_keyword
 from typing import Any, Dict
 from pydicom.dataset import Dataset, FileDataset
 from numpy._typing import _ArrayLike
@@ -139,6 +142,204 @@ class QSignalObject(QObject):
         
     def ConnectUpdateView(self, callbackFunc):
         self.signalUpdateView.connect(callbackFunc)
+        
+class XFile():
+    tempResumeData = {}
+    projectFilePath = 'temp.xml'
+    folderPath = {}
+    
+    def __init__(self):
+        pass
+        
+    def GetBootFileInfo(filePath:str = None, tagName:str = None):
+        try:
+            if filePath is None:
+                filePath = XFile.projectFilePath
+                
+            if os.path.exists(filePath):
+                dom = xdom.parse(filePath)
+                root = dom.documentElement
+                
+                data = XFile.GetNode(root, 'dicom')
+                if len(data) > 0:
+                    XFile.tempResumeData['path'] = data
+                    
+                    
+                dataTrajectory = XFile.GetNode(root, 'trajectory')
+                if len(dataTrajectory) > 0:
+                    XFile.tempResumeData['trajectory'] = dataTrajectory
+                
+                if tagName is not None:
+                    return dom.getElementsByTagName(tagName)[0].childNodes[0].nodeValue
+                
+                return True
+        except Exception as msg:
+            logger.critical(msg)
+            
+        return None
+        
+    def GetNode(dom:xdom.Element, tagName:str = None, data:list = None):
+        nodeList = []
+        dataList = []
+        if data is not None:
+            dataList = data
+            
+        if tagName is not None:
+            nodeList = dom.getElementsByTagName(tagName)
+        elif dom.nodeType == xdom.Node.ELEMENT_NODE:
+            nodeList = dom.childNodes
+        
+        dicData = {}
+        if dom.hasAttribute('owner'):
+            dicData['owner'] = dom.getAttribute('owner')
+            dataList.append(dicData)
+            
+        for node in nodeList:
+            
+            if node.nodeType == xdom.Node.TEXT_NODE:
+                if isinstance(node.nodeValue, str):
+                    nodeValue = node.nodeValue.strip()
+                    if nodeValue:
+                        dicData['text'] = nodeValue
+                        if dicData not in dataList:
+                            dataList.append(dicData)
+                        return dataList 
+            else:
+                XFile.GetNode(node, data = dataList)
+            
+        return dataList
+                
+    def ModifyTag(dicTag:dict, pathSaveAs:str = None):
+        """ 
+        因為當dom.writexml再次輸出後，為了保持原有的縮排格和換行，newl和addindent都設為空白
+        會使得root node緊接在document type node之後，太醜了…
+        所以才另外這樣改寫
+        """
+        if pathSaveAs is None:
+            pathSaveAs = XFile.projectFilePath
+            
+        if os.path.exists(pathSaveAs):
+            dom = xdom.parse(pathSaveAs)
+            for tag, tagValue in dicTag.items():
+                dom.getElementsByTagName(tag)[0].childNodes[0].nodeValue = tagValue
+            
+            # 將原本的root完整內容轉成文字，且保留原本縮排和換行不進行改變
+            root:xdom.Element = dom.documentElement
+            # 原本的root node text，最前方加上換行以保持美觀
+            root_text = '\n' + root.toprettyxml(indent = '', newl = '')
+            
+            # 開新的root，覆蓋掉原本的
+            dom = xdom.Document()
+            
+            try:
+                with open(pathSaveAs, 'w') as f:
+                    # 這裡的dom.xwritexml只有輸出document type node
+                    # 原本的root當成一般文字輸出
+                    dom.writexml(f, encoding = 'UTF-8')
+                    f.write(root_text)
+            except Exception as msg:
+                logger.critical(msg)
+                
+    def AppendTextNode(node:xdom.Element, value:str):
+        nLayer = 1
+        parent = node.parentNode
+        while parent and parent.nodeType == node.ELEMENT_NODE:
+            nLayer += 1
+            parent = parent.parentNode
+            
+            
+        indent = '\n' + '\t' * nLayer
+        indentEnd = '\n' + '\t' * (nLayer - 1)
+        value = indent + indent.join(value.split('\n')) + indentEnd
+        
+        textNode = xdom.Document().createTextNode(value)
+        node.appendChild(textNode)
+        
+                
+    def SaveBootFile(dicData:dict, filePath:str = None):
+            
+        dom = xdom.Document()
+        root = dom.createElement('root')
+        dom.appendChild(root)
+        
+        # save dicom path
+        # pathInhale = self.reader.GetSelectedDicomPath(0).replace('\\', '/')
+        # pathExhale = self.reader.GetSelectedDicomPath(1).replace('\\', '/')
+        dicom = list(dicData.values())
+        # pathInhale = dicom[0].get('path')
+        # pathExhale = dicom[1].get('path')
+        pathInhale = XFile.folderPath.get(TYPE_INHALE)
+        pathExhale = XFile.folderPath.get(TYPE_EXHALE)
+        logger.info(f'inhale dicom = {pathInhale}')
+        logger.info(f'exhale dicom = {pathExhale}')
+        
+        # save to xml node
+        inhaleNode = dom.createElement('inhale')
+        exhaleNode = dom.createElement('exhale')
+        
+        if None not in (pathInhale, pathExhale):
+            inhalePathNode = dom.createTextNode(pathInhale)
+            exhalePathNode = dom.createTextNode(pathExhale)
+            
+            inhaleNode.appendChild(inhalePathNode)
+            exhaleNode.appendChild(exhalePathNode)
+        
+        dicomNode = dom.createElement('dicom')
+        dicomNode.appendChild(inhaleNode)
+        dicomNode.appendChild(exhaleNode)
+        
+        root.appendChild(dicomNode)
+        
+        # registration result
+        dicomInhale = list(dicData.values())[0]
+        matrix = dicomInhale.get('matrix')
+        if matrix is not None:
+            logger.info(f'registration matrix = {matrix}')
+            
+            strMatrix = '\n'.join([','.join([f'{num:13.8f}' for num in row]) for row in matrix])
+            matrixNode = dom.createElement('matrix')
+            root.appendChild(matrixNode)
+            # 要取得正確的縮排層數，必須先將node加入到node tree
+            XFile.AppendTextNode(matrixNode, strMatrix)
+            
+            
+        # save trajectory (if exist)
+        strTrajectoryList = []
+        for i in range(DISPLAY.trajectory.count()):
+            entry = DISPLAY.trajectory[i][0]
+            target = DISPLAY.trajectory[i][1]
+            
+            logger.info(f'trajectory {i} entry : {entry}, target : {target}')
+            
+            text = ','.join([f'{num:.6f}' for num in np.append(entry, target)])
+            strTrajectoryList.append(text)
+            
+        # save to xml node
+        if len(strTrajectoryList) > 0:
+            trajectoryNode = dom.createElement('trajectory')
+            
+            for i, text in enumerate(strTrajectoryList, 1):
+                textNode = dom.createTextNode(text)
+                
+                numOfTrajectoryNode = dom.createElement(f'T{i}')
+                numOfTrajectoryNode.appendChild(textNode)
+                
+                owner = DISPLAY.trajectory.getOwner(i - 1)
+                if owner:
+                    numOfTrajectoryNode.setAttribute('owner', owner)
+                
+                trajectoryNode.appendChild(numOfTrajectoryNode)
+                
+            root.appendChild(trajectoryNode)
+            
+        try:  
+            if filePath is None:
+                filePath = XFile.projectFilePath
+                
+            with open(filePath, 'w', encoding = 'UTF-8') as f:
+                dom.writexml(f, indent = '', addindent = '\t', newl = '\n', encoding = 'UTF-8')
+        except Exception as msg:
+            logger.error(msg)
 
 "DICOM function"
 class DICOM(QObject):
@@ -249,7 +450,8 @@ class DICOM(QObject):
                 # metadataStudy.append(fileData.StudyInstanceUID)
                 metadataFileList.append(s)
                 count += 1
-                self.signalProcess.emit(np.round(count / totalFiles, 2), s)
+                # self.signalProcess.emit(np.round(count / totalFiles, 2), s)
+                self.signalProcess.emit(min(0.999999, count / totalFiles), f'scan {s}')
             except Exception as msg:
                 logger.error(msg)
         # if studyNumber.shape[0]>1 or len(metadataStudy)==0:
@@ -261,9 +463,11 @@ class DICOM(QObject):
         skipCount = 0
         skipRepeatCount = 0
         dicPatient = {}
+        progress = 0
         for fileData in metadata:
             if not hasattr(fileData, 'PatientID'):
                 skipCount += 1
+                totalFiles -= 1
                 continue
             
             elem = self.FindTag(fileData, (0x18, 0x50))
@@ -276,6 +480,7 @@ class DICOM(QObject):
                 elemSpacingXY = self.FindTag(fileData, (0x28, 0x30))
                 if elemSpacingXY is None:
                     skipCount += 1
+                    totalFiles -= 1
                     continue
             
             
@@ -303,6 +508,7 @@ class DICOM(QObject):
                     listID.append(sopID)
                 else:
                     skipRepeatCount += 1
+                    totalFiles -= 1
                     continue
             
             dicSeries['path'] = os.path.dirname(fileData.filename)
@@ -312,10 +518,16 @@ class DICOM(QObject):
             # dicPatient[pID][studyID][seriesID].append(fileData)
             dicSeries['data'].append(fileData)
             count += 1
-            self.signalProcess.emit(np.round(count / totalFiles, 2), fileData.filename)
+            # self.signalProcess.emit(np.round(count / totalFiles, 2), fileData.filename)
+            progress = count / totalFiles
+            self.signalProcess.emit(progress, fileData.filename)
         self.dicPatient = dicPatient
+        
+        if progress < 1:
+            self.signalProcess.emit(1.0, 'read dicom completed')
         logger.info(f'skip {skipCount} files')
         logger.info(f'found {skipRepeatCount} files repeated and skip')
+        
         
         #sort series
         # count = 0
@@ -491,7 +703,7 @@ class DICOM(QObject):
                                 
                     
                                 
-        self.signalProcess.emit(1.0, '')
+        # self.signalProcess.emit(1.0, '')
                         
                         # print(f'imagePosition = {slice.ImagePositionPatient}')
                     # for slice in slices:
@@ -536,6 +748,7 @@ class DICOM(QObject):
             signalMessageReply.connect(self.OnSignal_MessageboxReply)
             DICOM.__bConnected = True
             
+        # self.__Export(path, selectedID)
         tExport = threading.Thread(target = self.__Export, args = (path, selectedID))
         tExport.start()
         
@@ -545,9 +758,9 @@ class DICOM(QObject):
             try:
                 ret = None
                 arrImage = None
-                if selectedID < len(self.__cacheData):
-                    ret = list(self.__cacheData[selectedID].values())
-                    arrImage = self.__cacheData[selectedID]['image']
+                if selectedID < len(DICOM.__cacheData):
+                    ret = list(DICOM.__cacheData[selectedID].values())
+                    arrImage = DICOM.__cacheData[selectedID]['image']
                 else:
                     ret = self.GetData(index = selectedID)
                     if ret is None:
@@ -555,7 +768,7 @@ class DICOM(QObject):
                         return
                     arrImage = self.arrImage.astype(int)
                 
-                _, spacing, dimension, lstSeries = ret
+                _, spacing, dimension, lstSeries, *_ = ret
                 
                 if isinstance(lstSeries, list):
                     imagePosition = np.array([0, 0, 0], dtype = np.float64)
@@ -568,17 +781,27 @@ class DICOM(QObject):
                     shape = arrImage.shape
                     patientName = lstSeries[0].PatientName
                     patientID = lstSeries[0].PatientID
-                    studyUID = lstSeries[0].StudyInstanceUID
-                    seriesUID = lstSeries[0].SeriesInstanceUID
+                    # studyUID = lstSeries[0].StudyInstanceUID
+                    # seriesUID = lstSeries[0].SeriesInstanceUID
                     
-                    if hasattr(lstSeries[0], 'StudyID'):
-                        studyUID = str(lstSeries[0].StudyID)
+                    # if hasattr(lstSeries[0], 'StudyID'):
+                    #     studyUID = str(lstSeries[0].StudyID)
                         
-                    if hasattr(lstSeries[0], 'SeriesNumber'):
-                        seriesUID = str(lstSeries[0].SeriesNumber)
+                    # if hasattr(lstSeries[0], 'SeriesNumber'):
+                    #     seriesUID = str(lstSeries[0].SeriesNumber)
                     
-                    folderName = str(patientName) + '_' + patientID
-                    outPath = os.path.join(path, folderName, studyUID, seriesUID)
+                    # folderName = str(patientName) + '_' + patientID
+                    # projectFolder = os.path.join(path, patientID)
+                    # outPath = os.path.join(projectFolder, folderName, studyUID, seriesUID)
+                    
+                    # DICOM.__cacheData[selectedID]['path'] = outPath
+                    logger.debug('bf get project')
+                    projectFolder, outPath = self.GetProjectPath(
+                                                                    selectedID,
+                                                                    path,
+                                                                    lstSeries[0]
+                                                                )
+                    logger.debug('af get project')
                     
                     if not os.path.exists(outPath):
                         os.makedirs(outPath, exist_ok = True)
@@ -621,12 +844,44 @@ class DICOM(QObject):
                             ds.Rows = shape[1]
                             ds.Columns = shape[2]
                             ds.PixelData = arrImage[nSlice].astype('<i2').tobytes()
+                            # keyTag = tag_for_keyword('PatientID')
+                            # ds[keyTag].value = 'NAVI123'
                             
                             filePath = os.path.join(outPath, f'{nSlice:04}.dcm')
                             ds.save_as(filePath)
                             self.signalExport.emit((nSlice + 1) / fTotal, f'export {patientName}')
+                        
+                        
+                    XFile.projectFilePath = os.path.join(projectFolder, patientID + '.ai')
+                    XFile.folderPath[selectedID] = outPath
+                        
+                    # XFile.ModifyTag({strType:outPath})
             except Exception as msg:
                 logger.critical(msg)
+                
+    def GetProjectPath(
+        self, 
+        selectedID:int, 
+        basePath:str,
+        seriesData
+    ):
+        patientName = seriesData.PatientName
+        patientID = seriesData.PatientID
+        studyUID = seriesData.StudyInstanceUID
+        seriesUID = seriesData.SeriesInstanceUID
+        
+        if hasattr(seriesData, 'StudyID'):
+            studyUID = str(seriesData.StudyID)
+            
+        if hasattr(seriesData, 'SeriesNumber'):
+            seriesUID = str(seriesData.SeriesNumber)
+            
+        folderName = str(patientName) + '_' + patientID
+        projectFolder = os.path.join(basePath, patientID)
+        folderPath = os.path.join(projectFolder, folderName, studyUID, seriesUID)
+        
+        DICOM.__cacheData[selectedID]['path'] = folderPath
+        return projectFolder, folderPath
             
     def SaveAsSingleFrameDicom(self, ds:Dataset, frame_index:int, output_dir:str):
         try:
@@ -900,12 +1155,19 @@ class DICOM(QObject):
         
         imageData:vtk.vtkImageData = importer.GetOutput()
         # spacing_rotated = np.round(spacing_rotated, 6)
-        self.__cacheData[index] = {}
-        self.__cacheData[index].update({'image':self.arrImage.copy(),
+        DICOM.__cacheData[index] = {}
+        DICOM.__cacheData[index].update({'image':self.arrImage.copy(),
                                         'spacing':spacing,
                                         'dimension':dimension,
                                         'series':listSeries
                                         })
+        
+        _, folderPath = self.GetProjectPath(index, 
+                                            DATABASE_PATH, 
+                                            listSeries[0]
+                                            )
+        
+        XFile.folderPath[index] = folderPath
             
         
         return imageData, spacing, dimension, listSeries
@@ -2210,7 +2472,7 @@ class REGISTRATION(QObject):
         if not reference:
             return False, None
         else:
-            self.signalProgress.emit(1, 'compeleted reference classified')
+            self.signalProgress.emit(0.999999, 'compeleted reference classified')
             refs = np.concatenate(list(reference.values()), axis = 0)
             logger.debug(f'reference = \n{refs}')
             return True, reference

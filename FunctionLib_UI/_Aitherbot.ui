@@ -1485,7 +1485,7 @@ image:url(image/switch.png)</string>
 }</string>
           </property>
           <property name="currentIndex">
-           <number>13</number>
+           <number>14</number>
           </property>
           <widget class="QWidget" name="pgUnlockRobot">
            <layout class="QGridLayout" name="gridLayout_38" rowstretch="1,0" columnstretch="2,1">
@@ -3972,7 +3972,7 @@ QPushButton:disabled{
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="btnFromUSB">
+               <widget class="QPushButton" name="btnFromFS">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -4070,6 +4070,263 @@ BASE</string>
               </item>
               <item>
                <spacer name="horizontalSpacer_28">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="pgDatabaseList">
+           <property name="styleSheet">
+            <string notr="true">QHeaderView:section{
+	background-color: qlineargradient(x1: 0, y1: 1, x2: 1, y2: 0,
+                                 stop: 0 rgb(0, 0, 127), 
+								 /*stop: 0.2 rgb(0, 0, 127),*/
+								 stop: 1 rgb(112, 118, 139));
+	color:rgb(197, 255, 246);
+	font: 16px &quot;Arial&quot;;
+}
+
+
+
+QTreeWidget{
+	outline:0px;
+	background-color:#1E1C27;
+	color:#F4EDFF;
+	gridline-color: transparent;
+}
+
+QTreeWidget::item, QTreeWidget::branch{
+	background-color:#353534;
+	color:#F4EDFF;
+	height:100px;
+}
+
+QTreeWidget::item{
+	padding-left:7px;
+	padding-right:7px;
+	border-bottom:2px solid #fff;
+	border-top:4px solid #666;
+	border-right:1px solid #ccc;
+	border-left:2px solid #666;
+}
+
+QTreeWidget::item:selected, QTreeWidget::branch:selected{
+	/*background-color:rgb(88, 56, 100);*/
+	background-color:  qlineargradient(x0: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #353534, 
+								stop: 0.1 #353534, 
+								 stop: 0.5 lightblue,
+								/*stop: 0.7 lightblue,*/
+								stop: 0.9 #353534, 
+								 stop: 1 #353534);
+	color:#666;
+}
+
+QTreeWidget::item:selected:alternate, QTreeWidget::branch:selected:alternate{
+	/*background-color:rgb(88, 56, 100);*/
+	background-color:  qlineargradient(x0: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #323864, 
+								stop: 0.1 #323864, 
+								 stop: 0.5 lightblue,
+								/*stop: 0.7 lightblue,*/
+								stop: 0.9 #323864, 
+								 stop: 1 #323864);
+	color:#666;
+}
+
+QTreeWidget::item:!selected, QTreeWidget::branch:!selected{ 
+        background-color: #353534; 
+}
+
+QTreeWidget::item:!selected:alternate, QTreeWidget::branch:!selected:alternate{
+    background-color: #323864;
+}</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_56">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QTreeWidget" name="treeDatabase">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="rootIsDecorated">
+               <bool>false</bool>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>false</bool>
+              </property>
+              <column>
+               <property name="text">
+                <string>Patient Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Patient ID</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Modality</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Dimension</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Voxel Size</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Acqusition Date</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Path</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <layout class="QHBoxLayout" name="horizontalLayout_48">
+              <item>
+               <spacer name="horizontalSpacer_36">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnCanceIImportDB">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>324</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>324</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}</string>
+                </property>
+                <property name="text">
+                 <string>Cancel</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnImportDB">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>324</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+font: 48pt &quot;Arial&quot;;
+color:#666666;
+border-radius:24px;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 155, 155, 255), stop:0.2 rgba(88, 239, 255, 255), stop:0.5 rgba(88, 239, 255, 255), stop:0.75 rgba(0, 200, 200, 255),  stop:1 rgba(0, 155, 155, 255));
+padding: 0px 20px;
+margin-bottom:5px;
+margin-right:3px;
+}
+
+QPushButton:hover{
+color:#aa3333;
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 155, 155, 255), stop:0.2 rgba(150, 239, 255, 255), stop:0.5 rgba(150, 239, 255, 255), stop:0.75 rgba(50, 200, 200, 255),  stop:1 rgba(50, 155, 155, 255));
+}
+
+QPushButton:pressed{
+margin-top:5px;
+margin-bottom:0px;
+margin-left:3px;
+margin-right:0px;
+}
+
+QPushButton:disabled{
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(155, 155, 155, 255), stop:0.2 rgba(239, 239, 239, 255), stop:0.5 rgba(239, 239, 239, 255), stop:0.75 rgba(200, 200, 200, 255),  stop:1 rgba(155, 155, 155, 255));
+}</string>
+                </property>
+                <property name="text">
+                 <string>Confirm</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_48">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -9031,7 +9288,7 @@ font: 20px &quot;Arial&quot;;</string>
    </hints>
   </connection>
   <connection>
-   <sender>btnFromUSB</sender>
+   <sender>btnFromFS</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>NextScene()</slot>
@@ -9165,11 +9422,11 @@ font: 20px &quot;Arial&quot;;</string>
   <slot>NextSceneMain()</slot>
  </slots>
  <buttongroups>
+  <buttongroup name="btnGroup_tool"/>
+  <buttongroup name="btnGroup_ref"/>
   <buttongroup name="buttonGroup"/>
   <buttongroup name="btnGroup_fusion"/>
-  <buttongroup name="btnGroup_ref"/>
-  <buttongroup name="btnGroup_tool"/>
-  <buttongroup name="btgDicom"/>
   <buttongroup name="btnGroup_Lung"/>
+  <buttongroup name="btgDicom"/>
  </buttongroups>
 </ui>
