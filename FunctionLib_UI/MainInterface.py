@@ -2460,6 +2460,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicomLow.rendererSagittal.SetTargetVisible(True)
         self.dicomLow.rendererCoronal.SetTargetVisible(True)
         self.ShowDicom()
+        translateBackInfo = self.robot.Translate_RobotBase_PlatformBase()
+        self.w1 = translateBackInfo[0]
+        self.alpha = translateBackInfo[1]
         
     def OnClicked_btnSetEntry(self):
         self._SetupTrajectoryPoint(POINT_ENTRY)
@@ -4139,7 +4142,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.bTrackingBreathing = False
         try:
             self.robot.RealTimeTracking(self.breathingPercentage)
-            self.robot.MoveToPoint()
+            self.robot.MoveToPoint(self.w1,self.alpha)
         except:
             logger.error("Robot Compensation error")
         # else:
@@ -4175,14 +4178,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         tHoming.start()
         
                 
-    def Robot_OnThreadHomingProcess(self):
-        self.robot.ForwardKinamatic()
+    def Robot_OnThreadHomingProcess(self):        
         if self.robot.bConnected == True:
             if self.robot.HomeProcessing_image() == True:
                 print("Home processing is done!")
                 # QMessageBox.information(self, "information", "Home processing is done!")
-                self.homeStatus = True
-            
+                self.homeStatus = True            
                 
         
     def Robot_OnSignalFootPedal(self, bPress:bool):
@@ -4214,12 +4215,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         if self.dlgResumeSupportArm is not None:
             self.dlgResumeSupportArm.SetPress(bPress)
+        
             
     def Robot_OnSignalTargetArrived(self):
         if self.dlgResumeSupportArm is not None:
             self.dlgResumeSupportArm.accept()
             
         self.OnClicked_btnDriveConfirm()
+        # [robotBase_position,angle] = self.robot.InverseKinamatic()
+        # print(robotBase_position)
+        # print(angle)
         
     def Robot_OnSignalAxisValue(self, nAxisIndex:int, diffValue:float):
         greenZoneColor = QColor(0, 255, 0)
@@ -4257,7 +4262,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if self.homeStatus is True:
             reach = self.robot.reachable_check(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
             if reach == True:
-                self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1])
+                self.robot.P2P(pathInhale[0], pathInhale[1], pathExhale[0], pathExhale[1],self.w1,self.alpha)
                 print("Robot run processing is done!")
                 # QMessageBox.information(self, "information", "Robot run processing is done!")
             

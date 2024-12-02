@@ -37,8 +37,8 @@ shiftingFLDC_up = -20.5893
 shiftingBLDC_Up = -52.85
 shiftingFLDC_Down = -26.0881
 shiftingBLDC_Down = -52.85
-shiftingPlatform_Left_back = -146.3998
-shiftingPlatform_Left_forward = 200
+shiftingPlatform_Left_back = -50
+shiftingPlatform_Left_forward = 60
 # robotShifting = np.array([70, -11.5, 205])
 
 robotInitialLength = 132.253 #132.93 #110.38  #128.38
@@ -73,6 +73,10 @@ diff_rotateMotion = 18
 "Joystick speed setting"
 linearSpeed = 2
 rotateSpeed = 2
+
+"roobt support arm link length"
+length1 = 180
+length2 = 190
 
 laserStartPoint = 100 # the start point to measure
 laserEndPoint = 550 # measure laser point to the end point
