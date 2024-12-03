@@ -8,6 +8,7 @@ import winsound
 import serial
 import cv2
 import pygame
+import math
 import threading
 # import random
 # import atexit
@@ -1742,8 +1743,21 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         
         return breathingFull_entry, breathingFull_target
 
-    def MoveToPoint(self):
+    def MoveToPoint(self,w1,alpha):
         reachTarget = False
+        print(f"entry point {self.entryPoint}")
+        print(f"target point {self.targetPoint}")
+        w2,beta = self.Translate_RobotBase_PlatformBase()
+        new_entryPoint = self.Translate_PlatformBase_Robotbase(w1,w2,alpha,beta,self.entryPoint)
+        entryPoint_Z = float(self.entryPoint[2])
+        self.entryPoint = new_entryPoint.flatten().tolist()
+        self.entryPoint.append(entryPoint_Z)
+        new_targetPoint = self.Translate_PlatformBase_Robotbase(w1,w2,alpha,beta,self.targetPoint)
+        targetPoint_Z = float(self.targetPoint[2])
+        self.targetPoint = new_targetPoint.flatten().tolist()
+        self.targetPoint.append(targetPoint_Z)
+        print(f"new entry point {self.entryPoint}")
+        print(f"new target point {self.targetPoint}")
         while reachTarget == False:
             Release = self.plc.read_by_name(self.SupportMove)
             Release = True
@@ -1892,7 +1906,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         return reachable
             
                
-    def P2P(self,entry_full, target_full, entry_halt, target_halt):
+    def P2P(self,entry_full, target_full, entry_halt, target_halt,w1,alpha):
         "obtain entry point and target point"
         self.currentPath = [entry_full, target_full, entry_halt, target_halt]
         self.movingPoint = self.CapturePoint(entry_full, target_full, entry_halt, target_halt)
@@ -1900,7 +1914,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.targetPoint = self.movingPoint[1] # from robot to target point
         print(self.entryPoint,self.targetPoint)
         # self.absolutePosition()
-        self.MoveToPoint()
+        self.MoveToPoint(w1,alpha)
         
     def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray):
         # x, y, z map to z, x, y(robot base) coordinate
@@ -2286,15 +2300,38 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
     def Joystick_Stop(self):
         self.bStopJoystick = True
         
-    def ForwardKinamatic(self): #obtain postion from platform base
+    def Translate_RobotBase_PlatformBase(self): #obtain postion from robot base to platform base
+        # read platform position
         # obtain theta1 and theta2 from linkage of robot support arm
+        initPos_joint1 = 191161
+        initPos_joint2 = 207685
         En1 = self.plc.read_by_name(self.RobotArmEn1)
         En2 = self.plc.read_by_name(self.RobotArmEn2)
-        theta1 = (2*math.pi)*En1/262144
-        theta2 = (2*math.pi)*En2/262144
+        theta1 = (2*math.pi)*(En1 - initPos_joint1)/262144
+        theta2 = (2*math.pi)*(initPos_joint2 - En2)/262144
         print(theta1,theta2)
-        # matrixA = np.array([[math.cos]])
+        matrixA = np.array([[math.cos(theta1), math.cos(theta1+theta2)],[math.sin(theta1), math.sin(theta1+theta2)]])
+        matrix_Link = np.array([length1,length2]).reshape(2,1)
+        platformToPoint = np.dot(matrixA,matrix_Link)
+        angle = theta1+theta2
+        print(f"platformToPoint {platformToPoint}")
+        print(f"angle {angle}")
+        return platformToPoint, angle
         
+    def Translate_PlatformBase_Robotbase(self,w1,w2,alpha,beta,dicomPoint):
+        dicom_Px = dicomPoint[0]
+        dicom_Py = dicomPoint[1]
+        platformPosition = self.Platform_Left.ReadActualPosition()
+        print(f"platform position {platformPosition}")
+        platformMove = np.array([0, platformPosition]).reshape(2,1)
+        dicomPoint = np.array([dicom_Px,dicom_Py]).reshape(2,1)
+        transformMatrixA = np.array([[math.cos(alpha), -1*math.sin(alpha)],[math.sin(alpha), math.cos(alpha)]])
+        baseToPoint = w1 + np.dot(transformMatrixA,dicomPoint) - platformMove
+        transformMatrixB = np.array([[math.cos(beta), math.sin(beta)],[-1*math.sin(beta), math.cos(beta)]])
+        matrixB = baseToPoint - w2
+        X2Y2ToPoint = np.dot(transformMatrixB,matrixB)
+        print(X2Y2ToPoint)
+        return X2Y2ToPoint       
                
 class LineLaser(MOTORCONTROL, QObject):
     signalInitFailed = pyqtSignal(int)
