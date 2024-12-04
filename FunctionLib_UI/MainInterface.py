@@ -7,6 +7,8 @@ import sys
 import shutil
 import threading
 import time
+import traceback
+import gc
 from pathlib import Path
 from datetime import datetime, timedelta
 from functools import reduce
@@ -61,6 +63,8 @@ import FunctionLib_Vision.lungSegmentation as lung
 
 mpl.use('QT5Agg')
 # nest_asyncio.apply()
+vtk.vtkObject.GlobalWarningDisplayOn()
+vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_INFO)
 
 STAGE_ROBOT = 'ST_ROBOT'
 STAGE_LASER = 'ST_LASER'
@@ -178,6 +182,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # t.start()
         
         # self.dlg.exec_()
+
         
         self.language = lang
         self.setupUi(self)
@@ -476,7 +481,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.btnImportDB.clicked.connect(self.OnClicked_btnImportDB)
         
         for combobox in self.dicViewSelector_L.values():
-            combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
+            # combobox.currentIndexChanged['QString'].connect(self.OnChangeIndex_ViewSelect)
+            combobox.currentTextChanged.connect(self.OnChangeIndex_ViewSelect)
             
         model = QStandardItemModel()
         stringList = ['patient name', 'patient ID', 'sex', 'Modality', 'dim', 'voxel size','acqusition date', 'path']
@@ -716,7 +722,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.CloseView()
             
             try:
-                os.remove('temp.xml')
+                os.remove(TEMP_FILENAME)
             except FileNotFoundError:
                 pass
             # self._XmlModifyTag('status', '0')
@@ -806,7 +812,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         try:
             # 注意！這裡的regMatrix是改變座標系，而不會改變點在原世界座標系中的位置
-            # 如需要進行真實的位置變換，regMatrix需要進行轉置(transpose)
+            # 如需要進行真實的位置變換，regMatrix需要進行轉置(單位正交矩陣transpose = inverse)
             
             # 計算exhale原點偏移量translate
             mat_translate = np.identity(4)
@@ -913,10 +919,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self._EnabledUI_ImportDicom(False)
                 
                 self.bResumeFinished = False
-                tResume = threading.Thread(target = self._ResumeFromShutdown)
+                tResume = threading.Thread(target = self._ResumeFromSave, args = ('Resume from shutdown...',))
                 tResume.start()
                 while not self.bResumeFinished:
-                    QCoreApplication.processEvents()
+                    # QCoreApplication.processEvents()
+                    pass
                 
         return True
     
@@ -1047,13 +1054,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         index:int, 
         dicom:DISPLAY
     ):
+        # 創建實體vtk線段
         dicom.CreateLine(index)
-        # trajectory = dicom.trajectory[index]
+        
         trajectory = DISPLAY.trajectory[index]
         
         if trajectory is not None:
             entry, target = trajectory
-            
+            # 更新trajectory slider的範圍
             length = np.linalg.norm(np.array(entry) - np.array(target))
             self.sldTrajectory.setMinimum(0)
             self.sldTrajectory.setSingleStep(1)
@@ -1065,18 +1073,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.currentTag['trajectory'] = trajectory
             # if dicom == self.dicomLow:
             
-            for view in self.viewport_L.values():
-                if view.orientation == VIEW_CROSS_SECTION:
-                    view.uiScrollSlice.setMaximum(int(length))
-                    view.uiScrollSlice.setValue(0)
-                elif view.orientation == VIEW_ALONG_TRAJECTORY:
-                    view.uiScrollSlice.setMaximum(360)
-            
-            # else:
-            #     for view in self.viewport_H.values():
-            #         length = np.linalg.norm(np.array(entry) - np.array(target))
-            #         if view.orientation == VIEW_CROSS_SECTION:
-            #             view.uiScrollSlice.setMaximum(length)
+            # 根據view的屬性，更新view scorll的範圍
+            if self.viewport_L:
+                for view in self.viewport_L.values():
+                    if view.orientation == VIEW_CROSS_SECTION:
+                        view.uiScrollSlice.setMaximum(int(length))
+                        view.uiScrollSlice.setValue(0)
+                    elif view.orientation == VIEW_ALONG_TRAJECTORY:
+                        view.uiScrollSlice.setMaximum(360)
         
     def _PlayVedio(self, widget:QWidget, filePath:str):
         
@@ -1123,17 +1127,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalLoadingImage.emit(0.0, 'Start Loading image...')
         
         if None not in (idxPatient, idxStudy, idxSeries):
-            retData = self.reader.GetDataFromIndex(idxPatient, idxStudy, idxSeries)
+            retData = self.reader.GetDataFromIndex(nType, idxPatient, idxStudy, idxSeries)
             path = list(self.dicDicom.values())[nType]['path']
         else:
-            retData = self.reader.GetData(index = nType)
+            retData = self.reader.GetData(nType, index = nType)
             path = self.reader.GetSelectedDicomPath(nType).replace('\\', '/')
             
         if not self.bFromDatabase and not bResume:
             # self.signalStartExport.emit(nType)
-            self.reader.SetThreadExport(DATABASE_PATH, nType, self.OnSignal_ShowMessage, self.signalOnMessageReply)
-        else:
-            XFile.folderPath = {}
+            self.reader.SetThreadExport(DATABASE_PATH, 
+                                        nType, 
+                                        self.OnSignal_ShowMessage, 
+                                        self.signalOnMessageReply, 
+                                        self.OnSignal_ExportFinished)
             
         if retData is None:
             logger.error(f'load inhale dicom failed')
@@ -1160,16 +1166,23 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.signalShowProgressDlg.emit({'content':'Import Dicom...', 
                                          'signal':self.signalLoadingImage, 
                                          'nParts':2})
-        
-        if not self.ImportDicom_L(retInhale):
-            return
-        
-        if not self.ImportDicom_H(retExhale):
-            return
+        try:
+            if not self.ImportDicom_L(retInhale):
+                return
+            
+            if not self.ImportDicom_H(retExhale):
+                return
+            
+        except Exception as msg:
+            logger.error(msg)
+            traceback.print_exc()
         
         XFile.SaveBootFile(self.dicDicom)
         
+        
         self.signalImportDicomFinished.emit()
+        
+        logger.debug('import dicom finished')
         
     def _RemoveTrajectoryItem(self):
         ret = self._GetCurrentTrajectory(TRAJECTORY_CURRENT)
@@ -1213,6 +1226,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         try:
             ## 自動找球心 + 辨識定位球位置 ############################################################################################
             # flag, answer = self.regFn.GetBallAuto(image, spacing, series)
+            gc.collect()
             flag, answer = self.regFn.GetBallAuto2(image, spacing)
             
             ############################################################################################
@@ -1267,9 +1281,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             else:
                 logger.debug(f'Error: [{strKey}] = {index}')
                 
-    def _ResumeFromShutdown(self):
-        # 執行homing process
-        
+    def _ResumeFromSave(self, strProgressMsg:str):
+    
         # resume lost data
         if len(XFile.tempResumeData) == 0:
             logger.error(f'no available resume data')
@@ -1278,9 +1291,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             
         try:
             dicom = list(self.dicDicom.values())
-            pathData = XFile.tempResumeData['path']
-            dicom[0]['path'] = pathData[0]['text']
-            dicom[1]['path'] = pathData[1]['text']
+            # pathData = XFile.tempResumeData['path']
+            # dicom[0]['path'] = pathData[0]['text']
+            # dicom[1]['path'] = pathData[1]['text']
+            dicom[TYPE_INHALE]['path'] = XFile.GetDicomPath(TYPE_INHALE)
+            dicom[TYPE_EXHALE]['path'] = XFile.GetDicomPath(TYPE_EXHALE)
                     
             dataTrajectory = XFile.tempResumeData.get('trajectory')
             
@@ -1304,7 +1319,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.reader = DICOM()
             
             self.signalShowProgressDlg.emit({
-                'content':'Resume from shutdown...',
+                'content':strProgressMsg,
                 'signal':(self.reader.signalProcess, 
                           self.signalLoadingImage, 
                           self.regFn.signalProgress),
@@ -1322,10 +1337,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.signalShowProgressDlg.emit({'content':'Registing Robot Position...', 
             #                          'signal':self.regFn.signalProgress})
             
-            if not self.ImportDicom_L(retInhale):
+            regBallInhale = XFile.tempResumeData.get('regBallInhale')
+            regMatrixInhale = XFile.tempResumeData.get('regMatrixInhale')
+            if not self.ImportDicom_L(retInhale, regBallInhale, regMatrixInhale):
+            # if not self.ImportDicom_L(retInhale):
                 self.signalResumeImageFinished.emit(False)
                 return
-            
             
             self.reader.LoadPath(pathExhale)
             retExhale = self._PreImportImage(TYPE_EXHALE, 0, 0, 0, True)
@@ -1336,10 +1353,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 self.signalResumeImageFinished.emit(False)
                 return
             
-            if not self.ImportDicom_H(retExhale):
+            regBallExhale = XFile.tempResumeData.get('regBallExhale')
+            regMatrixExhale = XFile.tempResumeData.get('regMatrixExhale')
+            
+            if not self.ImportDicom_H(retExhale, regBallExhale, regMatrixExhale):
+            # if not self.ImportDicom_H(retExhale):
                 self.signalResumeImageFinished.emit(False)
                 return
-            
             
             self.signalResumeImageFinished.emit(True)
             logger.debug('resume finished')
@@ -1362,6 +1382,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # self.stkScene.setCurrentWidget(self.pgImageView)
         except Exception as msg:
             logger.critical(msg)
+            traceback.print_exc()
             self.bResumeFinished = True
             return False
         
@@ -1708,10 +1729,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         return self.viewport_L
     
     def ImportDatabase(self):
-        self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
-        self.dlgSystemProcessing.signalClose.connect(self.OnSignal_ProcessClose)
-        self.dlgSystemProcessing.show()
-        QApplication.processEvents()
         
         # search for project file
         projectFiles = []
@@ -1720,12 +1737,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 extName = Path(f).suffix[1:]
                 if extName == 'ai':
                     projectFiles.append(os.path.join(dirPath, f))
+                    
+        if len(projectFiles) == 0:
+            self.signalShowMessage.emit('No dicom found in database', MB_INFO)
+            return False
         
                  
         self.reader = DICOM()
-        self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
-        self.reader.signalExport.connect(self.OnSignal_ExportProgress)
+        self._SetProgress('Import from database', self.reader.signalProcess, prefix = 'from')
+        self.reader.signalExportProgress.connect(self.OnSignal_ExportProgress)
         self.treeDatabase.clear()
+        # 讓進度條可以平行處理
+        QCoreApplication.processEvents()
         
         for file in projectFiles:
             inhalePath = XFile.GetBootFileInfo(file, 'inhale')
@@ -1815,7 +1838,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         #         row[i].setData(QColor(0, 255, 255, 30), role = Qt.BackgroundRole)
                         
                         # model.appendRow(row)
-        
+        return True
             
     def ImportDicom(self, path):
         self.dlgSystemProcessing = SystemProcessing(prefix = 'from')
@@ -1825,7 +1848,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         
         self.reader = DICOM()
         self.reader.signalProcess.connect(self.dlgSystemProcessing.UpdateProgress)
-        self.reader.signalExport.connect(self.OnSignal_ExportProgress)
+        self.reader.signalExportProgress.connect(self.OnSignal_ExportProgress)
         dicom = self.reader.LoadPath(path)
         
         model = QStandardItemModel()
@@ -1955,7 +1978,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                   
     def ImportDicom_L(
         self, 
-        dicData:dict
+        dicData:dict,
+        regBall:np.ndarray = None,
+        regMatrix:np.ndarray = None
     ):
         """load inhale (Low breath) DICOM to get image array and metadata
         """
@@ -1969,6 +1994,8 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.vtkImageLow = dicData.get('vtkImage')
         dimension = dicData.get('dimension')
         spacing = dicData.get('spacing')
+        
+        logger.debug(f'image shape = {self.imageL.shape}\n')
         
         if self.vtkImageLow is None:
             # QMessageBox.critical(None, 'ERROR', 'image error')
@@ -1989,7 +2016,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             # MessageBox.ShowCritical('missing current tag [LOW]')
             return False
             
-        if ENABLE_REGISTRATION:
+        if regBall is not None and regMatrix is not None:
+            self.currentTag.update({'regBall' : regBall, 'regMatrix' : regMatrix})
+        elif ENABLE_REGISTRATION:
             if not self.SetRegistration_L():
                 self.signalShowMessage.emit('Registration Failed', MB_ERROR)
                 # MessageBox.ShowCritical('Registration Failed')
@@ -2005,7 +2034,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     
     def ImportDicom_H(
         self, 
-        dicData:dict
+        dicData:dict,
+        regBall:np.ndarray = None,
+        regMatrix:np.ndarray = None
     ):
         
         if any(data is None for data in dicData.values()):
@@ -2032,7 +2063,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.error('DICOM TAG ERROR', 'missing current tag [HIGH]')
             return False
         
-        if ENABLE_REGISTRATION:
+        if regBall is not None and regMatrix is not None:
+            self.currentTag.update({'regBall':regBall, 'regMatrix':regMatrix})
+        elif ENABLE_REGISTRATION:
             # self.signalLoadingImage.emit(1.0, 'Start Registration...')
             if not self.SetRegistration_H():
                 self.signalShowMessage.emit('Registration Failed', MB_ERROR)
@@ -2108,6 +2141,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.viewport_L["Fusion3"] = ViewPortUnit(self, self.dicomLow, self.wdgFusionView3, lstOrientation[2], self.sbrFusion3)
         MainInterface.viewport = self.viewport_L
         
+        self.dicomLow.rendererAxial.DebugOn()
+        self.dicomLow.rendererSagittal.DebugOn()
+        self.dicomLow.rendererCoronal.DebugOn()
+        
         # self.syncInteractorStyle = SynchronInteractorStyle(self.viewport_L)
         self.currentRenderer = self.viewport_L['Fusion1'].renderer
         
@@ -2133,10 +2170,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             interactorWipe.signalUpdate.ConnectUpdateView(self.UpdateTarget)
             self.lstInteractorWipe.append(interactorWipe)
         
-        balls = list(self.dicDicom.values())[0].get('candidateBallVTK')
-        if balls:
-            reference = np.array(*list(balls.values()))
-            self.currentRenderer.SetTarget(reference[0][:3])
+        # balls = list(self.dicDicom.values())[0].get('candidateBallVTK')
+        balls = list(self.dicDicom.values())[0].get('regBall')
+        if balls is not None:
+            # reference = np.array(*list(balls.values()))
+            self.currentRenderer.SetTarget(balls[0][:3])
             
         # add toolbox widget to Views
         views = [self.wdgFusionView1, self.wdgFusionView2, self.wdgFusionView3]
@@ -2292,7 +2330,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
     def UpdateView(self):
         viewport = self.GetViewPort()
         for view in viewport.values():
-            view.iren.Render()
+            view.iren.Initialize()
+            view.iren.Start()
+            # view.iren.Render()
         
         if self.currentTag is not None:
             wl = self.currentTag.get('wl')
@@ -2475,7 +2515,12 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         ret = MessageBox.ShowWarning('This action will be import and replace existed dicom.\nconfirm that to press YES', 'YES', 'NO')
         if ret == 0:
             self.SetStage(STAGE_DICOM)
-        # self.stkScene.setCurrentWidget(self.pgImportDicom)
+            self.treeTrajectory.ClearItems()
+            DISPLAY.ClearTrajectory()
+            InteractorStyleWipe.ResetGlobal()
+        self.stkScene.setCurrentWidget(self.pgImportDicom)
+        
+        self.UpdateView()
         
     def OnClicked_btnDriveConfirm(self):
         
@@ -2557,14 +2602,16 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 path = pathObj.parents[2]
                 path = os.path.join(path, Path(path).parts[-1] + '.ai')
                 
+                logger.debug(f'project file = {path}')
+                
                 if os.path.exists(path):
                     if not XFile.GetBootFileInfo(path):
                         logger.error('database path error')
                         return
                     
-                    # self._ResumeFromShutdown()
+                    # self._ResumeFromSave('Loading project...')
                     self.bResumeFinished = False
-                    tResume = threading.Thread(target = self._ResumeFromShutdown)
+                    tResume = threading.Thread(target = self._ResumeFromSave, args = ('Loading project...', ))
                     tResume.start()
                     while not self.bResumeFinished:
                         QCoreApplication.processEvents()
@@ -2935,16 +2982,18 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     if bExist == True:
                         view.Swap(existView)
                     else:
-                        currentDicom = self.currentTag.get('display')
-                        if currentDicom is not None:
-                            view.SetViewPort(viewName, currentDicom.rendererList[viewName])
-                            view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
-                        else:
-                            MessageBox.ShowCritical('missing current dicom')
-                        
-                        iStyle = MyInteractorStyle(self, viewName)
-                        # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
-                        iStyle.signalObject.ConnectGetRenderer(self.GetCurrentRendererCallback)
+                        for tag in self.dicDicom.values():
+                            # currentDicom = self.currentTag.get('display')
+                            currentDicom = tag.get('display')
+                            if currentDicom is not None:
+                                view.SetViewPort(viewName, currentDicom.rendererList[viewName])
+                                view.signalChangedTrajPosition.connect(self.ChangeTrajectorySlider)
+                            else:
+                                MessageBox.ShowCritical('missing current dicom')
+                            
+                            iStyle = MyInteractorStyle(self, viewName)
+                            # iStyle.signalObject.ConnectUpdateHU(self.UpdateHU_L)
+                            iStyle.signalObject.ConnectGetRenderer(self.GetCurrentRendererCallback)
                         
                         # slider = self.dicSliceScroll_L['RT']
                         # rangeSlider = [slider.minimum(), slider.maximum(), slider.singleStep()]
@@ -3176,12 +3225,13 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                         
     def OnToggled_btnGroup_ref(self, button:QAbstractButton, bChecked:bool):
         if bChecked:
-            balls = self.currentTag.get('candidateBallVTK')
-            if balls:
-                reference = np.array(*list(balls.values()))
+            # balls = self.currentTag.get('candidateBallVTK')
+            balls = self.currentTag.get('regBall')
+            if balls is not None:
+                # reference = np.array(*list(balls.values()))
                 renderer = self.viewport_L['LT'].renderer
                 idx = self.btnGroup_ref.id(button)
-                renderer.SetTarget(reference[idx][:3])
+                renderer.SetTarget(balls[idx][:3])
             
             self.UpdateTarget()
             self.UpdateView()
@@ -3342,19 +3392,19 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 if dlg.exec_():
                     filePath = dlg.selectedFiles()[0]
                     self.bFromDatabase = 'database' in filePath
-                    
-                    self.ImportDicom(filePath)
-                    
-                    self.stkScene.setCurrentWidget(self.pgDicomList)
-                    return
-                else:
-                    return
+                    if self.bFromDatabase:
+                        if self.ImportDatabase():
+                            self.stkScene.setCurrentWidget(self.pgDatabaseList)
+                    else:
+                        self.ImportDicom(filePath)
+                        self.stkScene.setCurrentWidget(self.pgDicomList)
+                return
+                
             elif button == self.btnFromDB:
                 self.bFromDatabase = True
                 currentPath = os.path.join(os.getcwd(), 'database')
-                self.ImportDatabase()
-                
-                self.stkScene.setCurrentWidget(self.pgDatabaseList)
+                if self.ImportDatabase():
+                    self.stkScene.setCurrentWidget(self.pgDatabaseList)
                 return
                 
         self.player.stop()
@@ -3367,7 +3417,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         index = max(0, index - 1)
         self.stkScene.setCurrentIndex(index)
         
-    def ChangeCurrentDicom(self, dicomName:str):
+    def ChangeCurrentDicom(self, dicomName:str, bUpdate = True):
         # 取得原本的target point(十字標線交差點)
         display:DISPLAY = self.currentTag.get('display')
         # matrix = self.currentTag.get('matrix')
@@ -3394,8 +3444,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             idxFrom = 1
             idxTo = 0
         DISPLAY.CopyCamera(idxFrom, idxTo)
+         
             
-        self.ShowDicom()
+        if bUpdate:
+            self.ShowDicom()
         
         display = self.currentTag.get('display')
         if display and crosshair is not None:
@@ -3744,6 +3796,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.pbrProgress.setVisible(bVisible)
         self.lblProgressText.setVisible(bVisible)
         
+    def OnSignal_ExportFinished(self):
+        XFile.SaveBootFile(self.dicDicom)
+        
     def OnSignal_PreImportFinished(self, retInhale:dict, retExhale:dict):
         if retInhale is None or retExhale is None:
             return
@@ -3807,6 +3862,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 
             tImportDicom = threading.Thread(target = self._ImportDicom, args = args)
             tImportDicom.start()
+            # self._ImportDicom(*args)
                 
             # self._SaveBootFile()
             # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
@@ -3821,7 +3877,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         # self.ChangeCurrentDicom(self.btnDicomLow.objectName())
         # self.ShowFusion()
         
-        self.ChangeCurrentDicom(self.btnDicomLow.objectName())
+        self.ChangeCurrentDicom(self.btnDicomLow.objectName(), False)
         self.ShowFusion()
         index = self.stkScene.currentIndex()
         index = min(self.stkScene.count() - 1, index + 1)
@@ -3879,7 +3935,6 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             prefix = kwargs.get('prefix', '')
             bReset = kwargs.get('bReset', True)
             
-            logger.debug(f'progress dlg setting, content = {content}, part = {nParts}, reset = {bReset}')
             if self.dlgSystemProcessing is not None and (content is None or content == ''):
                 self.dlgSystemProcessing.close()
             else:
@@ -3893,6 +3948,10 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     #         for _signal in signal:
                     #             if isinstance(_signal, pyqtBoundSignal):
                     #                 _signal.connect(self.dlgSystemProcessing.UpdateProgress)
+                # elif not bReset and self.dlgSystemProcessing:
+                #     self.dlgSystemProcessing.nParts += nParts
+                    # logger.debug(f'nParts is {self.dlgSystemProcessing.nParts}')
+                    
                 if isinstance(signal, tuple):
                     self.dlgSystemProcessing.ConnectSignals(*signal)
                 elif signal:
@@ -3900,7 +3959,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                     
                 self.dlgSystemProcessing.label_Processing.setText(content)
                 self.dlgSystemProcessing.show()
-            
+                # QCoreApplication.processEvents()
                 
     def OnSignal_ProcessClose(self):
         self.dlgSystemProcessing = None
@@ -3917,7 +3976,7 @@ class MainInterface(QMainWindow,Ui_MainWindow):
                 # add to renderer
                 self._ModifyTrajectory(i, dicom[idx]['display'])
                 lstItem.append({'owner':owner})
-                    
+            
             self._AddTrajectoryTreeItems(lstItem)
             if len(lstItem) > 0:
                 self.SetUIEnable_Trajectory(True)
@@ -5361,14 +5420,14 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             logger.critical(e)
             logger.error("close Laser error")
             
-    def Update(pos:np.ndarray = None):
-        viewport = MainInterface.viewport
-        for view in viewport.values():
-            view.Focus()
+    # def Update(pos:np.ndarray = None):
+    #     viewport = MainInterface.viewport
+    #     for view in viewport.values():
+    #         view.Focus()
                 
-            view.renderer.SetTarget(pos)
-            view.ChangeSliceView()
-            view.iren.Render()
+    #         view.renderer.SetTarget(pos)
+    #         view.ChangeSliceView()
+    #         view.iren.Render()
         
             
 #画布控件继承自 matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg 类
@@ -6899,6 +6958,7 @@ class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
     ID_PITCH = 0
     ID_ROLL = 1
     ID_ALL = 2
+    ID_ALL2 = 3
     
     def __init__(self, parent = None):
         super().__init__(parent)
@@ -6920,17 +6980,19 @@ class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
         titleText.set_fontsize(24)
         self.titleText = titleText
        
-        self.axePitch = fig.add_subplot(221)
-        self.axeRoll = fig.add_subplot(222)
-        self.axeAll = fig.add_subplot(212)
+        self.axePitch = fig.add_subplot(321)
+        self.axeRoll = fig.add_subplot(322)
+        self.axeAll = fig.add_subplot(312)
+        self.axeAll2 = fig.add_subplot(313)
         
         self.axePitch.set_title('pitch').set_color('#C7C7C7')
         self.axeRoll.set_title('roll').set_color('#C7C7C7')
         self.axeAll.set_title('merge').set_color('#C7C7C7')
+        self.axeAll2.set_title('merge2').set_color('#C7C7C7')
         
         self.lineData = []
         self.linePercent = []
-        for axe in [self.axePitch, self.axeRoll, self.axeAll]:
+        for axe in [self.axePitch, self.axeRoll, self.axeAll, self.axeAll2]:
         
             axe.set_facecolor('#000000')
             axe.set_ylabel('Lung Volume (mL)')
@@ -6963,7 +7025,7 @@ class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
         self.idle.timeout.connect(lambda:self.canvas.draw())
         self.idle.start(100)
         
-    def Draw(self, dataPitch:list, dataRoll:list, dataMerge:list):
+    def Draw(self, dataPitch:list, dataRoll:list, dataMerge:list, dataMerge2:list):
         
         lenOfData = len(dataPitch)
         self.axePitch.set_xlim(0, lenOfData + 30)
@@ -6988,12 +7050,20 @@ class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
         self.axeAll.set_ylim(minMerge, maxMerge)
         self.lineData[self.ID_ALL].set_data(range(lenOfData), dataMerge)
         
+        if dataMerge2 is not None:
+            self.axeAll2.set_xlim(0, lenOfData + 30)
+            
+            minMerge2 = min(np.min(dataMerge2), 0)
+            maxMerge2 = max(np.max(dataMerge2), 10)
+            self.axeAll2.set_ylim(minMerge2, maxMerge2)
+            self.lineData[self.ID_ALL2].set_data(range(lenOfData), dataMerge)
+        
         self.dataPitch = dataPitch
         self.dataRoll = dataRoll
         
         # self.canvas.draw()
         
-    def DrawPercentLine(self, pitch:float, roll:float, mergeValue:float):
+    def DrawPercentLine(self, pitch:float, roll:float, mergeValue:float, mergeValue2:float):
         if self.dataPitch is None or self.dataRoll is None:
             return
         
@@ -7008,11 +7078,16 @@ class DlgBreathingDetector(QDialog, Ui_DlgBreathingDetector):
         data = [mergeValue] * dataLength
         self.linePercent[self.ID_ALL].set_data(range(dataLength), data)
         
+        if mergeValue2 is not None:
+            data = [mergeValue2] * dataLength
+            self.linePercent[self.ID_ALL2].set_data(range(dataLength), data)
+        
         # self.canvas.draw()
         
-    def UpdatePercent(self, pitch:float, roll:float, merge:float):
-        
-        self.titleText.set_text(f'pitch : {pitch:.2%}, roll : {roll:.2%}, merge : {merge:.2%}')
+    def UpdatePercent(self, pitch:float, roll:float, merge:float, merge2:float):
+        if merge2 is None:
+            merge2 = 'N/A'
+        self.titleText.set_text(f'pitch : {pitch:.2%}, roll : {roll:.2%}, merge : {merge:.2%}, merge2:{merge2:.2%}')
         
             
 class WidgetArrow(QWidget):

@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from PyQt5.QtCore import *
 from filterpy.kalman import KalmanFilter
+from FunctionLib_Robot.logger import logger
 
 class BreathingDetect(QObject):
-    signalUpdateData = pyqtSignal(object, object, object)
-    signalUpdatePercent = pyqtSignal(float, float, float)
-    signalUpdatePercentLine = pyqtSignal(float, float, float)
+    signalUpdateData = pyqtSignal(object, object, object, object)
+    signalUpdatePercent = pyqtSignal(float, float, float, float)
+    signalUpdatePercentLine = pyqtSignal(float, float, float, float)
     # Low-pass filter parameters
     alpha = 0.3  # Smoothing factor for the filter (0 < alpha < 1)
 
@@ -55,16 +56,23 @@ class BreathingDetect(QObject):
         maxMerge = np.max(self.mergeData)
         minMerge = np.min(self.mergeData)
         
+        maxMerge2 = np.max(self.mergeData2)
+        minMerge2 = np.min(self.mergeData2)
+        
         try:
             percentPitch = (self.detectPitch[-1] - minPitch) / (maxPitch - minPitch)
             percentRoll = (self.detectRoll[-1] - minRoll) / (maxRoll - minRoll)
             
-            detectMerge = np.sqrt(self.detectPitch[-1] ** 2 + self.detectRoll[-1] ** 2)
+            detectMerge = self.CombindAngles(self.detectPitch[-1], self.detectRoll[-1])
+            detectMerge2 = self.CombindAngles2(self.detectPitch[-1], self.detectRoll[-1])
             
             percentMerge = (detectMerge - minMerge) / (maxMerge - minMerge)
+            percentMerge2 = (detectMerge2 - minMerge2) / (maxMerge2 - minMerge2)
             
-            self.signalUpdatePercentLine.emit(self.detectPitch[-1], self.detectRoll[-1], detectMerge)
-            self.signalUpdatePercent.emit(percentPitch, percentRoll, percentMerge)
+            # self.signalUpdatePercentLine.emit(self.detectPitch[-1], self.detectRoll[-1], detectMerge, detectMerge2)
+            # self.signalUpdatePercent.emit(percentPitch, percentRoll, percentMerge, percentMerge2)
+            self.signalUpdatePercentLine.emit(self.detectPitch[-1], self.detectRoll[-1], detectMerge, 0.0)
+            self.signalUpdatePercent.emit(percentPitch, percentRoll, percentMerge, 0.0)
             return percentPitch, percentRoll
         
         except Exception as msg:
@@ -133,7 +141,7 @@ class BreathingDetect(QObject):
         
         dataMapper = np.ones_like(data, dtype = bool)
         
-        if len(lstMin) == 0 or len(lstMax) == 0:
+        if len(lstMin) <= 1 or len(lstMax) <= 1:
             return dataMapper
         
         lstMin = np.asarray(lstMin)
@@ -167,6 +175,65 @@ class BreathingDetect(QObject):
         
         # argRange = np.where(dataMapper)
         return dataMapper
+    
+    def CombindAngles2(self, *angles):
+        merge_angles = []
+        
+        angles = np.asarray(angles)
+        if len(angles.shape) == 1:
+            angles = angles.reshape(-1, 1)
+            
+        for pitch_deg, roll_deg in zip(*angles):
+            # pitch_deg, roll_deg = angles
+            
+            # Convert degrees to radians
+            pitch = np.radians(pitch_deg)
+            roll = np.radians(roll_deg)
+            
+            # Calculate normal vector components
+            nx = np.sin(pitch)
+            ny = -np.sin(roll) * np.cos(pitch)
+            nz = np.cos(roll) * np.cos(pitch)
+            v =  np.array([nx, ny, nz]).flatten()
+            
+            # 計算與 z 軸的合成角
+            norm = np.linalg.norm(v)
+            deg = np.degrees(np.arccos(nz / norm))  # 注意法向量的方向
+            
+            # 計算向量的大小
+            # n = np.array([0, 0, 1])
+            # v_norm = np.linalg.norm(v)
+            # n_norm = np.linalg.norm(n)
+            
+            # # 檢查向量是否為零
+            # if v_norm == 0 or n_norm == 0:
+            #     raise ValueError("向量或法向量不能為零")
+            
+            # # 計算內積
+            # dot_product = np.dot(v, n)
+            
+            # # 計算向量與平面的夾角
+            # angle_rad = np.arcsin(np.abs(dot_product) / (v_norm * n_norm))
+            
+            # # 將弧度轉換為度數
+            # deg = np.degrees(angle_rad)
+            
+            merge_angles.append(deg)
+        
+        return np.array(merge_angles)
+        
+    def CombindAngles(self, *angles):
+        if not all(isinstance(x, type(angles[0])) for x in angles):
+            logger.error('inputs are not the same type')
+            return None
+        
+        if all(isinstance(x, (tuple, list, np.ndarray)) for x in angles):
+            if not all(len(x) == len(angles[0]) for x in angles):
+                logger.error('inputs have different length')
+                return None
+        
+        mergeData = np.degrees(np.arctan(np.sqrt(np.sum(np.tan(np.radians(x)) ** 2 for x in angles))))
+        return mergeData
     
     def StartDetect(self):
         # self.idle = QTimer()
@@ -228,9 +295,12 @@ class BreathingDetect(QObject):
                         else:
                             filtered_roll.append(self.alpha * self.roll_data[-1] + (1 - self.alpha) * filtered_roll[-1])
                             
-                        mergeData = np.sqrt(np.array(filtered_pitch) ** 2 + np.array(filtered_roll) ** 2)
-                        # self.signalUpdateData.emit(self.pitch_data, self.roll_data)
-                        self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData))
+                        mergeData = self.CombindAngles(filtered_pitch, filtered_roll)
+                        mergeData2 = self.CombindAngles2(filtered_pitch, filtered_roll)
+                        
+                        logger.debug(f'{mergeData[-1]}, {mergeData2[-1]}')
+                        # self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData), list(mergeData2))
+                        self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData), None)
                             
                     except Exception as msg:
                         print(msg)
@@ -241,65 +311,78 @@ class BreathingDetect(QObject):
         # Close the serial port
         self.ser.close()
         
-        idxStart = 0
-        slopeLast = 0
-        lstWave = []
-        for i in range(len(self.time_data)):
-            if self.time_data[i] - self.time_data[idxStart] > 1:
-                # 紀錄累積時間至少達到一秒
-                xAxis = np.arange(len(filtered_pitch[idxStart:i]))
-                # 計算多項式逼近的一維參數，分別為斜率和截距
-                slope, intercept = np.polyfit(xAxis, filtered_pitch[idxStart:i], 1)
-                # 計算斜率變化量
-                slopeDiff = slope - slopeLast
+        # idxStart = 0
+        # slopeLast = 0
+        # lstWave = []
+        # for i in range(len(self.time_data)):
+        #     if self.time_data[i] - self.time_data[idxStart] > 1:
+        #         # 紀錄累積時間至少達到一秒
+        #         xAxis = np.arange(len(filtered_pitch[idxStart:i]))
+        #         # 計算多項式逼近的一維參數，分別為斜率和截距
+        #         slope, intercept = np.polyfit(xAxis, filtered_pitch[idxStart:i], 1)
+        #         # 計算斜率變化量
+        #         slopeDiff = slope - slopeLast
                 
-                if abs(slopeDiff) > 0.001 and slopeLast * slope < 0:
-                    # 當前斜率與上一次斜率發生正負交錯時，代表有峰值或低波谷
-                    # 當前斜率為負，前一次為正，代表是波峰，因此找最大值；相反為低谷，找最小值
-                    # 並且紀錄當時的斜率變化量，供後面計算過濾
-                    if slope < 0:
-                        # find maximum value
-                        # timeInMax = lstTime[np.argmax(subData)]
-                        idxMax = np.argmax(filtered_pitch[idxStart:i])
-                        lstWave.append([filtered_pitch[idxStart + idxMax], idxStart + idxMax])
-                        idxStart = i
+        #         if abs(slopeDiff) > 0.001 and slopeLast * slope < 0:
+        #             # 當前斜率與上一次斜率發生正負交錯時，代表有峰值或低波谷
+        #             # 當前斜率為負，前一次為正，代表是波峰，因此找最大值；相反為低谷，找最小值
+        #             # 並且紀錄當時的斜率變化量，供後面計算過濾
+        #             if slope < 0:
+        #                 # find maximum value
+        #                 # timeInMax = lstTime[np.argmax(subData)]
+        #                 idxMax = np.argmax(filtered_pitch[idxStart:i])
+        #                 lstWave.append([filtered_pitch[idxStart + idxMax], idxStart + idxMax])
+        #                 idxStart = i
                         
-                    elif slope > 0:
-                        # timeInMin = lstTime[np.argmin(subData)]
-                        idxMin = np.argmin(filtered_pitch[idxStart:i])
-                        lstWave.append([filtered_pitch[idxStart + idxMin], idxStart + idxMin])
-                        idxStart = i
+        #             elif slope > 0:
+        #                 # timeInMin = lstTime[np.argmin(subData)]
+        #                 idxMin = np.argmin(filtered_pitch[idxStart:i])
+        #                 lstWave.append([filtered_pitch[idxStart + idxMin], idxStart + idxMin])
+        #                 idxStart = i
                       
-                    if len(lstWave) > 2:
+        #             if len(lstWave) > 2:
                         
-                        xStart1 = lstWave[0][1]
+        #                 xStart1 = lstWave[0][1]
                         
-                        xStart2 = (lstWave[-2][1] + lstWave[-1][1]) // 2
-                        # lastPoint = lstWave[-1]
-                        lstWave.clear()  
-                        lstWave.append([filtered_pitch[xStart2], xStart2])
-                        # lstWave.append(lastPoint)
+        #                 xStart2 = (lstWave[-2][1] + lstWave[-1][1]) // 2
+        #                 # lastPoint = lstWave[-1]
+        #                 lstWave.clear()  
+        #                 lstWave.append([filtered_pitch[xStart2], xStart2])
+        #                 # lstWave.append(lastPoint)
 
-                        x = np.arange(xStart2 - xStart1)
-                        p = np.polyfit(x, filtered_pitch[xStart1:xStart2], 3)
-                        y = np.polyval(p, x)
-                        filtered_pitch[xStart1:xStart2] = y
+        #                 x = np.arange(xStart2 - xStart1)
+        #                 p = np.polyfit(x, filtered_pitch[xStart1:xStart2], 3)
+        #                 y = np.polyval(p, x)
+        #                 filtered_pitch[xStart1:xStart2] = y
                     
                 
-                slopeLast = slope
+        #         slopeLast = slope
         
+        if not all(len(filtered_pitch) == len(x) for x in [mergeData, mergeData2]):
+            logger.debug(f'length = {len(filtered_pitch)}, merge 2 = {len(mergeData2)}')
         
         argRange1 = self.__FilterMinMax(self.time_data, filtered_pitch)
         
         argRange2 = self.__FilterMinMax(self.time_data, filtered_roll)
         mapper = argRange1 & argRange2
-        # argRange = np.union1d(argRange1, argRange2)
         filtered_pitch = np.asarray(filtered_pitch)[mapper]
         filtered_roll = np.asarray(filtered_roll)[mapper]
         mergeData = np.asarray(mergeData)[mapper]
+        mergeData2 = np.asarray(mergeData2)[mapper]
         self.time_data = np.asarray(self.time_data)[mapper]
 
-        self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData))
+        if not all(len(filtered_pitch) == len(x) for x in [mergeData, mergeData2]):
+            logger.debug(f'length = {len(filtered_pitch)}, merge 2 = {len(mergeData2)}')
+            
+        # self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData))
+        
+        # filtered_pitch = np.asarray(filtered_pitch)
+        # filtered_roll = np.asarray(filtered_roll)
+        # mergeData = np.asarray(mergeData)
+        # self.time_data = np.asarray(self.time_data)
+
+        # self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData), list(mergeData2))
+        self.signalUpdateData.emit(filtered_pitch, filtered_roll, list(mergeData), None)
         
 
         # for i in range(1, len(self.pitch_data)):
@@ -310,7 +393,7 @@ class BreathingDetect(QObject):
         self.filtered_pitch = filtered_pitch
         self.filtered_roll = filtered_roll
         self.mergeData = mergeData
-        
+        self.mergeData2 = mergeData2
         # df = pd.DataFrame(self.pitch_data, columns = ['times'])
         # pitch_std = df['times'].rolling(window = 10).std()
         # print(pitch_std)

@@ -32,7 +32,15 @@ class ViewPortUnit(QObject):
     
     _bLockTarget3D = False
     
-    def __init__(self, mainWidget, dicom:DISPLAY, vtkWidget:QVTKRenderWindowInteractor, orientation:str, uiScrollSlice:QScrollBar, uiCbxOrientation:QComboBox = None):
+    def __init__(
+        self, 
+        mainWidget, 
+        dicom:DISPLAY, 
+        vtkWidget:QVTKRenderWindowInteractor, 
+        orientation:str, 
+        uiScrollSlice:QScrollBar, 
+        uiCbxOrientation:QComboBox = None
+    ):
         
         super().__init__()
         
@@ -123,7 +131,10 @@ class ViewPortUnit(QObject):
         # self.renderer.signalUpdateView.connect(self.UpdateView)
         self.renderer.SetTarget()
         self.renderer.initalBorder()
-        self.UpdateView()
+        
+        self.iren.Initialize()
+        self.iren.Start()
+        # self.UpdateView()
         
     def changeRenderer(self, renderer:vtkRenderer):
         oldRenderers = self.renderWindow.GetRenderers()
@@ -155,7 +166,8 @@ class ViewPortUnit(QObject):
                 self.orientation != VIEW_CROSS_SECTION and \
                 self.orientation != VIEW_ALONG_TRAJECTORY:
                 if pos is None:
-                    pos = self.renderer.target
+                    # pos = self.renderer.target
+                    pos = self.renderer.GetTarget()
                 self.renderer.SetCameraToTarget(pos)
     def OnValueChanged_ViewScroll(self):
         if not self.dicom or not self.renderer:
@@ -237,7 +249,8 @@ class ViewPortUnit(QObject):
             return
         
         if pos is None:
-            pos = np.round(self.renderer.target / self.renderer.voxelSize)
+            # pos = np.round(self.renderer.target / self.renderer.voxelSize)
+            pos = np.round(self.renderer.GetTarget() / self.renderer.voxelSize)
         iPos = np.array(pos).astype(int)
         
         scrollValue = None
@@ -296,17 +309,21 @@ class ViewPortUnit(QObject):
             
             if orientation == VIEW_AXIAL:
                 self.uiScrollSlice.setMaximum(dimension[2] - 1)
-                self.MapPositionToImageSlice(self.renderer.target)
+                # self.MapPositionToImageSlice(self.renderer.target)
+                self.MapPositionToImageSlice(self.renderer.GetTarget())
             elif orientation == VIEW_CORONAL:
                 self.uiScrollSlice.setMaximum(dimension[1] - 1)
-                self.MapPositionToImageSlice(self.renderer.target)
+                # self.MapPositionToImageSlice(self.renderer.target)
+                self.MapPositionToImageSlice(self.renderer.GetTarget())
             elif orientation == VIEW_SAGITTAL:
                 self.uiScrollSlice.setMaximum(dimension[0] - 1)
-                self.MapPositionToImageSlice(self.renderer.target)
+                # self.MapPositionToImageSlice(self.renderer.target)
+                self.MapPositionToImageSlice(self.renderer.GetTarget())
             elif orientation == VIEW_CROSS_SECTION:
                 length = renderer.GetTrajectoryLength()
                 self.uiScrollSlice.setMaximum(int(length))
-                self.renderer.SetTarget(posOriginal = self.renderer.target)
+                # self.renderer.SetTarget(posOriginal = self.renderer.target)
+                self.renderer.SetTarget()
                 
                 self.renderer.FocusTarget()
             elif orientation == VIEW_ALONG_TRAJECTORY:
@@ -315,61 +332,66 @@ class ViewPortUnit(QObject):
             # self.uiScrollSlice.setValue(0)
             # renderer.signalUpdateView.connect(self.UpdateView)
             self.UpdateView()
-    def Swap(self, viewPortUnit):
-        # if isinstance(viewPortUnit, str):
-        #     viewPortUnit = self.parentWidget.vi
-        if self.renderer:
-            self.vtkWidget.GetRenderWindow().RemoveRenderer(self.renderer)
-            viewPortUnit.vtkWidget.GetRenderWindow().AddRenderer(self.renderer) 
+    def Swap(self, viewPortUnit:'ViewPortUnit'):
+        self.uiCbxOrientation.setCurrentIndex(self.currentIndex)
+        self.__ReplaceWidget(self.vtkWidget, viewPortUnit.vtkWidget)
+        self.__ReplaceWidget(self.uiScrollSlice, viewPortUnit.uiScrollSlice)
+        self.__ReplaceWidget(self.uiCbxOrientation, viewPortUnit.uiCbxOrientation)
+        
+        
+        
+        # if self.renderer:
+        #     self.vtkWidget.GetRenderWindow().RemoveRenderer(self.renderer)
+        #     viewPortUnit.vtkWidget.GetRenderWindow().AddRenderer(self.renderer) 
             
-        if viewPortUnit.renderer:
-            viewPortUnit.vtkWidget.GetRenderWindow().RemoveRenderer(viewPortUnit.renderer)
-            self.vtkWidget.GetRenderWindow().AddRenderer(viewPortUnit.renderer)
+        # if viewPortUnit.renderer:
+        #     viewPortUnit.vtkWidget.GetRenderWindow().RemoveRenderer(viewPortUnit.renderer)
+        #     self.vtkWidget.GetRenderWindow().AddRenderer(viewPortUnit.renderer)
         
-        self.renderer, viewPortUnit.renderer = viewPortUnit.renderer, self.renderer
-        self.orientation, viewPortUnit.orientation = viewPortUnit.orientation, self.orientation
+        # self.renderer, viewPortUnit.renderer = viewPortUnit.renderer, self.renderer
+        # self.orientation, viewPortUnit.orientation = viewPortUnit.orientation, self.orientation
         
-        self.position, viewPortUnit.position = viewPortUnit.position, self.position
-        self.imagePosition, viewPortUnit.imagePosition = viewPortUnit.imagePosition, self.imagePosition
+        # self.position, viewPortUnit.position = viewPortUnit.position, self.position
+        # self.imagePosition, viewPortUnit.imagePosition = viewPortUnit.imagePosition, self.imagePosition
         
-        viewPortUnit.uiCbxOrientation.blockSignals(True)
-        viewPortUnit.uiCbxOrientation.setCurrentIndex(self.currentIndex)
-        viewPortUnit.currentIndex = self.currentIndex
-        viewPortUnit.uiCbxOrientation.blockSignals(False)
-        self.currentIndex = self.uiCbxOrientation.currentIndex()
+        # viewPortUnit.uiCbxOrientation.blockSignals(True)
+        # viewPortUnit.uiCbxOrientation.setCurrentIndex(self.currentIndex)
+        # viewPortUnit.currentIndex = self.currentIndex
+        # viewPortUnit.uiCbxOrientation.blockSignals(False)
+        # self.currentIndex = self.uiCbxOrientation.currentIndex()
         
-        minimum = self.uiScrollSlice.minimum()
-        maximum = self.uiScrollSlice.maximum()
-        value = self.uiScrollSlice.value()
+        # minimum = self.uiScrollSlice.minimum()
+        # maximum = self.uiScrollSlice.maximum()
+        # value = self.uiScrollSlice.value()
         
-        self.uiScrollSlice.setMinimum(viewPortUnit.uiScrollSlice.minimum())
-        self.uiScrollSlice.setMaximum(viewPortUnit.uiScrollSlice.maximum())
-        self.uiScrollSlice.setValue(viewPortUnit.uiScrollSlice.value())
+        # self.uiScrollSlice.setMinimum(viewPortUnit.uiScrollSlice.minimum())
+        # self.uiScrollSlice.setMaximum(viewPortUnit.uiScrollSlice.maximum())
+        # self.uiScrollSlice.setValue(viewPortUnit.uiScrollSlice.value())
         
-        viewPortUnit.uiScrollSlice.setMinimum(minimum)
-        viewPortUnit.uiScrollSlice.setMaximum(maximum)
-        viewPortUnit.uiScrollSlice.setValue(value)
+        # viewPortUnit.uiScrollSlice.setMinimum(minimum)
+        # viewPortUnit.uiScrollSlice.setMaximum(maximum)
+        # viewPortUnit.uiScrollSlice.setValue(value)
         
-        # swap interactorStyle
-        # self.iren.SetInteractorStyle(MyInteractorStyle(self.parentWidget, self.orientation))
-        self.iren.GetInteractorStyle().SetOrientation(self.orientation)
-        if self.orientation != '3D':
-            self.uiScrollSlice.setEnabled(True)
-        else:
-            self.uiScrollSlice.setEnabled(False)
+        # # swap interactorStyle
+        # # self.iren.SetInteractorStyle(MyInteractorStyle(self.parentWidget, self.orientation))
+        # self.iren.GetInteractorStyle().SetOrientation(self.orientation)
+        # if self.orientation != '3D':
+        #     self.uiScrollSlice.setEnabled(True)
         # else:
-        #     self.iren.SetInteractorStyle(MyInteractorStyle3D(None))
         #     self.uiScrollSlice.setEnabled(False)
+        # # else:
+        # #     self.iren.SetInteractorStyle(MyInteractorStyle3D(None))
+        # #     self.uiScrollSlice.setEnabled(False)
             
-        # viewPortUnit.iren.SetInteractorStyle(MyInteractorStyle(viewPortUnit.parentWidget, viewPortUnit.orientation))
-        viewPortUnit.iren.GetInteractorStyle().SetOrientation(viewPortUnit.orientation)
-        if viewPortUnit.orientation != '3D':
-            viewPortUnit.uiScrollSlice.setEnabled(True)
-        else:
-            viewPortUnit.uiScrollSlice.setEnabled(False)
+        # # viewPortUnit.iren.SetInteractorStyle(MyInteractorStyle(viewPortUnit.parentWidget, viewPortUnit.orientation))
+        # viewPortUnit.iren.GetInteractorStyle().SetOrientation(viewPortUnit.orientation)
+        # if viewPortUnit.orientation != '3D':
+        #     viewPortUnit.uiScrollSlice.setEnabled(True)
         # else:
-        #     viewPortUnit.iren.SetInteractorStyle(MyInteractorStyle3D(None))
         #     viewPortUnit.uiScrollSlice.setEnabled(False)
+        # # else:
+        # #     viewPortUnit.iren.SetInteractorStyle(MyInteractorStyle3D(None))
+        # #     viewPortUnit.uiScrollSlice.setEnabled(False)
         
         self.UpdateView()
         viewPortUnit.UpdateView()
@@ -392,8 +414,17 @@ class ViewPortUnit(QObject):
         if not self.renderer:
             return
         
-        self.iren.Initialize()
-        self.iren.Start()
+        self.iren.Render()
+        # self.iren.Initialize()
+        # self.iren.Start()
+        
+    def __ReplaceWidget(self, widgetFrom:QWidget, widgetTo:QWidget):
+        placeHolder = QWidget()
+        layout:QGridLayout = widgetFrom.parentWidget().layout()
+        layout.replaceWidget(widgetFrom, placeHolder)
+        layout.replaceWidget(widgetTo, widgetFrom)
+        layout.replaceWidget(placeHolder, widgetTo)
+        placeHolder.deleteLater()
         
 class TreeViewDelegate(QStyledItemDelegate):
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):

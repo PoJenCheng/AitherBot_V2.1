@@ -53,7 +53,6 @@ class TreeWidget(QTreeWidget):
         self._dragItem = None
         self._preSelectedItem = None
         self._groupTable = []
-        self._hasDrived = []
         self._groupNumberTable = np.array([], dtype = int)
         self._groupNumber = 0
         self.bFoundGroup = False # 上一個路徑的狀態
@@ -190,8 +189,6 @@ class TreeWidget(QTreeWidget):
             
         self.addTopLevelItem(item)
         
-        self._hasDrived.append(False)
-        
         wdgMark = QWidget()
         wdgMark.setObjectName(f'group{idx}')
         layout = QHBoxLayout(wdgMark)
@@ -221,6 +218,15 @@ class TreeWidget(QTreeWidget):
             
         self.bFoundGroup = bFoundGroup
         return bFoundGroup
+    
+    def ClearItems(self):
+        self.clear()
+        self._dragItem = None
+        self._preSelectedItem = None
+        self._groupTable = []
+        self._groupNumberTable = np.array([], dtype = int)
+        self._groupNumber = 0
+        self.bFoundGroup = False
     
     def UpdateItemGroup(self, idxParner:int, idx:int):
         if idx in self._groupTable and idxParner in self._groupTable:

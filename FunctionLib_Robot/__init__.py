@@ -154,6 +154,8 @@ IMG_VISIBLE = 'image/eye2.png'
 IMG_HIDDEN = 'image/eye-off2.png'
 IMG_PARTIAL = 'image/eye-close-line2.png'
 
+TEMP_FILENAME = 'temp.ai'
+
 DATABASE_PATH = os.path.join(os.getcwd(), 'database')
 
 # 選擇是否略過註冊，for測試使用，以免每次都要跑registration shpere註冊

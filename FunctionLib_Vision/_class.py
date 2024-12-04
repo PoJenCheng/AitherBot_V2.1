@@ -18,6 +18,7 @@ import pydicom.dataset
 import pydicom.tag
 import threading
 import vtkmodules.all as vtk
+from pathlib import Path
 from pydicom.datadict import tag_for_keyword
 from typing import Any, Dict
 from pydicom.dataset import Dataset, FileDataset
@@ -145,8 +146,9 @@ class QSignalObject(QObject):
         
 class XFile():
     tempResumeData = {}
-    projectFilePath = 'temp.xml'
+    projectFilePath = TEMP_FILENAME
     folderPath = {}
+    idxFolderPath = 0
     
     def __init__(self):
         pass
@@ -157,14 +159,42 @@ class XFile():
                 filePath = XFile.projectFilePath
                 
             if os.path.exists(filePath):
+                XFile.Reset()
+                
                 dom = xdom.parse(filePath)
                 root = dom.documentElement
                 
+                XFile.projectFilePath = filePath
+                XFile.tempResumeData = {}
+                
                 data = XFile.GetNode(root, 'dicom')
                 if len(data) > 0:
-                    XFile.tempResumeData['path'] = data
+                    XFile.tempResumeData['path'] = {index:value for index, value in enumerate(data)}
                     
+                regBall = XFile.GetNode(root, 'regBall')
+                if len(regBall) > 0:
+                    strRegBallInhale = regBall[0].get('text')
+                    if strRegBallInhale:
+                        lstRegBall = [[float(x.strip()) for x in row.split(',')] for row in strRegBallInhale.split('\n')]
+                        XFile.tempResumeData['regBallInhale'] = np.array(lstRegBall)
+                        
+                    strRegBallExhale = regBall[1].get('text')
+                    if strRegBallExhale:
+                        lstRegBall = [[float(x.strip()) for x in row.split(',')] for row in strRegBallExhale.split('\n')]
+                        XFile.tempResumeData['regBallExhale'] = np.array(lstRegBall)
                     
+                regMatrix = XFile.GetNode(root, 'matrix')
+                if len(regMatrix) > 0:
+                    strRegMatrixInhale = regMatrix[0].get('text')
+                    if strRegMatrixInhale:
+                        lstRegMatrix = [[float(x.strip()) for x in row.split(',')] for row in strRegMatrixInhale.split('\n')]
+                        XFile.tempResumeData['regMatrixInhale'] = np.array(lstRegMatrix)
+                        
+                    strRegMatrixExhale = regMatrix[1].get('text')
+                    if strRegMatrixExhale:
+                        lstRegMatrix = [[float(x.strip()) for x in row.split(',')] for row in strRegMatrixExhale.split('\n')]
+                        XFile.tempResumeData['regMatrixExhale'] = np.array(lstRegMatrix)
+                
                 dataTrajectory = XFile.GetNode(root, 'trajectory')
                 if len(dataTrajectory) > 0:
                     XFile.tempResumeData['trajectory'] = dataTrajectory
@@ -266,13 +296,37 @@ class XFile():
         # pathInhale = self.reader.GetSelectedDicomPath(0).replace('\\', '/')
         # pathExhale = self.reader.GetSelectedDicomPath(1).replace('\\', '/')
         dicom = list(dicData.values())
-        # pathInhale = dicom[0].get('path')
-        # pathExhale = dicom[1].get('path')
-        pathInhale = XFile.folderPath.get(TYPE_INHALE)
-        pathExhale = XFile.folderPath.get(TYPE_EXHALE)
+        dicomInhale = dicom[0]
+        dicomExhale = dicom[1]
+        # pathInhale = XFile.folderPath.get(TYPE_INHALE)
+        # pathExhale = XFile.folderPath.get(TYPE_EXHALE)
+        
+        if len(XFile.folderPath) > 1:
+            # 如果有export的dicom path資訊存在，則獲取
+            # 獲取後報銷export dicom path資料，並轉存在tempResume
+            XFile.SaveDicomPath(TYPE_INHALE, XFile.folderPath[TYPE_INHALE])
+            XFile.SaveDicomPath(TYPE_EXHALE, XFile.folderPath[TYPE_EXHALE])
+            XFile.folderPath = {}
+            
+        pathInhale = XFile.GetDicomPath(TYPE_INHALE)
+        pathExhale = XFile.GetDicomPath(TYPE_EXHALE)
+        
+            
+        
+        if pathInhale is None:
+            pathInhale = dicomInhale.get('path')
+            if pathInhale is None:
+                logger.error('not found dicom [inhale] while saving project')
+                return
+            
+        if pathExhale is None:
+            pathExhale = dicomExhale.get('path')
+            if pathExhale is None:
+                logger.error('not found dicom [exhale] while saving project')
+                return
+        
         logger.info(f'inhale dicom = {pathInhale}')
         logger.info(f'exhale dicom = {pathExhale}')
-        
         # save to xml node
         inhaleNode = dom.createElement('inhale')
         exhaleNode = dom.createElement('exhale')
@@ -291,16 +345,49 @@ class XFile():
         root.appendChild(dicomNode)
         
         # registration result
-        dicomInhale = list(dicData.values())[0]
-        matrix = dicomInhale.get('matrix')
-        if matrix is not None:
-            logger.info(f'registration matrix = {matrix}')
+        
+        regBallInhale = dicomInhale.get('regBall')
+        regBallExhale = dicomExhale.get('regBall')
+        if regBallInhale is not None and regBallExhale is not None:
+            regBallNode = dom.createElement('regBall')
+            root.appendChild(regBallNode)
             
-            strMatrix = '\n'.join([','.join([f'{num:13.8f}' for num in row]) for row in matrix])
+            if regBallInhale is not None:
+                regBallNodeInhale = dom.createElement('inhale')
+                regBallNode.appendChild(regBallNodeInhale)
+                
+                strRegBall = '\n'.join(','.join(f'{x:13.8f}' for x in row) for row in regBallInhale)
+                XFile.AppendTextNode(regBallNodeInhale, strRegBall)
+                
+            if regBallExhale is not None:
+                regBallNodeExhale = dom.createElement('exhale')
+                regBallNode.appendChild(regBallNodeExhale)
+                
+                strRegBall = '\n'.join(','.join(f'{x:13.8f}' for x in row) for row in regBallExhale)
+                XFile.AppendTextNode(regBallNodeExhale, strRegBall)
+            
+        matrixInhale = dicomInhale.get('regMatrix')
+        matrixExhale = dicomExhale.get('regMatrix')
+        if matrixInhale is not None and matrixInhale is not None:
+            
             matrixNode = dom.createElement('matrix')
             root.appendChild(matrixNode)
-            # 要取得正確的縮排層數，必須先將node加入到node tree
-            XFile.AppendTextNode(matrixNode, strMatrix)
+            
+            if matrixInhale is not None:
+                matrixNodeInhale = dom.createElement('inhale')
+                matrixNode.appendChild(matrixNodeInhale)
+                
+                strMatrix = '\n'.join([','.join([f'{num:13.8f}' for num in row]) for row in matrixInhale])
+                # 要取得正確的縮排層數，必須先將node加入到node tree
+                XFile.AppendTextNode(matrixNodeInhale, strMatrix)
+                
+            if matrixExhale is not None:
+                matrixNodeExhale = dom.createElement('exhale')
+                matrixNode.appendChild(matrixNodeExhale)
+                
+                strMatrix = '\n'.join([','.join([f'{num:13.8f}' for num in row]) for row in matrixExhale])
+                # 要取得正確的縮排層數，必須先將node加入到node tree
+                XFile.AppendTextNode(matrixNodeExhale, strMatrix)
             
             
         # save trajectory (if exist)
@@ -338,21 +425,60 @@ class XFile():
                 
             with open(filePath, 'w', encoding = 'UTF-8') as f:
                 dom.writexml(f, indent = '', addindent = '\t', newl = '\n', encoding = 'UTF-8')
+                
+            shutil.copy2(filePath, TEMP_FILENAME)
+            
+            logger.debug('save project file succeed')
         except Exception as msg:
             logger.error(msg)
+            
+    def SaveDicomPath(nTypeID:int, path:str):
+        pathNode = XFile.__GetPathNode(nTypeID)
+        if pathNode is not None:
+            pathNode['text'] = path
+        
+            
+    # 分出一個ExportDicomPath是因為thread會有覆蓋問題
+    def SaveExportDicomPath(nTypeID:int, path:str):
+        XFile.folderPath[nTypeID] = path
+            
+    def GetDicomPath(nTypeID:int):
+        pathNode = XFile.__GetPathNode(nTypeID)
+        if pathNode is not None:
+            return pathNode['text']
+        return None
+    
+    def Reset():
+        XFile.tempResumeData = {}
+        XFile.projectFilePath = TEMP_FILENAME
+    
+    def __GetPathNode(nTypeID:int):
+        if len(XFile.tempResumeData) > 0:
+            pathNode = XFile.tempResumeData.get('path')
+            if pathNode is not None and pathNode.get(nTypeID) is not None:
+                return pathNode[nTypeID]
+            else:
+                pathNode[nTypeID] = {'text':''}
+                return pathNode[nTypeID]
+        else: 
+            XFile.tempResumeData['path'] = {}
+            XFile.tempResumeData['path'][nTypeID] = {'text':''}
+            return XFile.tempResumeData['path'][nTypeID]
 
 "DICOM function"
 class DICOM(QObject):
-    signalExport = pyqtSignal(float, str)
+    signalExportProgress = pyqtSignal(float, str)
+    signalExportFinished = pyqtSignal()
     signalProcess = pyqtSignal(float, str)
     signalShowMessage = pyqtSignal(str, int, tuple)
     lock = threading.Lock()
-    __bConnected = False
     __cacheData:Dict[int, Dict[str, Any]] = {}
+    nExportSucceed = 0
     
     def __init__(self):
         super().__init__()
         
+        self.bConnected = False
         self._count = 0
         self.dicPatient = None
         self.windowWidth = None
@@ -388,18 +514,6 @@ class DICOM(QObject):
                 spacing[:2] = spacing[:2][::-1]
                 
         return images, spacing
-        
-    def GetTotalFiles(self, path:str):
-        files = os.listdir(path)
-        count = 0
-        for f in files:
-            fullPath = os.path.join(path, f)
-            if os.path.isdir(fullPath):
-                count += self.GetTotalFiles(fullPath)
-            else:
-                count += 1
-                
-        return count
     
     def CreateDir(self, path:str):
         try:
@@ -742,11 +856,21 @@ class DICOM(QObject):
         return dicPatient
        
         ############################################################################################
-    def SetThreadExport(self, path:str, selectedID:int, callbackShowMessage, signalMessageReply:pyqtSignal):
-        if not DICOM.__bConnected:
+    def SetThreadExport(
+        self, 
+        path:str, 
+        selectedID:int, 
+        callbackShowMessage, 
+        signalMessageReply:pyqtSignal,
+        callbackExportFinished = None
+    ):
+        if not self.bConnected:
             self.signalShowMessage.connect(callbackShowMessage)
             signalMessageReply.connect(self.OnSignal_MessageboxReply)
-            DICOM.__bConnected = True
+            self.bConnected = True
+            
+            if callbackExportFinished:
+                self.signalExportFinished.connect(callbackExportFinished)
             
         # self.__Export(path, selectedID)
         tExport = threading.Thread(target = self.__Export, args = (path, selectedID))
@@ -760,13 +884,18 @@ class DICOM(QObject):
                 arrImage = None
                 if selectedID < len(DICOM.__cacheData):
                     ret = list(DICOM.__cacheData[selectedID].values())
-                    arrImage = DICOM.__cacheData[selectedID]['image']
+                    arrImage = DICOM.__cacheData[selectedID].get('image')
+                    
                 else:
-                    ret = self.GetData(index = selectedID)
+                    ret = self.GetData(selectedID, index = selectedID)
                     if ret is None:
                         logger.error('Export dicom error')
                         return
                     arrImage = self.arrImage.astype(int)
+                    
+                if isinstance(arrImage, np.ndarray):
+                    arrImage = arrImage.copy()
+                    
                 
                 _, spacing, dimension, lstSeries, *_ = ret
                 
@@ -795,25 +924,32 @@ class DICOM(QObject):
                     # outPath = os.path.join(projectFolder, folderName, studyUID, seriesUID)
                     
                     # DICOM.__cacheData[selectedID]['path'] = outPath
-                    logger.debug('bf get project')
                     projectFolder, outPath = self.GetProjectPath(
                                                                     selectedID,
                                                                     path,
                                                                     lstSeries[0]
                                                                 )
-                    logger.debug('af get project')
+                    
+                    XFile.projectFilePath = os.path.join(projectFolder, patientID + '.ai')
+                    XFile.SaveExportDicomPath(selectedID, outPath)
                     
                     if not os.path.exists(outPath):
                         os.makedirs(outPath, exist_ok = True)
                     else:
-                        # ret = MessageBox.ShowWarning(f'patient "{patientName}" has already exist\nMake sure to rewrite?', 'Yes', 'No')
-                        self.signalShowMessage.emit(f'patient "{patientName}" has already exist\nMake sure to rewrite?', MB_WARNING, ('Yes', 'No'))
-                        while not self.bHasMessageboxReply:
-                            QApplication.processEvents()
+                        nFilesCount = 0
+                        for _, _, files in os.walk(outPath):
+                            for file in files:
+                                nFilesCount += 1
                         
-                        self.bHasMessageboxReply = False
-                        if self.messageboxReply == 1:
-                            return
+                        if nFilesCount > 0:
+                            self.signalShowMessage.emit(f'patient "{patientName}" has already exist\nMake sure to rewrite?', MB_WARNING, ('Yes', 'No'))
+                            while not self.bHasMessageboxReply:
+                                # QApplication.processEvents()
+                                pass
+                            
+                            self.bHasMessageboxReply = False
+                            if self.messageboxReply == 1:
+                                return
                     
                     fTotal = len(lstSeries)
                     for nSlice, slice in enumerate(lstSeries):
@@ -837,7 +973,7 @@ class DICOM(QObject):
                                 ds.ImagePositionPatient = imagePosition.tolist()
                                 imagePosition += incValue
                                 self.SaveAsSingleFrameDicom(ds, i, outPath)
-                                self.signalExport.emit((i + 1) / fTotal, f'export {patientName}')
+                                self.signalExportProgress.emit((i + 1) / fTotal, f'export {patientName}')
                         else:
                             ds.ImagePositionPatient = imagePosition.tolist()
                             imagePosition += incValue
@@ -849,15 +985,17 @@ class DICOM(QObject):
                             
                             filePath = os.path.join(outPath, f'{nSlice:04}.dcm')
                             ds.save_as(filePath)
-                            self.signalExport.emit((nSlice + 1) / fTotal, f'export {patientName}')
+                            self.signalExportProgress.emit((nSlice + 1) / fTotal, f'export {patientName}')
                         
-                        
-                    XFile.projectFilePath = os.path.join(projectFolder, patientID + '.ai')
-                    XFile.folderPath[selectedID] = outPath
-                        
+                DICOM.nExportSucceed += 1
+                if DICOM.nExportSucceed >= 2:
+                    logger.debug(f'export finished emitted')
+                    self.signalExportFinished.emit()
+                    DICOM.nExportSucceed = 0
                     # XFile.ModifyTag({strType:outPath})
             except Exception as msg:
                 logger.critical(msg)
+                
                 
     def GetProjectPath(
         self, 
@@ -880,7 +1018,7 @@ class DICOM(QObject):
         projectFolder = os.path.join(basePath, patientID)
         folderPath = os.path.join(projectFolder, folderName, studyUID, seriesUID)
         
-        DICOM.__cacheData[selectedID]['path'] = folderPath
+        # DICOM.__cacheData[selectedID]['path'] = folderPath
         return projectFolder, folderPath
             
     def SaveAsSingleFrameDicom(self, ds:Dataset, frame_index:int, output_dir:str):
@@ -943,18 +1081,18 @@ class DICOM(QObject):
         #     self.currentSeries[index] = series
         self.currentSeries[index] = series
         
-    def GetDataFromID(self, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
+    def GetDataFromID(self, nType:int, idPatient:str, idStuy:str, idSeries:str, index:int = 0):
         self.SelectDataFromID(idPatient, idStuy, idSeries, index)
-        return self.GetData(self.currentSeries)
+        return self.GetData(nType, self.currentSeries)
         
         
-    def GetDataFromIndex(self,nPatient:int, nStudy:int, nSeries:int):
+    def GetDataFromIndex(self,nType:int, nPatient:int, nStudy:int, nSeries:int):
         patient:dict = list(self.dicPatient.values())[nPatient]
         study:dict = list(patient.values())[nStudy]
         series:dict = list(study.values())[nSeries]
         
         # self.currentSeries = series
-        return self.GetData(series)
+        return self.GetData(nType, series)
     
     def GetSlice(self, idPatient:str, idStuy:str, idSeries:str, index:int, nSlice:int):
         patient = self.dicPatient.get(idPatient)
@@ -1023,7 +1161,7 @@ class DICOM(QObject):
         path = series.get('path')
         return path
         
-    def GetData(self, series = None, index:int = 0):
+    def GetData(self, nType:int, series = None, index:int = 0):
         if self.currentSeries is None and series is None:
             return None
         elif series is None:
@@ -1159,7 +1297,7 @@ class DICOM(QObject):
         DICOM.__cacheData[index].update({'image':self.arrImage.copy(),
                                         'spacing':spacing,
                                         'dimension':dimension,
-                                        'series':listSeries
+                                        'series':listSeries.copy()
                                         })
         
         _, folderPath = self.GetProjectPath(index, 
@@ -1167,10 +1305,11 @@ class DICOM(QObject):
                                             listSeries[0]
                                             )
         
-        XFile.folderPath[index] = folderPath
+        # XFile.folderPath[index] = folderPath
+        XFile.SaveDicomPath(nType, folderPath)
             
         
-        return imageData, spacing, dimension, listSeries
+        return imageData, spacing, dimension, listSeries.copy()
     
     def _RecursiveFind(
         self, 
@@ -1637,6 +1776,7 @@ class REGISTRATION(QObject):
         return
     def _ClassifyBalls(self, *lstCentroid:list):
         centroids = np.concatenate(lstCentroid, axis = 0)
+        
         
         # 過濾
         groups = []
@@ -2452,18 +2592,26 @@ class REGISTRATION(QObject):
             
             imageHuMm = imageHuMm_resized
             
+        startTime = datetime.now().timestamp()
         self.signalProgress.emit(0.1, 'registrator identifying...')
         ############################################################################################
         ## 取得候選人球心 ############################################################################################
         resultCentroid_xy = self._FindBallXY(imageHuMm)
+        logger.debug(f'_FindBallXY pass through {datetime.now().timestamp() - startTime} s')
         self.signalProgress.emit(0.34, 'registrator identifying...')
+        
         resultCentroid_yz = self._FindBallYZ(imageHuMm)
+        logger.debug(f'_FindBallYZ pass through {datetime.now().timestamp() - startTime} s')
         self.signalProgress.emit(0.68, 'registrator identifying...')
+        
         resultCentroid_xz = self._FindBallXZ(imageHuMm)
+        logger.debug(f'_FindBallXZ pass through {datetime.now().timestamp() - startTime} s')
         self.signalProgress.emit(0.99, 'registrator identify completed')
         
         try:
             balls = self._ClassifyBalls(resultCentroid_xy, resultCentroid_yz, resultCentroid_xz)
+            del imageHuMm, resultCentroid_xy, resultCentroid_yz, resultCentroid_xz
+            
             self.signalProgress.emit(0.5, 'classify reference balls')
             reference = self.IdentifyPoint(balls)
         except Exception as msg:
@@ -3044,6 +3192,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
                     iStyle.wipeWidget.On()
                     
                 iren.Render()
+    
     def _RestoreActor(self):
         if None not in (self.ren1, self.actorImage):
             self.ren1.RemoveActor(self.ren1.actorImage)
@@ -3343,7 +3492,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             self.imageRectWipe.SetInputConnection(0, mapColor1.GetOutputPort())
             self.imageRectWipe.SetInputConnection(1, mapColor2.GetOutputPort())
             
-            self.posRefence = self.ren1.target.copy()
+            self.posRefence = self.ren1.GetTarget()
             position = self.ren1.GetImagePosition()
             InteractorStyleWipe.wipePosition = position
             self.imageRectWipe.SetPosition(position[self._idxAxis])
@@ -3365,7 +3514,7 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             self.port1 = mapColor1.GetOutputPort()
             self.port2 = mapColor2.GetOutputPort()
             
-            self.posRefence = self.ren1.target.copy()
+            self.posRefence = self.ren1.GetTarget()
             position = self.ren1.GetImagePosition()
             InteractorStyleWipe.wipePosition = position
             offset = self._GetFluoroSize()
@@ -3501,6 +3650,16 @@ class InteractorStyleWipe(vtkInteractorStyleImage):
             if isinstance(iStyle, InteractorStyleWipe):
                 iStyle._SyncWipePosition()
             iren.Render()
+            
+    def ResetGlobal():
+        InteractorStyleWipe.lstIren = []
+        InteractorStyleWipe.action = InteractorStyleWipe.ACTION_POINTER
+        InteractorStyleWipe.imageId = InteractorStyleWipe.IMAGE_INHALE
+        InteractorStyleWipe._transform  = vtkTransform() # 共用的transform
+        InteractorStyleWipe.wipePosition = np.zeros(3)
+        InteractorStyleWipe.sizeFluoro = 100
+        InteractorStyleWipe.image1Filter = None
+        InteractorStyleWipe.image2Filter = None
             
 class ContourInteractorStyle(vtk.vtkInteractorStyle):
     
@@ -4249,8 +4408,9 @@ class InteractorStyleImageAlgorithm(vtkInteractorStyleImage):
             # else:
             #     self.actor.GetMapper().SetInputData(output)
             # self.imageAlgorithm.image.DeepCopy(output)
-            self.iren.Initialize()
-            self.iren.Start()
+            self.iren.Render()
+            # self.iren.Initialize()
+            # self.iren.Start()
         
 class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
     
@@ -4480,8 +4640,9 @@ class InteractorStyleSegmentation(InteractorStyleImageAlgorithm):
                 self.actorLine.GetMapper().SetInputConnection(polyLine.GetOutputPort())
                 self.actorLine.VisibilityOn()
             
-            self.iren.Initialize()
-            self.iren.Start()
+            # self.iren.Initialize()
+            # self.iren.Start()
+            self.iren.Render()
             
     def onChangeCurrentRenderer(self):
         self.actorLine = None
@@ -4707,8 +4868,9 @@ class InteractorStyleVolume(vtk.vtkInteractorStyleRubberBandPick):
         self.renderer.image = imageMath.GetOutput()
         
             
-        self.iren.Initialize()
-        self.iren.Start()
+        # self.iren.Initialize()
+        # self.iren.Start()
+        self.iren.Render()
         
     def OnLeftButtonRelease(self, obj, event):
         self.bLeftButtonPress = False
@@ -4775,9 +4937,9 @@ class InteractorStyleVolume(vtk.vtkInteractorStyleRubberBandPick):
                 else:
                     self.actorLine.GetMapper().SetInputConnection(polyLine.GetOutputPort())
                 
-                self.iren.Initialize()
-                self.iren.Start()
-                
+                # self.iren.Initialize()
+                # self.iren.Start()
+                self.iren.Render()
                 
             else:
                 super().OnMouseMove()
@@ -5127,13 +5289,11 @@ class ContourWidget(vtk.vtkContourWidget):
     
 class RendererObj(vtkRenderer):
     # signalUpdateView = pyqtSignal()
-    # target為全實例共享，故設置為類屬性
-    target = [0, 0, 0]
     
     # 之後透過類變數統一管理全部view的target是否顯示
     bShowTarget = False
     
-    def __init__(self):
+    def __init__(self, display:'DISPLAY'):
         super(RendererObj, self).__init__()
         
         self.viewPort = None
@@ -5151,6 +5311,7 @@ class RendererObj(vtkRenderer):
         self.bRulerVisible = True
         self.bRulerVisibleTemp = True
         self.textActor = None
+        self.display = display
             
         self.targetObj = TargetObj(self)
         
@@ -5182,6 +5343,7 @@ class RendererObj(vtkRenderer):
                 
     def CopyCameraProperty(self, renderer):
         self.camera.DeepCopy(renderer.camera)
+        self.ResetCamera()
         
     def GetWorldToView(self, pos:_ArrayLike):
         self.SetWorldPoint(np.append(pos, 1))
@@ -5351,17 +5513,20 @@ class RendererObj(vtkRenderer):
         if isinstance(value, np.ndarray):
             if value.dtype == np.float64:
                 if self.orientation == VIEW_AXIAL: 
-                    self.target[:] = value
+                    # self.target[:] = value
+                    self.SetTarget(value, True)
                     self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, 0, self.imageDimensions[1] - 1, value, value)
                     self.textActor.SetInput(f'{self.imagePosition[2]}/{self.imageDimensions[2] - 1}')
                 elif self.orientation == VIEW_CORONAL: 
-                    self.target[:] = value
+                    # self.target[:] = value
+                    self.SetTarget(value, True)
                     self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(0, self.imageDimensions[0] - 1, value, value, 0, self.imageDimensions[2] - 1)
                     self.textActor.SetInput(f'{self.imagePosition[1]}/{self.imageDimensions[1] - 1}')
                 elif self.orientation == VIEW_SAGITTAL: 
-                    self.target[:] = value
+                    # self.target[:] = value
+                    self.SetTarget(value, True)
                     self.imagePosition[:] = np.round(value / self.voxelSize)
                     self.actorImage.SetDisplayExtent(value, value, 0, self.imageDimensions[1] - 1, 0, self.imageDimensions[2] - 1)
                     self.textActor.SetInput(f'{self.imagePosition[0]}/{self.imageDimensions[0] - 1}')
@@ -5386,7 +5551,7 @@ class RendererObj(vtkRenderer):
                 self.textActor.SetInput(f'{value}/{self.imageDimensions[0] - 1}')
                 
     def GetTarget(self):
-        return self.target
+        return self.display.target.copy()
     
     def GetViewportInWorld(self):
         renderWindow = self.GetRenderWindow()
@@ -5432,15 +5597,15 @@ class RendererObj(vtkRenderer):
         self.voxelSize = image.GetSpacing()
         self.image = image
         self.imageOrigin = imageOrigin
-        self.target = target
         self.imagePosition = imagePosition
+        # self.SetTarget(target, True)
         # self.imageOutputPort = imageOutputPort
         
         
     def SetCameraToTarget(self, pos:np.ndarray = None):
         
         if pos is None:
-            pos = self.target
+            pos = self.display.target
             
         # move camera to select point
         camera = self.GetActiveCamera()
@@ -5468,9 +5633,9 @@ class RendererObj(vtkRenderer):
             return
         
         if pos is None:
-            pos = self.target
+            pos = self.display.target
         else:
-            self.target[:] = np.array(pos)
+            self.display.target = np.array(pos)
             
         if not self.bFocusMode:
             self.actorTarget = self.targetObj.InitObj(pos)
@@ -5751,12 +5916,15 @@ class RendererObj(vtkRenderer):
         self.targetObj.SetInViewportCenter()
         
     
-    def SetTarget(self, pos = None):
+    def SetTarget(self, pos = None, bSetValueOnly = False):
         
         if pos is None:
-                pos = self.target
+                pos = self.display.target
         else:
-            self.target[:] = np.array(pos)
+            self.display.target = np.array(pos)
+            
+        if bSetValueOnly:
+            return
         
         self.imagePosition[:] = np.round(pos / self.voxelSize)
         
@@ -5898,8 +6066,8 @@ class RendererObj(vtkRenderer):
         
     
 class RendererObj3D(RendererObj):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, display:'DISPLAY'):
+        super().__init__(display)
         self.actorTarget3D = vtkAssembly()
         self.volume = vtkVolume()
         
@@ -5980,12 +6148,15 @@ class RendererObj3D(RendererObj):
             self.volume.GetMapper().SetInputData(self.image)
         
     
-    def SetTarget(self, pos = None):
+    def SetTarget(self, pos = None, bSetValueOnly = False):
         
         if pos is None:
-            pos = self.target
+            pos = self.display.target
         else:
-            self.target[:] = pos
+            self.display.target = np.array(pos)
+            
+        if bSetValueOnly:
+            return
             
         if self.isInitialize == False:
             self.InitTarget(pos)
@@ -6087,8 +6258,8 @@ class RendererCrossSectionObj(RendererObj):
     targetCS    = None
     actorCircle = None
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, display:'DISPLAY'):
+        super().__init__(display)
         
     def ChangeView(self, value):
         """change slice view
@@ -6410,7 +6581,7 @@ class RendererCrossSectionObj(RendererObj):
         
             
         if pos is None:
-            pos = self.GetCrossSectionFromPosition(self.target)
+            pos = self.GetCrossSectionFromPosition(self.display.target)
         
         self.actorTarget = self.targetObj.InitObj(pos)
             
@@ -6421,26 +6592,26 @@ class RendererCrossSectionObj(RendererObj):
     def SetTarget(self, pos = None, posOriginal = None):
         
         if pos is None and posOriginal is None:
-            pos = self.GetCrossSectionFromPosition(self.target)
+            pos = self.GetCrossSectionFromPosition(self.display.target)
             if pos is None:
                 logger.debug('pos in RendererCrossSectionObj.SetTarget is None')
                 return
             
-            self.targetCS = pos
-            posOriginal = self.target
+            self.targetCS = np.array(pos)
+            posOriginal = self.display.target
         else:
             if posOriginal is not None:
-                self.target[:] = posOriginal
+                self.display.target = np.array(posOriginal)
             else:
                 posOriginal = self.GetPositionFromCrossSection(pos)
                 if posOriginal is not None:
-                    self.target[:] = posOriginal
+                    self.display.target = posOriginal
                 else:
                     logger.debug('posOriginal is None')
                     return
                     
             if pos is None:
-                pos = self.GetCrossSectionFromPosition(self.target)
+                pos = self.GetCrossSectionFromPosition(self.display.target)
                 if pos is None:
                     logger.debug('pos in RendererCrossSectionObj.SetTarget is None')
                     return
@@ -6555,8 +6726,8 @@ class RendererCrossSectionObj(RendererObj):
 #         self.camera.Zoom(1.8)
 
 class RendererAlongTrajectory(RendererCrossSectionObj):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, display:'DISPLAY'):
+        super().__init__(display)
         self.axis = np.array([0, 0, -1])
         self.transform = vtkTransform()
         
@@ -7015,6 +7186,8 @@ class TrajectoryVTKObj():
         for renderer in self.lstRenderer:
             self.stippleLine.remove(renderer)
             renderer.RemoveActor(self.actorLine)
+            
+            
         
     def setCurrent(self, bEnabled:bool = True):
         if self.bVisible:
@@ -7075,11 +7248,11 @@ class TrajectoryVTKObj():
         self.actorTube.PickableOff()
         
     def setRenderer(self, renderer:vtkRenderer):
-        renderer.AddActor(self.actorLine)
         if renderer not in self.lstRenderer:
+            renderer.AddActor(self.actorLine)
             self.lstRenderer.append(renderer)
-        # renderer.AddActor(self.actorTube)
-        self.stippleLine.setRenderer(renderer)
+            # renderer.AddActor(self.actorTube)
+            self.stippleLine.setRenderer(renderer)
         
     def setVisibility(self, bVisible:bool):
         bVisibleAndCurrent = bVisible and self.bCurrent
@@ -7168,6 +7341,20 @@ class Trajectory():
         
         self._pointBeenSetNum |= 2
         self._checkAddTrajectory(owner)
+        
+    def clear(self):
+        for obj in self._listVTKObj:
+            obj.remove()
+        
+        self._listOwner = []
+        self._listTrajectory = []
+        self._listVTKObj = []
+        self._preVisible = True
+        self._pointBeenSetNum = 0
+        
+        self.entryPoint = np.zeros(3)
+        self.targetPoint = np.zeros(3)
+        self.currentIndex = -1
         
     def count(self):
         return len(self._listTrajectory)
@@ -7352,12 +7539,12 @@ class DISPLAY(QObject):
         self.actorAxial = vtkImageActor()
         self.actorCrossSection = vtkImageActor()
         
-        self.rendererSagittal = RendererObj()
-        self.rendererCoronal = RendererObj()
-        self.rendererAxial = RendererObj()
-        self.renderer3D = RendererObj3D()
-        self.rendererCrossSection = RendererCrossSectionObj()
-        self.rendererAlongTrajectory = RendererAlongTrajectory()
+        self.rendererSagittal = RendererObj(self)
+        self.rendererCoronal = RendererObj(self)
+        self.rendererAxial = RendererObj(self)
+        self.renderer3D = RendererObj3D(self)
+        self.rendererCrossSection = RendererCrossSectionObj(self)
+        self.rendererAlongTrajectory = RendererAlongTrajectory(self)
         
         DISPLAY._lstRendererAxial.append(self.rendererAxial)
         DISPLAY._lstRendererCoronal.append(self.rendererCoronal)
@@ -8196,6 +8383,9 @@ class DISPLAY(QObject):
         
         return out[:3]
     
+    def ClearTrajectory():
+        DISPLAY.trajectory.clear()
+    
     def CountOfTrajectory():
         return DISPLAY.trajectory.count()
     
@@ -8259,4 +8449,15 @@ class DISPLAY(QObject):
         blend.Update()
         
         DISPLAY.lstDisplayObj[0].LoadImage(blend.GetOutput())
+        
+    # def Reset():
+    #     DISPLAY.ClearTrajectory()
+    #     # DISPLAY._lstRendererAxial     = []
+    #     # DISPLAY._lstRendererCoronal   = []
+    #     # DISPLAY._lstRendererSagittal  = []
+    #     # DISPLAY._lstRenderer3D        = []
+    #     # DISPLAY._lstRendererCrossSection = []
+    #     # DISPLAY.lstDisplayObj = []
+    #     # DISPLAY.inputImage1 = None
+    #     # DISPLAY.inputImage2 = None
         
