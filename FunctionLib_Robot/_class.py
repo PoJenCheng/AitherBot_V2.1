@@ -3659,6 +3659,8 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             
         self.btnRobotRun.clicked.connect(lambda:self.signalRobotRun.emit(self.entryRobot, self.targetRobot, self.w1, self.alpha))
         self.btnGetImage.clicked.connect(self.OnClicked_btnGetImage)
+        self.btnGetPnp.clicked.connect(self.OnClicked_btnGetPnp)
+        
         self.cameraRegist()
         
     def OnClicked_btnGetImage(self):
@@ -3673,13 +3675,10 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
         
         
-        centerPoint = np.array([69, 44, 69])
-        self.GetPnP(centerPoint)
-        
-        # self.entryF, _ = cv2.projectPoints(self.entryF, self.rvec, self.tvec, self.cameraMatrix, None)
-        # self.targetF, _ = cv2.projectPoints(self.targetF, self.rvec, self.tvec, self.cameraMatrix, None)
-        # self.entryS, _ = cv2.projectPoints(self.entryS, self.rvec, self.tvec, self.cameraMatrix, None)
-        # self.targetS, _ = cv2.projectPoints(self.targetS, self.rvec, self.tvec, self.cameraMatrix, None)
+        entryF, _ = cv2.projectPoints(self.entryF, self.rvec, self.tvec, self.cameraMatrix, None)
+        targetF, _ = cv2.projectPoints(self.targetF, self.rvec, self.tvec, self.cameraMatrix, None)
+        entryS, _ = cv2.projectPoints(self.entryS, self.rvec, self.tvec, self.cameraMatrix, None)
+        targetS, _ = cv2.projectPoints(self.targetS, self.rvec, self.tvec, self.cameraMatrix, None)
         
         
         
@@ -3690,12 +3689,12 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         # self.qImgFront = self.__ImageToQImage(caliImageFront)
         # self.qImgSide = self.__ImageToQImage(caliImageSide)
         
-        self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
-        self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
-        self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
-        self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
-        self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
-        self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+        self.DrawPoint(entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        self.DrawPoint(targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        self.__DrawLine(entryF, targetF, DlgRobotCalibration.IMG_FRONT)
+        self.__DrawLine(entryS, targetS, DlgRobotCalibration.IMG_SIDE)
         
        
         self.update()
@@ -3729,6 +3728,35 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         # self.update()
         
         
+        
+        # close calibration light
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_2,False)
+        return True
+    
+    def OnClicked_btnGetPnp(self):
+            
+        self.imageFront, self.pixelWidthFront, self.pixelHeightFront = self.__CaptureImage(self.cameraCali_Front)
+        self.imageSide, self.pixelWidthSide, self.pixelHeightSide = self.__CaptureImage(self.cameraCali_Side)
+        
+        self.qImgSide = self.__ImageToQImage(self.imageSide)
+        self.qImgFront = self.__ImageToQImage(self.imageFront)
+        
+        self.rateFront = np.array([self.pixelWidthFront / 138, self.pixelHeightFront / 88, self.pixelWidthFront / 138])
+        self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
+        
+        
+        centerPoint = np.array([69, 44, 69])
+        self.GetPnP(centerPoint)
+        
+        self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+        self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+       
+        self.update()
         
         # close calibration light
         MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
@@ -3907,24 +3935,24 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             if nImageID == DlgRobotCalibration.IMG_FRONT:
                 # pointFront = (point * self.rateFront)
                 
-                # if calibrationMatrix is not None:
-                #     pointFront = self.__CalibrationPoints(pointFront[:2], self.transformFront)
-                # pointFront = np.int_(pointFront)
-                # self.__DrawOnQImage(self.qImgFront, pointFront[0], pointFront[1], color)
-                point, _ = cv2.projectPoints(point, self.rvec, self.tvec, self.cameraMatrix, None)
-                point = point.ravel()
-                self.__DrawOnQImage(self.qImgFront, int(point[0]), int(point[1]), color)
+                if calibrationMatrix is not None:
+                    point = self.__CalibrationPoints(point[:2], self.transformFront)
+                point = np.int_(point)
+                self.__DrawOnQImage(self.qImgFront, point[0], point[1], color)
+                # point, _ = cv2.projectPoints(point, self.rvec, self.tvec, self.cameraMatrix, None)
+                # point = point.ravel()
+                # self.__DrawOnQImage(self.qImgFront, int(point[0]), int(point[1]), color)
                 self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
             elif nImageID == DlgRobotCalibration.IMG_SIDE:
             
-                pointSide = (point * self.rateSide)
+                # pointSide = (point * self.rateSide)
                 if calibrationMatrix is not None:
-                    pointSide = self.__CalibrationPoints(pointSide[1:][::-1], self.transformFront)
+                    point = self.__CalibrationPoints(point[1:][::-1], self.transformFront)
                 else:
-                    pointSide = pointSide[1:][::-1]
-                pointSide = np.int_(pointSide)
+                    point = point[1:][::-1]
+                point = np.int_(point)
                 
-                self.__DrawOnQImage(self.qImgSide, pointSide[0], pointSide[1], color)
+                self.__DrawOnQImage(self.qImgSide, point[0], point[1], color)
                 self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
             
             self.update()
@@ -4016,11 +4044,13 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             colors = [QColor(255, 0, 0), QColor(0, 255, 0), QColor(0, 0, 255), QColor(0, 255, 255)]
             for i in range(numOfCorners):
                 cornerFront3D.append(np.array([cornersFront[i][0], cornersFront[i][1], cornersSide[i][0]]))
+                cornerFront3D[-1] *= self.rateFront
                 self.DrawPoint(cornerFront3D[-1], colors[i], DlgRobotCalibration.IMG_FRONT)
                 
             cornerSide3D = []
             for j in range(numOfCorners):
                 cornerSide3D.append(np.array([cornersFront[j][0], cornersSide[j][1], cornersSide[j][0]]))
+                cornerSide3D[-1] *= self.rateSide
                 self.DrawPoint(cornerSide3D[-1], colors[j], DlgRobotCalibration.IMG_SIDE)
             
             self.update()
