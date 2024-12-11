@@ -38,8 +38,34 @@ QLabel{
     </widget>
    </item>
    <item row="1" column="0" colspan="2">
-    <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,0">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,0,0">
      <item row="0" column="2">
+      <widget class="QPushButton" name="btnRobotRun">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Robot Run</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="btnGetImage">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Get Robot Image</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
       <widget class="QGroupBox" name="gbxCoordinate">
        <property name="title">
         <string>Coordinate</string>
@@ -109,7 +135,7 @@ QLabel{
       </widget>
      </item>
      <item row="0" column="0">
-      <widget class="QPushButton" name="btnGetImage">
+      <widget class="QPushButton" name="btnGetPnp">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -117,20 +143,7 @@ QLabel{
         </size>
        </property>
        <property name="text">
-        <string>Get Image</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="btnRobotRun">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>80</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Robot Run</string>
+        <string>Get Camera Matrix</string>
        </property>
       </widget>
      </item>

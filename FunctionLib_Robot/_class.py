@@ -10,6 +10,7 @@ import cv2
 import pygame
 import math
 import threading
+from typing import *
 # import random
 # import atexit
 from pylltLib import pyllt as llt
@@ -1916,7 +1917,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         # self.absolutePosition()
         self.MoveToPoint(w1,alpha)
         
-    def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray):
+    def P2PWidthRobotCoordinate(self, entry:np.ndarray, target:np.ndarray, w1, alpha):
         # x, y, z map to z, x, y(robot base) coordinate
         self.entryPoint = np.roll(entry, 1) 
         self.targetPoint = np.roll(target, 1)
@@ -1925,7 +1926,7 @@ class MOTORSUBFUNCTION(MOTORCONTROL, REGISTRATION, OperationLight, QObject):
         self.entryPoint[1] *= -1
         self.targetPoint[1] *= -1
         
-        self.MoveToPoint()
+        self.MoveToPoint(w1, alpha)
         
     def breathingCompensation(self, percentage):
         
@@ -3562,15 +3563,65 @@ class joystickControl(MOTORSUBFUNCTION, QObject):
         
             
 class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
-    signalRobotRun = pyqtSignal(np.ndarray, np.ndarray)
+    signalRobotRun = pyqtSignal(np.ndarray, np.ndarray, object, object)
     
     IMG_FRONT = 0
     IMG_SIDE = 1
     
-    def __init__(self, parent = None):
+    cubeSide = np.array(
+        [[-12.5, -10],
+        [12.5, 0],
+        [12.5, 10],
+        [-12.5, 0]],
+        dtype = np.float32
+    )
+    
+    cubeFront = np.array(
+        [[12.5, -10],
+        [12.5, 0],
+        [-12.5, 10],
+        [-12.5, 0]],
+        dtype = np.float32
+    )
+    
+    cube3DSide = np.array([
+        [-12.5, -10, -12.5],
+        [-12.5,  0,   12.5], 
+        [ 12.5,  10,  12.5],
+        [ 12.5,  0,  -12.5]],
+        dtype = np.float32)
+    
+    cube3DFront = np.array([
+        [-12.5, -10,  12.5],
+        [ 12.5,  0,   12.5],
+        [ 12.5,  10, -12.5],
+        [-12.5,  0,  -12.5]
+    ])
+    
+    transformFront = np.array([
+        [ 4.94322957e+00, 4.26177107e+00,-5.15872103e+02],
+        [ 1.12998773e+00, 5.70769156e+00,-3.45918811e+02],
+        [ 6.29643752e-03, 1.39844425e-02,  1.00000000e+00]],
+        dtype = np.float32)
+    
+    transformSide = np.array([
+        [ 1.78834573e-01,  1.05568116e+00, 1.15335755e+02],
+        [-3.19477993e-01, 1.38557232e+00, 7.02563975e+01],
+        [-1.70701217e-03, 3.78797046e-03, 1.00000000e+00]],
+        dtype = np.float32)
+    
+    def __init__(self, w1, alpha, parent = None):
         super().__init__(parent)
         self.setupUi(self)
-
+        
+        self.w1 = w1
+        self.alpha = alpha
+        
+        # IDS相機的cmos尺寸(mm) / 像素
+        self.cameraCMOS = np.array([5.76, 4.32])
+        self.cameraPixel = np.array([1280, 1024])
+        self.focusLength = 6
+        
         self.baseShiftX = 69
         self.baseDistance = 197.392
         self.baseShiftHeight = 63.9
@@ -3606,8 +3657,10 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         for p in self.lstCoord:
             p.editingFinished.connect(self.OnEditFinished)
             
-        self.btnRobotRun.clicked.connect(lambda:self.signalRobotRun.emit(self.entryRobot, self.targetRobot))
+        self.btnRobotRun.clicked.connect(lambda:self.signalRobotRun.emit(self.entryRobot, self.targetRobot, self.w1, self.alpha))
         self.btnGetImage.clicked.connect(self.OnClicked_btnGetImage)
+        self.btnGetPnp.clicked.connect(self.OnClicked_btnGetPnp)
+        
         self.cameraRegist()
         
     def OnClicked_btnGetImage(self):
@@ -3615,48 +3668,95 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.imageFront, self.pixelWidthFront, self.pixelHeightFront = self.__CaptureImage(self.cameraCali_Front)
         self.imageSide, self.pixelWidthSide, self.pixelHeightSide = self.__CaptureImage(self.cameraCali_Side)
         
+        self.qImgSide = self.__ImageToQImage(self.imageSide)
+        self.qImgFront = self.__ImageToQImage(self.imageFront)
+        
         self.rateFront = np.array([self.pixelWidthFront / 138, self.pixelHeightFront / 88, self.pixelWidthFront / 138])
         self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
         
-        # self.entryF, self.entryS = self.GetPositionInImage(self.imageFront, self.imageSide, self.entryF)
-        # self.targetF, self.targetS = self.GetPositionInImage(self.imageFront, self.imageSide, self.targetF)
-        points = self.GetPositionInImage(self.imageFront, self.imageSide, self.entryF)
+        
+        entryF, _ = cv2.projectPoints(self.entryF, self.rvec, self.tvec, self.cameraMatrix, None)
+        targetF, _ = cv2.projectPoints(self.targetF, self.rvec, self.tvec, self.cameraMatrix, None)
+        entryS, _ = cv2.projectPoints(self.entryS, self.rvec, self.tvec, self.cameraMatrix, None)
+        targetS, _ = cv2.projectPoints(self.targetS, self.rvec, self.tvec, self.cameraMatrix, None)
+        
+        
+        
+        # points = self.GetPositionInImage(self.imageFront, self.imageSide, self.entryF)
+        # caliImageSide = cv2.warpPerspective(self.imageSide, self.transformSide, np.array(self.imageSide.shape)[::-1])
+        # caliImageFront = cv2.warpPerspective(self.imageFront, self.transformFront, np.array(self.imageFront.shape)[::-1])
+        
+        # self.qImgFront = self.__ImageToQImage(caliImageFront)
+        # self.qImgSide = self.__ImageToQImage(caliImageSide)
+        
+        self.DrawPoint(entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        self.DrawPoint(targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        self.__DrawLine(entryF, targetF, DlgRobotCalibration.IMG_FRONT)
+        self.__DrawLine(entryS, targetS, DlgRobotCalibration.IMG_SIDE)
+        
+       
+        self.update()
+        
+        
+        
+        # self.qImgSide = self.__ImageToQImage(self.imageSide)
+        # self.qImgFront = self.__ImageToQImage(self.imageFront)
+        
+        # if points is None:
+        #     logger.warning('no instrument in camera')
+        #     self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
+        #     self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
+        #     self.update()
+        #     return
+        
+        # self.entryF, self.targetF, self.entryS, self.targetS = points
+            
+        # logger.debug(f'entry : robot = {self.entryRobot}, camera front = {self.entryF}, side = {self.entryS}')
+        # logger.debug(f'target : robot = {self.targetRobot}, camera front = {self.targetF}, side = {self.targetS}')
+        
+        # if self.entryF is not None and self.targetF is not None:
+        #     ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        #     ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        #     ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        #     ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        #     self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+        #     self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+        #     if ret == False:
+        #         QMessageBox.critical(None, 'error', f'out of canvas range')
+        # self.update()
+        
+        
+        
+        # close calibration light
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
+        MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_2,False)
+        return True
+    
+    def OnClicked_btnGetPnp(self):
+            
+        self.imageFront, self.pixelWidthFront, self.pixelHeightFront = self.__CaptureImage(self.cameraCali_Front)
+        self.imageSide, self.pixelWidthSide, self.pixelHeightSide = self.__CaptureImage(self.cameraCali_Side)
         
         self.qImgSide = self.__ImageToQImage(self.imageSide)
         self.qImgFront = self.__ImageToQImage(self.imageFront)
         
-        if points is None:
-            logger.warning('no instrument in camera')
-            self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
-            self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
-            self.update()
-            return
+        self.rateFront = np.array([self.pixelWidthFront / 138, self.pixelHeightFront / 88, self.pixelWidthFront / 138])
+        self.rateSide = np.array([self.pixelWidthSide / 138, self.pixelHeightSide / 88, self.pixelWidthSide / 138])
         
-        self.entryF, self.targetF, self.entryS, self.targetS = points
-            
-        logger.debug(f'entry : robot = {self.entryRobot}, camera front = {self.entryF}, side = {self.entryS}')
-        logger.debug(f'target : robot = {self.targetRobot}, camera front = {self.targetF}, side = {self.targetS}')
         
-        if self.entryF is not None and self.targetF is not None:
-            ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
-            ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
-            ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
-            ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
-            self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
-            self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
-            if ret == False:
-                QMessageBox.critical(None, 'error', f'out of canvas range')
+        centerPoint = np.array([69, 44, 69])
+        self.GetPnP(centerPoint)
+        
+        self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+        self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+       
         self.update()
-        
-        # cv2.imwrite("imageFront_cal.jpg",corrected_image)
-        
-        # # 修改成adaptive threshold image
-        # src = cv2.imread("imageFront_cal.jpg", cv2.IMREAD_GRAYSCALE)
-        # dst = cv2.adaptiveThreshold(src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,7,5)
-        # cv2.imwrite("imageFrontAdaptive.jpg",dst)
-                
-        
-        # cv2.imwrite("imageFront_done.jpg",corrected_image)
         
         # close calibration light
         MOTORSUBFUNCTION.lightPLC.write_by_name(MOTORSUBFUNCTION.CalibrationLight_1,False)
@@ -3711,6 +3811,12 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         except Exception as msg:
             logger.error(msg)
             return np.zeros(3)
+        
+    def __CalibrationPoints(self, points:np.ndarray, transformMatrix:np.ndarray):
+        points = points.reshape(-1, 1, 2).astype(np.float32)
+        points = cv2.perspectiveTransform(points, transformMatrix)
+        return points
+        
     
     def __CaptureImage(self, camera:imageCalibration):
         # Open calibration light
@@ -3803,8 +3909,23 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         painter.drawEllipse(QPoint(x, y), radius, radius)
         
         painter.end()
+        
+    def __FindIntersection(self, line1, line2):
+        x1, y1, x2, y2 = line1
+        x3, y3, x4, y4 = line2
+
+        # 計算斜率 (考慮垂直線的情況)
+        denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if denom == 0:  # 平行線或重合線
+            return None
+
+        # 使用行列式計算交點
+        px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom
+        py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom
+
+        return int(px), int(py)
     
-    def DrawPoint(self, point:np.ndarray, color:QColor, nImageID:int):
+    def DrawPoint(self, point:np.ndarray, color:QColor, nImageID:int, calibrationMatrix:np.ndarray = None):
         try:
             
             # x, y, z = point
@@ -3812,13 +3933,26 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             #     return False
             
             if nImageID == DlgRobotCalibration.IMG_FRONT:
-                pointFront = (point * self.rateFront).astype(int)
-                self.__DrawOnQImage(self.qImgFront, pointFront[0], pointFront[1], color)
+                # pointFront = (point * self.rateFront)
+                
+                if calibrationMatrix is not None:
+                    point = self.__CalibrationPoints(point[:2], self.transformFront)
+                point = np.int_(point)
+                self.__DrawOnQImage(self.qImgFront, point[0], point[1], color)
+                # point, _ = cv2.projectPoints(point, self.rvec, self.tvec, self.cameraMatrix, None)
+                # point = point.ravel()
+                # self.__DrawOnQImage(self.qImgFront, int(point[0]), int(point[1]), color)
                 self.canvasXZ.setPixmap(QPixmap.fromImage(self.qImgFront))
             elif nImageID == DlgRobotCalibration.IMG_SIDE:
             
-                pointSide = (point * self.rateSide).astype(int)
-                self.__DrawOnQImage(self.qImgSide, pointSide[2], pointSide[1], color)
+                # pointSide = (point * self.rateSide)
+                if calibrationMatrix is not None:
+                    point = self.__CalibrationPoints(point[1:][::-1], self.transformFront)
+                else:
+                    point = point[1:][::-1]
+                point = np.int_(point)
+                
+                self.__DrawOnQImage(self.qImgSide, point[0], point[1], color)
                 self.canvasYZ.setPixmap(QPixmap.fromImage(self.qImgSide))
             
             self.update()
@@ -3828,14 +3962,14 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             
         return True
     
-    def GetPositionInImage(self, imageFront:np.ndarray, imageSide:np.ndarray, point:np.ndarray):
+    def GetPositionInImage(self, imageFront:np.ndarray, imageSide:np.ndarray):
         try:
-            y = point[1]
-            pixelY = max(int((y * self.pixelHeightFront) / 88), 0)
+            # y = point[1]
+            # pixelY = max(int((y * self.pixelHeightFront) / 88), 0)
             
-            dataX = []
-            diameterLast = 0
-            y1, y2 = 0, 0
+            # dataX = []
+            # diameterLast = 0
+            # y1, y2 = 0, 0
             
             pointsFront = self.GetPolyCenterLine(imageFront)
             pointsSide = self.GetPolyCenterLine(imageSide)
@@ -3857,6 +3991,72 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
             pTargetSide = np.array([pointFrontTarget[0], pointSideTarget[1], pointSideTarget[0]])
             
             return np.array([pEntryFront, pTargetFront, pEntrySide, pTargetSide], dtype = np.float64)
+            
+
+        except Exception as msg:
+            logger.critical(msg)
+
+            return None
+        
+    def GetCornersInImage(self, imageFront:np.ndarray, imageSide:np.ndarray):
+        try:
+            
+            cornersFront = self.GetBoxCorner2(imageFront, filename = 'front')
+            cornersSide = self.GetBoxCorner2(imageSide, filename = 'side')
+            
+            if cornersFront is None or cornersSide is None:
+                return None
+            
+            centerPoint = np.array([69, 44])
+            cubeFront = np.float32((self.cubeFront + centerPoint) * self.rateFront[:2])
+            transpformFront, warpedImageFront = self.GetPerspectiveMatrix(imageFront, cubeFront, cornersFront)
+            
+            cubeSide = np.float32((self.cubeSide + centerPoint) * self.rateSide[:2])
+            transpformSide, warpedImageSide = self.GetPerspectiveMatrix(imageSide, cubeSide, cornersSide)
+            
+            cornerPoints = cornersFront.reshape((-1, 1, 2)).astype(np.float32)
+            cornersFront = cv2.perspectiveTransform(cornerPoints, transpformFront).reshape(4, 2)
+            
+            cornerPoints = cornersSide.reshape((-1, 1, 2)).astype(np.float32)
+            cornersSide = cv2.perspectiveTransform(cornerPoints, transpformSide).reshape(4, 2)
+            
+            
+            self.qImgFront = self.__ImageToQImage(warpedImageFront)
+            self.qImgSide = self.__ImageToQImage(warpedImageSide)
+            
+            numOfCorners = len(cornersFront)
+            numOfCornersSide = len(cornersSide)
+            if numOfCorners != numOfCornersSide:
+                logger.warning('=' * 43 + '!!!CAUTION!!!' + '=' * 43)
+                logger.warning('\ncorner size diffierent between front and side image')
+                logger.warning(f'num of front:{numOfCorners} num of side:{numOfCornersSide}')
+                logger.warning('=' * 99)
+                
+                numOfCorners = min(numOfCorners, numOfCornersSide)
+            
+            for i in range(numOfCorners):
+                cornersFront[i] /= self.rateFront[:2]
+                
+            for i in range(numOfCorners):
+                cornersSide[i] /= self.rateSide[:2]
+            
+            cornerFront3D = []
+            colors = [QColor(255, 0, 0), QColor(0, 255, 0), QColor(0, 0, 255), QColor(0, 255, 255)]
+            for i in range(numOfCorners):
+                cornerFront3D.append(np.array([cornersFront[i][0], cornersFront[i][1], cornersSide[i][0]]))
+                cornerFront3D[-1] *= self.rateFront
+                self.DrawPoint(cornerFront3D[-1], colors[i], DlgRobotCalibration.IMG_FRONT)
+                
+            cornerSide3D = []
+            for j in range(numOfCorners):
+                cornerSide3D.append(np.array([cornersFront[j][0], cornersSide[j][1], cornersSide[j][0]]))
+                cornerSide3D[-1] *= self.rateSide
+                self.DrawPoint(cornerSide3D[-1], colors[j], DlgRobotCalibration.IMG_SIDE)
+            
+            self.update()
+            
+            logger.debug(f'transform front = \n{transpformFront}')
+            logger.debug(f'transform side = \n{transpformSide}')
             
 
         except Exception as msg:
@@ -3898,23 +4098,23 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         self.targetS = self.targetF.copy()
         
         
-        self.entryF, _ = self.__CalibrationViewAngle(self.entryF)
+        # self.entryF, _ = self.__CalibrationPoints(self.entryF)
         
 
-        self.targetF, _ = self.__CalibrationViewAngle(self.targetF)
+        # self.targetF, _ = self.__CalibrationViewAngle(self.targetF)
         
-        self.qImgSide = self.__ImageToQImage(self.imageSide) # XY plane
-        self.qImgFront = self.__ImageToQImage(self.imageFront) # YZ plane
+        # self.qImgSide = self.__ImageToQImage(self.imageSide) # XY plane
+        # self.qImgFront = self.__ImageToQImage(self.imageFront) # YZ plane
         
         
-        ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
-        ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
-        ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
-        ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
-        self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
-        self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
-        if ret == False:
-            QMessageBox.critical(None, 'error', f'out of canvas range')
+        # ret = self.DrawPoint(self.entryF, QColor(255, 0, 0), DlgRobotCalibration.IMG_FRONT)
+        # ret &= self.DrawPoint(self.targetF, QColor(0, 0, 255), DlgRobotCalibration.IMG_FRONT)
+        # ret &= self.DrawPoint(self.entryS, QColor(255, 0, 0), DlgRobotCalibration.IMG_SIDE)
+        # ret &= self.DrawPoint(self.targetS, QColor(0, 0, 255), DlgRobotCalibration.IMG_SIDE)
+        # self.__DrawLine(self.entryF, self.targetF, DlgRobotCalibration.IMG_FRONT)
+        # self.__DrawLine(self.entryS, self.targetS, DlgRobotCalibration.IMG_SIDE)
+        # if ret == False:
+        #     QMessageBox.critical(None, 'error', f'out of canvas range')
             
     def GetPolyCenterLine(self, image:np.ndarray = None, path:str = None):
         if image is None and path is None:
@@ -3979,3 +4179,219 @@ class DlgRobotCalibration(QDialog, Ui_DlgRobotCalibration):
         except Exception as msg:
             logger.critical(msg)
             return None
+        
+    def GetBoxCorner(self, image:np.ndarray = None, path:str = None, filename:str = None):
+        if image is None and path is None:
+            logger.warning('at least one parameter')
+            return None
+        elif image is None:
+            image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            
+        try:
+
+            # 創建一個稍微小於原影像的蒙版，忽略邊界區域
+            border = 5  # 邊界大小
+            masked_image = image[border:-border, border:-border]  # 移除邊界
+
+            # 二值化處理
+            _, binary = cv2.threshold(masked_image, 200, 255, cv2.THRESH_BINARY_INV)
+            cv2.imwrite(f'binary_{filename}.jpg', binary)
+            
+            edges = cv2.Canny(binary, 50, 100, apertureSize = 5)
+            # edges = cv2.GaussianBlur(edges, (3, 3), 0)
+            # kernel = np.ones((3, 3), np.uint8)
+            # edges = cv2.dilate(edges, kernel, iterations=1)
+            
+            # _, edges = cv2.threshold(edges, 80, 255, cv2.THRESH_BINARY)
+
+            cv2.imwrite(f'canny_{filename}.jpg', edges)
+            lines = cv2.HoughLinesP(edges, rho = 1, theta = np.pi / 180, threshold = 60, minLineLength=50, maxLineGap=100)
+            
+            imageColor = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            lines = sorted(lines, key = lambda x: (x[0][0] + x[0][2]) / 2)
+            
+            colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255]]
+            for i, line in enumerate(lines):
+                line[0] += np.array([5, 5, 5, 5])
+                x1, y1, x2, y2 = line[0]
+                # cv2.line(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.line(imageColor, (x1, y1), (x2, y2), colors[i % 5], 2)
+            
+                
+            intersections = []
+            for i in range(len(lines) - 1):
+                # 計算所有線段的交點
+                intersection = self.__FindIntersection(lines[i][0], lines[i + 1][0])
+                if intersection is not None:
+                    intersections.append(intersection)
+            
+            # for i in range(len(lines)):
+            #     for j in range(i + 1, len(lines)):
+            #         line1 = lines[i][0]  # 第一條線段
+            #         line2 = lines[j][0]  # 第二條線段
+            #         intersection = self.__FindIntersection(line1, line2)
+            #         if intersection is not None:
+            #             intersections.append(intersection)
+
+            # 在圖像上繪製交點
+            for point in intersections:
+                # cv2.circle(image, point, 5, (0, 0, 255), -1)
+                cv2.circle(imageColor, point, 5, (0, 0, 255), -1)
+                
+            cv2.imwrite(f'corner_{filename}.jpg', imageColor)
+            
+            return np.array(intersections, dtype = np.float64)
+        except Exception as msg:
+            logger.critical(msg)
+            return None
+        
+    def GetBoxCorner2(self, image:np.ndarray = None, path:str = None, filename:str = None):
+        if image is None and path is None:
+            logger.warning('at least one parameter')
+            return None
+        elif image is None:
+            image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            
+        try:
+
+            # 創建一個稍微小於原影像的蒙版，忽略邊界區域
+            border = 20  # 邊界大小
+            masked_image = image[border:-border, border:-border]  # 移除邊界
+
+            # 二值化處理
+            _, binary = cv2.threshold(masked_image, 200, 255, cv2.THRESH_BINARY_INV)
+            
+            # 找到輪廓
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            imageColor = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            
+            focusLength = []
+            colors = [[0, 0, 255], [0, 255, 0], [255, 0, 0], [255, 0, 255]]
+            contours = sorted(contours, key = lambda x:x.size, reverse = True)
+            # for contour in contours:
+            contour = contours[0]  
+            # 多邊形近似
+            epsilon = 0.01 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
+            
+            approx = np.reshape(approx, (-1, 2))
+            
+            approx = approx[np.argsort(approx[:, 1])]
+            
+            # cubePixelWidth = abs(approx[5][0] - approx[4][0])
+            # focusLength.append(((138 - 25) / 2) * 25 / cubePixelWidth)
+            # logger.debug(f'focus length = {focusLength}mm')
+            
+            approx = approx[:4]
+            
+            if approx[1][0] >= approx[2][0]:
+                approx = approx[[0, 1, 3, 2]]
+            else:
+                approx = approx[[0, 2, 3, 1]]
+                
+            # 繪製多邊形角點
+            approx = np.array([pt + [border, border] for pt in approx])
+            for i in range(len(approx)):
+                x, y = approx[i]
+                
+                cv2.line(imageColor, approx[i], approx[(i + 1) % len(approx)], colors[i], 2)
+                cv2.circle(imageColor, (x, y), 5, colors[i], -1)
+            
+            # 繪製多邊形輪廓
+            # cv2.drawContours(imageColor, [approx], -1, (0, 255, 255), 2)
+
+            cv2.imwrite(f'polyContour_{filename}.jpg', imageColor)
+            
+            
+            
+            return np.array(approx, dtype = np.float32)
+        except Exception as msg:
+            logger.critical(msg)
+            return None
+        
+    def GetPnP(
+        self,
+        imageCenter:np.ndarray
+    ):
+        
+        cubePoints2D = self.GetBoxCorner2(self.imageFront, filename = 'front')
+        # cornersSide = self.GetBoxCorner2(self.imageSide, filename = 'side')
+        
+        cubePoints3D = self.cube3DFront + imageCenter
+        imageCenter = np.float32(imageCenter * self.rateFront)
+        
+        
+        fx, fy = self.focusLength * self.cameraPixel
+        cx, cy = imageCenter[1:][::-1]
+        cameraMatrix = np.array([[fx, 0,  cx],
+                                 [0,  fy, cy],
+                                 [0,  0,  1]], dtype = np.float32)
+        
+        dist_coeffs = np.zeros(5, dtype = np.float32)
+        
+        ret, rvec, tvec = cv2.solvePnP(np.float32(cubePoints3D), np.float32(cubePoints2D), cameraMatrix, None)
+        if ret:
+            logger.debug(f'rvec:{rvec}')
+            logger.debug(f'tvec:{tvec}')
+            
+            # 將旋轉向量轉換為旋轉矩陣
+            R, _ = cv2.Rodrigues(rvec)
+
+            # 拼接旋轉矩陣和平移向量
+            Rt = np.hstack((R, tvec))
+
+            # 計算透視矩陣
+            P = np.dot(cameraMatrix, Rt)
+
+            print(f"透視矩陣：\n", P)
+            
+            projectPoints, _ = cv2.projectPoints(cubePoints3D, rvec, tvec, cameraMatrix, dist_coeffs)
+            self.rvec = rvec
+            self.tvec = tvec
+            self.cameraMatrix = cameraMatrix
+            
+            print(f"投影後的2D點:\n", projectPoints)
+        
+    def GetPerspectiveMatrix(
+        self,
+        image:np.ndarray,
+        cubePoints3D:np.ndarray,
+        cubePoints2D:np.ndarray
+    ):
+        
+        
+        # fx, fy = self.focusLength * self.cameraPixel
+        # cx, cy = imageCenter
+        # cameraMatrix = np.array([[fx, 0,  cx],
+        #                          [0,  fy, cy],
+        #                          [0,  0,  1]], dtype = np.float32)
+        
+        # dist_coeffs = np.zeros(14)
+        
+        perspectiveMatrix = cv2.getPerspectiveTransform(cubePoints2D, cubePoints3D)
+        width = int(np.max(cubePoints3D[:, 0]) - np.min(cubePoints3D[:, 0]))
+        height = int(np.max(cubePoints3D[:, 1]) - np.min(cubePoints3D[:, 1]))
+        warpedImage = cv2.warpPerspective(image, perspectiveMatrix, np.array(image.shape)[::-1])
+        cv2.imwrite('cali_image.jpg', warpedImage)
+        
+        return perspectiveMatrix, warpedImage
+        
+        # ret, rvec, tvec = cv2.solvePnP(np.float32(cubePoints3D), np.float32(cubePoints2D), cameraMatrix, dist_coeffs)
+        # if ret:
+        #     logger.debug(f'rvec:{rvec}')
+        #     logger.debug(f'tvec:{tvec}')
+            
+        #     # 將旋轉向量轉換為旋轉矩陣
+        #     R, _ = cv2.Rodrigues(rvec)
+
+        #     # 拼接旋轉矩陣和平移向量
+        #     Rt = np.hstack((R, tvec))
+
+        #     # 計算透視矩陣
+        #     P = np.dot(cameraMatrix, Rt)
+
+        #     logger.debug("透視矩陣：\n", P)
+            
+        #     projectPoints, _ = cv2.projectPoints(cubePoints3D, rvec, tvec, cameraMatrix, dist_coeffs)
+            
+        #     logger.debug("投影後的2D點:\n", projectPoints)

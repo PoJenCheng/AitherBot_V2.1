@@ -2460,9 +2460,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         self.dicomLow.rendererSagittal.SetTargetVisible(True)
         self.dicomLow.rendererCoronal.SetTargetVisible(True)
         self.ShowDicom()
-        translateBackInfo = self.robot.Translate_RobotBase_PlatformBase()
-        self.w1 = translateBackInfo[0]
-        self.alpha = translateBackInfo[1]
+        # translateBackInfo = self.robot.Translate_RobotBase_PlatformBase()
+        # self.w1 = translateBackInfo[0]
+        # self.alpha = translateBackInfo[1]
         
     def OnClicked_btnSetEntry(self):
         self._SetupTrajectoryPoint(POINT_ENTRY)
@@ -3405,6 +3405,9 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self._EnableDevice(DEVICE_ENABLED)
         elif self.stkMain.currentWidget() == self.pgInstallSupportArm:
             self._PlayVedio(self.wdgInstallSupportArm, 'video/patient_install_support_arm.mp4')
+        elif self.stkMain.currentWidget() == self.pgScene:
+            if FOR_ROBOT_CALI_TEST:
+                self.stkScene.setCurrentWidget(self.pgImportDicom)
             
     def SetStageButtonStyle(self, index:int): 
         if self.IsStage(index, STAGE_ROBOT):
@@ -3490,7 +3493,11 @@ class MainInterface(QMainWindow,Ui_MainWindow):
             self.GetRobotPosition()
         elif currentWidget == self.pgImportDicom:
             if self.robot:
-                self.wdgRobotCalibration = DlgRobotCalibration()
+                translateBackInfo = self.robot.Translate_RobotBase_PlatformBase()
+                self.w1 = translateBackInfo[0]
+                self.alpha = translateBackInfo[1]
+        
+                self.wdgRobotCalibration = DlgRobotCalibration(self.w1, self.alpha)
                 self.wdgRobotCalibration.signalRobotRun.connect(self.robot.P2PWidthRobotCoordinate)
                 # sys.exit(self.wdgRobotCalibration.exec_())
                 self.wdgRobotCalibration.exec_()
@@ -4171,18 +4178,20 @@ class MainInterface(QMainWindow,Ui_MainWindow):
         if not self.robot:
             return
         
-        self.uiHoming = HomingWidget(self)
-        self.uiHoming.finished.connect(lambda:self.NextScene())
-        self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
-        self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
-        
-        # self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.uiHoming.setWindowFlags(Qt.FramelessWindowHint)
-        self.uiHoming.setModal(True)
-        # self.uiHoming.exec_()
-        self.uiHoming.show()
-        self.listSubDialog.append(self.uiHoming)
-        # self.NextScene()
+        if not SKIP_HOMING:
+            self.uiHoming = HomingWidget(self)
+            self.uiHoming.finished.connect(lambda:self.NextScene())
+            self.uiHoming.signalHoming.connect(self.Robot_HomingProcess)
+            self.robot.signalHomingProgress.connect(self.uiHoming.OnSignal_Percent)
+            
+            # self.uiHoming.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+            self.uiHoming.setWindowFlags(Qt.FramelessWindowHint)
+            self.uiHoming.setModal(True)
+            # self.uiHoming.exec_()
+            self.uiHoming.show()
+            self.listSubDialog.append(self.uiHoming)
+        else:
+            self.NextScene()
         
     def Robot_HomingProcess(self):
         if self.robot is None:
